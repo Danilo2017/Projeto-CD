@@ -1,0 +1,208 @@
+/* Estilos para o calendário de recebimento CD */
+
+/* Grade do calendário anual */
+.calendario-anual {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 1200px) {
+    .calendario-anual {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .calendario-anual {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .calendario-anual {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mes-container {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mes-header {
+    background: var(--bs-primary, #004080);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.dias-semana-mini {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #f5f7fa;
+}
+
+.dia-semana-mini {
+    padding: 5px 2px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+}
+
+.dias-grid-mini {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e0e0e0;
+}
+
+.dia-mini {
+    background: white;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    padding: 2px;
+}
+
+.dia-mini:hover {
+    background: #e3f2fd;
+    transform: scale(1.1);
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.dia-mini.outro-mes {
+    background: #fafafa;
+    color: #ccc;
+}
+
+.dia-mini.hoje {
+    background: #48c9b0;
+    color: white;
+    font-weight: 700;
+}
+
+.dia-mini.tem-recebimento {
+    background: #e3f2fd;
+    font-weight: 700;
+}
+
+.dia-mini.tem-recebimento.hoje {
+    background: var(--bs-primary, #004080);
+}
+
+.contador-mini {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+/* Badge de status */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-pendente {
+    background: #f39c12;
+    color: white;
+}
+
+.status-iniciado {
+    background: #3498db;
+    color: white;
+}
+
+.status-finalizado {
+    background: #27ae60;
+    color: white;
+}
+
+.status-recebido {
+    background: #27ae60;
+    color: white;
+}
+
+.status-nao-recebido {
+    background: #95a5a6;
+    color: white;
+}
+
+/* Tabela de recebimentos */
+.tabela-recebimentos {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabela-recebimentos th,
+.tabela-recebimentos td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.tabela-recebimentos th {
+    background: #f5f7fa;
+    font-weight: 600;
+    font-size: 12px;
+    color: #666;
+}
+
+.tabela-recebimentos tbody tr:hover {
+    background: #f0f7ff;
+}
+
+/* Botões de ação */
+.btn-acao {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 4px;
+    transition: all 0.2s;
+}
+
+.btn-editar {
+    background: #3498db;
+    color: white;
+}
+
+.btn-editar:hover {
+    background: #2980b9;
+}
+
+.btn-excluir {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-excluir:hover {
+    background: #c0392b;
+}

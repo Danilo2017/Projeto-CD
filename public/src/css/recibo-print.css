@@ -1,0 +1,192 @@
+/* Estilos para recibo - impressão e visualização */
+.recibos-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 24px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 8px;
+}
+.recibo-via-container {
+    width: 100%;
+    margin-bottom: 24px;
+    page-break-inside: avoid;
+}
+.recibo-header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.logo-recibo {
+    height: 40px;
+}
+.recibo-via-label {
+    font-size: 13px;
+    color: #555;
+    font-weight: 600;
+    background: #f5f7fa;
+    padding: 2px 10px;
+    border-radius: 6px;
+}
+.recibo-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.recibo-titulo h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #004080;
+    margin: 0;
+}
+.recibo-numero {
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 600;
+    margin-left: 12px;
+}
+.recibo-valor-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+.recibo-valor-box .label {
+    font-weight: 600;
+    color: #004080;
+}
+.recibo-valor-box .valor {
+    font-weight: 700;
+    color: #2c3e50;
+}
+.recibo-corpo {
+    margin-bottom: 16px;
+}
+.recibo-texto {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+.recibo-declaracao {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 8px;
+}
+.recibo-data {
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 16px;
+}
+.recibo-assinatura {
+    margin-top: 18px;
+    text-align: center;
+}
+.linha-assinatura {
+    border-bottom: 1.5px dashed #888;
+    width: 180px;
+    margin: 0 auto 6px auto;
+}
+.assinatura-nome {
+    font-size: 0.95rem;
+    color: #333;
+    margin: 0;
+}
+.recibo-rodape {
+    font-size: 0.85rem;
+    color: #666;
+    text-align: center;
+    margin-top: 10px;
+}
+.linha-corte {
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+    margin: 12px 0 12px 0;
+    border-top: 1px dashed #bbb;
+    padding-top: 4px;
+}
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 10mm 10mm 10mm 10mm;
+    }
+    html, body {
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+    body * {
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+        page-break-inside: avoid !important;
+    }
+    #modalVisualizarRecibo, #modalVisualizarRecibo * {
+        visibility: visible !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        page-break-before: always !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    #modalVisualizarRecibo {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100vw !important;
+        height: auto !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        z-index: 9999;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        align-items: initial !important;
+        justify-content: initial !important;
+        page-break-before: always !important;
+    }
+    .modal-content {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 700px !important;
+        page-break-before: avoid !important;
+    }
+    .modal-header, .modal-actions, .no-print {
+        display: none !important;
+    }
+    .recibos-container {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 700px !important;
+        display: block !important;
+        page-break-before: avoid !important;
+    }
+    .recibo-via-container {
+        page-break-inside: avoid !important;
+        margin-bottom: 0 !important;
+        page-break-before: avoid !important;
+    }
+    .linha-corte {
+        page-break-after: avoid !important;
+        margin: 10px 0 !important;
+    }
+}
