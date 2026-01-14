@@ -13,68 +13,60 @@ class AvisosRecebimento
      */
     public function listarAvisosHoje()
     {
-        $sql = "SELECT
-            e.COD_EMP ||'-'|| e.RAZAO_SOCIAL AS EMPRESA,
-            a.COD_ALMOX AS ALMOX,
-            ar.PLACA_VEICULO AS PLACA,
-            TO_CHAR(MIN(ar.DATA_HORA_CHEGADA), 'DD/MM/YYYY HH24:MI') AS CHEGADA,
-            TO_CHAR(MIN(CASE
-                WHEN lg.STATUS = 'INI'
-                THEN lg.DATA_HORA
-            END), 'DD/MM/YYYY HH24:MI') AS INICIO,
-            TO_CHAR(MAX(CASE
-                WHEN lg.STATUS = 'FIM'
-                THEN lg.DATA_HORA
-            END), 'DD/MM/YYYY HH24:MI') AS TERMINO,
-            MAX(CASE
-                WHEN s.MAIOR_ID LIKE 'INI%' OR s.MAIOR_ID LIKE 'REA%' THEN 'INICIADO'
-                WHEN s.MAIOR_ID LIKE 'FIM%' THEN 'FINALIZADO'
-                ELSE 'PENDENTE'
-            END) AS STATUS,
-            MAX(CASE
-                WHEN a.COD_ALMOX = '9'
-                THEN 'SIM ' || pdc.OBS
-            END) AS CROSSDOCKING
-        FROM TAVISOS_RECEB r
-        JOIN TEMPRESAS e
-            ON e.ID = r.EMPR_ID
-        JOIN TGAZIN_AVISOS_RECEB ar
-            ON ar.AVR_ID = r.ID
-        JOIN TITENS_AVISO_RECEB it
-            ON it.AVR_ID = r.ID
-        JOIN TALMOXARIFADOS a
-            ON a.ID = it.ALMOX_ID
-        LEFT JOIN TGAZIN_LOG_CONF_AVR_WEB lg
-            ON lg.AVR_ID = r.ID
-        JOIN VGAZIN_AVRREC_STATUS s
-            ON s.EMPRESA = e.ID
-           AND s.PLACA_VEICULO = ar.PLACA_VEICULO
-           AND s.DATA = TO_CHAR(ar.DATA_HORA_CHEGADA, 'DD/MM/YYYY')
-        LEFT JOIN (
-            SELECT
-                itav.ID,
-                LISTAGG(itpdc.OBS, ', ') WITHIN GROUP (ORDER BY itpdc.OBS) AS OBS
-            FROM TITENS_AVISO_RECEB itav
-            JOIN TPEDC_ITEM itpdc ON itpdc.ID = itav.PEDCITEM_ID
-            JOIN TPED_COMPRA pdc ON pdc.ID = itpdc.TPEDC_ID
-            GROUP BY itav.ID
-        ) pdc
-            ON pdc.ID = it.ID
-        WHERE e.COD_EMP = 1
-          AND a.COD_ALMOX IN ('1','9')
-          AND r.id NOT IN (102355,102353)
-          AND TRUNC(ar.DATA_HORA_CHEGADA, 'MM') = TRUNC(SYSDATE, 'MM')
-        GROUP BY
-            e.COD_EMP,
-            e.RAZAO_SOCIAL,
-            a.COD_ALMOX,
-            ar.PLACA_VEICULO
-        HAVING MAX(CASE
-                WHEN s.MAIOR_ID LIKE 'INI%' OR s.MAIOR_ID LIKE 'REA%' THEN 'INICIADO'
-                WHEN s.MAIOR_ID LIKE 'FIM%' THEN 'FINALIZADO'
-                ELSE 'PENDENTE'
-            END) IN ('PENDENTE', 'INICIADO')
-        ORDER BY ar.PLACA_VEICULO";
+        $sql = "SELECT TEMPRESAS.COD_EMP COD_EMP,
+       TEMPRESAS.RAZAO_SOCIAL EMPRESA,
+       TALMOXARIFADOS.COD_ALMOX ALMOX,
+       TGAZIN_AVISOS_RECEB.PLACA_VEICULO PLACA,
+       MIN(to_char(TGAZIN_AVISOS_RECEB.DATA_HORA_CHEGADA,'DD/MM/RRRR HH24:MI')) CHEGADA,
+       MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
+THEN TO_CHAR(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA,'DD/MM/RRRR HH24:MI')
+ELSE ''
+END) INICIO,
+       MAX(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'FIM' 
+THEN TO_CHAR(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA,'DD/MM/RRRR HH24:MI')
+ELSE ''
+END) TERMINO,
+       MAX(CASE WHEN VGAZIN_AVRREC_STATUS.MAIOR_ID LIKE '%INI%' THEN 'INICIADO' 
+     WHEN VGAZIN_AVRREC_STATUS.MAIOR_ID LIKE '%REA%' THEN 'INICIADO' 
+     WHEN VGAZIN_AVRREC_STATUS.MAIOR_ID NOT LIKE '%INI%' AND VGAZIN_AVRREC_STATUS.MAIOR_ID NOT LIKE '%FIM%' THEN 'PENDENTE'
+     WHEN VGAZIN_AVRREC_STATUS.MAIOR_ID NOT LIKE '%INI%' AND VGAZIN_AVRREC_STATUS.MAIOR_ID NOT LIKE '%PEN%' THEN 'FINALIZADO'
+     WHEN VGAZIN_AVRREC_STATUS.MAIOR_ID NOT LIKE '%INI%' AND VGAZIN_AVRREC_STATUS.MAIOR_ID LIKE '%PEN%' 
+AND VGAZIN_AVRREC_STATUS.MAIOR_ID LIKE '%FINALIZADO%'
+THEN 'INI'
+END) STATUS,
+       MAX(CASE WHEN VGAZIN_AVRREC_STATUS.ALMOX LIKE '%9%' THEN 'SIM ' ||(select wm_concat(itpdc.OBS)
+                                                                           from TITENS_AVISO_RECEB itav
+                                                                              ,tpedc_item itpdc
+                                                                              ,tped_compra pdc
+                                                                              where itav.PEDCITEM_ID = itpdc.id
+                                                                              and itpdc.TPEDC_ID = pdc.id
+                                                                              and itav.id = TITENS_AVISO_RECEB.id)
+ELSE ''
+END) CROSSDOCKING
+  FROM VGAZIN_AVRREC_STATUS VGAZIN_AVRREC_STATUS,
+       TEMPRESAS TEMPRESAS,
+       TGAZIN_AVISOS_RECEB TGAZIN_AVISOS_RECEB,
+       TAVISOS_RECEB TAVISOS_RECEB,
+       TGAZIN_LOG_CONF_AVR_WEB TGAZIN_LOG_CONF_AVR_WEB,
+       TITENS_AVISO_RECEB TITENS_AVISO_RECEB,
+       TALMOXARIFADOS TALMOXARIFADOS
+ WHERE TEMPRESAS.ID = TAVISOS_RECEB.EMPR_ID
+   AND TAVISOS_RECEB.ID = TITENS_AVISO_RECEB.AVR_ID
+   AND TAVISOS_RECEB.ID = TGAZIN_LOG_CONF_AVR_WEB.AVR_ID(+)
+   AND TAVISOS_RECEB.ID = TGAZIN_AVISOS_RECEB.AVR_ID
+   AND TALMOXARIFADOS.ID = TITENS_AVISO_RECEB.ALMOX_ID
+   AND (( TEMPRESAS.COD_EMP in (1)))
+   AND VGAZIN_AVRREC_STATUS.EMPRESA = TEMPRESAS.ID
+   AND (( TALMOXARIFADOS.COD_ALMOX in ('1','9')))
+   AND TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA >= TRUNC(SYSDATE, 'MM')
+   AND TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA <  ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+   AND VGAZIN_AVRREC_STATUS.PLACA_VEICULO =TGAZIN_AVISOS_RECEB.PLACA_VEICULO
+   AND VGAZIN_AVRREC_STATUS.DATA =to_char(TGAZIN_AVISOS_RECEB.DATA_HORA_CHEGADA,'DD/MM/RRRR')
+   AND VGAZIN_AVRREC_STATUS.NFE LIKE '%1%'
+GROUP BY TEMPRESAS.COD_EMP,
+         TEMPRESAS.RAZAO_SOCIAL,
+         TALMOXARIFADOS.COD_ALMOX,
+         TGAZIN_AVISOS_RECEB.PLACA_VEICULO";
 
         $pdo = Database::getInstance('focco');
         $stmt = $pdo->prepare($sql);
@@ -95,36 +87,75 @@ class AvisosRecebimento
             SUM(CASE WHEN STATUS = 'INICIADO' THEN 1 ELSE 0 END) AS INICIADOS,
             SUM(CASE WHEN STATUS = 'FINALIZADO' THEN 1 ELSE 0 END) AS FINALIZADOS
         FROM (
-            SELECT
-                ar.PLACA_VEICULO,
-                MAX(CASE
-                    WHEN s.MAIOR_ID LIKE 'INI%' OR s.MAIOR_ID LIKE 'REA%' THEN 'INICIADO'
-                    WHEN s.MAIOR_ID LIKE 'FIM%' THEN 'FINALIZADO'
-                    ELSE 'PENDENTE'
-                END) AS STATUS
-            FROM TAVISOS_RECEB r
-            JOIN TEMPRESAS e
-                ON e.ID = r.EMPR_ID
-            JOIN TGAZIN_AVISOS_RECEB ar
-                ON ar.AVR_ID = r.ID
-            JOIN TITENS_AVISO_RECEB it
-                ON it.AVR_ID = r.ID
-            JOIN TALMOXARIFADOS a
-                ON a.ID = it.ALMOX_ID
-            JOIN VGAZIN_AVRREC_STATUS s
-                ON s.EMPRESA = e.ID
-               AND s.PLACA_VEICULO = ar.PLACA_VEICULO
-               AND s.DATA = TO_CHAR(ar.DATA_HORA_CHEGADA, 'DD/MM/YYYY')
-            WHERE e.COD_EMP = 1
-              AND a.COD_ALMOX IN ('1','9')
-              AND r.id NOT IN (102355,102353)
-              AND TRUNC(ar.DATA_HORA_CHEGADA, 'MM') = TRUNC(SYSDATE, 'MM')
-            GROUP BY
-                e.COD_EMP,
-                e.RAZAO_SOCIAL,
-                a.COD_ALMOX,
-                ar.PLACA_VEICULO
-        )";
+            SELECT TEMPRESAS.COD_EMP COD_EMP,
+       TEMPRESAS.RAZAO_SOCIAL EMPRESA,
+       TALMOXARIFADOS.COD_ALMOX ALMOX,
+       TGAZIN_AVISOS_RECEB.PLACA_VEICULO PLACA,
+       MIN(to_char(TGAZIN_AVISOS_RECEB.DATA_HORA_CHEGADA,'DD/MM/RRRR HH24:MM')) CHEGADA,
+       MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
+THEN TO_CHAR(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA,'DD/MM/RRRR HH24:MM')
+ELSE ''
+END) INICIO,
+       MAX(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'FIM' 
+THEN TO_CHAR(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA,'DD/MM/RRRR HH24:MM')
+ELSE ''
+END) TERMINO,
+CASE
+    /* REGRA PRIORITÁRIA */
+    WHEN
+        MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI'
+                 THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
+            END) IS NOT NULL
+    AND
+        MAX(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'FIM'
+                 THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
+            END) IS NOT NULL
+    THEN 'FINALIZADO'
+    /* PADRÃO ORIGINAL */
+    WHEN MAIOR_ID LIKE '%INI%' 
+      OR MAIOR_ID LIKE '%REA%' 
+    THEN 'INICIADO'
+    WHEN MAIOR_ID NOT LIKE '%INI%' 
+     AND MAIOR_ID NOT LIKE '%FIM%' 
+    THEN 'PENDENTE'
+    WHEN MAIOR_ID NOT LIKE '%INI%' 
+     AND MAIOR_ID NOT LIKE '%PEN%' 
+    THEN 'FINALIZADO'
+END AS STATUS
+,
+       MAX(CASE WHEN VGAZIN_AVRREC_STATUS.ALMOX LIKE '%9%' THEN 'SIM ' ||(select wm_concat(itpdc.OBS)
+                                                                           from TITENS_AVISO_RECEB itav
+                                                                              ,tpedc_item itpdc
+                                                                              ,tped_compra pdc
+                                                                              where itav.PEDCITEM_ID = itpdc.id
+                                                                              and itpdc.TPEDC_ID = pdc.id
+                                                                              and itav.id = TITENS_AVISO_RECEB.id)
+ELSE ''
+END) CROSSDOCKING
+  FROM VGAZIN_AVRREC_STATUS VGAZIN_AVRREC_STATUS,
+       TEMPRESAS TEMPRESAS,
+       TGAZIN_AVISOS_RECEB TGAZIN_AVISOS_RECEB,
+       TAVISOS_RECEB TAVISOS_RECEB,
+       TGAZIN_LOG_CONF_AVR_WEB TGAZIN_LOG_CONF_AVR_WEB,
+       TITENS_AVISO_RECEB TITENS_AVISO_RECEB,
+       TALMOXARIFADOS TALMOXARIFADOS
+ WHERE TEMPRESAS.ID = TAVISOS_RECEB.EMPR_ID
+   AND TAVISOS_RECEB.ID = TITENS_AVISO_RECEB.AVR_ID
+   AND TAVISOS_RECEB.ID = TGAZIN_LOG_CONF_AVR_WEB.AVR_ID(+)
+   AND TAVISOS_RECEB.ID = TGAZIN_AVISOS_RECEB.AVR_ID
+   AND TALMOXARIFADOS.ID = TITENS_AVISO_RECEB.ALMOX_ID
+   AND (( TEMPRESAS.COD_EMP in (1)))
+   AND VGAZIN_AVRREC_STATUS.EMPRESA = TEMPRESAS.ID
+   AND (( TALMOXARIFADOS.COD_ALMOX in ('1','9')))
+   AND TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA >= TRUNC(SYSDATE, 'MM')
+   AND TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA <  ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+   AND VGAZIN_AVRREC_STATUS.PLACA_VEICULO =TGAZIN_AVISOS_RECEB.PLACA_VEICULO
+   AND VGAZIN_AVRREC_STATUS.DATA =to_char(TGAZIN_AVISOS_RECEB.DATA_HORA_CHEGADA,'DD/MM/RRRR')
+   --AND VGAZIN_AVRREC_STATUS.NFE LIKE '%1%'
+GROUP BY TEMPRESAS.COD_EMP,
+         TEMPRESAS.RAZAO_SOCIAL,
+         TALMOXARIFADOS.COD_ALMOX,
+         TGAZIN_AVISOS_RECEB.PLACA_VEICULO)";
 
         $pdo = Database::getInstance('focco');
         $stmt = $pdo->prepare($sql);
