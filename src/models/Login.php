@@ -10,26 +10,41 @@ class Login
 {
     public static function autenticar($username, $password)
     {
-        $sql = "SELECT *
-        FROM glb.usuario
-        WHERE login = :username";
+        $pdo = Database::getInstance('focco');
 
-        $pdo = Database::getInstance('sabium');
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':username', $username);
-        $stmt->execute();
-        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Forçar username para maiúsculo
+        $username = strtoupper($username);
 
-        if (!$usuario) {
-            throw new \Exception('Usuário não encontrado');
+        // Validar usuário e senha apenas pela procedure FOCCO3I.BR_UTL_USUARIOS.AUTENTICA
+        $sqlAuth = "SELECT FOCCO3I.BR_UTL_USUARIOS.AUTENTICA(:username, :password) AS RESULTADO FROM DUAL";
+        $stmtAuth = $pdo->prepare($sqlAuth);
+        $stmtAuth->bindParam(':username', $username);
+        $stmtAuth->bindParam(':password', $password);
+        $stmtAuth->execute();
+        $resultAuth = $stmtAuth->fetch(PDO::FETCH_ASSOC);
+
+        if (!$resultAuth || !isset($resultAuth['RESULTADO'])) {
+            throw new \Exception('Erro ao autenticar usuário.');
         }
 
-        $senhaDescrpit =  $usuario['senha'];
-        if(DecryptPassword::decrypt($senhaDescrpit) != $password){
-            throw new \Exception('Verifique seus dados de acesso');
+        $resultado = $resultAuth['RESULTADO'];
+        if ($resultado === 'ERRO_01') {
+            throw new \Exception('Usuário não existe');
+        } elseif ($resultado === 'ERRO_02') {
+            throw new \Exception('Senha inválida ou informação incorreta');
+        } elseif ($resultado === 'ERRO_03') {
+            throw new \Exception('Usuário inativo');
+        } elseif ($resultado === 'OK_03' || $resultado === 'OK_02') {
+            // prossegue
+        } else {
+            throw new \Exception('Erro desconhecido na autenticação: ' . $resultado);
         }
 
-        $_SESSION['user'] = $usuario;
-        return $usuario;
+        // Retornar apenas o resultado da autenticação
+        $_SESSION['user'] = [
+            'login' => $username,
+            'resultado' => $resultado
+        ];
+        return $_SESSION['user'];
     }
 }
