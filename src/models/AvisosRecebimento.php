@@ -27,22 +27,30 @@ THEN TO_CHAR(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA,'DD/MM/RRRR HH24:MM')
 ELSE ''
 END) TERMINO,
 CASE
+    -- Sem nenhum log
     WHEN MIN(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA) IS NULL
-         THEN 'PENDENTE' -- só tem chegada (sem log de início)
+         THEN 'PENDENTE'
+    -- Início existe, fim não existe
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL
          AND MAX(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'FIM'
                        THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
                   END) IS NULL
-         THEN 'INICIADO' -- iniciou, mas não finalizou
+         THEN 'INICIADO'
+    -- Início e fim existem, mas depende do NFE
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL
          AND MAX(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'FIM'
                        THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
                   END) IS NOT NULL
-         THEN 'FINALIZADO' -- chegou, iniciou e finalizou
+         THEN CASE
+                  WHEN MAX(VGAZIN_AVRREC_STATUS.NFE) LIKE '%1%' THEN 'INICIADO'
+                  WHEN MAX(VGAZIN_AVRREC_STATUS.NFE) LIKE '%0%' THEN 'FINALIZADO'
+                  ELSE 'FINALIZADO'
+              END
+   
     ELSE 'PENDENTE'
 END AS STATUS,
        MAX(CASE WHEN VGAZIN_AVRREC_STATUS.ALMOX LIKE '%9%' THEN 'SIM ' ||(select wm_concat(itpdc.OBS)
@@ -112,22 +120,30 @@ THEN TO_CHAR(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA,'DD/MM/RRRR HH24:MM')
 ELSE ''
 END) TERMINO,
 CASE
+    -- Sem nenhum log
     WHEN MIN(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA) IS NULL
-         THEN 'PENDENTE' -- só tem chegada (sem log de início)
+         THEN 'PENDENTE'
+    -- Início existe, fim não existe
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL
          AND MAX(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'FIM'
                        THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
                   END) IS NULL
-         THEN 'INICIADO' -- iniciou, mas não finalizou
+         THEN 'INICIADO'
+    -- Início e fim existem, mas depende do NFE
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL
          AND MAX(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'FIM'
                        THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
                   END) IS NOT NULL
-         THEN 'FINALIZADO' -- chegou, iniciou e finalizou
+         THEN CASE
+                  WHEN MAX(VGAZIN_AVRREC_STATUS.NFE) LIKE '%1%' THEN 'INICIADO'
+                  WHEN MAX(VGAZIN_AVRREC_STATUS.NFE) LIKE '%0%' THEN 'FINALIZADO'
+                  ELSE 'FINALIZADO'
+              END
+   
     ELSE 'PENDENTE'
 END AS STATUS,
        MAX(CASE WHEN VGAZIN_AVRREC_STATUS.ALMOX LIKE '%9%' THEN 'SIM ' ||(select wm_concat(itpdc.OBS)
