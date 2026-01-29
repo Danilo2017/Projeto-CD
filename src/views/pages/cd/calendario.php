@@ -919,7 +919,7 @@
                                 <option value="CARTAO_DEBITO">Cartão Débito</option>
                                 <option value="CARTAO_CREDITO">Cartão Crédito</option>
                                 <option value="TRANSFERENCIA">Transferência Bancária</option>
-                                <option value="BOLETO">Boleto</option>
+                                <option value="BOLETO">A Receber</option>
                             </select>
                         </div>
 
