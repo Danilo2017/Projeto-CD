@@ -1,0 +1,402 @@
+/**
+ * Comissão Faixas - JavaScript
+ */
+
+let dataTable = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregar dados dos selects
+    carregarCentrosTrabalho();
+    
+    // Carregar dados iniciais
+    carregarFaixas();
+});
+
+/**
+ * Carrega centros de trabalho para o select
+ */
+function carregarCentrosTrabalho() {
+    fetch('/comissao-api-centros')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const selects = ['filtroCentro', 'centroTrabId'];
+                selects.forEach(id => {
+                    const select = document.getElementById(id);
+                    if (select) {
+                        const primeiraOpcao = id.startsWith('filtro') ? 'Todos' : 'Todos os centros';
+                        select.innerHTML = `<option value="">${primeiraOpcao}</option>`;
+                        data.data.forEach(centro => {
+                            select.innerHTML += `<option value="${centro.ID}">${centro.COD_CENTRO} - ${centro.DESCRICAO}</option>`;
+                        });
+                    }
+                });
+            }
+        })
+        .catch(error => console.error('Erro ao carregar centros:', error));
+}
+
+/**
+ * Carrega faixas da API
+ */
+function carregarFaixas() {
+    const filtros = {
+        centroTrabId: document.getElementById('filtroCentro')?.value || '',
+        tipo: document.getElementById('filtroTipo')?.value || '',
+        incluirInativas: document.getElementById('incluirInativas')?.checked || false
+    };
+    
+    const params = new URLSearchParams();
+    Object.keys(filtros).forEach(key => {
+        if (filtros[key]) params.append(key, filtros[key]);
+    });
+    
+    fetch(`/comissao-api-faixas?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderizarTabela(data.data);
+            } else {
+                exibirMensagemErro(data.message || 'Erro ao carregar faixas');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar faixas:', error);
+            exibirMensagemErro('Erro ao carregar faixas');
+        });
+}
+
+/**
+ * Renderiza a tabela de faixas
+ */
+function renderizarTabela(dados) {
+    // Destruir DataTable existente antes de modificar o tbody
+    if (dataTable) {
+        dataTable.destroy();
+        dataTable = null;
+    }
+    
+    // Também destruir se existir no DOM mas não na variável
+    if ($.fn.DataTable.isDataTable('#tabelaFaixas')) {
+        $('#tabelaFaixas').DataTable().destroy();
+    }
+    
+    const tbody = document.getElementById('tabelaFaixasBody');
+    
+    if (!dados || dados.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="11" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                    Nenhuma faixa cadastrada para esta empresa
+                </td>
+            </tr>
+        `;
+        // Não inicializar DataTable quando não há dados
+        return;
+    }
+    
+    let html = '';
+    dados.forEach(item => {
+        const statusClass = item.ATIVO === 'S' ? 'status-ativo' : 'status-inativo';
+        const statusTexto = item.ATIVO === 'S' ? 'Ativo' : 'Inativo';
+        const tipoClass = item.TIPO === 'P' ? 'tipo-percentual' : 'tipo-quantidade';
+        const tipoTexto = item.TIPO === 'P' ? 'Percentual' : 'Quantidade';
+        
+        let valorFormatado = '';
+        if (item.TIPO === 'P') {
+            valorFormatado = formatarNumero(item.VALOR_COMISSAO, 2) + '%';
+        } else {
+            valorFormatado = formatarMoeda(item.VALOR_COMISSAO);
+        }
+        
+        const pontoFinal = item.PONTO_FINAL ? formatarNumero(item.PONTO_FINAL, 2) : '∞ (Sem limite)';
+        const vigencia = `${formatarData(item.DT_VIGENCIA_INI)}${item.DT_VIGENCIA_FIM ? ' até ' + formatarData(item.DT_VIGENCIA_FIM) : ''}`;
+        
+        html += `
+            <tr>
+                <td>${item.ID_FAIXA}</td>
+                <td>${item.COD_EMPRESA || '-'}</td>
+                <td>${item.DESCRICAO}</td>
+                <td><span class="tipo-badge ${tipoClass}">${tipoTexto}</span></td>
+                <td class="text-end">${formatarNumero(item.PONTO_INICIAL, 2)}</td>
+                <td class="text-end">${pontoFinal}</td>
+                <td class="text-end"><strong>${valorFormatado}</strong></td>
+                <td>${item.CENTRO_DESCRICAO || 'Todos'}</td>
+                <td>${vigencia}</td>
+                <td><span class="status-badge ${statusClass}">${statusTexto}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-primary" onclick="editarFaixa(${item.ID_FAIXA})" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirFaixa(${item.ID_FAIXA})" title="Excluir">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    initDataTable();
+}
+
+/**
+ * Inicializa DataTable
+ */
+function initDataTable() {
+    // Destruir se existir na variável
+    if (dataTable) {
+        dataTable.destroy();
+        dataTable = null;
+    }
+    
+    // Também destruir se existir no DOM mas não na variável
+    if ($.fn.DataTable.isDataTable('#tabelaFaixas')) {
+        $('#tabelaFaixas').DataTable().destroy();
+    }
+    
+    dataTable = $('#tabelaFaixas').DataTable({
+        language: {
+            processing: "Processando...",
+            search: "Pesquisar:",
+            lengthMenu: "Exibir _MENU_ resultados por página",
+            info: "Mostrando _START_ até _END_ de _TOTAL_ registros",
+            infoEmpty: "Mostrando 0 até 0 de 0 registros",
+            infoFiltered: "(filtrado de _MAX_ registros no total)",
+            loadingRecords: "Carregando...",
+            zeroRecords: "Nenhum registro encontrado",
+            emptyTable: "Nenhum dado disponível na tabela",
+            paginate: {
+                first: "Primeiro",
+                previous: "Anterior",
+                next: "Próximo",
+                last: "Último"
+            }
+        },
+        lengthChange: false,
+        pageLength: 10,
+        order: [[3, 'asc']], // Ordenar por ponto inicial
+        columnDefs: [
+            { orderable: false, targets: [9] }
+        ]
+    });
+}
+
+/**
+ * Abre modal para nova faixa
+ */
+function novaFaixa() {
+    document.getElementById('modalFaixaTitulo').innerHTML = '<i class="bi bi-layers-fill"></i> Nova Faixa de Comissão';
+    document.getElementById('formFaixa').reset();
+    document.getElementById('faixaId').value = '';
+    
+    // Definir data de vigência como hoje
+    document.getElementById('dtVigenciaIni').value = new Date().toISOString().split('T')[0];
+    
+    // Resetar label do valor
+    atualizarLabelValor();
+}
+
+/**
+ * Atualiza o label e prefixo do campo de valor baseado no tipo
+ */
+function atualizarLabelValor() {
+    const tipo = document.getElementById('tipoFaixa').value;
+    const label = document.getElementById('labelValorComissao');
+    const prefixo = document.getElementById('prefixoValor');
+    const sufixo = document.getElementById('sufixoValor');
+    
+    if (tipo === 'P') {
+        label.textContent = 'Percentual *';
+        prefixo.style.display = 'none';
+        sufixo.style.display = 'block';
+    } else {
+        label.textContent = 'Valor Fixo *';
+        prefixo.style.display = 'block';
+        sufixo.style.display = 'none';
+    }
+}
+
+/**
+ * Carrega dados para edição
+ */
+function editarFaixa(id) {
+    fetch(`/comissao-api-faixas?id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                const item = data.data;
+                document.getElementById('modalFaixaTitulo').innerHTML = '<i class="bi bi-pencil"></i> Editar Faixa de Comissão';
+                document.getElementById('faixaId').value = item.ID_FAIXA;
+                document.getElementById('descricao').value = item.DESCRICAO;
+                document.getElementById('tipoFaixa').value = item.TIPO;
+                document.getElementById('pontoInicial').value = item.PONTO_INICIAL;
+                document.getElementById('pontoFinal').value = item.PONTO_FINAL || '';
+                document.getElementById('valorComissao').value = item.VALOR_COMISSAO;
+                document.getElementById('centroTrabId').value = item.CENTRO_TRAB_ID || '';
+                document.getElementById('dtVigenciaIni').value = item.DT_VIGENCIA_INI;
+                document.getElementById('dtVigenciaFim').value = item.DT_VIGENCIA_FIM || '';
+                
+                atualizarLabelValor();
+                
+                const modal = new bootstrap.Modal(document.getElementById('modalFaixa'));
+                modal.show();
+            } else {
+                exibirMensagemErro('Faixa não encontrada');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar faixa:', error);
+            exibirMensagemErro('Erro ao carregar faixa');
+        });
+}
+
+/**
+ * Salva faixa (criar ou atualizar)
+ */
+function salvarFaixa() {
+    const id = document.getElementById('faixaId').value;
+    const dados = {
+        descricao: document.getElementById('descricao').value,
+        tipo: document.getElementById('tipoFaixa').value,
+        pontoInicial: document.getElementById('pontoInicial').value,
+        pontoFinal: document.getElementById('pontoFinal').value,
+        valorComissao: document.getElementById('valorComissao').value,
+        centroTrabId: document.getElementById('centroTrabId').value,
+        dtVigenciaIni: document.getElementById('dtVigenciaIni').value,
+        dtVigenciaFim: document.getElementById('dtVigenciaFim').value
+    };
+    
+    // Validação
+    if (!dados.descricao) {
+        exibirMensagemErro('Informe a descrição da faixa');
+        return;
+    }
+    if (!dados.tipo) {
+        exibirMensagemErro('Selecione o tipo de faixa');
+        return;
+    }
+    if (dados.pontoInicial === '' || dados.pontoInicial < 0) {
+        exibirMensagemErro('Informe o ponto inicial');
+        return;
+    }
+    if (!dados.valorComissao || dados.valorComissao <= 0) {
+        exibirMensagemErro('Informe o valor da comissão');
+        return;
+    }
+    if (!dados.dtVigenciaIni) {
+        exibirMensagemErro('Informe a data de vigência inicial');
+        return;
+    }
+    
+    // Validar range de pontos
+    if (dados.pontoFinal && parseFloat(dados.pontoFinal) <= parseFloat(dados.pontoInicial)) {
+        exibirMensagemErro('O ponto final deve ser maior que o ponto inicial');
+        return;
+    }
+    
+    const metodo = id ? 'PUT' : 'POST';
+    if (id) dados.id = id;
+    
+    fetch('/comissao-api-faixas', {
+        method: metodo,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalFaixa')).hide();
+            carregarFaixas();
+            exibirMensagemSucesso(id ? 'Faixa atualizada com sucesso!' : 'Faixa cadastrada com sucesso!');
+        } else {
+            exibirMensagemErro(data.message || 'Erro ao salvar faixa');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao salvar:', error);
+        exibirMensagemErro('Erro ao salvar faixa');
+    });
+}
+
+/**
+ * Exclui uma faixa
+ */
+function excluirFaixa(id) {
+    if (!confirm('Deseja realmente excluir esta faixa de comissão?')) return;
+    
+    fetch('/comissao-api-faixas', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: id })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            carregarFaixas();
+            exibirMensagemSucesso('Faixa excluída com sucesso!');
+        } else {
+            exibirMensagemErro(data.message || 'Erro ao excluir faixa');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao excluir:', error);
+        exibirMensagemErro('Erro ao excluir faixa');
+    });
+}
+
+/**
+ * Formata número
+ */
+function formatarNumero(valor, casasDecimais = 2) {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: casasDecimais,
+        maximumFractionDigits: casasDecimais
+    }).format(valor || 0);
+}
+
+/**
+ * Formata moeda
+ */
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor || 0);
+}
+
+/**
+ * Formata data
+ */
+function formatarData(data) {
+    if (!data) return '-';
+    // Adiciona T12:00:00 para evitar problemas de timezone
+    if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
+        data = data + 'T12:00:00';
+    }
+    const d = new Date(data);
+    return d.toLocaleDateString('pt-BR');
+}
+
+/**
+ * Exibe mensagem de erro
+ */
+function exibirMensagemErro(mensagem) {
+    alert('❌ ' + mensagem);
+    // TODO: Implementar sistema de toast
+}
+
+/**
+ * Exibe mensagem de sucesso
+ */
+function exibirMensagemSucesso(mensagem) {
+    alert('✅ ' + mensagem);
+    // TODO: Implementar sistema de toast
+}

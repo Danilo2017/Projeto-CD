@@ -1,0 +1,23 @@
+# Docker Compose para o Sistema de Comissionamento de Produtividade
+# Execute com: docker-compose -f docker-compose-comissao.yml up -d
+
+services:
+  comissao_colchao:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: comissao_colchao
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8050:80"
+    environment:
+      - TZ=America/Sao_Paulo
+      - PHP_MEMORY_LIMIT=256M
+    restart: unless-stopped
+    
+  composer_comissao:
+    image: composer/composer
+    command: install
+    volumes:
+      - ./:/app

@@ -1,0 +1,388 @@
+/* CD Dashboard - Estilos originais */
+
+.cd-dashboard-container {
+    max-width: 100%;
+    margin: 0 auto;
+    background: #f0f0f0;
+}
+
+/* Header CD */
+.cd-header {
+    background: linear-gradient(135deg, #004080 0%, #0059b3 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cd-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cd-logo img {
+    display: block;
+    max-height: 40px;
+}
+
+.cd-title {
+    color: white;
+    font-size: 18px;
+    margin: 0;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Info Bar */
+.cd-info-bar {
+    background: #f5f7fa;
+    padding: 10px 20px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ddd;
+}
+
+.cd-info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cd-info-value {
+    color: #333;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cd-btn-refresh {
+    padding: 8px 20px;
+    background: #004080;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 64, 128, 0.2);
+}
+
+.cd-btn-refresh:hover {
+    background: #0059b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 64, 128, 0.3);
+}
+
+.cd-btn-menu {
+    padding: 8px 20px;
+    background: white;
+    color: #004080;
+    border: 2px solid #004080;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: 10px;
+}
+
+.cd-btn-menu:hover {
+    background: #004080;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 64, 128, 0.3);
+}
+
+.cd-btn-menu.active {
+    background: #004080;
+    color: white;
+}
+
+/* Metrics Grid */
+.cd-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    padding: 20px;
+}
+
+.cd-metric-card {
+    background: #ffffff;
+    color: #000000;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s;
+    border: 1px solid #e0e0e0;
+}
+
+.cd-metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cd-metric-card.pendente {
+    background: #ffffff;
+}
+
+.cd-metric-card.iniciado {
+    background: #ffffff;
+}
+
+.cd-metric-card.finalizado {
+    background: #ffffff;
+}
+
+.cd-metric-label {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    color: #333333;
+}
+
+.cd-metric-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #000000;
+}
+
+/* Table Section */
+.cd-table-section {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cd-table-header {
+    background: #004080;
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.cd-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    background: white;
+}
+
+.cd-data-table thead {
+    background: #004080;
+}
+
+.cd-data-table th {
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: bold;
+    border-right: 1px solid rgba(255,255,255,0.3);
+    background: #004080;
+    color: white;
+    white-space: nowrap;
+}
+
+.cd-data-table th:first-child {
+    text-align: left;
+    padding-left: 15px;
+}
+
+.cd-data-table tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+.cd-data-table tbody tr:nth-child(even) {
+    background: #e8f4fd;
+}
+
+.cd-data-table tbody tr:hover {
+    background: #d4e9ff;
+}
+
+.cd-data-table td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+}
+
+.cd-data-table td:first-child {
+    text-align: left;
+    padding-left: 15px;
+    font-weight: 500;
+}
+
+.cd-loading {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-style: italic;
+}
+
+.cd-loading.error {
+    color: #d63031;
+}
+
+/* Status Badge */
+.cd-status-badge {
+    padding: 6px 12px 6px 26px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+}
+
+.cd-status-badge::before {
+    content: '🚛';
+    position: absolute;
+    left: 6px;
+    font-size: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.cd-status-pendente {
+    background: #f39c12;
+    color: white;
+}
+
+.cd-status-pendente::before {
+    animation: truck-waiting 2s ease-in-out infinite;
+}
+
+@keyframes truck-waiting {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(-50%) translateX(-2px); }
+}
+
+.cd-status-iniciado {
+    background: #3498db;
+    color: white;
+}
+
+.cd-status-iniciado::before {
+    animation: truck-unloading 1.5s ease-in-out infinite;
+}
+
+@keyframes truck-unloading {
+    0%, 100% { transform: translateY(-50%) translateX(0) rotate(0deg); }
+    25% { transform: translateY(-50%) translateX(-2px) rotate(-5deg); }
+    75% { transform: translateY(-50%) translateX(2px) rotate(5deg); }
+}
+
+.cd-status-finalizado {
+    background: #27ae60;
+    color: white;
+}
+
+.cd-status-finalizado::before {
+    animation: truck-done 2s ease-in-out infinite;
+}
+
+@keyframes truck-done {
+    0%, 90%, 100% { transform: translateY(-50%) scale(1); }
+    95% { transform: translateY(-50%) scale(1.15); }
+}
+
+/* Estilo de Placa Mercosul */
+.cd-placa-carro {
+    display: inline-block;
+    background: #ffffff;
+    color: #000000;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    font-size: 9px;
+    padding: 14px 6px 5px 6px;
+    border: 2px solid #000;
+    border-radius: 3px;
+    letter-spacing: 1.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-width: 70px;
+    text-align: center;
+}
+
+.cd-placa-carro::before {
+    content: 'BRASIL';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    height: 12px;
+    background: #003da5;
+    color: #ffffff;
+    font-size: 7px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px 2px 0 0;
+}
+
+.cd-crossdocking-cell {
+    max-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+    font-size: 11px;
+}
+
+/* Tables Container */
+.cd-tables-container {
+    display: flex;
+    gap: 20px;
+    padding: 0 20px 20px 20px;
+}
+
+.cd-table-avisos {
+    flex: 2;
+}
+
+.cd-table-agendamentos {
+    flex: 1;
+}
+
+@media (max-width: 1200px) {
+    .cd-tables-container {
+        flex-direction: column;
+    }
+    
+    .cd-table-avisos,
+    .cd-table-agendamentos {
+        flex: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .cd-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .cd-metrics-grid {
+        grid-template-columns: 1fr;
+        padding: 15px;
+    }
+
+    .cd-info-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

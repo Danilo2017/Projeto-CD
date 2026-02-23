@@ -1,0 +1,15 @@
+
+services:
+  api_rotinas:
+    build:
+      context: .
+    container_name: api_rotinas
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8002:80"
+  composer:
+    image: composer/composer
+    command: install
+    volumes:
+      - ./:/app
