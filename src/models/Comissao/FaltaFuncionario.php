@@ -7,15 +7,15 @@ use PDO;
 use Exception;
 
 /**
- * Model para GestÃ£o de Faltas de FuncionÃ¡rios
+ * Model para Gestão de Faltas de Funcionários
  * 
  * Tabela: FOCCO3I.TGAZIN_FALTA_FUNC
  * 
  * Regras:
- * - Se o funcionÃ¡rio tiver falta registrada em determinado dia, comissÃ£o = 0
+ * - Se o funcionário tiver falta registrada em determinado dia, comissão = 0
  * - Ignora todos os apontamentos do dia
- * - Regra Ã© diÃ¡ria (nÃ£o mensal)
- * - Funciona para perÃ­odos atuais e retroativos
+ * - Regra é diária (não mensal)
+ * - Funciona para períodos atuais e retroativos
  */
 class FaltaFuncionario
 {
@@ -23,15 +23,15 @@ class FaltaFuncionario
     const TIPO_PARCIAL = 'P';
 
     /**
-     * Registrar falta de funcionÃ¡rio
+     * Registrar falta de funcionário
      * @param array $dados
      * @return int ID da falta inserida
      */
     public function registrar($dados)
     {
-        // Validar se jÃ¡ existe falta para o mesmo dia
+        // Validar se já existe falta para o mesmo dia
         if ($this->verificarFaltaExistente($dados['id_funcionario'], $dados['dt_falta'], $dados['id_empr'])) {
-            throw new Exception('JÃ¡ existe uma falta registrada para este funcionÃ¡rio nesta data');
+            throw new Exception('Já existe uma falta registrada para este funcionário nesta data');
         }
 
         $sql = "INSERT INTO FOCCO3I.TGAZIN_FALTA_FUNC (
@@ -67,7 +67,7 @@ class FaltaFuncionario
 
         $stmt->execute();
 
-        // Buscar o ID inserido (tabela usa IDENTITY, nÃ£o sequence)
+        // Buscar o ID inserido (tabela usa IDENTITY, não sequence)
         $sqlId = "SELECT MAX(ID_FALTA) FROM FOCCO3I.TGAZIN_FALTA_FUNC 
                   WHERE ID_FUNCIONARIO = :id_funcionario 
                   AND DT_FALTA = TO_DATE(:dt_falta, 'YYYY-MM-DD')
@@ -86,7 +86,7 @@ class FaltaFuncionario
     }
 
     /**
-     * Verificar se jÃ¡ existe falta registrada para o funcionÃ¡rio na data
+     * Verificar se já existe falta registrada para o funcionário na data
      * @param int $funcId
      * @param string $data (YYYY-MM-DD)
      * @param int $emprId
@@ -111,7 +111,7 @@ class FaltaFuncionario
     }
 
     /**
-     * Verificar faltas de um funcionÃ¡rio em um perÃ­odo
+     * Verificar faltas de um funcionário em um período
      * Retorna array com as datas que possuem falta
      * @param int $funcId
      * @param string $dataIni (YYYY-MM-DD)
@@ -283,7 +283,7 @@ class FaltaFuncionario
     }
 
     /**
-     * Excluir falta (exclusÃ£o lÃ³gica)
+     * Excluir falta (exclusão lógica)
      * @param int $id
      * @param int $usuId
      * @return bool
@@ -293,7 +293,7 @@ class FaltaFuncionario
         // Buscar dados anteriores para auditoria
         $dadosAnteriores = $this->buscarPorId($id);
         if (!$dadosAnteriores) {
-            throw new \Exception('Falta nÃ£o encontrada para exclusÃ£o');
+            throw new \Exception('Falta não encontrada para exclusão');
         }
 
         $sql = "DELETE FROM FOCCO3I.TGAZIN_FALTA_FUNC WHERE ID_FALTA = :id";
@@ -312,8 +312,8 @@ class FaltaFuncionario
     }
 
     /**
-     * Obter datas com falta para um array de funcionÃ¡rios em um perÃ­odo
-     * Ãštil para processamento em lote
+     * Obter datas com falta para um array de funcionários em um período
+     * Útil para processamento em lote
      * @param array $funcIds
      * @param string $dataIni (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
@@ -362,7 +362,7 @@ class FaltaFuncionario
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Organizar por funcionÃ¡rio
+        // Organizar por funcionário
         $resultado = [];
         foreach ($rows as $row) {
             $funcId = $row['ID_FUNCIONARIO'];
@@ -428,9 +428,74 @@ class FaltaFuncionario
 
             $stmt->execute();
         } catch (\Exception $e) {
-            // Log de erro, mas nÃ£o interrompe a operaÃ§Ã£o principal
-            error_log('Erro ao registrar log de auditoria: ' . $e->getMessage());
+            // Log de erro silenciado - não interrompe a operação principal
         }
+    }
+
+    /**
+     * MÉTODO OTIMIZADO - Verificar faltas de MÚLTIPLOS funcionários em um período
+     * Evita N queries separadas fazendo uma única consulta batch
+     * 
+     * @param array $funcIds Array com IDs dos funcionários
+     * @param string $dataIni (YYYY-MM-DD)
+     * @param string $dataFim (YYYY-MM-DD)
+     * @param int|null $emprId
+     * @return array Indexado por ID do funcionário, cada um contendo array de faltas
+     */
+    public function verificarFaltasPeriodoBatch(array $funcIds, string $dataIni, string $dataFim, ?int $emprId = null): array
+    {
+        if (empty($funcIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($funcIds), '?'));
+
+        $sql = "SELECT 
+                    ID_FUNCIONARIO,
+                    TO_CHAR(DT_FALTA, 'YYYY-MM-DD') AS DT_FALTA,
+                    TIPO_FALTA,
+                    MOTIVO
+                FROM FOCCO3I.TGAZIN_FALTA_FUNC
+                WHERE ID_FUNCIONARIO IN ($placeholders)
+                AND DT_FALTA >= TO_DATE(?, 'YYYY-MM-DD')
+                AND DT_FALTA <= TO_DATE(?, 'YYYY-MM-DD')
+                AND ATIVO = 'S'";
+
+        if ($emprId) {
+            $sql .= " AND ID_EMPR = ?";
+        }
+
+        $sql .= " ORDER BY ID_FUNCIONARIO, DT_FALTA";
+
+        $pdo = Database::getInstance('focco');
+        $stmt = $pdo->prepare($sql);
+
+        $i = 1;
+        foreach ($funcIds as $funcId) {
+            $stmt->bindValue($i++, $funcId, PDO::PARAM_INT);
+        }
+        $stmt->bindValue($i++, $dataIni, PDO::PARAM_STR);
+        $stmt->bindValue($i++, $dataFim, PDO::PARAM_STR);
+
+        if ($emprId) {
+            $stmt->bindValue($i++, $emprId, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Indexar por funcionário para acesso rápido O(1)
+        $faltasPorFunc = [];
+        foreach ($funcIds as $funcId) {
+            $faltasPorFunc[$funcId] = [];
+        }
+        
+        foreach ($resultados as $falta) {
+            $funcId = $falta['ID_FUNCIONARIO'];
+            $faltasPorFunc[$funcId][] = $falta;
+        }
+
+        return $faltasPorFunc;
     }
 }
 

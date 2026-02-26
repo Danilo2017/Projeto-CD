@@ -4,19 +4,29 @@ namespace src\controllers\CD;
 
 use \core\Controller as ctrl;
 use \core\Request;
-use src\models\CD\AgendamentoRecebimento;
-use src\models\CD\ReciboDescarga;
+use src\handlers\CD\CDCalendarioHandler;
 
+/**
+ * Controller do Calendário CD
+ * Responsável por orquestrar requisições, delegando lógica ao Handler
+ */
 class CDCalendarioController extends ctrl
 {
+    private CDCalendarioHandler $handler;
+
+    public function __construct()
+    {
+        $this->handler = new CDCalendarioHandler();
+    }
+
     /**
-     * Exibe a pÃ¡gina do CalendÃ¡rio de Recebimento
+     * Exibe a página do Calendário de Recebimento
      */
     public function index()
     {
         $dados = [
-            'titulo' => 'CalendÃ¡rio de Recebimento',
-            'pagina' => 'CalendÃ¡rio CD'
+            'titulo' => 'Calendário de Recebimento',
+            'pagina' => 'Calendário CD'
         ];
 
         $this->render('cd/calendario', $dados);
@@ -28,8 +38,7 @@ class CDCalendarioController extends ctrl
     public function listar()
     {
         try {
-            $model = new AgendamentoRecebimento();
-            $recebimentos = $model->listarTodos();
+            $recebimentos = $this->handler->listarRecebimentos();
 
             self::response([
                 'success' => true,
@@ -52,17 +61,10 @@ class CDCalendarioController extends ctrl
             $input = Request::getJsonBody();
 
             if (!isset($input['data']) || !isset($input['fornecedor'])) {
-                throw new \Exception('Campos obrigatÃ³rios nÃ£o preenchidos');
+                throw new \Exception('Campos obrigatórios não preenchidos');
             }
 
-            $model = new AgendamentoRecebimento();
-            
-            // Verificar duplicata recente
-            if ($model->verificarDuplicataRecente($input)) {
-                throw new \Exception('Aguarde alguns segundos antes de cadastrar novamente');
-            }
-
-            $id = $model->inserir($input);
+            $id = $this->handler->salvarRecebimento($input);
 
             self::response([
                 'success' => true,
@@ -86,11 +88,10 @@ class CDCalendarioController extends ctrl
             $input = Request::getJsonBody();
 
             if (!isset($input['id'])) {
-                throw new \Exception('ID nÃ£o informado');
+                throw new \Exception('ID não informado');
             }
 
-            $model = new AgendamentoRecebimento();
-            $model->atualizar($input);
+            $this->handler->atualizarRecebimento($input);
 
             self::response([
                 'success' => true,
@@ -113,15 +114,14 @@ class CDCalendarioController extends ctrl
             $input = Request::getJsonBody();
 
             if (!isset($input['id'])) {
-                throw new \Exception('ID nÃ£o informado');
+                throw new \Exception('ID não informado');
             }
 
-            $model = new AgendamentoRecebimento();
-            $model->excluir($input['id']);
+            $this->handler->excluirRecebimento((int)$input['id']);
 
             self::response([
                 'success' => true,
-                'message' => 'Recebimento excluÃ­do com sucesso!'
+                'message' => 'Recebimento excluído com sucesso!'
             ], 200);
         } catch (\Exception $e) {
             self::response([
@@ -140,11 +140,10 @@ class CDCalendarioController extends ctrl
             $input = Request::getJsonBody();
 
             if (!isset($input['id'])) {
-                throw new \Exception('ID nÃ£o informado');
+                throw new \Exception('ID não informado');
             }
 
-            $model = new AgendamentoRecebimento();
-            $resultado = $model->alterarStatus($input['id']);
+            $resultado = $this->handler->alterarStatusRecebimento((int)$input['id']);
 
             self::response([
                 'success' => true,
@@ -167,13 +166,11 @@ class CDCalendarioController extends ctrl
         try {
             $input = Request::getJsonBody();
 
-            // ValidaÃ§Ã£o dos campos obrigatÃ³rios
             if (empty($input['agendamento_id']) || empty($input['empresa_pagadora']) || !isset($input['valor_pago'])) {
-                throw new \Exception('Preencha todos os campos obrigatÃ³rios.');
+                throw new \Exception('Preencha todos os campos obrigatórios.');
             }
 
-            $model = new ReciboDescarga();
-            $resultado = $model->inserir($input);
+            $resultado = $this->handler->gerarRecibo($input);
 
             self::response([
                 'success' => true,
@@ -197,14 +194,13 @@ class CDCalendarioController extends ctrl
             $id = isset($_GET['id']) ? intval($_GET['id']) : null;
 
             if (!$id) {
-                throw new \Exception('ID do recibo nÃ£o informado');
+                throw new \Exception('ID do recibo não informado');
             }
 
-            $model = new ReciboDescarga();
-            $recibo = $model->buscarPorId($id);
+            $recibo = $this->handler->buscarRecibo($id);
 
             if (!$recibo) {
-                throw new \Exception('Recibo nÃ£o encontrado');
+                throw new \Exception('Recibo não encontrado');
             }
 
             self::response([
@@ -228,11 +224,10 @@ class CDCalendarioController extends ctrl
             $agendamentoId = isset($_GET['agendamento_id']) ? intval($_GET['agendamento_id']) : null;
 
             if (!$agendamentoId) {
-                throw new \Exception('ID do agendamento nÃ£o informado');
+                throw new \Exception('ID do agendamento não informado');
             }
 
-            $model = new ReciboDescarga();
-            $recibos = $model->listarPorAgendamento($agendamentoId);
+            $recibos = $this->handler->listarRecibosPorAgendamento($agendamentoId);
 
             self::response([
                 'success' => true,

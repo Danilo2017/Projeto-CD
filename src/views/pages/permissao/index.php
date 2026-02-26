@@ -1,7 +1,7 @@
 <?php
 // Verificar permissão de admin
-$isAdmin = $_SESSION['user']['admin'] ?? 'N';
-if ($isAdmin !== 'S') {
+$isAdmin = $_SESSION['user']['is_admin'] ?? false;
+if (!$isAdmin) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
 }

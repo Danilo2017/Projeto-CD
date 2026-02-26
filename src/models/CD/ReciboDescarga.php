@@ -8,7 +8,7 @@ use PDO;
 class ReciboDescarga
 {
     /**
-     * Obter prÃ³ximo nÃºmero de recibo
+     * Obter próximo número de recibo
      * @return int
      */
     public function proximoNumeroRecibo()
@@ -74,13 +74,12 @@ class ReciboDescarga
         $stmt->bindParam(':usuario_emissao', $usuarioEmissao);
         $stmt->execute();
 
-        // Buscar o Ãºltimo ID gerado para esse nÃºmero de recibo
+        // Buscar o último ID gerado para esse número de recibo
         $sqlId = "SELECT ID FROM TGAZIN_RECIBO_DESCARGA WHERE NUMERO_RECIBO = :numero_recibo ORDER BY ID DESC FETCH FIRST 1 ROWS ONLY";
         $stmtId = $pdo->prepare($sqlId);
         $stmtId->bindParam(':numero_recibo', $numeroRecibo);
         $stmtId->execute();
         $id = $stmtId->fetchColumn();
-        error_log('DEBUG RECIBO - ID gerado (busca): ' . print_r($id, true));
         return [
             'id' => $id,
             'numero_recibo' => $numeroRecibo
@@ -124,7 +123,7 @@ class ReciboDescarga
     }
 
     /**
-     * Buscar recibo por nÃºmero
+     * Buscar recibo por número
      * @param int $numero
      * @return array|null
      */
@@ -186,7 +185,7 @@ class ReciboDescarga
     }
 
     /**
-     * Listar todos os recibos do mÃªs atual
+     * Listar todos os recibos do mês atual
      * @return array
      */
     public function listarRecibosMes()

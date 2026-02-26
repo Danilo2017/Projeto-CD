@@ -469,22 +469,40 @@
 	// Carregar empresas para o select
 	async function carregarEmpresas() {
 		try {
+			console.log('Carregando empresas...');
 			const response = await fetch('/comissao-api-empresas');
-			const result = await response.json();
+			console.log('Response status:', response.status);
+			
+			const text = await response.text();
+			console.log('Response text:', text);
+			
+			let result;
+			try {
+				result = JSON.parse(text);
+			} catch (parseErr) {
+				console.error('Erro ao parsear JSON:', parseErr);
+				console.error('Texto recebido:', text);
+				return;
+			}
 			
 			const select = document.getElementById('empresaSelect');
 			select.innerHTML = '<option value="">Selecione uma empresa</option>';
 			
 			if (result.success && result.data) {
+				console.log('Empresas encontradas:', result.data.length);
 				result.data.forEach(empresa => {
 					const option = document.createElement('option');
 					option.value = empresa.ID;
 					option.textContent = `${empresa.CODIGO} - ${empresa.NOME_FANTASIA || empresa.RAZAO_SOCIAL}`;
 					select.appendChild(option);
 				});
+			} else {
+				console.error('Erro na resposta:', result.error || 'Sem dados');
+				select.innerHTML = '<option value="">Erro ao carregar empresas</option>';
 			}
 		} catch (err) {
 			console.error('Erro ao carregar empresas:', err);
+			document.getElementById('empresaSelect').innerHTML = '<option value="">Erro de conexão</option>';
 		}
 	}
 	
@@ -530,12 +548,21 @@
 	function getRedirectUrl() {
 		// Verificar permissões retornadas do login (armazenadas em variável global)
 		if (window.userPermissions) {
-			if (window.userPermissions.admin === 'S') {
+			// Novo sistema de permissões
+			if (window.userPermissions.is_admin === true) {
 				return '/permissao';
-			} else if (window.userPermissions.acesso_comissao === 'S') {
+			}
+			
+			// Verificar rotas permitidas
+			const rotas = window.userPermissions.rotas_permitidas || [];
+			if (rotas.includes('*')) {
+				return '/permissao';
+			} else if (rotas.includes('comissao')) {
 				return '/comissao-relatorio';
-			} else if (window.userPermissions.acesso_cd === 'S') {
+			} else if (rotas.includes('cd')) {
 				return '/cd-dashboard';
+			} else if (rotas.includes('permissao')) {
+				return '/permissao';
 			}
 		}
 		// Fallback - tenta página de relatórios

@@ -7,7 +7,7 @@ use PDO;
 use Exception;
 
 /**
- * Model para Faixas de ComissÃ£o
+ * Model para Faixas de Comissão
  * Tabela customizada: FOCCO3I.TGAZIN_FAIXA_COMISSAO
  * 
  * Estrutura da tabela:
@@ -127,7 +127,7 @@ class FaixaComissao
     }
 
     /**
-     * Buscar faixa aplicÃ¡vel para determinada pontuaÃ§Ã£o
+     * Buscar faixa aplicável para determinada pontuação
      * @param float $pontuacao
      * @param int $centroTrabId
      * @param string $dataReferencia
@@ -176,10 +176,10 @@ class FaixaComissao
 
     /**
      * Verificar se existe conflito de faixa
-     * (mesmo centro de trabalho, faixa de pontos e vigÃªncia que se sobrepÃµem)
+     * (mesmo centro de trabalho, faixa de pontos e vigência que se sobrepõem)
      * @param array $dados
-     * @param int|null $idExcluir ID da faixa a excluir da verificaÃ§Ã£o (para ediÃ§Ã£o)
-     * @return array|null Retorna a faixa conflitante ou null se nÃ£o houver
+     * @param int|null $idExcluir ID da faixa a excluir da verificação (para edição)
+     * @return array|null Retorna a faixa conflitante ou null se não houver
      */
     public function verificarConflito($dados, $idExcluir = null)
     {
@@ -189,7 +189,7 @@ class FaixaComissao
         $dtVigenciaIni = $dados['dt_vigencia_ini'];
         $dtVigenciaFim = $dados['dt_vigencia_fim'] ?? null;
         
-        // Verifica se hÃ¡ sobreposiÃ§Ã£o de faixas de pontos E vigÃªncia
+        // Verifica se há sobreposição de faixas de pontos E vigência
         $sql = "SELECT 
                     FC.ID_FAIXA,
                     FC.DESCRICAO,
@@ -210,22 +210,22 @@ class FaixaComissao
             $sql .= " AND FC.CENTRO_TRAB_ID IS NULL";
         }
         
-        // Verificar sobreposiÃ§Ã£o de faixas de pontos
-        // Nova faixa [ponto_inicial, ponto_final] sobrepÃµe se:
+        // Verificar sobreposição de faixas de pontos
+        // Nova faixa [ponto_inicial, ponto_final] sobrepõe se:
         // (novo_ini <= existente_fim OR existente_fim IS NULL) AND (novo_fim >= existente_ini OR novo_fim IS NULL)
         $sql .= " AND (
             (:ponto_inicial <= FC.PONTO_FINAL OR FC.PONTO_FINAL IS NULL)
             AND (:ponto_final >= FC.PONTO_INICIAL OR :ponto_final2 IS NULL)
         )";
         
-        // Verificar sobreposiÃ§Ã£o de vigÃªncia
+        // Verificar sobreposição de vigência
         // (nova_ini <= existente_fim OR existente_fim IS NULL) AND (nova_fim >= existente_ini OR nova_fim IS NULL)
         $sql .= " AND (
             (TO_DATE(:dt_vig_ini, 'YYYY-MM-DD') <= FC.DT_VIGENCIA_FIM OR FC.DT_VIGENCIA_FIM IS NULL)
             AND (TO_DATE(:dt_vig_fim, 'YYYY-MM-DD') >= FC.DT_VIGENCIA_INI OR :dt_vig_fim2 IS NULL)
         )";
         
-        // Excluir registro atual (para ediÃ§Ã£o)
+        // Excluir registro atual (para edição)
         if ($idExcluir) {
             $sql .= " AND FC.ID_FAIXA != :id_excluir";
         }
@@ -307,7 +307,7 @@ class FaixaComissao
         
         $stmt->execute();
         
-        // Buscar o Ãºltimo ID inserido
+        // Buscar o último ID inserido
         $sqlId = "SELECT FOCCO3I.SEQ_GAZIN_FAIXA_COMISSAO.CURRVAL AS ID FROM DUAL";
         $stmtId = $pdo->query($sqlId);
         $result = $stmtId->fetch(PDO::FETCH_ASSOC);
@@ -394,7 +394,7 @@ class FaixaComissao
     }
 
     /**
-     * Listar todas as faixas (incluindo inativas) para histÃ³rico
+     * Listar todas as faixas (incluindo inativas) para histórico
      * @return array
      */
     public function listarTodas($emprId = null)

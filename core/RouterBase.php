@@ -79,8 +79,14 @@ class RouterBase extends Auth {
 
         if($privado){
             $auth = new Auth();
-                $auth->validaToken($this->token);
             
+            // 1. Validar se está logado
+            $auth->validaToken($this->token);
+            
+            // 2. Validar se tem acesso à rota (por perfil/módulo)
+            if (!$auth->validarAcessoRota($url)) {
+                $auth->negarAcesso($url);
+            }
         }
 
         $controller = "\src\controllers\\$controller";

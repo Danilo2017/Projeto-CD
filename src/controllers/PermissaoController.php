@@ -2,11 +2,13 @@
 
 namespace src\controllers;
 
+use core\Request;
 use src\models\PermissaoUsuario;
 use \core\Controller as ctrl;
 
 /**
  * Controller para gerenciamento de permissões de acesso
+ * Usa tabela TGAZIN_ACESSO_USUARIO
  */
 class PermissaoController extends ctrl
 {
@@ -15,9 +17,6 @@ class PermissaoController extends ctrl
      */
     public function index()
     {
-        // Verificar se é admin
-        $this->verificarAdmin();
-        
         $dados = [
             'titulo' => 'Gerenciar Permissões de Acesso',
             'pagina' => 'Permissões'
@@ -27,20 +26,18 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Lista todas as permissões
+     * API - Lista todas as permissões de usuários
      */
     public function listar()
     {
         try {
-            $this->verificarAdmin();
-            
             $filtros = [];
             
             if (!empty($_GET['login'])) {
                 $filtros['login'] = $_GET['login'];
             }
             
-            if (isset($_GET['ativo'])) {
+            if (isset($_GET['ativo']) && $_GET['ativo'] !== '') {
                 $filtros['ativo'] = $_GET['ativo'];
             }
             
@@ -60,20 +57,25 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Busca uma permissão por ID
+     * API - Busca uma permissão específica por ID ou login
      */
     public function buscar()
     {
         try {
-            $this->verificarAdmin();
-            
             $id = $_GET['id'] ?? null;
+            $login = $_GET['login'] ?? null;
             
-            if (!$id) {
-                throw new \Exception('ID é obrigatório');
+            if (!$id && !$login) {
+                throw new \Exception('ID ou Login é obrigatório');
             }
             
-            $permissao = PermissaoUsuario::buscarPorId($id);
+            $permissao = null;
+            
+            if ($id) {
+                $permissao = PermissaoUsuario::buscarPorId($id);
+            } else {
+                $permissao = PermissaoUsuario::buscarPorLogin($login);
+            }
             
             if (!$permissao) {
                 throw new \Exception('Permissão não encontrada');
@@ -93,14 +95,12 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Salva uma nova permissão
+     * API - Salva nova permissão
      */
     public function salvar()
     {
         try {
-            $this->verificarAdmin();
-            
-            $body = ctrl::getBody();
+            $body = Request::getJsonBody();
             
             $login = $body['login'] ?? null;
             $acessoCd = $body['acesso_cd'] ?? 'N';
@@ -111,16 +111,11 @@ class PermissaoController extends ctrl
                 throw new \Exception('Login do usuário é obrigatório');
             }
             
-            // Normalizar valores
-            $acessoCd = strtoupper($acessoCd) === 'S' ? 'S' : 'N';
-            $acessoComissao = strtoupper($acessoComissao) === 'S' ? 'S' : 'N';
-            $admin = strtoupper($admin) === 'S' ? 'S' : 'N';
-            
             $id = PermissaoUsuario::inserir($login, $acessoCd, $acessoComissao, $admin);
             
             self::response([
                 'success' => true,
-                'message' => 'Permissão cadastrada com sucesso',
+                'message' => 'Permissão salva com sucesso',
                 'id' => $id
             ], 200);
             
@@ -133,14 +128,12 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Atualiza uma permissão existente
+     * API - Atualiza permissão existente
      */
     public function atualizar()
     {
         try {
-            $this->verificarAdmin();
-            
-            $body = ctrl::getBody();
+            $body = Request::getJsonBody();
             
             $id = $body['id'] ?? null;
             $acessoCd = $body['acesso_cd'] ?? 'N';
@@ -151,12 +144,6 @@ class PermissaoController extends ctrl
             if (!$id) {
                 throw new \Exception('ID é obrigatório');
             }
-            
-            // Normalizar valores
-            $acessoCd = strtoupper($acessoCd) === 'S' ? 'S' : 'N';
-            $acessoComissao = strtoupper($acessoComissao) === 'S' ? 'S' : 'N';
-            $admin = strtoupper($admin) === 'S' ? 'S' : 'N';
-            $ativo = strtoupper($ativo) === 'S' ? 'S' : 'N';
             
             PermissaoUsuario::atualizar($id, $acessoCd, $acessoComissao, $admin, $ativo);
             
@@ -179,9 +166,7 @@ class PermissaoController extends ctrl
     public function excluir()
     {
         try {
-            $this->verificarAdmin();
-            
-            $body = ctrl::getBody();
+            $body = Request::getJsonBody();
             $id = $body['id'] ?? null;
             
             if (!$id) {
@@ -200,23 +185,6 @@ class PermissaoController extends ctrl
                 'success' => false,
                 'error' => $e->getMessage()
             ], 500);
-        }
-    }
-
-    /**
-     * Verifica se o usuário logado é administrador
-     */
-    private function verificarAdmin()
-    {
-        $login = $_SESSION['user']['login'] ?? null;
-        
-        if (!$login) {
-            throw new \Exception('Usuário não autenticado');
-        }
-        
-        // Verificar se é admin
-        if (!PermissaoUsuario::isAdmin($login)) {
-            throw new \Exception('Acesso negado. Apenas administradores podem gerenciar permissões.');
         }
     }
 }

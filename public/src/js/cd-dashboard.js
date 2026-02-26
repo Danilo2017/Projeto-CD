@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Alias para o botão Atualizar da navbar
+ */
+function carregarDashboard() {
+    carregarDados();
+}
+
+/**
  * Carregar todos os dados do dashboard
  */
 async function carregarDados() {

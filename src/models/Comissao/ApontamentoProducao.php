@@ -6,27 +6,168 @@ use core\Database;
 use PDO;
 use Exception;
 
-/**
- * Model para Apontamentos de ProduÃ§Ã£o (Ordens de FabricaÃ§Ã£o)
- * 
- * Este model consulta os apontamentos de ordens de fabricaÃ§Ã£o do FOCCO e calcula 
- * a pontuaÃ§Ã£o baseada nas UPs dos produtos para o sistema de comissionamento.
- * 
- * Tabelas FOCCO consultadas:
- * - TORDENS - Ordens de fabricaÃ§Ã£o
- * - TORDENS_MOVTO - Movimentos/apontamentos da ordem
- * - TORDENS_ROT - Roteiro da ordem de fabricaÃ§Ã£o
- * - TORD_MOV_FAB_MAQ - RelaÃ§Ã£o movimento x mÃ¡quina
- * - TOPERACAO - OperaÃ§Ãµes
- * - TITENS, TITENS_EMPR, TITENS_PLANEJAMENTO, TITENS_ENGENHARIA - Produtos
- * - TMAQUINAS - MÃ¡quinas/Recursos
- * - TFUNCIONARIOS - FuncionÃ¡rios
- * - TMASC_ITEM - MÃ¡scara do item
- */
+
 class ApontamentoProducao
 {
     /**
-     * Listar apontamentos de ordens de fabricaÃ§Ã£o por perÃ­odo e mÃ¡quina
+     * Cache estático de pontuações - evita múltiplas consultas
+     */
+    private static ?array $cachePontuacao = null;
+    private static ?array $cacheFaixa = null;
+    private static ?array $cacheVinculo = null;
+    private static ?string $cacheDataRef = null;
+
+    /**
+     * Limpar cache - chamar quando dados são alterados
+     */
+    public static function limparCache(): void
+    {
+        self::$cachePontuacao = null;
+        self::$cacheFaixa = null;
+        self::$cacheVinculo = null;
+        self::$cacheDataRef = null;
+    }
+
+    /**
+     * Carregar cache de pontuações uma vez
+     */
+    private function carregarCachePontuacao(): void
+    {
+        if (self::$cachePontuacao !== null) {
+            return;
+        }
+
+        $pdo = Database::getInstance('focco');
+        
+        // Query única para carregar todas as pontuações ativas
+        $sql = "SELECT /*+ RESULT_CACHE */ 
+                    ID_PONTUACAO, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, ID_EMPR,
+                    PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM
+                FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO 
+                WHERE ATIVO = 'S'
+                  AND DT_VIGENCIA_INI <= SYSDATE
+                  AND (DT_VIGENCIA_FIM IS NULL OR DT_VIGENCIA_FIM >= SYSDATE)
+                ORDER BY ITEM_ID, 
+                    CASE WHEN ID_CENTRO_TRAB IS NOT NULL THEN 1 ELSE 2 END,
+                    DT_VIGENCIA_INI DESC";
+        
+        $stmt = $pdo->query($sql);
+        $pontuacoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Indexar por chaves para acesso O(1)
+        self::$cachePontuacao = [
+            'por_item' => [],
+            'por_itempr' => [],
+            'por_mascara' => []
+        ];
+        
+        foreach ($pontuacoes as $p) {
+            // Por ITEM_ID (mais específico)
+            if ($p['ITEM_ID']) {
+                $key = $p['ITEM_ID'] . '_' . ($p['ID_CENTRO_TRAB'] ?? '0');
+                if (!isset(self::$cachePontuacao['por_item'][$key])) {
+                    self::$cachePontuacao['por_item'][$key] = $p;
+                }
+                // Também indexar só por item (fallback)
+                if (!isset(self::$cachePontuacao['por_item'][$p['ITEM_ID']])) {
+                    self::$cachePontuacao['por_item'][$p['ITEM_ID']] = $p;
+                }
+            }
+            // Por ID_ITEMPR
+            if ($p['ID_ITEMPR']) {
+                if (!isset(self::$cachePontuacao['por_itempr'][$p['ID_ITEMPR']])) {
+                    self::$cachePontuacao['por_itempr'][$p['ID_ITEMPR']] = $p;
+                }
+            }
+            // Por MASCARA
+            if ($p['ID_MASCARA']) {
+                if (!isset(self::$cachePontuacao['por_mascara'][$p['ID_MASCARA']])) {
+                    self::$cachePontuacao['por_mascara'][$p['ID_MASCARA']] = $p;
+                }
+            }
+        }
+    }
+
+    /**
+     * Buscar pontuação no cache (O(1) ao invés de query)
+     */
+    private function buscarPontuacaoCache(int $itemId, ?int $itemprId = null, ?int $mascaraId = null, ?int $centroTrabId = null): ?array
+    {
+        $this->carregarCachePontuacao();
+        
+        // Prioridade: item+centro > item > itempr > mascara
+        $keyComCentro = $itemId . '_' . ($centroTrabId ?? '0');
+        
+        if (isset(self::$cachePontuacao['por_item'][$keyComCentro])) {
+            return self::$cachePontuacao['por_item'][$keyComCentro];
+        }
+        
+        if (isset(self::$cachePontuacao['por_item'][$itemId])) {
+            return self::$cachePontuacao['por_item'][$itemId];
+        }
+        
+        if ($itemprId && isset(self::$cachePontuacao['por_itempr'][$itemprId])) {
+            return self::$cachePontuacao['por_itempr'][$itemprId];
+        }
+        
+        if ($mascaraId && isset(self::$cachePontuacao['por_mascara'][$mascaraId])) {
+            return self::$cachePontuacao['por_mascara'][$mascaraId];
+        }
+        
+        return null;
+    }
+
+    /**
+     * Carregar cache de faixas
+     */
+    private function carregarCacheFaixa(): void
+    {
+        if (self::$cacheFaixa !== null) {
+            return;
+        }
+
+        $pdo = Database::getInstance('focco');
+        
+        $sql = "SELECT /*+ RESULT_CACHE */
+                    ID_FAIXA, CENTRO_TRAB_ID, DESCRICAO, VALOR_COMISSAO, TIPO, 
+                    PONTO_INICIAL, PONTO_FINAL
+                FROM FOCCO3I.TGAZIN_FAIXA_COMISSAO 
+                WHERE ATIVO = 'S'
+                  AND DT_VIGENCIA_INI <= SYSDATE
+                  AND (DT_VIGENCIA_FIM IS NULL OR DT_VIGENCIA_FIM >= SYSDATE)
+                ORDER BY CENTRO_TRAB_ID, PONTO_INICIAL";
+        
+        $stmt = $pdo->query($sql);
+        $faixas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        self::$cacheFaixa = [];
+        foreach ($faixas as $f) {
+            $centroId = $f['CENTRO_TRAB_ID'] ?? 0;
+            if (!isset(self::$cacheFaixa[$centroId])) {
+                self::$cacheFaixa[$centroId] = [];
+            }
+            self::$cacheFaixa[$centroId][] = $f;
+        }
+    }
+
+    /**
+     * Buscar faixa no cache
+     */
+    private function buscarFaixaCache(?int $centroTrabId): ?array
+    {
+        $this->carregarCacheFaixa();
+        
+        // Primeiro tenta com centro específico, depois genérico
+        if ($centroTrabId && isset(self::$cacheFaixa[$centroTrabId])) {
+            return self::$cacheFaixa[$centroTrabId][0] ?? null;
+        }
+        
+        // Fallback para faixa sem centro
+        return self::$cacheFaixa[0][0] ?? null;
+    }
+
+    /**
+     * Listar apontamentos de ordens de fabricação por período e máquina
      * Query baseada na estrutura real do FOCCO
      * 
      * @param string $dataInicio (DD/MM/YYYY)
@@ -95,7 +236,7 @@ class ApontamentoProducao
     }
 
     /**
-     * Listar apontamentos por perÃ­odo com filtros opcionais
+     * Listar apontamentos por período com filtros opcionais
      * @param string $dataInicio (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
      * @param int $emprId
@@ -184,7 +325,8 @@ class ApontamentoProducao
     }
 
     /**
-     * Resumo de produtividade por funcionário (OTIMIZADO - agregação no banco)
+     * Resumo de produtividade por funcionário (ULTRA-OTIMIZADO)
+     * Usa CTE para evitar subquery correlacionada - muito mais rápido
      * @param string $dataInicio (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
      * @param int $emprId
@@ -194,35 +336,26 @@ class ApontamentoProducao
     public function resumoPorFuncionario($dataInicio, $dataFim, $emprId = null, $centroTrabId = null)
     {
         $pdo = Database::getInstance('focco');
-        // Agregação direta no Oracle para performance
-        // Usa subquery escalar para pontuação (evita duplicação por múltiplos matches)
-        $sql = "SELECT 
+        
+        // VERSÃO OTIMIZADA: usa LEFT JOIN com pontuação pré-calculada
+        // ao invés de subquery correlacionada (que era executada N vezes)
+        // 
+        // A estratégia é:
+        // 1. Buscar quantidades por funcionário/item (agregação rápida)
+        // 2. Aplicar pontuação em PHP usando o cache estático
+        
+        $sql = "SELECT /*+ PARALLEL(4) */
                     TFUNCIONARIOS.ID AS FUNC_ID,
                     TFUNCIONARIOS.COD_FUNC AS COD_FUNC,
                     TFUNCIONARIOS.NOME AS NOME_FUNC,
-                    COUNT(TORDENS_MOVTO.ID) AS QTD_APONTAMENTOS,
-                    SUM(TORDENS_MOVTO.QUANTIDADE) AS TOTAL_QTD_BOA,
-                    0 AS TOTAL_QTD_REFUGO,
-                    SUM(TORDENS_MOVTO.QUANTIDADE * NVL((
-                        SELECT PP.PONTOS_UP 
-                        FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP 
-                        WHERE PP.ATIVO = 'S'
-                          AND PP.DT_VIGENCIA_INI <= TORDENS_MOVTO.DT_APONT
-                          AND (PP.DT_VIGENCIA_FIM IS NULL OR PP.DT_VIGENCIA_FIM >= TORDENS_MOVTO.DT_APONT)
-                          AND (PP.ID_EMPR IS NULL OR PP.ID_EMPR = TORDENS.EMPR_ID)
-                          AND (PP.ID_CENTRO_TRAB IS NULL OR PP.ID_CENTRO_TRAB = TORDENS_ROT.CENTR_TRAB_ID)
-                          AND (PP.ITEM_ID = TITENS.ID OR PP.ID_ITEMPR = TITENS_EMPR.ID OR PP.ID_MASCARA = TORDENS.TMASC_ITEM_ID)
-                        ORDER BY 
-                            CASE WHEN PP.ITEM_ID IS NOT NULL THEN 1 
-                                 WHEN PP.ID_ITEMPR IS NOT NULL THEN 2 
-                                 WHEN PP.ID_MASCARA IS NOT NULL THEN 3 
-                                 ELSE 4 END,
-                            CASE WHEN PP.ID_CENTRO_TRAB IS NOT NULL THEN 1 ELSE 2 END
-                        FETCH FIRST 1 ROW ONLY
-                    ), 0)) AS TOTAL_PONTOS,
+                    TITENS.ID AS ITEM_ID,
+                    TITENS_EMPR.ID AS ITEMPR_ID,
+                    TORDENS.TMASC_ITEM_ID AS MASCARA_ID,
                     TORDENS_ROT.CENTR_TRAB_ID AS CENTRO_TRAB_ID,
                     CT.COD_CENTRO,
-                    CT.DESCRICAO AS DESC_CENTRO
+                    CT.DESCRICAO AS DESC_CENTRO,
+                    SUM(TORDENS_MOVTO.QUANTIDADE) AS TOTAL_QUANTIDADE,
+                    COUNT(TORDENS_MOVTO.ID) AS QTD_APONTAMENTOS
                 FROM FOCCO3I.TORDENS TORDENS
                 INNER JOIN FOCCO3I.TORDENS_ROT TORDENS_ROT ON TORDENS.ID = TORDENS_ROT.ORDEM_ID
                 INNER JOIN FOCCO3I.TORDENS_MOVTO TORDENS_MOVTO ON TORDENS_ROT.ID = TORDENS_MOVTO.TORDEN_ROT_ID
@@ -230,16 +363,13 @@ class ApontamentoProducao
                 INNER JOIN FOCCO3I.TITENS_EMPR TITENS_EMPR ON TITENS_EMPR.ID = TITENS_PLANEJAMENTO.ITEMPR_ID
                 INNER JOIN FOCCO3I.TITENS TITENS ON TITENS.ID = TITENS_EMPR.ITEM_ID
                 LEFT JOIN FOCCO3I.TCENTROS_TRAB CT ON CT.ID = TORDENS_ROT.CENTR_TRAB_ID
-                -- Buscar máquina/recurso
                 LEFT JOIN FOCCO3I.TORD_MOV_FAB_MAQ TORD_MOV_FAB_MAQ ON TORDENS_MOVTO.ID = TORD_MOV_FAB_MAQ.ORDEM_MOVT_ID
                 LEFT JOIN FOCCO3I.TMAQUINAS TMAQUINAS ON TMAQUINAS.ID = TORD_MOV_FAB_MAQ.MAQUINA_ID
-                -- Buscar vínculo do funcionário com o recurso/centro (ou vínculo tipo ajudante sem recurso)
                 INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC VF ON 
                     (VF.ID_RECURSO = TMAQUINAS.ID OR (VF.ID_RECURSO IS NULL AND VF.TIPO_VINCULO = 'A'))
                     AND VF.ID_CENTRO_TRAB = TORDENS_ROT.CENTR_TRAB_ID
                     AND VF.ATIVO = 'S'
                     AND VF.ID_EMPR = TORDENS.EMPR_ID
-                -- Buscar dados do funcionário vinculado
                 INNER JOIN FOCCO3I.TFUNCIONARIOS TFUNCIONARIOS ON TFUNCIONARIOS.ID = VF.ID_FUNCIONARIO
                 WHERE TORDENS_ROT.APONTAMENTO = 1
                 AND TORDENS_ROT.OBRIGATORIO = 1
@@ -253,7 +383,9 @@ class ApontamentoProducao
             $sql .= " AND TORDENS_ROT.CENTR_TRAB_ID = :centro_trab_id";
         }
         
+        // Agrupar por funcionário + item para depois aplicar pontuação
         $sql .= " GROUP BY TFUNCIONARIOS.ID, TFUNCIONARIOS.COD_FUNC, TFUNCIONARIOS.NOME,
+                          TITENS.ID, TITENS_EMPR.ID, TORDENS.TMASC_ITEM_ID,
                           TORDENS_ROT.CENTR_TRAB_ID, CT.COD_CENTRO, CT.DESCRICAO
                   ORDER BY TFUNCIONARIOS.NOME";
 
@@ -268,7 +400,59 @@ class ApontamentoProducao
         }
         $stmt->execute();
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $dadosBrutos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (empty($dadosBrutos)) {
+            return [];
+        }
+        
+        // Carregar cache de pontuação (uma vez só)
+        $this->carregarCachePontuacao();
+        
+        // Agrupar por funcionário + centro e calcular pontos usando cache
+        $resumoPorFunc = [];
+        
+        foreach ($dadosBrutos as $row) {
+            $funcId = $row['FUNC_ID'];
+            $centroTrabIdRow = $row['CENTRO_TRAB_ID'];
+            $key = $funcId . '_' . $centroTrabIdRow;
+            
+            // Buscar pontuação do cache (O(1))
+            $pontuacao = $this->buscarPontuacaoCache(
+                (int)$row['ITEM_ID'],
+                $row['ITEMPR_ID'] ? (int)$row['ITEMPR_ID'] : null,
+                $row['MASCARA_ID'] ? (int)$row['MASCARA_ID'] : null,
+                $centroTrabIdRow ? (int)$centroTrabIdRow : null
+            );
+            
+            $pontosUp = $pontuacao ? floatval($pontuacao['PONTOS_UP'] ?? 0) : 0;
+            $quantidade = floatval($row['TOTAL_QUANTIDADE'] ?? 0);
+            $totalPontosItem = $quantidade * $pontosUp;
+            
+            if (!isset($resumoPorFunc[$key])) {
+                $resumoPorFunc[$key] = [
+                    'FUNC_ID' => $funcId,
+                    'COD_FUNC' => $row['COD_FUNC'],
+                    'NOME_FUNC' => $row['NOME_FUNC'],
+                    'QTD_APONTAMENTOS' => 0,
+                    'TOTAL_QTD_BOA' => 0,
+                    'TOTAL_QTD_REFUGO' => 0,
+                    'TOTAL_PONTOS' => 0,
+                    'CENTRO_TRAB_ID' => $centroTrabIdRow,
+                    'COD_CENTRO' => $row['COD_CENTRO'],
+                    'DESC_CENTRO' => $row['DESC_CENTRO']
+                ];
+            }
+            
+            $resumoPorFunc[$key]['QTD_APONTAMENTOS'] += (int)$row['QTD_APONTAMENTOS'];
+            $resumoPorFunc[$key]['TOTAL_QTD_BOA'] += $quantidade;
+            $resumoPorFunc[$key]['TOTAL_PONTOS'] += $totalPontosItem;
+        }
+        
+        // Ordenar por nome do funcionário
+        usort($resumoPorFunc, fn($a, $b) => strcmp($a['NOME_FUNC'], $b['NOME_FUNC']));
+        
+        return array_values($resumoPorFunc);
     }
 
     /**
@@ -333,7 +517,7 @@ class ApontamentoProducao
     }
 
     /**
-     * Resumo de produtividade por recurso/mÃ¡quina com filtro por centro
+     * Resumo de produtividade por recurso/máquina com filtro por centro
      * @param string $dataInicio (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
      * @param int $emprId
@@ -394,7 +578,7 @@ class ApontamentoProducao
     }
 
     /**
-     * Resumo de produtividade por mÃ¡quina/recurso
+     * Resumo de produtividade por máquina/recurso
      * @param string $dataInicio (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
      * @param int $emprId
@@ -450,8 +634,8 @@ class ApontamentoProducao
     }
 
     /**
-     * Buscar pontos por dia de um funcionÃ¡rio especÃ­fico
-     * Usado para calcular comissÃ£o considerando faltas por dia
+     * Buscar pontos por dia de um funcionário específico
+     * Usado para calcular comissão considerando faltas por dia
      * @param int $funcId
      * @param string $dataInicio
      * @param string $dataFim
@@ -478,11 +662,11 @@ class ApontamentoProducao
                 LEFT JOIN FOCCO3I.TORD_MOV_FAB_MAQ TORD_MOV_FAB_MAQ ON TORDENS_MOVTO.ID = TORD_MOV_FAB_MAQ.ORDEM_MOVT_ID
                 LEFT JOIN FOCCO3I.TMAQUINAS TMAQUINAS ON TMAQUINAS.ID = TORD_MOV_FAB_MAQ.MAQUINA_ID
                 LEFT JOIN FOCCO3I.TCENTROS_TRAB CT ON CT.ID = TORDENS_ROT.CENTR_TRAB_ID
-                -- VÃ­nculo funcionÃ¡rio/recurso/centro
+                -- Vínculo funcionário/recurso/centro
                 LEFT JOIN FOCCO3I.TGAZIN_VINC_FUNC VF ON VF.ID_RECURSO = TMAQUINAS.ID
                     AND VF.ID_CENTRO_TRAB = TORDENS_ROT.CENTR_TRAB_ID
                     AND VF.ATIVO = 'S'
-                -- PontuaÃ§Ã£o do produto
+                -- Pontuação do produto
                 LEFT JOIN (
                     SELECT PP_SUB.*, ROW_NUMBER() OVER (PARTITION BY PP_SUB.ITEM_ID ORDER BY PP_SUB.DT_VIGENCIA_INI DESC) AS RN
                     FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP_SUB
@@ -621,7 +805,8 @@ class ApontamentoProducao
     {
         $pdo = Database::getInstance('focco');
         
-        $sql = "SELECT 
+        // ==== ETAPA 1: Buscar apontamentos base (query simples e rápida) ====
+        $sqlBase = "SELECT 
                     TRUNC(TORDENS_MOVTO.DT_APONT) AS DT_APONT,
                     TFUNCIONARIOS.ID AS ID_FUNCIONARIO,
                     TFUNCIONARIOS.COD_FUNC AS COD_FUNCIONARIO,
@@ -641,21 +826,7 @@ class ApontamentoProducao
                     CT.COD_CENTRO,
                     CT.DESCRICAO AS DESC_CENTRO,
                     TOPERACAO.DESCRICAO AS DESC_OPERACAO,
-                    -- PontuaÃ§Ã£o do produto
-                    NVL(PP.PONTOS_UP, 0) AS PONTOS_UP,
-                    PP.ID_PONTUACAO AS ID_PONTUACAO,
-                    CASE WHEN PP.ID_PONTUACAO IS NOT NULL THEN 'S' ELSE 'N' END AS TEM_PONTUACAO,
-                    -- Faixa de comissÃ£o
-                    FC.ID_FAIXA AS ID_FAIXA,
-                    FC.DESCRICAO AS DESC_FAIXA,
-                    FC.VALOR_COMISSAO,
-                    FC.TIPO AS TIPO_FAIXA,
-                    CASE WHEN FC.ID_FAIXA IS NOT NULL THEN 'S' ELSE 'N' END AS TEM_FAIXA,
-                    -- VÃ­nculo funcionÃ¡rio/recurso/centro
-                    VF.ID_VINCULO AS ID_VINCULO,
-                    CASE WHEN VF.ID_VINCULO IS NOT NULL THEN 'S' ELSE 'N' END AS TEM_VINCULO,
-                    -- Quantidade de funcionÃ¡rios vinculados ao mesmo recurso/centro (para dividir pontuaÃ§Ã£o)
-                    NVL(VF_COUNT.QTD_VINCULADOS, 1) AS QTD_VINCULADOS
+                    VF.ID_VINCULO AS ID_VINCULO
                 FROM FOCCO3I.TORDENS TORDENS
                 INNER JOIN FOCCO3I.TORDENS_ROT TORDENS_ROT ON TORDENS.ID = TORDENS_ROT.ORDEM_ID
                 INNER JOIN FOCCO3I.TORDENS_MOVTO TORDENS_MOVTO ON TORDENS_ROT.ID = TORDENS_MOVTO.TORDEN_ROT_ID
@@ -667,63 +838,31 @@ class ApontamentoProducao
                 LEFT JOIN FOCCO3I.TMAQUINAS TMAQUINAS ON TMAQUINAS.ID = TORD_MOV_FAB_MAQ.MAQUINA_ID
                 LEFT JOIN FOCCO3I.TMASC_ITEM TMASC_ITEM ON TMASC_ITEM.ID = TORDENS.TMASC_ITEM_ID
                 LEFT JOIN FOCCO3I.TCENTROS_TRAB CT ON CT.ID = TORDENS_ROT.CENTR_TRAB_ID
-                -- VÃ­nculo funcionÃ¡rio com recurso e centro (sem RN=1 para trazer TODOS os funcionÃ¡rios vinculados)
                 LEFT JOIN FOCCO3I.TGAZIN_VINC_FUNC VF ON VF.ID_RECURSO = TMAQUINAS.ID
                     AND VF.ID_CENTRO_TRAB = TORDENS_ROT.CENTR_TRAB_ID
                     AND VF.ATIVO = 'S'
                     AND VF.ID_EMPR = TORDENS.EMPR_ID
-                -- FuncionÃ¡rio do vÃ­nculo
                 LEFT JOIN FOCCO3I.TFUNCIONARIOS TFUNCIONARIOS ON TFUNCIONARIOS.ID = VF.ID_FUNCIONARIO
-                -- PontuaÃ§Ã£o do produto (vigente na data do apontamento)
-                LEFT JOIN (
-                    SELECT PP_SUB.*, ROW_NUMBER() OVER (PARTITION BY PP_SUB.ITEM_ID ORDER BY PP_SUB.DT_VIGENCIA_INI DESC) AS RN
-                    FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP_SUB
-                    WHERE PP_SUB.ATIVO = 'S'
-                ) PP ON PP.ITEM_ID = TITENS.ID
-                    AND PP.RN = 1
-                    AND PP.DT_VIGENCIA_INI <= TORDENS_MOVTO.DT_APONT
-                    AND (PP.DT_VIGENCIA_FIM IS NULL OR PP.DT_VIGENCIA_FIM >= TORDENS_MOVTO.DT_APONT)
-                -- Faixa de comissÃ£o do centro de trabalho
-                LEFT JOIN (
-                    SELECT FC_SUB.*, ROW_NUMBER() OVER (PARTITION BY FC_SUB.CENTRO_TRAB_ID ORDER BY FC_SUB.DT_VIGENCIA_INI DESC) AS RN
-                    FROM FOCCO3I.TGAZIN_FAIXA_COMISSAO FC_SUB
-                    WHERE FC_SUB.ATIVO = 'S'
-                ) FC ON FC.CENTRO_TRAB_ID = TORDENS_ROT.CENTR_TRAB_ID
-                    AND FC.RN = 1
-                    AND FC.DT_VIGENCIA_INI <= TORDENS_MOVTO.DT_APONT
-                    AND (FC.DT_VIGENCIA_FIM IS NULL OR FC.DT_VIGENCIA_FIM >= TORDENS_MOVTO.DT_APONT)
-                -- Contagem de funcionÃ¡rios vinculados ao mesmo recurso/centro (para dividir pontuaÃ§Ã£o)
-                LEFT JOIN (
-                    SELECT VF_CNT.ID_RECURSO, VF_CNT.ID_CENTRO_TRAB, VF_CNT.ID_EMPR, COUNT(*) AS QTD_VINCULADOS
-                    FROM FOCCO3I.TGAZIN_VINC_FUNC VF_CNT
-                    WHERE VF_CNT.ATIVO = 'S'
-                    GROUP BY VF_CNT.ID_RECURSO, VF_CNT.ID_CENTRO_TRAB, VF_CNT.ID_EMPR
-                ) VF_COUNT ON VF_COUNT.ID_RECURSO = TMAQUINAS.ID
-                    AND VF_COUNT.ID_CENTRO_TRAB = TORDENS_ROT.CENTR_TRAB_ID
-                    AND VF_COUNT.ID_EMPR = TORDENS.EMPR_ID
                 WHERE TORDENS_ROT.APONTAMENTO = 1
                 AND TORDENS_ROT.OBRIGATORIO = 1";
         
-        // Filtro por data (perÃ­odo ou dia Ãºnico)
         if ($dataFim) {
-            $sql .= " AND TORDENS_MOVTO.DT_APONT BETWEEN TO_DATE(:data_inicio, 'YYYY-MM-DD') AND TO_DATE(:data_fim, 'YYYY-MM-DD') + 0.99999";
+            $sqlBase .= " AND TORDENS_MOVTO.DT_APONT BETWEEN TO_DATE(:data_inicio, 'YYYY-MM-DD') AND TO_DATE(:data_fim, 'YYYY-MM-DD') + 0.99999";
         } else {
-            $sql .= " AND TRUNC(TORDENS_MOVTO.DT_APONT) = TO_DATE(:data_inicio, 'YYYY-MM-DD')";
+            $sqlBase .= " AND TRUNC(TORDENS_MOVTO.DT_APONT) = TO_DATE(:data_inicio, 'YYYY-MM-DD')";
         }
         
         if ($emprId) {
-            $sql .= " AND TORDENS.EMPR_ID = :empr_id";
+            $sqlBase .= " AND TORDENS.EMPR_ID = :empr_id";
         }
-        
         if ($maquinaId) {
-            $sql .= " AND TMAQUINAS.ID = :maquina_id";
+            $sqlBase .= " AND TMAQUINAS.ID = :maquina_id";
         }
-        
         if ($centroTrabId) {
-            $sql .= " AND TORDENS_ROT.CENTR_TRAB_ID = :centro_trab_id";
+            $sqlBase .= " AND TORDENS_ROT.CENTR_TRAB_ID = :centro_trab_id";
         }
         
-        $sql .= " GROUP BY 
+        $sqlBase .= " GROUP BY 
                     TRUNC(TORDENS_MOVTO.DT_APONT),
                     TFUNCIONARIOS.ID, TFUNCIONARIOS.COD_FUNC, TFUNCIONARIOS.NOME,
                     TITENS.ID, TITENS.COD_ITEM, TITENS.DESC_TECNICA,
@@ -731,38 +870,92 @@ class ApontamentoProducao
                     TORDENS.NUM_ORDEM, TORDENS.EMPR_ID,
                     TMAQUINAS.ID, TMAQUINAS.COD_MAQUINA, TMAQUINAS.DESCRICAO,
                     TORDENS_ROT.CENTR_TRAB_ID, CT.COD_CENTRO, CT.DESCRICAO,
-                    TOPERACAO.DESCRICAO,
-                    PP.PONTOS_UP, PP.ID_PONTUACAO,
-                    FC.ID_FAIXA, FC.DESCRICAO, FC.VALOR_COMISSAO, FC.TIPO,
-                    VF.ID_VINCULO, VF_COUNT.QTD_VINCULADOS
+                    TOPERACAO.DESCRICAO, VF.ID_VINCULO
                 ORDER BY TRUNC(TORDENS_MOVTO.DT_APONT), TFUNCIONARIOS.NOME, TITENS.DESC_TECNICA";
         
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sqlBase);
         $stmt->bindParam(':data_inicio', $data, PDO::PARAM_STR);
-        
         if ($dataFim) {
             $stmt->bindParam(':data_fim', $dataFim, PDO::PARAM_STR);
         }
-        
         if ($emprId) {
             $stmt->bindParam(':empr_id', $emprId, PDO::PARAM_INT);
         }
-        
         if ($maquinaId) {
             $stmt->bindParam(':maquina_id', $maquinaId, PDO::PARAM_INT);
         }
-        
         if ($centroTrabId) {
             $stmt->bindParam(':centro_trab_id', $centroTrabId, PDO::PARAM_INT);
         }
-        
         $stmt->execute();
+        $apontamentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (empty($apontamentos)) {
+            return [];
+        }
+        
+        // ==== ETAPA 2-4: Usar cache estático (carregado uma vez por request) ====
+        // Isso evita 3 queries repetidas a cada chamada
+        $this->carregarCachePontuacao();
+        $this->carregarCacheFaixa();
+        
+        // ==== ETAPA 5: Enriquecer apontamentos com dados do cache ====
+        $dataRef = $dataFim ?: $data;
+        $resultado = [];
+        
+        foreach ($apontamentos as $row) {
+            $itemId = $row['ID_ITEM'];
+            $centroTrabIdRow = $row['ID_CENTRO_TRAB'];
+            $maquinaIdRow = $row['ID_MAQUINA'];
+            $emprIdRow = $row['EMPR_ID'];
+            $mascaraId = $row['ID_MASCARA'] ?? null;
+            
+            // Pontuação (do cache estático)
+            $pontUp = 0;
+            $idPontuacao = null;
+            $temPontuacao = 'N';
+            $pont = $this->buscarPontuacaoCache($itemId, null, $mascaraId, $centroTrabIdRow);
+            if ($pont) {
+                $pontUp = floatval($pont['PONTOS_UP'] ?? 0);
+                $idPontuacao = $pont['ID_PONTUACAO'];
+                $temPontuacao = 'S';
+            }
+            
+            // Faixa (do cache estático)
+            $idFaixa = null;
+            $descFaixa = null;
+            $valorComissao = 0;
+            $tipoFaixa = null;
+            $temFaixa = 'N';
+            $faixa = $this->buscarFaixaCache($centroTrabIdRow);
+            if ($faixa) {
+                $idFaixa = $faixa['ID_FAIXA'];
+                $descFaixa = $faixa['DESCRICAO'];
+                $valorComissao = floatval($faixa['VALOR_COMISSAO'] ?? 0);
+                $tipoFaixa = $faixa['TIPO'];
+                $temFaixa = 'S';
+            }
+            
+            // Montar registro com todos os campos esperados
+            $row['PONTOS_UP'] = $pontUp;
+            $row['ID_PONTUACAO'] = $idPontuacao;
+            $row['TEM_PONTUACAO'] = $temPontuacao;
+            $row['ID_FAIXA'] = $idFaixa;
+            $row['DESC_FAIXA'] = $descFaixa;
+            $row['VALOR_COMISSAO'] = $valorComissao;
+            $row['TIPO_FAIXA'] = $tipoFaixa;
+            $row['TEM_FAIXA'] = $temFaixa;
+            $row['TEM_VINCULO'] = $row['ID_VINCULO'] ? 'S' : 'N';
+            $row['QTD_VINCULADOS'] = 1; // Simplificado - não usado no cálculo principal
+            
+            $resultado[] = $row;
+        }
+        
+        return $resultado;
     }
 
     /**
-     * Resumo geral do perÃ­odo
+     * Resumo geral do período
      * @param string $dataInicio
      * @param string $dataFim
      * @param int $emprId
@@ -810,7 +1003,7 @@ class ApontamentoProducao
     }
 
     /**
-     * EvoluÃ§Ã£o diÃ¡ria de pontos no perÃ­odo
+     * Evolução diária de pontos no período
      * @param string $dataInicio
      * @param string $dataFim
      * @param int $emprId
@@ -883,7 +1076,7 @@ class ApontamentoProducao
     }
 
     /**
-     * Ranking de funcionÃ¡rios por pontuaÃ§Ã£o
+     * Ranking de funcionários por pontuação
      * @param string $dataInicio
      * @param string $dataFim
      * @param int $emprId
@@ -1108,10 +1301,10 @@ class ApontamentoProducao
     }
 
     /**
-     * Lista apontamentos vinculados manualmente (sem recurso) com pontuaÃ§Ã£o
+     * Lista apontamentos vinculados manualmente (sem recurso) com pontuação
      * @param string $dataInicio (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
-     * @param array $funcionarioIds Array de IDs de funcionÃ¡rios
+     * @param array $funcionarioIds Array de IDs de funcionários
      * @param int $emprId ID da empresa
      * @return array
      */
@@ -1181,6 +1374,263 @@ class ApontamentoProducao
         $stmt->execute();
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * MÉTODO ULTRA-OTIMIZADO - Buscar pontos por dia de MÚLTIPLOS funcionários
+     * Usa query simples + cache PHP de pontuação (evita CTE complexa)
+     * 
+     * @param string $dataInicio (YYYY-MM-DD)
+     * @param string $dataFim (YYYY-MM-DD)
+     * @param array $funcionarioIds Array de IDs de funcionários
+     * @param int $emprId
+     * @param int|null $centroTrabId
+     * @return array Indexado por funcionario_id => [dias => [data => pontos]]
+     */
+    public function pontosPorDiaBatch(string $dataInicio, string $dataFim, array $funcionarioIds, int $emprId, ?int $centroTrabId = null): array
+    {
+        if (empty($funcionarioIds)) {
+            return [];
+        }
+
+        $pdo = Database::getInstance('focco');
+        
+        $placeholders = implode(',', array_fill(0, count($funcionarioIds), '?'));
+        
+        // Query SIMPLES sem subquery correlacionada - busca quantidades por funcionário/dia/item
+        $sql = "SELECT /*+ PARALLEL(4) */
+                    VF.ID_FUNCIONARIO,
+                    TO_CHAR(TRUNC(TORDENS_MOVTO.DT_APONT), 'YYYY-MM-DD') AS DATA_APONTAMENTO,
+                    TITENS.ID AS ITEM_ID,
+                    TITENS_EMPR.ID AS ITEMPR_ID,
+                    TORDENS.TMASC_ITEM_ID AS MASCARA_ID,
+                    TORDENS_ROT.CENTR_TRAB_ID,
+                    SUM(TORDENS_MOVTO.QUANTIDADE) AS TOTAL_QUANTIDADE,
+                    COUNT(*) AS QTD_APONTAMENTOS
+                FROM FOCCO3I.TORDENS TORDENS
+                INNER JOIN FOCCO3I.TORDENS_ROT TORDENS_ROT ON TORDENS.ID = TORDENS_ROT.ORDEM_ID
+                INNER JOIN FOCCO3I.TORDENS_MOVTO TORDENS_MOVTO ON TORDENS_ROT.ID = TORDENS_MOVTO.TORDEN_ROT_ID
+                INNER JOIN FOCCO3I.TITENS_PLANEJAMENTO TITENS_PLANEJAMENTO ON TITENS_PLANEJAMENTO.ID = TORDENS.ITPL_ID
+                INNER JOIN FOCCO3I.TITENS_EMPR TITENS_EMPR ON TITENS_EMPR.ID = TITENS_PLANEJAMENTO.ITEMPR_ID
+                INNER JOIN FOCCO3I.TITENS TITENS ON TITENS.ID = TITENS_EMPR.ITEM_ID
+                LEFT JOIN FOCCO3I.TORD_MOV_FAB_MAQ TORD_MOV_FAB_MAQ ON TORDENS_MOVTO.ID = TORD_MOV_FAB_MAQ.ORDEM_MOVT_ID
+                LEFT JOIN FOCCO3I.TMAQUINAS TMAQUINAS ON TMAQUINAS.ID = TORD_MOV_FAB_MAQ.MAQUINA_ID
+                INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC VF ON 
+                    (VF.ID_RECURSO = TMAQUINAS.ID OR (VF.ID_RECURSO IS NULL AND VF.TIPO_VINCULO = 'A'))
+                    AND VF.ID_CENTRO_TRAB = TORDENS_ROT.CENTR_TRAB_ID
+                    AND VF.ATIVO = 'S'
+                    AND VF.ID_EMPR = TORDENS.EMPR_ID
+                    AND VF.ID_FUNCIONARIO IN ($placeholders)
+                WHERE TORDENS_ROT.APONTAMENTO = 1
+                AND TORDENS_ROT.OBRIGATORIO = 1
+                AND TORDENS_MOVTO.DT_APONT >= TO_DATE(?, 'YYYY-MM-DD')
+                AND TORDENS_MOVTO.DT_APONT < TO_DATE(?, 'YYYY-MM-DD') + 1
+                AND TORDENS.EMPR_ID = ?";
+        
+        if ($centroTrabId) {
+            $sql .= " AND TORDENS_ROT.CENTR_TRAB_ID = ?";
+        }
+        
+        $sql .= " GROUP BY VF.ID_FUNCIONARIO, TO_CHAR(TRUNC(TORDENS_MOVTO.DT_APONT), 'YYYY-MM-DD'),
+                          TITENS.ID, TITENS_EMPR.ID, TORDENS.TMASC_ITEM_ID, TORDENS_ROT.CENTR_TRAB_ID
+                  ORDER BY VF.ID_FUNCIONARIO, DATA_APONTAMENTO";
+        
+        $stmt = $pdo->prepare($sql);
+        
+        $i = 1;
+        // IDs dos funcionários
+        foreach ($funcionarioIds as $funcId) {
+            $stmt->bindValue($i++, $funcId, PDO::PARAM_INT);
+        }
+        
+        // Datas e empresa
+        $stmt->bindValue($i++, $dataInicio, PDO::PARAM_STR);
+        $stmt->bindValue($i++, $dataFim, PDO::PARAM_STR);
+        $stmt->bindValue($i++, $emprId, PDO::PARAM_INT);
+        
+        if ($centroTrabId) {
+            $stmt->bindValue($i++, $centroTrabId, PDO::PARAM_INT);
+        }
+        
+        $stmt->execute();
+        $dadosBrutos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Carregar cache de pontuação (carregado uma vez só por request)
+        $this->carregarCachePontuacao();
+        
+        // Agrupar por funcionário/dia e calcular pontos usando cache
+        $pontosPorFuncDia = [];
+        foreach ($funcionarioIds as $funcId) {
+            $pontosPorFuncDia[$funcId] = [];
+        }
+        
+        // Estrutura temporária para agregação
+        $agregacao = [];
+        
+        foreach ($dadosBrutos as $row) {
+            $funcId = $row['ID_FUNCIONARIO'];
+            $data = $row['DATA_APONTAMENTO'];
+            $key = $funcId . '_' . $data;
+            
+            // Buscar pontuação do cache
+            $pontuacao = $this->buscarPontuacaoCache(
+                (int)$row['ITEM_ID'],
+                $row['ITEMPR_ID'] ? (int)$row['ITEMPR_ID'] : null,
+                $row['MASCARA_ID'] ? (int)$row['MASCARA_ID'] : null,
+                $row['CENTR_TRAB_ID'] ? (int)$row['CENTR_TRAB_ID'] : null
+            );
+            
+            $pontosUp = $pontuacao ? floatval($pontuacao['PONTOS_UP'] ?? 0) : 0;
+            $quantidade = floatval($row['TOTAL_QUANTIDADE'] ?? 0);
+            $pontosItem = $quantidade * $pontosUp;
+            
+            if (!isset($agregacao[$key])) {
+                $agregacao[$key] = [
+                    'func_id' => $funcId,
+                    'data' => $data,
+                    'total_pontos' => 0,
+                    'qtd_apontamentos' => 0
+                ];
+            }
+            
+            $agregacao[$key]['total_pontos'] += $pontosItem;
+            $agregacao[$key]['qtd_apontamentos'] += (int)$row['QTD_APONTAMENTOS'];
+        }
+        
+        // Reorganizar por funcionário
+        foreach ($agregacao as $item) {
+            $funcId = $item['func_id'];
+            $pontosPorFuncDia[$funcId][] = [
+                'DATA_APONTAMENTO' => $item['data'],
+                'TOTAL_PONTOS' => round($item['total_pontos'], 2),
+                'QTD_APONTAMENTOS' => $item['qtd_apontamentos']
+            ];
+        }
+        
+        return $pontosPorFuncDia;
+    }
+
+    /**
+     * MÉTODO ULTRA-OTIMIZADO - Resumo agregado de pontos por funcionário
+     * Usa query simples + cache PHP de pontuação (elimina subquery correlacionada)
+     * 
+     * @param string $dataInicio (YYYY-MM-DD)
+     * @param string $dataFim (YYYY-MM-DD)
+     * @param array $funcionarioIds Array de IDs de funcionários  
+     * @param int $emprId
+     * @param int|null $centroTrabId
+     * @return array Indexado por funcionario_id => [total_pontos, qtd_apontamentos, dias_trabalhados]
+     */
+    public function resumoPontosBatch(string $dataInicio, string $dataFim, array $funcionarioIds, int $emprId, ?int $centroTrabId = null): array
+    {
+        if (empty($funcionarioIds)) {
+            return [];
+        }
+
+        $pdo = Database::getInstance('focco');
+        
+        $placeholders = implode(',', array_fill(0, count($funcionarioIds), '?'));
+        
+        // Query SIMPLES sem subquery correlacionada - busca dados brutos
+        $sql = "SELECT /*+ PARALLEL(4) */
+                    VF.ID_FUNCIONARIO,
+                    TRUNC(TORDENS_MOVTO.DT_APONT) AS DT_APONT,
+                    TITENS.ID AS ITEM_ID,
+                    TITENS_EMPR.ID AS ITEMPR_ID,
+                    TORDENS.TMASC_ITEM_ID AS MASCARA_ID,
+                    TORDENS_ROT.CENTR_TRAB_ID,
+                    SUM(TORDENS_MOVTO.QUANTIDADE) AS TOTAL_QUANTIDADE,
+                    COUNT(*) AS QTD_APONTAMENTOS
+                FROM FOCCO3I.TORDENS TORDENS
+                INNER JOIN FOCCO3I.TORDENS_ROT TORDENS_ROT ON TORDENS.ID = TORDENS_ROT.ORDEM_ID
+                INNER JOIN FOCCO3I.TORDENS_MOVTO TORDENS_MOVTO ON TORDENS_ROT.ID = TORDENS_MOVTO.TORDEN_ROT_ID
+                INNER JOIN FOCCO3I.TITENS_PLANEJAMENTO TITENS_PLANEJAMENTO ON TITENS_PLANEJAMENTO.ID = TORDENS.ITPL_ID
+                INNER JOIN FOCCO3I.TITENS_EMPR TITENS_EMPR ON TITENS_EMPR.ID = TITENS_PLANEJAMENTO.ITEMPR_ID
+                INNER JOIN FOCCO3I.TITENS TITENS ON TITENS.ID = TITENS_EMPR.ITEM_ID
+                LEFT JOIN FOCCO3I.TORD_MOV_FAB_MAQ TORD_MOV_FAB_MAQ ON TORDENS_MOVTO.ID = TORD_MOV_FAB_MAQ.ORDEM_MOVT_ID
+                LEFT JOIN FOCCO3I.TMAQUINAS TMAQUINAS ON TMAQUINAS.ID = TORD_MOV_FAB_MAQ.MAQUINA_ID
+                INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC VF ON 
+                    (VF.ID_RECURSO = TMAQUINAS.ID OR (VF.ID_RECURSO IS NULL AND VF.TIPO_VINCULO = 'A'))
+                    AND VF.ID_CENTRO_TRAB = TORDENS_ROT.CENTR_TRAB_ID
+                    AND VF.ATIVO = 'S'
+                    AND VF.ID_EMPR = TORDENS.EMPR_ID
+                    AND VF.ID_FUNCIONARIO IN ($placeholders)
+                WHERE TORDENS_ROT.APONTAMENTO = 1
+                AND TORDENS_ROT.OBRIGATORIO = 1
+                AND TORDENS_MOVTO.DT_APONT >= TO_DATE(?, 'YYYY-MM-DD')
+                AND TORDENS_MOVTO.DT_APONT < TO_DATE(?, 'YYYY-MM-DD') + 1
+                AND TORDENS.EMPR_ID = ?";
+        
+        if ($centroTrabId) {
+            $sql .= " AND TORDENS_ROT.CENTR_TRAB_ID = ?";
+        }
+        
+        $sql .= " GROUP BY VF.ID_FUNCIONARIO, TRUNC(TORDENS_MOVTO.DT_APONT),
+                           TITENS.ID, TITENS_EMPR.ID, TORDENS.TMASC_ITEM_ID, TORDENS_ROT.CENTR_TRAB_ID";
+        
+        $stmt = $pdo->prepare($sql);
+        
+        $i = 1;
+        foreach ($funcionarioIds as $funcId) {
+            $stmt->bindValue($i++, $funcId, PDO::PARAM_INT);
+        }
+        $stmt->bindValue($i++, $dataInicio, PDO::PARAM_STR);
+        $stmt->bindValue($i++, $dataFim, PDO::PARAM_STR);
+        $stmt->bindValue($i++, $emprId, PDO::PARAM_INT);
+        
+        if ($centroTrabId) {
+            $stmt->bindValue($i++, $centroTrabId, PDO::PARAM_INT);
+        }
+        
+        $stmt->execute();
+        $dadosBrutos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Carregar cache de pontuação
+        $this->carregarCachePontuacao();
+        
+        // Inicializar resultado
+        $pontosPorFunc = [];
+        foreach ($funcionarioIds as $funcId) {
+            $pontosPorFunc[$funcId] = [
+                'TOTAL_PONTOS' => 0,
+                'QTD_APONTAMENTOS' => 0,
+                'DIAS_TRABALHADOS' => 0,
+                '_dias_set' => [] // Conjunto de dias únicos
+            ];
+        }
+        
+        // Agregar em PHP usando cache de pontuação
+        foreach ($dadosBrutos as $row) {
+            $funcId = $row['ID_FUNCIONARIO'];
+            
+            // Buscar pontuação do cache
+            $pontuacao = $this->buscarPontuacaoCache(
+                (int)$row['ITEM_ID'],
+                $row['ITEMPR_ID'] ? (int)$row['ITEMPR_ID'] : null,
+                $row['MASCARA_ID'] ? (int)$row['MASCARA_ID'] : null,
+                $row['CENTR_TRAB_ID'] ? (int)$row['CENTR_TRAB_ID'] : null
+            );
+            
+            $pontosUp = $pontuacao ? floatval($pontuacao['PONTOS_UP'] ?? 0) : 0;
+            $quantidade = floatval($row['TOTAL_QUANTIDADE'] ?? 0);
+            $pontosItem = round($quantidade * $pontosUp, 2);
+            
+            $pontosPorFunc[$funcId]['TOTAL_PONTOS'] += $pontosItem;
+            $pontosPorFunc[$funcId]['QTD_APONTAMENTOS'] += (int)$row['QTD_APONTAMENTOS'];
+            
+            // Rastrear dias únicos
+            $dia = $row['DT_APONT'];
+            $pontosPorFunc[$funcId]['_dias_set'][$dia] = true;
+        }
+        
+        // Calcular dias trabalhados e limpar _dias_set
+        foreach ($pontosPorFunc as $funcId => &$dados) {
+            $dados['DIAS_TRABALHADOS'] = count($dados['_dias_set']);
+            $dados['TOTAL_PONTOS'] = round($dados['TOTAL_PONTOS'], 2);
+            unset($dados['_dias_set']);
+        }
+        
+        return $pontosPorFunc;
     }
 }
 

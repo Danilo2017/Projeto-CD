@@ -7,7 +7,7 @@ use PDO;
 use Exception;
 
 /**
- * Model para PontuaÃ§Ã£o de Produto (UP)
+ * Model para Pontuação de Produto (UP)
  * Tabela customizada: FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
  * 
  * Estrutura da tabela:
@@ -29,7 +29,7 @@ use Exception;
 class PontuacaoProduto
 {
     /**
-     * Cache para verificaÃ§Ã£o de colunas
+     * Cache para verificação de colunas
      */
     private static $columnCache = [];
     
@@ -58,14 +58,14 @@ class PontuacaoProduto
             self::$columnCache[$coluna] = $exists;
             return $exists;
         } catch (Exception $e) {
-            // Se der erro, assumir que existe para nÃ£o bloquear
+            // Se der erro, assumir que existe para não bloquear
             return true;
         }
     }
     
     /**
-     * Listar todas as pontuaÃ§Ãµes ativas
-     * @param int $emprId ID da empresa (obrigatÃ³rio para filtrar)
+     * Listar todas as pontuações ativas
+     * @param int $emprId ID da empresa (obrigatório para filtrar)
      * @param int $centroTrabId
      * @return array
      */
@@ -125,13 +125,13 @@ class PontuacaoProduto
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            // Se a tabela nÃ£o existir, retorna array vazio
+            // Se a tabela não existir, retorna array vazio
             return [];
         }
     }
 
     /**
-     * Listar todas as pontuaÃ§Ãµes (ativas e inativas)
+     * Listar todas as pontuações (ativas e inativas)
      * @param int $emprId ID da empresa
      * @return array
      */
@@ -186,13 +186,12 @@ class PontuacaoProduto
             
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log('ERRO listarTodas: ' . $e->getMessage());
             return [];
         }
     }
 
     /**
-     * Buscar pontuaÃ§Ã£o por ID
+     * Buscar pontuação por ID
      * @param int $id
      * @return array|null
      */
@@ -238,7 +237,7 @@ class PontuacaoProduto
     }
 
     /**
-     * Buscar pontuaÃ§Ã£o por item e centro de trabalho
+     * Buscar pontuação por item e centro de trabalho
      * @param int $itemId
      * @param int $centroTrabId
      * @param string $dataReferencia (YYYY-MM-DD)
@@ -284,7 +283,7 @@ class PontuacaoProduto
     }
 
     /**
-     * Inserir nova pontuaÃ§Ã£o
+     * Inserir nova pontuação
      * @param array $dados
      * @return int ID inserido
      */
@@ -321,11 +320,6 @@ class PontuacaoProduto
                     :id_usuario
                 )";
         
-        // LOG DEBUG - Remover depois
-        error_log('=== INSERT SQL ===');
-        error_log('SQL: ' . $sql);
-        error_log('DADOS: ' . print_r($dados, true));
-        
         $stmt = $pdo->prepare($sql);
         
         $stmt->bindValue(':empr_id', $dados['empr_id'] ?? null, PDO::PARAM_INT);
@@ -340,7 +334,7 @@ class PontuacaoProduto
         
         $stmt->execute();
         
-        // Buscar o Ãºltimo ID inserido
+        // Buscar o último ID inserido
         $sqlId = "SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.CURRVAL AS ID FROM DUAL";
         $stmtId = $pdo->query($sqlId);
         $result = $stmtId->fetch(PDO::FETCH_ASSOC);
@@ -349,7 +343,7 @@ class PontuacaoProduto
     }
 
     /**
-     * Atualizar pontuaÃ§Ã£o
+     * Atualizar pontuação
      * @param int $id
      * @param array $dados
      * @return bool
@@ -379,7 +373,7 @@ class PontuacaoProduto
     }
 
     /**
-     * Ativar/Desativar pontuaÃ§Ã£o
+     * Ativar/Desativar pontuação
      * @param int $id
      * @param string $ativo (S/N)
      * @param int $idUsuario
@@ -404,7 +398,7 @@ class PontuacaoProduto
     }
 
     /**
-     * Excluir pontuaÃ§Ã£o (soft delete - desativa)
+     * Excluir pontuação (soft delete - desativa)
      * @param int $id
      * @param int $idUsuario
      * @return bool

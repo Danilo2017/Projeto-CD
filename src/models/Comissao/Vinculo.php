@@ -218,8 +218,7 @@ class Vinculo
                 UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET
                     ID_CENTRO_TRAB = :id_centro_trab,
                     ID_RECURSO = :id_recurso,
-                    TIPO_VINCULO = :tipo_vinculo,
-                    DT_ATUALIZACAO = SYSDATE
+                    TIPO_VINCULO = :tipo_vinculo
                 WHERE ID_VINCULO = :id
             ";
             $params = [
@@ -232,8 +231,7 @@ class Vinculo
             $sql = "
                 UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET
                     ID_CENTRO_TRAB = :id_centro_trab,
-                    ID_RECURSO = :id_recurso,
-                    DT_ATUALIZACAO = SYSDATE
+                    ID_RECURSO = :id_recurso
                 WHERE ID_VINCULO = :id
             ";
             $params = [
@@ -259,8 +257,7 @@ class Vinculo
         
         $sql = "
             UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET
-                ATIVO = :ativo,
-                DT_ATUALIZACAO = SYSDATE
+                ATIVO = :ativo
             WHERE ID_VINCULO = :id
         ";
 

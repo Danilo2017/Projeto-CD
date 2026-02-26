@@ -238,7 +238,7 @@ class AgendamentoRecebimento
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         
         if (!$row) {
-            throw new \Exception('Registro nÃ£o encontrado');
+            throw new \Exception('Registro não encontrado');
         }
         
         // Alterna o status

@@ -14,8 +14,8 @@ use src\models\Comissao\FaixaComissao;
 /**
  * Model para Cálculo e Gestão de Comissões
  * 
- * Este model calcula as comissÃµes baseadas na pontuaÃ§Ã£o dos funcionÃ¡rios
- * e nas faixas de comissÃ£o configuradas.
+ * Este model calcula as comissões baseadas na pontuação dos funcionários
+ * e nas faixas de comissão configuradas.
  * 
  * Tabela customizada: FOCCO3I.TGAZIN_COMISSAO_CALC
  * 
@@ -34,14 +34,14 @@ use src\models\Comissao\FaixaComissao;
  * - ID_USUARIO_APROV
  * - OBSERVACAO
  * 
- * ORDEM DE PROCESSAMENTO DO CÃLCULO:
- * 1. Definir perÃ­odo
- * 2. Verificar faltas por dia (comissÃ£o zerada se tiver falta)
- * 3. Buscar apontamentos vÃ¡lidos (apenas com vÃ­nculo)
+ * ORDEM DE PROCESSAMENTO DO CÁLCULO:
+ * 1. Definir período
+ * 2. Verificar faltas por dia (comissão zerada se tiver falta)
+ * 3. Buscar apontamentos válidos (apenas com vínculo)
  * 4. Buscar retrabalho
- * 5. Verificar regra especÃ­fica do funcionÃ¡rio
- * 6. Aplicar cÃ¡lculo
- * 7. Consolidar comissÃ£o final
+ * 5. Verificar regra específica do funcionário
+ * 6. Aplicar cálculo
+ * 7. Consolidar comissão final
  */
 class Comissao
 {
@@ -50,16 +50,16 @@ class Comissao
     const STATUS_CANCELADO = 'C';
 
     /**
-     * NOVO MÃ‰TODO DE CÃLCULO COM TODAS AS REGRAS
+     * NOVO MÉTODO DE CÁLCULO COM TODAS AS REGRAS
      * 
-     * Processa comissÃ£o seguindo a ordem correta:
-     * 1. Definir perÃ­odo
+     * Processa comissão seguindo a ordem correta:
+     * 1. Definir período
      * 2. Verificar faltas por dia
-     * 3. Buscar apontamentos vÃ¡lidos
+     * 3. Buscar apontamentos válidos
      * 4. Buscar retrabalho
-     * 5. Verificar regra especÃ­fica do funcionÃ¡rio
-     * 6. Aplicar cÃ¡lculo
-     * 7. Consolidar comissÃ£o final
+     * 5. Verificar regra específica do funcionário
+     * 6. Aplicar cálculo
+     * 7. Consolidar comissão final
      * 
      * @param int $funcId
      * @param string $periodoIni (YYYY-MM-DD)
@@ -93,7 +93,7 @@ class Comissao
 
         try {
             // =============================================
-            // PASSO 1: Definir perÃ­odo e gerar dias
+            // PASSO 1: Definir período e gerar dias
             // =============================================
             $diasPeriodo = $this->gerarDiasPeriodo($periodoIni, $periodoFim);
             
@@ -196,7 +196,7 @@ class Comissao
             $resultado['detalhes_retrabalho'] = $detalhesRetrabalho;
             
             // =============================================
-            // PASSO 5: Verificar regra especÃ­fica do funcionÃ¡rio
+            // PASSO 5: Verificar regra específica do funcionário
             // =============================================
             $regraModel = new RegraFuncionario();
             $regraEspecifica = $regraModel->buscarRegraAtiva($funcId, $centroTrabId, $periodoFim, $emprId);
@@ -204,7 +204,7 @@ class Comissao
             $valorComissaoBruto = 0;
             
             if ($regraEspecifica) {
-                // Aplicar regra especÃ­fica
+                // Aplicar regra específica
                 $resultado['usa_regra_especifica'] = true;
                 $resultado['regra_aplicada'] = [
                     'id' => $regraEspecifica['ID_REGRA'],
@@ -219,7 +219,7 @@ class Comissao
                 );
             } else {
                 // =============================================
-                // PASSO 6: Aplicar cÃ¡lculo padrÃ£o (faixas)
+                // PASSO 6: Aplicar cálculo padrão (faixas)
                 // =============================================
                 $faixaModel = new FaixaComissao();
                 $faixa = $faixaModel->buscarFaixaAplicavel($totalPontosAposFalta, $centroTrabId, $periodoFim);
@@ -245,7 +245,7 @@ class Comissao
             $resultado['valor_comissao_bruto'] = round($valorComissaoBruto, 2);
             
             // =============================================
-            // PASSO 7: Consolidar comissÃ£o final
+            // PASSO 7: Consolidar comissão final
             // Aplicar desconto de retrabalho
             // =============================================
             $descontoRetrabalho = 0;
@@ -273,7 +273,7 @@ class Comissao
     }
 
     /**
-     * Calcular comissÃ£o para TODOS os funcionÃ¡rios com as novas regras
+     * Calcular comissão para TODOS os funcionários com as novas regras
      * @param string $periodoIni
      * @param string $periodoFim
      * @param int $emprId
@@ -282,7 +282,7 @@ class Comissao
      */
     public function calcularComissaoTodosCompleta($periodoIni, $periodoFim, $emprId, $centroTrabId = null)
     {
-        // Buscar todos os funcionÃ¡rios com apontamentos no perÃ­odo
+        // Buscar todos os funcionários com apontamentos no período
         $apontamentoModel = new ApontamentoProducao();
         $resumo = $apontamentoModel->resumoPorFuncionario($periodoIni, $periodoFim, $emprId, $centroTrabId);
         
@@ -340,7 +340,7 @@ class Comissao
     }
 
     /**
-     * Gerar array com todos os dias do perÃ­odo
+     * Gerar array com todos os dias do período
      * @param string $dataIni (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
      * @return array
@@ -360,7 +360,7 @@ class Comissao
     }
 
     /**
-     * Calcular comissÃ£o para um funcionÃ¡rio em um perÃ­odo
+     * Calcular comissão para um funcionário em um período
      * @param int $funcId
      * @param string $periodoIni
      * @param string $periodoFim
@@ -370,11 +370,11 @@ class Comissao
      */
     public function calcularComissao($funcId, $periodoIni, $periodoFim, $centroTrabId = null)
     {
-        // Buscar total de pontos do funcionÃ¡rio no perÃ­odo
+        // Buscar total de pontos do funcionário no período
         $apontamentoModel = new ApontamentoProducao();
         $resumo = $apontamentoModel->resumoPorFuncionario($periodoIni, $periodoFim, $centroTrabId);
         
-        // Encontrar o funcionÃ¡rio especÃ­fico no resumo
+        // Encontrar o funcionário específico no resumo
         $dadosFunc = null;
         foreach ($resumo as $item) {
             if ($item['FUNC_ID'] == $funcId) {
@@ -386,7 +386,7 @@ class Comissao
         if (!$dadosFunc) {
             return [
                 'success' => false,
-                'message' => 'FuncionÃ¡rio nÃ£o possui apontamentos no perÃ­odo',
+                'message' => 'Funcionário não possui apontamentos no período',
                 'total_pontos' => 0,
                 'valor_comissao' => 0
             ];
@@ -394,23 +394,23 @@ class Comissao
         
         $totalPontos = floatval($dadosFunc['TOTAL_PONTOS']);
         
-        // Buscar faixa de comissÃ£o aplicÃ¡vel
+        // Buscar faixa de comissão aplicável
         $faixaModel = new FaixaComissao();
         $faixa = $faixaModel->buscarFaixaAplicavel($totalPontos, $centroTrabId, $periodoFim);
         
         if (!$faixa) {
             return [
                 'success' => false,
-                'message' => 'NÃ£o hÃ¡ faixa de comissÃ£o configurada para esta pontuaÃ§Ã£o',
+                'message' => 'Não há faixa de comissão configurada para esta pontuação',
                 'total_pontos' => $totalPontos,
                 'valor_comissao' => 0
             ];
         }
         
-        // Calcular valor da comissÃ£o
+        // Calcular valor da comissão
         $valorComissao = 0;
         if ($faixa['TIPO'] == FaixaComissao::TIPO_PERCENTUAL) {
-            // Valor Ã© percentual sobre os pontos
+            // Valor é percentual sobre os pontos
             $valorComissao = $totalPontos * ($faixa['VALOR_COMISSAO'] / 100);
         } elseif ($faixa['TIPO'] == FaixaComissao::TIPO_QUANTIDADE) {
             // Valor por ponto/quantidade
@@ -442,7 +442,7 @@ class Comissao
     }
 
     /**
-     * Calcular comissÃ£o para todos os funcionÃ¡rios em um perÃ­odo
+     * Calcular comissão para todos os funcionários em um período
      * @param string $periodoIni
      * @param string $periodoFim
      * @param int $emprId
@@ -451,7 +451,7 @@ class Comissao
      */
     public function calcularComissaoTodos($periodoIni, $periodoFim, $emprId = null, $centroTrabId = null)
     {
-        // Buscar resumo de todos os funcionÃ¡rios
+        // Buscar resumo de todos os funcionários
         $apontamentoModel = new ApontamentoProducao();
         $resumo = $apontamentoModel->resumoPorFuncionario($periodoIni, $periodoFim, $emprId, $centroTrabId);
         
@@ -464,12 +464,12 @@ class Comissao
             $funcId = $dadosFunc['FUNC_ID'];
             $totalPontosBruto = floatval($dadosFunc['TOTAL_PONTOS']);
             
-            // Verificar faltas do funcionÃ¡rio no perÃ­odo
+            // Verificar faltas do funcionário no período
             $faltas = $faltaModel->verificarFaltasPeriodo($funcId, $periodoIni, $periodoFim, $emprId);
             $diasComFalta = count($faltas);
             $temFaltaIntegral = false;
             
-            // Calcular pontos apÃ³s faltas
+            // Calcular pontos após faltas
             // Buscar pontos por dia para descontar dias com falta
             $apontamentosDiarios = $apontamentoModel->pontosPorDiaFuncionario($funcId, $periodoIni, $periodoFim, $emprId, $centroTrabId);
             
@@ -480,7 +480,7 @@ class Comissao
                 $dataApt = $dia['DATA_APONTAMENTO'];
                 $pontosDia = floatval($dia['TOTAL_PONTOS']);
                 
-                // Verificar se Ã© dia com falta
+                // Verificar se é dia com falta
                 $faltaDia = null;
                 foreach ($faltas as $falta) {
                     if ($falta['DT_FALTA'] === $dataApt) {
@@ -510,7 +510,7 @@ class Comissao
             $regraInfo = null;
             $usaRegraEspecifica = false;
             
-            // PASSO 1: Verificar se funcionÃ¡rio tem regra especÃ­fica cadastrada
+            // PASSO 1: Verificar se funcionário tem regra específica cadastrada
             $regraEspecifica = $regraModel->buscarRegraAtiva(
                 $funcId, 
                 $dadosFunc['CENTRO_TRAB_ID'] ?? $centroTrabId, 
@@ -519,13 +519,13 @@ class Comissao
             );
             
             if ($regraEspecifica) {
-                // Usar regra especÃ­fica do funcionÃ¡rio (ignora faixa padrÃ£o)
+                // Usar regra específica do funcionário (ignora faixa padrão)
                 $usaRegraEspecifica = true;
                 $regraInfo = $regraEspecifica;
                 
                 $valorComissao = $regraModel->calcularComissao($totalPontos, $regraEspecifica);
             } else {
-                // PASSO 2: NÃ£o tem regra especÃ­fica - usar faixa padrÃ£o do centro de trabalho
+                // PASSO 2: Não tem regra específica - usar faixa padrão do centro de trabalho
                 $faixa = $faixaModel->buscarFaixaAplicavel(
                     $totalPontos, 
                     $dadosFunc['CENTRO_TRAB_ID'] ?? $centroTrabId, 
@@ -563,8 +563,8 @@ class Comissao
                 'regra_descricao' => $regraInfo ? $regraInfo['DESCRICAO'] : null,
                 'regra_tipo' => $regraInfo ? $regraInfo['TIPO_COMISSAO'] : null,
                 'faixa_id' => $faixaInfo ? $faixaInfo['ID_FAIXA'] : null,
-                'faixa_descricao' => $usaRegraEspecifica 
-                    ? 'Regra EspecÃ­fica' 
+                                'faixa_descricao' => $usaRegraEspecifica 
+                    ? 'Regra Específica' 
                     : ($faixaInfo ? $faixaInfo['DESCRICAO'] : 'Sem faixa'),
                 'valor_comissao' => round($valorComissao, 2)
             ];
@@ -584,7 +584,7 @@ class Comissao
     }
 
     /**
-     * Salvar cÃ¡lculo de comissÃ£o no banco
+     * Salvar cálculo de comissão no banco
      * @param array $dados
      * @return int ID inserido
      */
@@ -631,7 +631,7 @@ class Comissao
         
         $stmt->execute();
         
-        // Buscar o ID recÃ©m-inserido via sequence
+        // Buscar o ID recém-inserido via sequence
         $stmtId = $pdo->query("SELECT FOCCO3I.SEQ_GAZIN_COMISSAO_CALC.CURRVAL FROM DUAL");
         $id = $stmtId->fetchColumn();
         
@@ -639,7 +639,7 @@ class Comissao
     }
 
     /**
-     * Aprovar cÃ¡lculo de comissÃ£o
+     * Aprovar cálculo de comissão
      * @param int $id
      * @param int $usuId
      * @return bool
@@ -662,7 +662,7 @@ class Comissao
     }
 
     /**
-     * Cancelar cÃ¡lculo de comissÃ£o
+     * Cancelar cálculo de comissão
      * @param int $id
      * @param int $usuId
      * @param string $motivo
@@ -688,7 +688,7 @@ class Comissao
     }
 
     /**
-     * Listar cÃ¡lculos de comissÃ£o
+     * Listar cálculos de comissão
      * @param string $status
      * @param string $periodoIni
      * @param string $periodoFim
@@ -764,7 +764,7 @@ class Comissao
     }
 
     /**
-     * Buscar cÃ¡lculo por ID
+     * Buscar cálculo por ID
      * @param int $id
      * @return array|null
      */
@@ -799,7 +799,7 @@ class Comissao
     }
 
     /**
-     * Buscar cÃ¡lculo por funcionÃ¡rio e perÃ­odo
+     * Buscar cálculo por funcionário e período
      * @param int $funcId
      * @param string $dataInicio (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
@@ -833,6 +833,276 @@ class Comissao
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ?: null;
+    }
+
+    /**
+     * VERSÃO OTIMIZADA - Calcular comissão para TODOS os funcionários
+     * 
+     * OTIMIZAÇÕES APLICADAS:
+     * 1. Busca todos os dados em consultas BATCH (evita N queries por funcionário)
+     * 2. Pré-carrega faltas de todos os funcionários de uma vez
+     * 3. Pré-carrega regras específicas de todos os funcionários de uma vez
+     * 4. Pré-carrega retrabalhos de todos os funcionários de uma vez
+     * 5. Processa tudo em memória (PHP)
+     * 
+     * Em vez de N*5 queries (onde N = número de funcionários), faz apenas ~6 queries totais
+     * 
+     * @param string $periodoIni
+     * @param string $periodoFim
+     * @param int $emprId
+     * @param int|null $centroTrabId
+     * @return array
+     */
+    public function calcularComissaoTodosCompletaOtimizado(string $periodoIni, string $periodoFim, int $emprId, ?int $centroTrabId = null): array
+    {
+        $inicioProcessamento = microtime(true);
+        
+        // =============================================
+        // PASSO 1: Buscar lista de funcionários com apontamentos (1 query)
+        // =============================================
+        $apontamentoModel = new ApontamentoProducao();
+        $resumoFuncionarios = $apontamentoModel->resumoPorFuncionario($periodoIni, $periodoFim, $emprId, $centroTrabId);
+        
+        if (empty($resumoFuncionarios)) {
+            return [
+                'success' => true,
+                'periodo_ini' => $periodoIni,
+                'periodo_fim' => $periodoFim,
+                'empr_id' => $emprId,
+                'centro_trab_id' => $centroTrabId,
+                'resumo' => [
+                    'total_funcionarios' => 0,
+                    'total_com_falta' => 0,
+                    'total_com_retrabalho' => 0,
+                    'total_com_regra_especifica' => 0,
+                    'total_geral_comissao' => 0
+                ],
+                'funcionarios' => [],
+                'tempo_processamento' => round((microtime(true) - $inicioProcessamento) * 1000, 2) . 'ms'
+            ];
+        }
+        
+        // Extrair IDs dos funcionários
+        $funcIds = array_map(fn($f) => (int)$f['FUNC_ID'], $resumoFuncionarios);
+        
+        // Indexar resumo por funcionário para acesso rápido
+        $dadosFuncionarios = [];
+        foreach ($resumoFuncionarios as $func) {
+            $dadosFuncionarios[(int)$func['FUNC_ID']] = $func;
+        }
+        
+        // =============================================
+        // PASSO 2: Buscar TODAS as faltas em uma única query (1 query)
+        // =============================================
+        $faltaModel = new FaltaFuncionario();
+        $faltasPorFunc = $faltaModel->verificarFaltasPeriodoBatch($funcIds, $periodoIni, $periodoFim, $emprId);
+        
+        // =============================================
+        // PASSO 3: Buscar pontos por dia de TODOS os funcionários (1 query)
+        // =============================================
+        $pontosPorDiaFunc = $apontamentoModel->pontosPorDiaBatch($periodoIni, $periodoFim, $funcIds, $emprId, $centroTrabId);
+        
+        // =============================================
+        // PASSO 4: Buscar TODOS os retrabalhos em uma única query (1 query)
+        // =============================================
+        $retrabalhoModel = new Retrabalho();
+        $retrabalhosBrutos = $retrabalhoModel->buscarPorFuncionariosPeriodo($funcIds, $periodoIni, $periodoFim, $emprId);
+        
+        // Indexar retrabalhos por funcionário
+        $retrabalhosPorFunc = [];
+        foreach ($funcIds as $funcId) {
+            $retrabalhosPorFunc[$funcId] = [];
+        }
+        foreach ($retrabalhosBrutos as $ret) {
+            $funcId = (int)$ret['ID_FUNCIONARIO'];
+            $retrabalhosPorFunc[$funcId][] = $ret;
+        }
+        
+        // =============================================
+        // PASSO 5: Buscar TODAS as regras específicas em uma única query (1 query)
+        // =============================================
+        $regraModel = new RegraFuncionario();
+        $regrasPorFunc = $regraModel->buscarRegraAtivaBatch($funcIds, $centroTrabId, $periodoFim, $emprId);
+        
+        // =============================================
+        // PASSO 6: Carregar faixas de comissão (1 query - cache)
+        // =============================================
+        $faixaModel = new FaixaComissao();
+        $faixas = $faixaModel->listarAtivas(null, $centroTrabId);
+        
+        // =============================================
+        // PASSO 7: Processar cada funcionário EM MEMÓRIA (sem queries)
+        // =============================================
+        $resultados = [];
+        $totalGeral = 0;
+        $totalComFalta = 0;
+        $totalComRetrabalho = 0;
+        $totalComRegraEspecifica = 0;
+        
+        foreach ($funcIds as $funcId) {
+            $dadosFunc = $dadosFuncionarios[$funcId];
+            $faltas = $faltasPorFunc[$funcId] ?? [];
+            $pontosDiarios = $pontosPorDiaFunc[$funcId] ?? [];
+            $retrabalhos = $retrabalhosPorFunc[$funcId] ?? [];
+            $regraEspecifica = $regrasPorFunc[$funcId] ?? null;
+            
+            // Mapear faltas por data
+            $faltasPorData = [];
+            foreach ($faltas as $falta) {
+                $dataFalta = substr($falta['DT_FALTA'], 0, 10);
+                $faltasPorData[$dataFalta] = $falta['TIPO_FALTA'] ?? 'I';
+            }
+            
+            // Calcular pontos com desconto de falta
+            $totalPontosBruto = 0;
+            $totalPontosAposFalta = 0;
+            $diasTrabalhados = 0;
+            
+            foreach ($pontosDiarios as $dia) {
+                $dataApt = $dia['DATA_APONTAMENTO'];
+                $pontos = floatval($dia['TOTAL_PONTOS']);
+                $totalPontosBruto += $pontos;
+                
+                if (isset($faltasPorData[$dataApt])) {
+                    $tipoFalta = $faltasPorData[$dataApt];
+                    if ($tipoFalta === 'I') {
+                        // Falta integral: zera os pontos
+                        continue;
+                    } else {
+                        // Falta parcial: 50%
+                        $totalPontosAposFalta += $pontos * 0.5;
+                        $diasTrabalhados++;
+                    }
+                } else {
+                    $totalPontosAposFalta += $pontos;
+                    $diasTrabalhados++;
+                }
+            }
+            
+            // Calcular comissão
+            $valorComissaoBruto = 0;
+            $usaRegraEspecifica = false;
+            $faixaAplicada = null;
+            $regraAplicadaInfo = null;
+            
+            if ($regraEspecifica) {
+                // Usar regra específica
+                $usaRegraEspecifica = true;
+                $regraAplicadaInfo = [
+                    'id' => $regraEspecifica['ID_REGRA'],
+                    'descricao' => $regraEspecifica['DESCRICAO'],
+                    'tipo' => $regraEspecifica['TIPO_COMISSAO'],
+                    'valor' => $regraEspecifica['VALOR_COMISSAO']
+                ];
+                $valorComissaoBruto = $regraModel->calcularComissao($totalPontosAposFalta, $regraEspecifica);
+            } else {
+                // Buscar faixa aplicável
+                $faixa = $this->buscarFaixaAplicavelEmMemoria($faixas, $totalPontosAposFalta);
+                
+                if ($faixa) {
+                    $faixaAplicada = [
+                        'id' => $faixa['ID_FAIXA'],
+                        'descricao' => $faixa['DESCRICAO'],
+                        'tipo' => $faixa['TIPO'],
+                        'valor' => $faixa['VALOR_COMISSAO']
+                    ];
+                    
+                    if ($faixa['TIPO'] == FaixaComissao::TIPO_PERCENTUAL) {
+                        $valorComissaoBruto = $totalPontosAposFalta * ($faixa['VALOR_COMISSAO'] / 100);
+                    } elseif ($faixa['TIPO'] == FaixaComissao::TIPO_QUANTIDADE) {
+                        $valorComissaoBruto = $totalPontosAposFalta * floatval($faixa['VALOR_COMISSAO']);
+                    } else {
+                        $valorComissaoBruto = floatval($faixa['VALOR_COMISSAO']);
+                    }
+                }
+            }
+            
+            // Calcular desconto de retrabalho
+            $descontoRetrabalho = 0;
+            $totalPontosRetrabalho = 0;
+            
+            foreach ($retrabalhos as $ret) {
+                $pontosRet = floatval($ret['QUANTIDADE']) * floatval($ret['PONTOS_UP']);
+                $totalPontosRetrabalho += $pontosRet;
+                $impacto = $retrabalhoModel->calcularImpacto(
+                    $valorComissaoBruto,
+                    $pontosRet,
+                    $ret['TIPO_IMPACTO'],
+                    $ret['VALOR_IMPACTO']
+                );
+                $descontoRetrabalho += $impacto['valor_desconto'];
+            }
+            
+            $valorComissaoFinal = max(0, $valorComissaoBruto - $descontoRetrabalho);
+            
+            // Montar resultado do funcionário
+            $resultado = [
+                'func_id' => $funcId,
+                'cod_func' => $dadosFunc['COD_FUNC'],
+                'nome_func' => $dadosFunc['NOME_FUNC'],
+                'centro_trab_id' => $dadosFunc['CENTRO_TRAB_ID'] ?? null,
+                'cod_centro' => $dadosFunc['COD_CENTRO'] ?? null,
+                'desc_centro' => $dadosFunc['DESC_CENTRO'] ?? null,
+                'periodo_ini' => $periodoIni,
+                'periodo_fim' => $periodoFim,
+                'dias_trabalhados' => $diasTrabalhados,
+                'dias_com_falta' => count($faltas),
+                'total_pontos_bruto' => round($totalPontosBruto, 2),
+                'total_pontos_apos_falta' => round($totalPontosAposFalta, 2),
+                'total_retrabalho' => round($totalPontosRetrabalho, 2),
+                'desconto_retrabalho' => round($descontoRetrabalho, 2),
+                'usa_regra_especifica' => $usaRegraEspecifica,
+                'regra_aplicada' => $regraAplicadaInfo,
+                'faixa_aplicada' => $faixaAplicada,
+                'valor_comissao_bruto' => round($valorComissaoBruto, 2),
+                'valor_comissao_final' => round($valorComissaoFinal, 2)
+            ];
+            
+            $resultados[] = $resultado;
+            $totalGeral += $valorComissaoFinal;
+            
+            if (count($faltas) > 0) $totalComFalta++;
+            if ($totalPontosRetrabalho > 0) $totalComRetrabalho++;
+            if ($usaRegraEspecifica) $totalComRegraEspecifica++;
+        }
+        
+        $tempoProcessamento = round((microtime(true) - $inicioProcessamento) * 1000, 2);
+        
+        return [
+            'success' => true,
+            'periodo_ini' => $periodoIni,
+            'periodo_fim' => $periodoFim,
+            'empr_id' => $emprId,
+            'centro_trab_id' => $centroTrabId,
+            'resumo' => [
+                'total_funcionarios' => count($resultados),
+                'total_com_falta' => $totalComFalta,
+                'total_com_retrabalho' => $totalComRetrabalho,
+                'total_com_regra_especifica' => $totalComRegraEspecifica,
+                'total_geral_comissao' => round($totalGeral, 2)
+            ],
+            'funcionarios' => $resultados,
+            'tempo_processamento' => $tempoProcessamento . 'ms'
+        ];
+    }
+
+    /**
+     * Buscar faixa aplicável em memória (sem query)
+     * @param array $faixas Lista de faixas já carregadas
+     * @param float $pontos Total de pontos
+     * @return array|null
+     */
+    private function buscarFaixaAplicavelEmMemoria(array $faixas, float $pontos): ?array
+    {
+        foreach ($faixas as $faixa) {
+            $min = floatval($faixa['PONTO_INICIAL'] ?? 0);
+            $max = floatval($faixa['PONTO_FINAL'] ?? PHP_FLOAT_MAX);
+            
+            if ($pontos >= $min && ($max == 0 || $pontos <= $max)) {
+                return $faixa;
+            }
+        }
+        return null;
     }
 }
 

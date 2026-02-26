@@ -7,15 +7,15 @@ use PDO;
 use Exception;
 
 /**
- * Model para GestÃ£o de Retrabalho
+ * Model para Gestão de Retrabalho
  * 
  * Tabela: FOCCO3I.TGAZIN_RETRABALHO
  * 
  * Regras:
- * - Retrabalho Ã© separado da produÃ§Ã£o normal
- * - Impacta a comissÃ£o conforme regra definida (percentual, valor fixo ou penalizaÃ§Ã£o)
- * - Permite ediÃ§Ã£o e exclusÃ£o com auditoria
- * - IncluÃ­do no cÃ¡lculo final da comissÃ£o
+ * - Retrabalho é separado da produção normal
+ * - Impacta a comissão conforme regra definida (percentual, valor fixo ou penalização)
+ * - Permite edição e exclusão com auditoria
+ * - Incluído no cálculo final da comissão
  */
 class Retrabalho
 {
@@ -82,7 +82,7 @@ class Retrabalho
 
         $stmt->execute();
 
-        // Buscar o ID inserido (tabela usa IDENTITY, nÃ£o sequence)
+        // Buscar o ID inserido (tabela usa IDENTITY, não sequence)
         $sqlId = "SELECT MAX(ID_RETRABALHO) FROM FOCCO3I.TGAZIN_RETRABALHO 
                   WHERE ID_FUNCIONARIO = :id_funcionario 
                   AND DT_RETRABALHO = TO_DATE(:dt_retrabalho, 'YYYY-MM-DD')
@@ -132,7 +132,7 @@ class Retrabalho
                     CASE R.TIPO_IMPACTO 
                         WHEN 'P' THEN 'Percentual' 
                         WHEN 'V' THEN 'Valor Fixo' 
-                        WHEN 'Z' THEN 'Zerar ComissÃ£o' 
+                        WHEN 'Z' THEN 'Zerar Comissão' 
                     END AS DESC_TIPO_IMPACTO,
                     R.VALOR_IMPACTO,
                     R.ATIVO,
@@ -276,7 +276,7 @@ class Retrabalho
     }
 
     /**
-     * Excluir retrabalho (exclusÃ£o lÃ³gica)
+     * Excluir retrabalho (exclusão lógica)
      * @param int $id
      * @param int $usuId
      * @return bool
@@ -307,7 +307,7 @@ class Retrabalho
     }
 
     /**
-     * Buscar retrabalhos de funcionÃ¡rios em um perÃ­odo
+     * Buscar retrabalhos de funcionários em um período
      * @param array $funcIds
      * @param string $dataIni (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
@@ -369,7 +369,7 @@ class Retrabalho
     }
 
     /**
-     * Calcular impacto do retrabalho na comissÃ£o
+     * Calcular impacto do retrabalho na comissão
      * @param float $valorComissaoOriginal
      * @param float $pontosRetrabalho
      * @param string $tipoImpacto
@@ -382,7 +382,7 @@ class Retrabalho
 
         switch ($tipoImpacto) {
             case self::TIPO_PERCENTUAL:
-                // Percentual de desconto sobre a comissÃ£o
+                // Percentual de desconto sobre a comissão
                 $desconto = $valorComissaoOriginal * ($valorImpacto / 100);
                 break;
 
@@ -392,7 +392,7 @@ class Retrabalho
                 break;
 
             case self::TIPO_ZERAR:
-                // Zera a comissÃ£o
+                // Zera a comissão
                 $desconto = $valorComissaoOriginal;
                 break;
         }
@@ -452,7 +452,7 @@ class Retrabalho
 
             $stmt->execute();
         } catch (\Exception $e) {
-            error_log('Erro ao registrar log de auditoria: ' . $e->getMessage());
+            // Log de erro silenciado - não interrompe a operação principal
         }
     }
 }

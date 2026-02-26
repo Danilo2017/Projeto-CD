@@ -369,4 +369,97 @@ class RegraFuncionario
                 return $pontos * $valor;
         }
     }
+
+    /**
+     * MÉTODO OTIMIZADO - Buscar regras ativas de MÚLTIPLOS funcionários em uma única query
+     * Evita N queries separadas
+     * 
+     * @param array $funcIds Array com IDs dos funcionários
+     * @param int|null $centroTrabId (opcional)
+     * @param string|null $data Data de referência (YYYY-MM-DD)
+     * @param int|null $emprId (opcional)
+     * @return array Indexado por ID do funcionário => regra ativa ou null
+     */
+    public function buscarRegraAtivaBatch(array $funcIds, ?int $centroTrabId = null, ?string $data = null, ?int $emprId = null): array
+    {
+        if (empty($funcIds)) {
+            return [];
+        }
+
+        $pdo = Database::getInstance('focco');
+        
+        if (!$data) {
+            $data = date('Y-m-d');
+        }
+
+        $placeholders = implode(',', array_fill(0, count($funcIds), '?'));
+
+        // Buscar todas as regras ativas dos funcionários, ordenando para pegar a mais específica
+        $sql = "SELECT 
+                    r.ID_REGRA,
+                    r.ID_FUNCIONARIO,
+                    r.ID_CENTRO_TRAB,
+                    r.DESCRICAO,
+                    r.TIPO_COMISSAO,
+                    r.VALOR_COMISSAO,
+                    r.VALOR_FIXO,
+                    r.PRIORIDADE,
+                    f.COD_FUNC,
+                    f.NOME AS NOME_FUNCIONARIO,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY r.ID_FUNCIONARIO 
+                        ORDER BY 
+                            CASE WHEN r.ID_CENTRO_TRAB = ? THEN 1 ELSE 2 END,
+                            r.PRIORIDADE DESC,
+                            r.DT_VIGENCIA_INI DESC
+                    ) AS RN
+                FROM FOCCO3I.TGAZIN_REGRA_FUNC r
+                INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = r.ID_FUNCIONARIO
+                WHERE r.ID_FUNCIONARIO IN ($placeholders)
+                  AND r.ATIVO = 'S'
+                  AND TO_DATE(?, 'YYYY-MM-DD') >= r.DT_VIGENCIA_INI
+                  AND (r.DT_VIGENCIA_FIM IS NULL OR TO_DATE(?, 'YYYY-MM-DD') <= r.DT_VIGENCIA_FIM)";
+        
+        if ($emprId) {
+            $sql .= " AND r.ID_EMPR = ?";
+        }
+
+        // Aplicar ROW_NUMBER para pegar apenas a regra mais prioritária por funcionário
+        $sqlFinal = "SELECT * FROM ($sql) WHERE RN = 1";
+
+        $stmt = $pdo->prepare($sqlFinal);
+        
+        $i = 1;
+        // Centro de trabalho para ordenação (ou NULL se não informado)
+        $stmt->bindValue($i++, $centroTrabId ?? 0, PDO::PARAM_INT);
+        
+        // IDs dos funcionários
+        foreach ($funcIds as $funcId) {
+            $stmt->bindValue($i++, $funcId, PDO::PARAM_INT);
+        }
+        
+        // Datas
+        $stmt->bindValue($i++, $data, PDO::PARAM_STR);
+        $stmt->bindValue($i++, $data, PDO::PARAM_STR);
+        
+        if ($emprId) {
+            $stmt->bindValue($i++, $emprId, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Indexar por funcionário
+        $regrasPorFunc = [];
+        foreach ($funcIds as $funcId) {
+            $regrasPorFunc[$funcId] = null;
+        }
+        
+        foreach ($resultados as $regra) {
+            $funcId = $regra['ID_FUNCIONARIO'];
+            $regrasPorFunc[$funcId] = $regra;
+        }
+
+        return $regrasPorFunc;
+    }
 }

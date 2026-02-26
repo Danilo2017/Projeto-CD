@@ -2,6 +2,7 @@
 
 namespace src\controllers;
 
+use core\Request;
 use src\models\Login;
 use \core\Controller as ctrl;
 
@@ -24,7 +25,7 @@ class LoginController extends ctrl
             // $usuario = $_POST['usuario'] ?? '';
             // $senha = $_POST['senha'] ?? '';
 
-            $body = ctrl::getBody();
+            $body = Request::getJsonBody();
             $usuario = $body['usuario'] ?? '';
             $senha = $body['senha'] ?? '';
 

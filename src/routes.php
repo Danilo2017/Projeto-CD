@@ -4,17 +4,17 @@ use core\Router;
 
 $router = new Router();
 
-// ========== Rotas do CD (Centro de DistribuiÃ§Ã£o) ==========
+// ========== Rotas Públicas ==========
 $router->get('/health-check', 'HomeController@index');
 $router->get('/login', 'LoginController@index');
-
 $router->post('/login', 'LoginController@login');
 $router->get('/logout', 'LoginController@logout');
+$router->get('/sem-acesso', 'HomeController@semAcesso', true);
 
-// PÃ¡gina inicial redireciona para RelatÃ³rios
-$router->get('/', 'Comissao\\ComissaoRelatorioController@index', true);
+// Página inicial - redireciona para módulo correto do usuário
+$router->get('/', 'HomeController@redirectInicial', true);
 
-// ========== Rotas do CD (Centro de DistribuiÃ§Ã£o) ==========
+// ========== Rotas do CD (Centro de Distribuição) ==========
 // APIs CD
 $router->get('/cd-api-avisos', 'CD\\CDDashboardController@getAvisosRecebimento', true);
 $router->get('/cd-api-agendamentos', 'CD\\CDDashboardController@getAgendamentosPendentes', true);
@@ -29,14 +29,14 @@ $router->post('/cd-api-recibo', 'CD\\CDCalendarioController@gerarRecibo', true);
 $router->get('/cd-api-recibo', 'CD\\CDCalendarioController@buscarRecibo', true);
 $router->get('/cd-api-recibos', 'CD\\CDCalendarioController@listarRecibos', true);
 
-// PÃ¡ginas CD
+// Páginas CD
 $router->get('/cd-calendario', 'CD\\CDCalendarioController@index', true);
 $router->get('/cd-dashboard', 'CD\\CDDashboardController@index', true);
 $router->get('/cd', 'CD\\CDDashboardController@index', true);
 
-// ========== Rotas do Sistema de ComissÃ£o ==========
+// ========== Rotas do Sistema de Comissão ==========
 
-// PÃ¡ginas de Dashboard (desativado)
+// Páginas de Dashboard (desativado)
 // $router->get('/comissao', 'Comissao\\ComissaoDashboardController@index', true);
 // $router->get('/comissao-dashboard', 'Comissao\\ComissaoDashboardController@index', true);
 
@@ -48,12 +48,12 @@ $router->get('/cd', 'CD\\CDDashboardController@index', true);
 // $router->get('/comissao-api-resumo-recurso', 'Comissao\\ComissaoDashboardController@getResumoPorRecurso', true);
 // $router->get('/comissao-api-simular', 'Comissao\\ComissaoDashboardController@simularComissoes', true);
 
-// PÃ¡ginas de Cadastro
+// Páginas de Cadastro
 $router->get('/comissao-cadastro', 'Comissao\\ComissaoCadastroController@index', true);
 $router->get('/comissao-pontuacao', 'Comissao\\ComissaoCadastroController@pontuacaoIndex', true);
 $router->get('/comissao-faixas', 'Comissao\\ComissaoCadastroController@faixasIndex', true);
 
-// PÃ¡gina de vÃ­nculo
+// Página de vínculo
 $router->get('/comissao-vinculo', 'Comissao\\ComissaoCadastroController@vinculoIndex', true);
 $router->get('/comissao-api-vinculos', 'Comissao\\ComissaoCadastroController@listarVinculos', true);
 $router->post('/comissao-api-vinculo', 'Comissao\\ComissaoCadastroController@salvarVinculo', true);
@@ -61,7 +61,7 @@ $router->put('/comissao-api-vinculo', 'Comissao\\ComissaoCadastroController@atua
 $router->delete('/comissao-api-vinculo', 'Comissao\\ComissaoCadastroController@excluirVinculo', true);
 $router->patch('/comissao-api-vinculo-status', 'Comissao\\ComissaoCadastroController@alterarStatusVinculo', true);
 
-// APIs de Cadastro - PontuaÃ§Ã£o
+// APIs de Cadastro - Pontuação
 $router->get('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@listarPontuacoes', true);
 $router->post('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@salvarPontuacao', true);
 $router->put('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@atualizarPontuacao', true);
@@ -87,25 +87,25 @@ $router->get('/comissao-api-centros-vinculados', 'Comissao\\ComissaoCadastroCont
 $router->get('/comissao-api-recursos-vinculados', 'Comissao\\ComissaoCadastroController@getRecursosComVinculo', true);
 $router->get('/comissao-api-funcionarios-vinculados', 'Comissao\\ComissaoCadastroController@getFuncionariosComVinculo', true);
 
-// API para seleÃ§Ã£o de empresa (define sessÃ£o)
+// API para seleção de empresa (define sessão)
 $router->post('/comissao-api-selecionar-empresa', 'Comissao\\ComissaoCadastroController@selecionarEmpresa', true);
 $router->get('/comissao-api-empresa-selecionada', 'Comissao\\ComissaoCadastroController@getEmpresaSelecionada', true);
 
-// ========== GestÃ£o de Faltas ==========
+// ========== Gestão de Faltas ==========
 $router->get('/comissao-faltas', 'Comissao\\ComissaoCadastroController@faltasIndex', true);
 $router->get('/comissao-api-faltas', 'Comissao\\ComissaoCadastroController@listarFaltas', true);
 $router->post('/comissao-api-falta', 'Comissao\\ComissaoCadastroController@salvarFalta', true);
 $router->put('/comissao-api-falta', 'Comissao\\ComissaoCadastroController@atualizarFalta', true);
 $router->delete('/comissao-api-falta', 'Comissao\\ComissaoCadastroController@excluirFalta', true);
 
-// ========== GestÃ£o de Retrabalho ==========
+// ========== Gestão de Retrabalho ==========
 $router->get('/comissao-retrabalho', 'Comissao\\ComissaoCadastroController@retrabalhoIndex', true);
 $router->get('/comissao-api-retrabalhos', 'Comissao\\ComissaoCadastroController@listarRetrabalhos', true);
 $router->post('/comissao-api-retrabalho', 'Comissao\\ComissaoCadastroController@salvarRetrabalho', true);
 $router->put('/comissao-api-retrabalho', 'Comissao\\ComissaoCadastroController@atualizarRetrabalho', true);
 $router->delete('/comissao-api-retrabalho', 'Comissao\\ComissaoCadastroController@excluirRetrabalho', true);
 
-// ========== VÃ­nculo de Apontamentos sem Recurso ==========
+// ========== Vínculo de Apontamentos sem Recurso ==========
 $router->get('/comissao-vinculo-apontamento', 'Comissao\\ComissaoCadastroController@vinculoApontamentoIndex', true);
 $router->get('/comissao-api-apontamentos-sem-recurso', 'Comissao\\ComissaoCadastroController@listarApontamentosSemRecurso', true);
 $router->get('/comissao-api-vinculos-apontamento', 'Comissao\\ComissaoCadastroController@listarVinculosApontamento', true);
@@ -115,7 +115,7 @@ $router->post('/comissao-api-vincular-apontamentos-lote', 'Comissao\\ComissaoCad
 $router->put('/comissao-api-vinculo-apontamento', 'Comissao\\ComissaoCadastroController@atualizarVinculoApontamento', true);
 $router->delete('/comissao-api-vinculo-apontamento', 'Comissao\\ComissaoCadastroController@excluirVinculoApontamento', true);
 
-// ========== Regras EspecÃ­ficas por FuncionÃ¡rio ==========
+// ========== Regras Específicas por Funcionário ==========
 $router->get('/comissao-regras', 'Comissao\\ComissaoCadastroController@regrasIndex', true);
 $router->get('/comissao-api-regras', 'Comissao\\ComissaoCadastroController@listarRegras', true);
 $router->get('/comissao-api-regra', 'Comissao\\ComissaoCadastroController@buscarRegra', true);
@@ -123,13 +123,13 @@ $router->post('/comissao-api-regra', 'Comissao\\ComissaoCadastroController@salva
 $router->put('/comissao-api-regra', 'Comissao\\ComissaoCadastroController@atualizarRegra', true);
 $router->delete('/comissao-api-regra', 'Comissao\\ComissaoCadastroController@inativarRegra', true);
 
-// PÃ¡ginas de RelatÃ³rios
+// Páginas de Relatórios
 $router->get('/comissao-relatorio', 'Comissao\\ComissaoRelatorioController@index', true);
 $router->get('/comissao-relatorio-diario', 'Comissao\\ComissaoRelatorioController@produtividadeDiariaIndex', true);
 $router->get('/comissao-relatorio-comissoes', 'Comissao\\ComissaoRelatorioController@comissoesIndex', true);
 $router->get('/comissao-relatorio-funcionario', 'Comissao\\ComissaoRelatorioController@porFuncionarioIndex', true);
 
-// APIs de RelatÃ³rios
+// APIs de Relatórios
 $router->get('/comissao-api-produtividade-diaria', 'Comissao\\ComissaoRelatorioController@getProdutividadeDiaria', true);
 $router->get('/comissao-api-comissoes', 'Comissao\\ComissaoRelatorioController@getComissoes', true);
 $router->get('/comissao-api-comissao-detalhes', 'Comissao\\ComissaoRelatorioController@getComissaoDetalhes', true);

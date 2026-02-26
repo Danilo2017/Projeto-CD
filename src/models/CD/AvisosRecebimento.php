@@ -30,7 +30,7 @@ CASE
     -- Sem nenhum log
     WHEN MIN(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA) IS NULL
          THEN 'PENDENTE'
-    -- InÃ­cio existe, fim nÃ£o existe
+    -- Início existe, fim não existe
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL
@@ -38,7 +38,7 @@ CASE
                        THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
                   END) IS NULL
          THEN 'INICIADO'
-    -- InÃ­cio e fim existem, mas depende do NFE
+    -- Início e fim existem, mas depende do NFE
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL
@@ -95,7 +95,7 @@ GROUP BY TEMPRESAS.COD_EMP,
     }
 
     /**
-     * Retorna os totais de avisos do mÃªs atual
+     * Retorna os totais de avisos do mês atual
      * @return array ['total' => X, 'pendentes' => X, 'iniciados' => X, 'finalizados' => X]
      */
     public function getTotaisMes()
@@ -123,7 +123,7 @@ CASE
     -- Sem nenhum log
     WHEN MIN(TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA) IS NULL
          THEN 'PENDENTE'
-    -- InÃ­cio existe, fim nÃ£o existe
+    -- Início existe, fim não existe
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL
@@ -131,7 +131,7 @@ CASE
                        THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA
                   END) IS NULL
          THEN 'INICIADO'
-    -- InÃ­cio e fim existem, mas depende do NFE
+    -- Início e fim existem, mas depende do NFE
     WHEN MIN(CASE WHEN TGAZIN_LOG_CONF_AVR_WEB.STATUS = 'INI' 
                   THEN TGAZIN_LOG_CONF_AVR_WEB.DATA_HORA 
              END) IS NOT NULL

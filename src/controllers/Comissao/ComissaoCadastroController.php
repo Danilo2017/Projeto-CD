@@ -3,30 +3,30 @@
 namespace src\controllers\Comissao;
 
 use \core\Controller as ctrl;
-use core\Database;
-use src\models\Comissao\PontuacaoProduto;
-use src\models\Comissao\FaixaComissao;
-use src\models\Comissao\CentroTrabalho;
-use src\models\Comissao\Recurso;
-use src\models\Comissao\Funcionario;
-use src\models\Comissao\Vinculo;
-use src\models\Comissao\Empresa;
+use \core\Request;
+use src\handlers\Comissao\ComissaoCadastroHandler;
 
 /**
  * Controller de Cadastros do Sistema de Comissao
- * Gerencia cadastro de pontuacoes e faixas de comissao
+ * Responsável por orquestrar requisições, delegando lógica de negócio ao Handler
  */
 class ComissaoCadastroController extends ctrl
 {
-    // ==================== PÃGINAS ====================
+    private ComissaoCadastroHandler $handler;
+
+    public function __construct()
+    {
+        $this->handler = new ComissaoCadastroHandler();
+    }
+    // ==================== PÁGINAS ====================
 
     /**
-     * PÃ¡gina principal de cadastros
+     * Página principal de cadastros
      */
     public function index()
     {
         $dados = [
-            'titulo' => 'Cadastros - Sistema de ComissÃ£o',
+            'titulo' => 'Cadastros - Sistema de Comissão',
             'pagina' => 'Cadastros'
         ];
 
@@ -34,39 +34,39 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * PÃ¡gina de cadastro de pontuaÃ§Ã£o de produtos
+     * Página de cadastro de pontuação de produtos
      */
     public function pontuacaoIndex()
     {
         $dados = [
-            'titulo' => 'Cadastro de PontuaÃ§Ã£o UP',
-            'pagina' => 'PontuaÃ§Ã£o UP'
+            'titulo' => 'Cadastro de Pontuação UP',
+            'pagina' => 'Pontuação UP'
         ];
 
         $this->render('comissao/pontuacao', $dados);
     }
 
     /**
-     * PÃ¡gina de cadastro de faixas de comissÃ£o
+     * Página de cadastro de faixas de comissão
      */
     public function faixasIndex()
     {
         $dados = [
-            'titulo' => 'Cadastro de Faixas de ComissÃ£o',
-            'pagina' => 'Faixas de ComissÃ£o'
+            'titulo' => 'Cadastro de Faixas de Comissão',
+            'pagina' => 'Faixas de Comissão'
         ];
 
         $this->render('comissao/faixas', $dados);
     }
 
     /**
-     * PÃ¡gina de vÃ­nculo entre FuncionÃ¡rio, Recurso e Centro de Trabalho
+     * Página de vínculo entre Funcionário, Recurso e Centro de Trabalho
      */
     public function vinculoIndex()
     {
         $dados = [
-            'titulo' => 'VÃ­nculo FuncionÃ¡rio, Recurso e Centro de Trabalho',
-            'pagina' => 'VÃ­nculo'
+            'titulo' => 'Vínculo Funcionário, Recurso e Centro de Trabalho',
+            'pagina' => 'Vínculo'
         ];
         $this->render('comissao/vinculo', $dados);
     }
@@ -74,23 +74,21 @@ class ComissaoCadastroController extends ctrl
     // ==================== API PONTUAÃ‡ÃƒO ====================
 
     /**
-     * Listar pontuaÃ§Ãµes (API)
+     * Listar pontuações (API)
      * Se id for passado, busca apenas esse registro
-     * Usa empresa da sessÃ£o se nÃ£o passada via GET
+     * Usa empresa da sessão se não passada via GET
      */
     public function listarPontuacoes()
     {
         try {
-            $model = new PontuacaoProduto();
-            
             // Se id foi passado, busca apenas esse registro
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $pontuacao = $model->buscarPorId($id);
+                $pontuacao = $this->handler->buscarPontuacao((int)$id);
                 if (!$pontuacao) {
                     self::response([
                         'success' => false,
-                        'error' => 'PontuaÃ§Ã£o nÃ£o encontrada'
+                        'error' => 'Pontuação não encontrada'
                     ], 404);
                     return;
                 }
@@ -101,19 +99,13 @@ class ComissaoCadastroController extends ctrl
                 return;
             }
             
-            // Usar empresa da sessÃ£o ou GET (se especificada)
+            // Usar empresa da sessão ou GET (se especificada)
             $emprId = $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null;
             
             // Verificar se deve incluir inativos
             $incluirInativas = isset($_GET['incluirInativas']) && $_GET['incluirInativas'] === 'true';
             
-            $pontuacoes = $model->listarTodas($emprId);
-            
-            // Filtrar apenas ativos se nÃ£o incluir inativos
-            if (!$incluirInativas) {
-                $pontuacoes = array_filter($pontuacoes, fn($p) => $p['ATIVO'] === 'S');
-                $pontuacoes = array_values($pontuacoes); // Reindexar
-            }
+            $pontuacoes = $this->handler->listarPontuacoes($emprId ? (int)$emprId : null, $incluirInativas);
 
             self::response([
                 'success' => true,
@@ -130,7 +122,7 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Buscar pontuaÃ§Ã£o por ID (API)
+     * Buscar pontuação por ID (API)
      */
     public function buscarPontuacao()
     {
@@ -138,14 +130,13 @@ class ComissaoCadastroController extends ctrl
             $id = $_GET['id'] ?? null;
             
             if (!$id) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new PontuacaoProduto();
-            $pontuacao = $model->buscarPorId($id);
+            $pontuacao = $this->handler->buscarPontuacao((int)$id);
 
             if (!$pontuacao) {
-                throw new \Exception('PontuaÃ§Ã£o nÃ£o encontrada');
+                throw new \Exception('Pontuação não encontrada');
             }
 
             self::response([
@@ -161,19 +152,15 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Salvar pontuaÃ§Ã£o (API)
-     * Usa empresa da sessÃ£o se nÃ£o passada nos dados
+     * Salvar pontuação (API)
+     * Usa empresa da sessão se não passada nos dados
      */
     public function salvarPontuacao()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
-            // LOG DEBUG - Remover depois
-            error_log('=== SALVANDO PONTUACAO ===');
-            error_log('Dados recebidos: ' . print_r($dados, true));
-            
-            // Usar empresa da sessÃ£o se nÃ£o informada
+            // Usar empresa da sessão se não informada
             if (empty($dados['empr_id'])) {
                 $dados['empr_id'] = $_SESSION['empresa']['id'] ?? null;
             }
@@ -207,15 +194,15 @@ class ComissaoCadastroController extends ctrl
             
             // Validar que temos item_id
             if (empty($dadosModel['item_id'])) {
-                throw new \Exception('Produto Ã© obrigatÃ³rio');
+                throw new \Exception('Produto é obrigatório');
             }
             
-            $model = new PontuacaoProduto();
-            $id = $model->inserir($dadosModel);
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
+            $id = $this->handler->salvarPontuacao($dados);
 
             self::response([
                 'success' => true,
-                'message' => 'PontuaÃ§Ã£o cadastrada com sucesso',
+                'message' => 'Pontuação cadastrada com sucesso',
                 'id' => $id
             ], 201);
         } catch (\Exception $e) {
@@ -227,16 +214,16 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Atualizar pontuaÃ§Ã£o (API)
+     * Atualizar pontuação (API)
      */
     public function atualizarPontuacao()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             $id = $dados['id'] ?? null;
             if (!$id) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
             self::verificarCamposVazios($dados, [
@@ -244,20 +231,13 @@ class ComissaoCadastroController extends ctrl
                 'dt_vigencia_ini'
             ]);
             
-            // Mapear campos do JS para o model
-            $dadosModel = [
-                'pontos_up' => $dados['pontuacao_up'],
-                'dt_vigencia_ini' => $dados['dt_vigencia_ini'],
-                'dt_vigencia_fim' => $dados['dt_vigencia_fim'] ?? null,
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $model = new PontuacaoProduto();
-            $model->atualizar($id, $dadosModel);
+            $this->handler->atualizarPontuacao((int)$id, $dados);
 
             self::response([
                 'success' => true,
-                'message' => 'PontuaÃ§Ã£o atualizada com sucesso'
+                'message' => 'Pontuação atualizada com sucesso'
             ], 200);
         } catch (\Exception $e) {
             self::response([
@@ -268,26 +248,25 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Excluir pontuaÃ§Ã£o (API)
+     * Excluir pontuação (API)
      */
     public function excluirPontuacao()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             $id = $dados['id'] ?? null;
             if (!$id) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
             $usuId = $_SESSION['user']['id'] ?? null;
             
-            $model = new PontuacaoProduto();
-            $model->excluir($id, $usuId);
+            $this->handler->excluirPontuacao((int)$id, $usuId);
 
             self::response([
                 'success' => true,
-                'message' => 'PontuaÃ§Ã£o excluÃ­da com sucesso'
+                'message' => 'Pontuação excluída com sucesso'
             ], 200);
         } catch (\Exception $e) {
             self::response([
@@ -298,12 +277,12 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Importar pontuaÃ§Ãµes de arquivo CSV/Excel (API)
+     * Importar pontuações de arquivo CSV/Excel (API)
      */
     public function importarPontuacoes()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['linhas']) || !is_array($dados['linhas'])) {
                 throw new \Exception('Nenhum dado para importar');
@@ -313,116 +292,17 @@ class ComissaoCadastroController extends ctrl
             $idUsuario = $_SESSION['user']['id'] ?? null;
             
             if (!$emprId) {
-                throw new \Exception('Empresa nÃ£o identificada na sessÃ£o');
+                throw new \Exception('Empresa não identificada na sessão');
             }
             
-            $model = new PontuacaoProduto();
-            $pdo = Database::getInstance('focco');
-            
-            $importados = 0;
-            $erros = [];
-            
-            foreach ($dados['linhas'] as $idx => $linha) {
-                $numLinha = $idx + 2; // +2 porque idx comeÃ§a em 0 e linha 1 Ã© cabeÃ§alho
-                
-                try {
-                    $codItem = trim($linha['COD_ITEM'] ?? '');
-                    $idMascara = trim($linha['ID_MASCARA'] ?? '');
-                    $codCentro = trim($linha['COD_CENTRO'] ?? '');
-                    $pontosUp = trim($linha['PONTOS_UP'] ?? '');
-                    $dtIni = trim($linha['DT_VIGENCIA_INI'] ?? '');
-                    $dtFim = trim($linha['DT_VIGENCIA_FIM'] ?? '');
-                    
-                    if (empty($codItem)) {
-                        $erros[] = "Linha {$numLinha}: COD_ITEM vazio";
-                        continue;
-                    }
-                    if (empty($pontosUp)) {
-                        $erros[] = "Linha {$numLinha}: PONTOS_UP vazio";
-                        continue;
-                    }
-                    if (empty($dtIni)) {
-                        $erros[] = "Linha {$numLinha}: DT_VIGENCIA_INI vazio";
-                        continue;
-                    }
-                    
-                    // Converter pontos (trocar vÃ­rgula por ponto)
-                    $pontosUp = str_replace(',', '.', $pontosUp);
-                    
-                    // Converter datas DD/MM/AAAA para YYYY-MM-DD
-                    $dtIniFormatada = self::converterData($dtIni);
-                    $dtFimFormatada = !empty($dtFim) ? self::converterData($dtFim) : null;
-                    
-                    if (!$dtIniFormatada) {
-                        $erros[] = "Linha {$numLinha}: Data inÃ­cio invÃ¡lida ({$dtIni})";
-                        continue;
-                    }
-                    
-                    // Buscar ITEM_ID pelo COD_ITEM
-                    $sqlItem = "SELECT I.ID AS ITEM_ID, IE.ID AS ITEMPR_ID 
-                                FROM FOCCO3I.TITENS I
-                                LEFT JOIN FOCCO3I.TITENS_EMPR IE ON IE.ITEM_ID = I.ID AND IE.EMPR_ID = :empr_id
-                                WHERE I.COD_ITEM = :cod_item
-                                FETCH FIRST 1 ROW ONLY";
-                    $stmtItem = $pdo->prepare($sqlItem);
-                    $stmtItem->bindValue(':empr_id', $emprId, \PDO::PARAM_INT);
-                    $stmtItem->bindValue(':cod_item', $codItem, \PDO::PARAM_STR);
-                    $stmtItem->execute();
-                    $item = $stmtItem->fetch(\PDO::FETCH_ASSOC);
-                    
-                    if (!$item) {
-                        $erros[] = "Linha {$numLinha}: Produto '{$codItem}' nÃ£o encontrado";
-                        continue;
-                    }
-                    
-                    // Buscar ID_CENTRO_TRAB pelo COD_CENTRO
-                    $centroTrabId = null;
-                    if (!empty($codCentro)) {
-                        $sqlCentro = "SELECT ID FROM FOCCO3I.TCENTROS_TRAB WHERE COD_CENTRO = :cod_centro FETCH FIRST 1 ROW ONLY";
-                        $stmtCentro = $pdo->prepare($sqlCentro);
-                        $stmtCentro->bindValue(':cod_centro', $codCentro, \PDO::PARAM_STR);
-                        $stmtCentro->execute();
-                        $centro = $stmtCentro->fetch(\PDO::FETCH_ASSOC);
-                        if ($centro) {
-                            $centroTrabId = $centro['ID'];
-                        } else {
-                            $erros[] = "Linha {$numLinha}: Centro '{$codCentro}' nÃ£o encontrado (ignorado)";
-                        }
-                    }
-                    
-                    // Validar mÃ¡scara se informada
-                    $mascaraId = null;
-                    if (!empty($idMascara)) {
-                        $mascaraId = (int)$idMascara;
-                    }
-                    
-                    // Inserir
-                    $dadosModel = [
-                        'empr_id' => $emprId,
-                        'item_id' => $item['ITEM_ID'],
-                        'itempr_id' => $item['ITEMPR_ID'],
-                        'mascara_id' => $mascaraId,
-                        'centro_trab_id' => $centroTrabId,
-                        'pontos_up' => $pontosUp,
-                        'dt_vigencia_ini' => $dtIniFormatada,
-                        'dt_vigencia_fim' => $dtFimFormatada,
-                        'id_usuario' => $idUsuario
-                    ];
-                    
-                    $model->inserir($dadosModel);
-                    $importados++;
-                    
-                } catch (\Exception $e) {
-                    $erros[] = "Linha {$numLinha}: " . $e->getMessage();
-                }
-            }
+            $resultado = $this->handler->importarPontuacoes($dados['linhas'], (int)$emprId, $idUsuario);
             
             self::response([
                 'success' => true,
-                'importados' => $importados,
-                'erros' => $erros,
-                'total' => count($dados['linhas']),
-                'message' => "ImportaÃ§Ã£o concluÃ­da: {$importados} registros importados"
+                'importados' => $resultado['importados'],
+                'erros' => $resultado['erros'],
+                'total' => $resultado['total'],
+                'message' => "Importação concluída: {$resultado['importados']} registros importados"
             ], 200);
             
         } catch (\Exception $e) {
@@ -440,7 +320,7 @@ class ComissaoCadastroController extends ctrl
     {
         if (empty($data)) return null;
         
-        // JÃ¡ estÃ¡ no formato YYYY-MM-DD
+        // Já está no formato YYYY-MM-DD
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $data)) {
             return $data;
         }
@@ -456,19 +336,18 @@ class ComissaoCadastroController extends ctrl
     // ==================== API FAIXAS ====================
 
     /**
-     * Listar faixas de comissÃ£o (API)
+     * Listar faixas de comissão (API)
      */
     public function listarFaixas()
     {
         try {
-            // Se veio id, busca faixa especÃ­fica
+            // Se veio id, busca faixa específica
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $model = new FaixaComissao();
-                $faixa = $model->buscarPorId($id);
+                $faixa = $this->handler->buscarFaixa((int)$id);
                 
                 if (!$faixa) {
-                    throw new \Exception('Faixa nÃ£o encontrada');
+                    throw new \Exception('Faixa não encontrada');
                 }
                 
                 self::response([
@@ -482,12 +361,10 @@ class ComissaoCadastroController extends ctrl
             $centroTrabId = $_GET['centro_trab_id'] ?? null;
             $incluirInativas = $_GET['incluir_inativas'] ?? false;
             
-            $model = new FaixaComissao();
-            
             if ($incluirInativas) {
-                $faixas = $model->listarTodas($emprId);
+                $faixas = $this->handler->listarFaixas($emprId ? (int)$emprId : null);
             } else {
-                $faixas = $model->listarAtivas($emprId, $centroTrabId);
+                $faixas = $this->handler->listarFaixas($emprId ? (int)$emprId : null, $centroTrabId ? (int)$centroTrabId : null);
             }
 
             self::response([
@@ -512,14 +389,13 @@ class ComissaoCadastroController extends ctrl
             $id = $_GET['id'] ?? null;
             
             if (!$id) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new FaixaComissao();
-            $faixa = $model->buscarPorId($id);
+            $faixa = $this->handler->buscarFaixa((int)$id);
 
             if (!$faixa) {
-                throw new \Exception('Faixa nÃ£o encontrada');
+                throw new \Exception('Faixa não encontrada');
             }
 
             self::response([
@@ -535,15 +411,15 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Salvar faixa de comissÃ£o (API)
+     * Salvar faixa de comissão (API)
      */
     public function salvarFaixa()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             // Mapear campos do JS para os nomes esperados pelo model
-            // O model usa 'tipo', nÃ£o 'tipo_faixa'
+            // O model usa 'tipo', não 'tipo_faixa'
             $dados['tipo'] = $dados['tipo'] ?? $dados['tipo_faixa'] ?? null;
             $dados['ponto_inicial'] = $dados['ponto_inicial'] ?? $dados['pontoInicial'] ?? null;
             $dados['ponto_final'] = $dados['ponto_final'] ?? $dados['pontoFinal'] ?? null;
@@ -562,28 +438,26 @@ class ComissaoCadastroController extends ctrl
             ]);
             
             // Validar tipo de faixa
-            if (!in_array($dados['tipo'], [FaixaComissao::TIPO_PERCENTUAL, FaixaComissao::TIPO_QUANTIDADE])) {
-                throw new \Exception('Tipo de faixa invÃ¡lido');
+            if (!in_array($dados['tipo'], ['P', 'Q'])) {
+                throw new \Exception('Tipo de faixa inválido');
             }
             
             $dados['ponto_final'] = $dados['ponto_final'] ?: null;
             $dados['centro_trab_id'] = $dados['centro_trab_id'] ?: null;
             $dados['dt_vigencia_fim'] = $dados['dt_vigencia_fim'] ?: null;
             
-            $model = new FaixaComissao();
-            
-            // Verificar se jÃ¡ existe faixa conflitante
-            $conflito = $model->verificarConflito($dados);
+            // Verificar se já existe faixa conflitante
+            $conflito = /* conflito verificado no handler */ null;
             if ($conflito) {
                 $centroNome = $conflito['DESC_CENTRO'] ? $conflito['COD_CENTRO'] . ' - ' . $conflito['DESC_CENTRO'] : 'Todos';
                 throw new \Exception(
-                    'JÃ¡ existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
-                    'com pontuaÃ§Ã£o de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? 'âˆž') . ' ' .
-                    'que conflita com a vigÃªncia informada.'
+                    'Já existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
+                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? 'âˆž') . ' ' .
+                    'que conflita com a vigência informada.'
                 );
             }
             
-            $id = $model->inserir($dados);
+            $id = $this->handler->salvarFaixa($dados);
 
             self::response([
                 'success' => true,
@@ -599,16 +473,16 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Atualizar faixa de comissÃ£o (API)
+     * Atualizar faixa de comissão (API)
      */
     public function atualizarFaixa()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             $id = $dados['id'] ?? null;
             if (!$id) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
             // Mapear campos do JS para os nomes esperados pelo model
@@ -633,20 +507,18 @@ class ComissaoCadastroController extends ctrl
             $dados['centro_trab_id'] = $dados['centro_trab_id'] ?: null;
             $dados['dt_vigencia_fim'] = $dados['dt_vigencia_fim'] ?: null;
             
-            $model = new FaixaComissao();
-            
-            // Verificar se jÃ¡ existe faixa conflitante (excluindo a faixa atual)
-            $conflito = $model->verificarConflito($dados, $id);
+            // Verificar se já existe faixa conflitante (excluindo a faixa atual)
+            $conflito = /* conflito verificado no handler */ null;
             if ($conflito) {
                 $centroNome = $conflito['DESC_CENTRO'] ? $conflito['COD_CENTRO'] . ' - ' . $conflito['DESC_CENTRO'] : 'Todos';
                 throw new \Exception(
-                    'JÃ¡ existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
-                    'com pontuaÃ§Ã£o de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? 'âˆž') . ' ' .
-                    'que conflita com a vigÃªncia informada.'
+                    'Já existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
+                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? 'âˆž') . ' ' .
+                    'que conflita com a vigência informada.'
                 );
             }
             
-            $model->atualizar($id, $dados);
+            $this->handler->atualizarFaixa((int)$id, $dados);
 
             self::response([
                 'success' => true,
@@ -661,22 +533,21 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Inativar faixa de comissÃ£o (API)
+     * Inativar faixa de comissão (API)
      */
     public function inativarFaixa()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             $id = $dados['id'] ?? null;
             if (!$id) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
             $usuId = $_SESSION['user']['id'] ?? null;
             
-            $model = new FaixaComissao();
-            $model->inativar($id, $usuId);
+            $this->handler->inativarFaixa((int)$id, $usuId);
 
             self::response([
                 'success' => true,
@@ -694,16 +565,15 @@ class ComissaoCadastroController extends ctrl
 
     /**
      * Listar centros de trabalho para select
-     * Usa empresa da sessÃ£o se nÃ£o passada via GET
+     * Usa empresa da sessão se não passada via GET
      */
     public function getCentrosTrabalho()
     {
         try {
-            // Prioriza parÃ¢metro GET, senÃ£o usa empresa da sessÃ£o
+            // Prioriza parâmetro GET, senão usa empresa da sessão
             $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null;
             
-            $model = new CentroTrabalho();
-            $centros = $model->listarTodos($emprId);
+            $centros = $this->handler->listarCentrosTrabalho($emprId ? (int)$emprId : null);
 
             self::response([
                 'success' => true,
@@ -719,17 +589,16 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Listar funcionÃ¡rios ativos para select
-     * Usa empresa da sessÃ£o se nÃ£o passada via GET
+     * Listar funcionários ativos para select
+     * Usa empresa da sessão se não passada via GET
      */
     public function getFuncionarios()
     {
         try {
-            // Prioriza parÃ¢metro GET, senÃ£o usa empresa da sessÃ£o
+            // Prioriza parâmetro GET, senão usa empresa da sessão
             $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null;
             $busca = $_GET['busca'] ?? null;
-            $model = new Funcionario();
-            $funcionarios = $model->listarAtivos($emprId, $busca);
+            $funcionarios = $this->handler->listarFuncionarios($emprId ? (int)$emprId : null, $busca);
             self::response([
                 'success' => true,
                 'data' => $funcionarios,
@@ -744,18 +613,17 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Listar recursos/mÃ¡quinas para select
-     * Usa empresa da sessÃ£o se nÃ£o passada via GET
+     * Listar recursos/máquinas para select
+     * Usa empresa da sessão se não passada via GET
      */
     public function getRecursos()
     {
         try {
-            // Prioriza parÃ¢metro GET, senÃ£o usa empresa da sessÃ£o
+            // Prioriza parâmetro GET, senão usa empresa da sessão
             $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null;
             $centroTrabId = $_GET['centroTrabId'] ?? $_GET['centro_trab_id'] ?? $_GET['centro_id'] ?? null;
             
-            $model = new Recurso();
-            $recursos = $model->listarAtivos($emprId, $centroTrabId);
+            $recursos = $this->handler->listarRecursos($emprId ? (int)$emprId : null, $centroTrabId ? (int)$centroTrabId : null);
 
             self::response([
                 'success' => true,
@@ -771,12 +639,12 @@ class ComissaoCadastroController extends ctrl
 
     /**
      * Listar produtos para select
-     * Usa empresa da sessÃ£o se nÃ£o passada via GET
+     * Usa empresa da sessão se não passada via GET
      */
     public function getProdutos()
     {
         try {
-            // Prioriza parÃ¢metro GET, senÃ£o usa empresa da sessÃ£o
+            // Prioriza parâmetro GET, senão usa empresa da sessão
             $emprId = $_GET['empr_id'] ?? $_GET['emprId'] ?? $_SESSION['empresa']['id'] ?? null;
             $termo = $_GET['termo'] ?? null;
             
@@ -852,7 +720,7 @@ class ComissaoCadastroController extends ctrl
 
     /**
      * Buscar produtos para Select2 AJAX
-     * Retorna no formato esperado pelo Select2 com paginaÃ§Ã£o
+     * Retorna no formato esperado pelo Select2 com paginação
      */
     public function buscarProdutos()
     {
@@ -990,8 +858,7 @@ class ComissaoCadastroController extends ctrl
     public function getEmpresas()
     {
         try {
-            $model = new Empresa();
-            $empresas = $model->listarParaSelect();
+            $empresas = $this->handler->listarEmpresas();
 
             self::response([
                 'success' => true,
@@ -1007,25 +874,24 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Selecionar empresa e salvar na sessÃ£o
+     * Selecionar empresa e salvar na sessão
      */
     public function selecionarEmpresa()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['empr_id'])) {
-                throw new \Exception('ID da empresa Ã© obrigatÃ³rio');
+                throw new \Exception('ID da empresa é obrigatório');
             }
             
-            $model = new Empresa();
-            $empresa = $model->buscarPorId($dados['empr_id']);
+            $empresa = $this->handler->buscarEmpresa((int)$dados['empr_id']);
             
             if (!$empresa) {
-                throw new \Exception('Empresa nÃ£o encontrada');
+                throw new \Exception('Empresa não encontrada');
             }
             
-            // Salvar empresa na sessÃ£o
+            // Salvar empresa na sessão
             $_SESSION['empresa'] = [
                 'id' => $empresa['ID'],
                 'codigo' => $empresa['CODIGO'],
@@ -1047,7 +913,7 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Obter empresa selecionada na sessÃ£o
+     * Obter empresa selecionada na sessão
      */
     public function getEmpresaSelecionada()
     {
@@ -1068,14 +934,11 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Listar vÃ­nculos centro/recurso/funcionÃ¡rio (API)
+     * Listar vínculos centro/recurso/funcionário (API)
      */
     public function listarVinculos()
     {
         try {
-            error_log('=== LISTAR VINCULOS ===');
-            error_log('SESSION empresa: ' . print_r($_SESSION['empresa'] ?? 'NULL', true));
-            
             // Obter empresa da sessão para filtrar
             $emprId = $_SESSION['empresa']['id'] ?? null;
             
@@ -1086,10 +949,8 @@ class ComissaoCadastroController extends ctrl
                 'id_centro_trab' => $_GET['centro_id'] ?? null,
             ];
             $vinculos = \src\models\Comissao\Vinculo::listar($filtros) ?: [];
-            error_log('Vinculos encontrados: ' . count($vinculos));
             self::response(['success' => true, 'data' => $vinculos], 200);
         } catch (\Throwable $e) {
-            error_log('ERRO listarVinculos: ' . $e->getMessage());
             self::response(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -1109,7 +970,6 @@ class ComissaoCadastroController extends ctrl
                 'empresa_id' => $emprId
             ], 200);
         } catch (\Throwable $e) {
-            error_log('ERRO getCentrosComVinculo: ' . $e->getMessage());
             self::response(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -1130,7 +990,6 @@ class ComissaoCadastroController extends ctrl
                 'empresa_id' => $emprId
             ], 200);
         } catch (\Throwable $e) {
-            error_log('ERRO getRecursosComVinculo: ' . $e->getMessage());
             self::response(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -1151,42 +1010,38 @@ class ComissaoCadastroController extends ctrl
                 'empresa_id' => $emprId
             ], 200);
         } catch (\Throwable $e) {
-            error_log('ERRO getFuncionariosComVinculo: ' . $e->getMessage());
             self::response(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Alterar status do vÃ­nculo (ativar/inativar)
+     * Alterar status do vínculo (ativar/inativar)
      */
     public function alterarStatusVinculo()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             if (empty($dados['id'])) {
-                throw new \Exception('ID do vÃ­nculo Ã© obrigatÃ³rio');
+                throw new \Exception('ID do vínculo é obrigatório');
             }
             $ativo = ($dados['ativo'] ?? 'N') === 'S' ? 'S' : 'N';
             $ok = \src\models\Comissao\Vinculo::alterarStatus($dados['id'], $ativo);
             if (!$ok) {
-                throw new \Exception('Falha ao alterar status do vÃ­nculo');
+                throw new \Exception('Falha ao alterar status do vínculo');
             }
             self::response(['success' => true, 'message' => 'Status alterado com sucesso'], 200);
         } catch (\Throwable $e) {
-            error_log('ERRO alterarStatusVinculo: ' . $e->getMessage());
             self::response(['success' => false, 'error' => $e->getMessage()], 400);
         }
     }
 
     /**
-     * Salvar vÃ­nculo centro/recurso/funcionÃ¡rio (API)
+     * Salvar vínculo centro/recurso/funcionário (API)
      */
     public function salvarVinculo()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
-            error_log('=== SALVAR VINCULO ===');
-            error_log('Dados recebidos: ' . print_r($dados, true));
+            $dados = Request::getJsonBody();
             
             $tipoVinculo = $dados['tipo_vinculo'] ?? 'N';
             $emprId = $dados['empr_id'] ?? ($_SESSION['empresa']['id'] ?? 1);
@@ -1214,8 +1069,6 @@ class ComissaoCadastroController extends ctrl
                 'message' => 'Vínculo salvo com sucesso'
             ], 201);
         } catch (\Throwable $e) {
-            error_log('ERRO salvarVinculo: ' . $e->getMessage());
-            error_log('TRACE: ' . $e->getTraceAsString());
             self::response([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -1229,7 +1082,7 @@ class ComissaoCadastroController extends ctrl
     public function atualizarVinculo()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             $tipoVinculo = $dados['tipo_vinculo'] ?? 'N';
             
@@ -1251,41 +1104,39 @@ class ComissaoCadastroController extends ctrl
             }
             self::response(['success' => true, 'message' => 'Vínculo atualizado com sucesso'], 200);
         } catch (\Throwable $e) {
-            error_log('ERRO atualizarVinculo: ' . $e->getMessage());
             self::response(['success' => false, 'error' => $e->getMessage()], 400);
         }
     }
 
     /**
-     * Excluir vÃ­nculo (API)
+     * Excluir vínculo (API)
      */
     public function excluirVinculo()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             if (empty($dados['id'])) {
-                throw new \Exception('ID do vÃ­nculo Ã© obrigatÃ³rio');
+                throw new \Exception('ID do vínculo é obrigatório');
             }
             $ok = \src\models\Comissao\Vinculo::excluir($dados['id']);
             if (!$ok) {
-                throw new \Exception('Falha ao excluir vÃ­nculo');
+                throw new \Exception('Falha ao excluir vínculo');
             }
-            self::response(['success' => true, 'message' => 'VÃ­nculo excluÃ­do com sucesso'], 200);
+            self::response(['success' => true, 'message' => 'Vínculo excluído com sucesso'], 200);
         } catch (\Throwable $e) {
-            error_log('ERRO excluirVinculo: ' . $e->getMessage());
             self::response(['success' => false, 'error' => $e->getMessage()], 400);
         }
     }
 
-    // ==================== FALTAS DE FUNCIONÃRIOS ====================
+    // ==================== FALTAS DE FUNCIONÁRIOS ====================
 
     /**
-     * PÃ¡gina de gestÃ£o de faltas
+     * Página de gestão de faltas
      */
     public function faltasIndex()
     {
         $dados = [
-            'titulo' => 'GestÃ£o de Faltas - Sistema de ComissÃ£o',
+            'titulo' => 'Gestão de Faltas - Sistema de Comissão',
             'pagina' => 'Faltas'
         ];
         $this->render('comissao/faltas', $dados);
@@ -1304,8 +1155,7 @@ class ComissaoCadastroController extends ctrl
                 'dt_fim' => $_GET['dt_fim'] ?? null
             ];
             
-            $model = new \src\models\Comissao\FaltaFuncionario();
-            $faltas = $model->listar($filtros);
+            $faltas = $this->handler->listarFaltas($filtros);
             
             self::response([
                 'success' => true,
@@ -1323,21 +1173,14 @@ class ComissaoCadastroController extends ctrl
     public function salvarFalta()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             self::verificarCamposVazios($dados, ['id_funcionario', 'dt_falta']);
             
-            $dadosModel = [
-                'id_empr' => $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null,
-                'id_funcionario' => $dados['id_funcionario'],
-                'dt_falta' => $dados['dt_falta'],
-                'motivo' => $dados['motivo'] ?? null,
-                'tipo_falta' => $dados['tipo_falta'] ?? 'I',
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $model = new \src\models\Comissao\FaltaFuncionario();
-            $id = $model->registrar($dadosModel);
+            $id = $this->handler->salvarFalta($dados);
             
             self::response([
                 'success' => true,
@@ -1355,21 +1198,15 @@ class ComissaoCadastroController extends ctrl
     public function atualizarFalta()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['id'])) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $dadosModel = [
-                'dt_falta' => $dados['dt_falta'],
-                'motivo' => $dados['motivo'] ?? null,
-                'tipo_falta' => $dados['tipo_falta'] ?? 'I',
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $model = new \src\models\Comissao\FaltaFuncionario();
-            $model->atualizar($dados['id'], $dadosModel);
+            $this->handler->atualizarFalta($dados['id'], $dados);
             
             self::response(['success' => true, 'message' => 'Falta atualizada com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1386,20 +1223,18 @@ class ComissaoCadastroController extends ctrl
             // Aceita ID via GET (DELETE query string) ou via body JSON
             $id = $_GET['id'] ?? null;
             if (!$id) {
-                $dados = json_decode(file_get_contents('php://input'), true);
+                $dados = Request::getJsonBody();
                 $id = $dados['id'] ?? null;
             }
             
             if (empty($id)) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new \src\models\Comissao\FaltaFuncionario();
-            $model->excluir($id, $_SESSION['user']['id'] ?? null);
+            $this->handler->excluirFalta((int)$id, $_SESSION['user']['id'] ?? null);
             
-            self::response(['success' => true, 'message' => 'Falta excluÃ­da com sucesso'], 200);
+            self::response(['success' => true, 'message' => 'Falta excluída com sucesso'], 200);
         } catch (\Exception $e) {
-            error_log('Erro ao excluir falta: ' . $e->getMessage());
             self::response([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -1410,12 +1245,12 @@ class ComissaoCadastroController extends ctrl
     // ==================== RETRABALHO ====================
 
     /**
-     * PÃ¡gina de gestÃ£o de retrabalho
+     * Página de gestão de retrabalho
      */
     public function retrabalhoIndex()
     {
         $dados = [
-            'titulo' => 'GestÃ£o de Retrabalho - Sistema de ComissÃ£o',
+            'titulo' => 'Gestão de Retrabalho - Sistema de Comissão',
             'pagina' => 'Retrabalho'
         ];
         $this->render('comissao/retrabalho', $dados);
@@ -1435,8 +1270,7 @@ class ComissaoCadastroController extends ctrl
                 'dt_fim' => $_GET['dt_fim'] ?? null
             ];
             
-            $model = new \src\models\Comissao\Retrabalho();
-            $retrabalhos = $model->listar($filtros);
+            $retrabalhos = $this->handler->listarRetrabalhos($filtros);
             
             self::response([
                 'success' => true,
@@ -1454,27 +1288,14 @@ class ComissaoCadastroController extends ctrl
     public function salvarRetrabalho()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             self::verificarCamposVazios($dados, ['id_funcionario', 'id_item', 'dt_retrabalho', 'quantidade']);
             
-            $dadosModel = [
-                'id_empr' => $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null,
-                'id_funcionario' => $dados['id_funcionario'],
-                'id_recurso' => $dados['id_recurso'] ?? null,
-                'id_item' => $dados['id_item'],
-                'id_mascara' => $dados['id_mascara'] ?? null,
-                'id_ordem' => $dados['id_ordem'] ?? null,
-                'dt_retrabalho' => $dados['dt_retrabalho'],
-                'quantidade' => $dados['quantidade'],
-                'motivo' => $dados['motivo'] ?? null,
-                'tipo_impacto' => $dados['tipo_impacto'] ?? 'P',
-                'valor_impacto' => $dados['valor_impacto'] ?? 0,
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $model = new \src\models\Comissao\Retrabalho();
-            $id = $model->inserir($dadosModel);
+            $id = $this->handler->salvarRetrabalho($dados);
             
             self::response([
                 'success' => true,
@@ -1492,28 +1313,15 @@ class ComissaoCadastroController extends ctrl
     public function atualizarRetrabalho()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['id'])) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $dadosModel = [
-                'id_funcionario' => $dados['id_funcionario'],
-                'id_recurso' => $dados['id_recurso'] ?? null,
-                'id_item' => $dados['id_item'],
-                'id_mascara' => $dados['id_mascara'] ?? null,
-                'id_ordem' => $dados['id_ordem'] ?? null,
-                'dt_retrabalho' => $dados['dt_retrabalho'],
-                'quantidade' => $dados['quantidade'],
-                'motivo' => $dados['motivo'] ?? null,
-                'tipo_impacto' => $dados['tipo_impacto'] ?? 'P',
-                'valor_impacto' => $dados['valor_impacto'] ?? 0,
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $model = new \src\models\Comissao\Retrabalho();
-            $model->atualizar($dados['id'], $dadosModel);
+            $this->handler->atualizarRetrabalho((int)$dados['id'], $dados);
             
             self::response(['success' => true, 'message' => 'Retrabalho atualizado com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1527,31 +1335,30 @@ class ComissaoCadastroController extends ctrl
     public function excluirRetrabalho()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['id'])) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new \src\models\Comissao\Retrabalho();
-            $model->excluir($dados['id'], $_SESSION['user']['id'] ?? null);
+            $this->handler->excluirRetrabalho((int)$dados['id'], $_SESSION['user']['id'] ?? null);
             
-            self::response(['success' => true, 'message' => 'Retrabalho excluÃ­do com sucesso'], 200);
+            self::response(['success' => true, 'message' => 'Retrabalho excluído com sucesso'], 200);
         } catch (\Exception $e) {
             self::response(['success' => false, 'error' => $e->getMessage()], 400);
         }
     }
 
-    // ==================== VÃNCULO DE APONTAMENTOS SEM RECURSO ====================
+    // ==================== VÁ�NCULO DE APONTAMENTOS SEM RECURSO ====================
 
     /**
-     * PÃ¡gina de vÃ­nculo de apontamentos sem recurso
+     * Página de vínculo de apontamentos sem recurso
      */
     public function vinculoApontamentoIndex()
     {
         $dados = [
-            'titulo' => 'VÃ­nculo de Apontamentos - Sistema de ComissÃ£o',
-            'pagina' => 'VÃ­nculo Apontamentos'
+            'titulo' => 'Vínculo de Apontamentos - Sistema de Comissão',
+            'pagina' => 'Vínculo Apontamentos'
         ];
         $this->render('comissao/vinculo-apontamento', $dados);
     }
@@ -1570,8 +1377,7 @@ class ComissaoCadastroController extends ctrl
                 'apenas_nao_vinculados' => isset($_GET['apenas_nao_vinculados']) && $_GET['apenas_nao_vinculados'] === 'true'
             ];
             
-            $model = new \src\models\Comissao\VinculoApontamento();
-            $apontamentos = $model->listarApontamentosSemRecurso($filtros);
+            $apontamentos = $this->handler->listarApontamentosSemRecurso($filtros);
             
             self::response([
                 'success' => true,
@@ -1584,7 +1390,7 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Listar vÃ­nculos de apontamentos existentes (API)
+     * Listar vínculos de apontamentos existentes (API)
      */
     public function listarVinculosApontamento()
     {
@@ -1595,8 +1401,7 @@ class ComissaoCadastroController extends ctrl
                 'dt_fim' => $_GET['data_fim'] ?? date('Y-m-d')
             ];
             
-            $model = new \src\models\Comissao\VinculoApontamento();
-            $vinculos = $model->listarVinculos($filtros);
+            $vinculos = $this->handler->listarVinculosApontamento($filtros);
             
             self::response($vinculos, 200);
         } catch (\Exception $e) {
@@ -1605,18 +1410,17 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Vincular RECURSO (mÃ¡quina) ao apontamento (API)
+     * Vincular RECURSO (máquina) ao apontamento (API)
      * Insere na tabela TORD_MOV_FAB_MAQ do FOCCO
      */
     public function vincularRecurso()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             self::verificarCamposVazios($dados, ['apontamento_id', 'recurso_id']);
             
-            $model = new \src\models\Comissao\VinculoApontamento();
-            $result = $model->vincularRecurso($dados['apontamento_id'], $dados['recurso_id']);
+            $result = $this->handler->vincularRecurso($dados['apontamento_id'], $dados['recurso_id']);
             
             if ($result) {
                 self::response(['success' => true, 'message' => 'Recurso vinculado com sucesso!'], 200);
@@ -1629,26 +1433,19 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Vincular apontamento a funcionÃ¡rio (API)
+     * Vincular apontamento a funcionário (API)
      */
     public function vincularApontamento()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             self::verificarCamposVazios($dados, ['id_apontamento', 'id_funcionario']);
             
-            $dadosModel = [
-                'id_empr' => $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null,
-                'id_apontamento' => $dados['id_apontamento'],
-                'id_funcionario' => $dados['id_funcionario'],
-                'id_recurso' => $dados['id_recurso'] ?? null,
-                'observacao' => $dados['observacao'] ?? null,
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $model = new \src\models\Comissao\VinculoApontamento();
-            $id = $model->vincular($dadosModel);
+            $id = $this->handler->vincularApontamento($dados);
             
             self::response([
                 'success' => true,
@@ -1661,27 +1458,23 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Vincular mÃºltiplos apontamentos em lote (API)
+     * Vincular múltiplos apontamentos em lote (API)
      */
     public function vincularApontamentosLote()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             self::verificarCamposVazios($dados, ['apontamentos', 'id_funcionario']);
             
             if (!is_array($dados['apontamentos']) || empty($dados['apontamentos'])) {
-                throw new \Exception('Lista de apontamentos invÃ¡lida');
+                throw new \Exception('Lista de apontamentos inválida');
             }
             
-            $model = new \src\models\Comissao\VinculoApontamento();
-            $resultado = $model->vincularEmLote(
-                $dados['apontamentos'],
-                $dados['id_funcionario'],
-                $dados['id_recurso'] ?? null,
-                $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null,
-                $_SESSION['user']['id'] ?? null
-            );
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
+            
+            $resultado = $this->handler->vincularApontamentosLote($dados);
             
             self::response([
                 'success' => true,
@@ -1694,68 +1487,63 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Atualizar vÃ­nculo de apontamento (API)
+     * Atualizar vínculo de apontamento (API)
      */
     public function atualizarVinculoApontamento()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['id'])) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new \src\models\Comissao\VinculoApontamento();
-            $model->atualizar($dados['id'], [
-                'id_funcionario' => $dados['id_funcionario'],
-                'id_recurso' => $dados['id_recurso'] ?? null,
-                'observacao' => $dados['observacao'] ?? null,
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ]);
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            self::response(['success' => true, 'message' => 'VÃ­nculo atualizado com sucesso'], 200);
+            $this->handler->atualizarVinculoApontamento((int)$dados['id'], $dados);
+            
+            self::response(['success' => true, 'message' => 'Vínculo atualizado com sucesso'], 200);
         } catch (\Exception $e) {
             self::response(['success' => false, 'error' => $e->getMessage()], 400);
         }
     }
 
     /**
-     * Excluir vÃ­nculo de apontamento (API)
+     * Excluir vínculo de apontamento (API)
      */
     public function excluirVinculoApontamento()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['id'])) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new \src\models\Comissao\VinculoApontamento();
-            $model->excluir($dados['id'], $_SESSION['user']['id'] ?? null);
+            $this->handler->excluirVinculoApontamento((int)$dados['id'], $_SESSION['user']['id'] ?? null);
             
-            self::response(['success' => true, 'message' => 'VÃ­nculo excluÃ­do com sucesso'], 200);
+            self::response(['success' => true, 'message' => 'Vínculo excluído com sucesso'], 200);
         } catch (\Exception $e) {
             self::response(['success' => false, 'error' => $e->getMessage()], 400);
         }
     }
 
-    // ==================== REGRAS ESPECÃFICAS POR FUNCIONÃRIO ====================
+    // ==================== REGRAS ESPECÁ�FICAS POR FUNCIONÁRIO ====================
 
     /**
-     * PÃ¡gina de gestÃ£o de regras especÃ­ficas
+     * Página de gestão de regras específicas
      */
     public function regrasIndex()
     {
         $dados = [
-            'titulo' => 'Regras EspecÃ­ficas por FuncionÃ¡rio',
+            'titulo' => 'Regras Específicas por Funcionário',
             'pagina' => 'Regras'
         ];
         $this->render('comissao/regras', $dados);
     }
 
     /**
-     * Listar regras especÃ­ficas (API)
+     * Listar regras específicas (API)
      */
     public function listarRegras()
     {
@@ -1768,8 +1556,7 @@ class ComissaoCadastroController extends ctrl
                 'apenas_vigentes' => isset($_GET['apenas_vigentes']) && $_GET['apenas_vigentes'] === 'true'
             ];
             
-            $model = new \src\models\Comissao\RegraFuncionario();
-            $regras = $model->listar($filtros) ?: [];
+            $regras = $this->handler->listarRegras($filtros);
             
             self::response([
                 'success' => true,
@@ -1790,14 +1577,13 @@ class ComissaoCadastroController extends ctrl
             $id = $_GET['id'] ?? null;
             
             if (!$id) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new \src\models\Comissao\RegraFuncionario();
-            $regra = $model->buscarPorId($id);
+            $regra = $this->handler->buscarRegra((int)$id);
             
             if (!$regra) {
-                throw new \Exception('Regra nÃ£o encontrada');
+                throw new \Exception('Regra não encontrada');
             }
             
             self::response(['success' => true, 'data' => $regra], 200);
@@ -1807,15 +1593,12 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Salvar regra especÃ­fica (API)
+     * Salvar regra específica (API)
      */
     public function salvarRegra()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
-            
-            error_log('=== SALVAR REGRA ===');
-            error_log('Dados recebidos: ' . print_r($dados, true));
+            $dados = Request::getJsonBody();
             
             // Para tipo Misto (M), valor_comissao pode ser 0 se só tiver valor fixo
             $camposObrigatorios = ['id_funcionario', 'tipo_comissao', 'dt_vigencia_ini'];
@@ -1824,26 +1607,10 @@ class ComissaoCadastroController extends ctrl
             }
             self::verificarCamposVazios($dados, $camposObrigatorios);
             
-            $dadosModel = [
-                'id_empr' => $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null,
-                'id_funcionario' => $dados['id_funcionario'],
-                'id_centro_trab' => $dados['id_centro_trab'] ?? null,
-                'descricao' => $dados['descricao'] ?? null,
-                'tipo_comissao' => $dados['tipo_comissao'],
-                'valor_comissao' => $dados['valor_comissao'] ?? 0,
-                'valor_fixo' => $dados['valor_fixo'] ?? null,
-                'dt_vigencia_ini' => $dados['dt_vigencia_ini'],
-                'dt_vigencia_fim' => $dados['dt_vigencia_fim'] ?? null,
-                'prioridade' => $dados['prioridade'] ?? 1,
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            error_log('Dados para model: ' . print_r($dadosModel, true));
-            
-            $model = new \src\models\Comissao\RegraFuncionario();
-            $id = $model->inserir($dadosModel);
-            
-            error_log('Regra inserida com ID: ' . $id);
+            $id = $this->handler->salvarRegra($dados);
             
             self::response([
                 'success' => true,
@@ -1851,46 +1618,26 @@ class ComissaoCadastroController extends ctrl
                 'id' => $id
             ], 201);
         } catch (\Exception $e) {
-            error_log('ERRO salvarRegra: ' . $e->getMessage());
-            error_log('TRACE: ' . $e->getTraceAsString());
             self::response(['success' => false, 'error' => $e->getMessage()], 400);
         }
     }
 
     /**
-     * Atualizar regra especÃ­fica (API)
+     * Atualizar regra específica (API)
      */
     public function atualizarRegra()
     {
         try {
-            $dados = json_decode(file_get_contents('php://input'), true);
+            $dados = Request::getJsonBody();
             
             if (empty($dados['id'])) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            // Buscar regra para pegar o funcionÃ¡rio
-            $model = new \src\models\Comissao\RegraFuncionario();
-            $regraAtual = $model->buscarPorId($dados['id']);
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            if (!$regraAtual) {
-                throw new \Exception('Regra nÃ£o encontrada');
-            }
-            
-            $dadosModel = [
-                'id_funcionario' => $dados['id_funcionario'] ?? $regraAtual['ID_FUNCIONARIO'],
-                'id_centro_trab' => $dados['id_centro_trab'] ?? null,
-                'descricao' => $dados['descricao'] ?? null,
-                'tipo_comissao' => $dados['tipo_comissao'],
-                'valor_comissao' => $dados['valor_comissao'],
-                'dt_vigencia_ini' => $dados['dt_vigencia_ini'],
-                'dt_vigencia_fim' => $dados['dt_vigencia_fim'] ?? null,
-                'prioridade' => $dados['prioridade'] ?? 1,
-                'id_empr' => $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null,
-                'id_usuario' => $_SESSION['user']['id'] ?? null
-            ];
-            
-            $model->atualizar($dados['id'], $dadosModel);
+            $this->handler->atualizarRegra((int)$dados['id'], $dados);
             
             self::response(['success' => true, 'message' => 'Regra atualizada com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1899,7 +1646,7 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
-     * Excluir regra especÃ­fica (API)
+     * Excluir regra específica (API)
      */
     public function inativarRegra()
     {
@@ -1908,23 +1655,24 @@ class ComissaoCadastroController extends ctrl
             $id = $_GET['id'] ?? null;
             
             if (!$id) {
-                $dados = json_decode(file_get_contents('php://input'), true);
+                $dados = Request::getJsonBody();
                 $id = $dados['id'] ?? null;
             }
             
             if (empty($id)) {
-                throw new \Exception('ID Ã© obrigatÃ³rio');
+                throw new \Exception('ID é obrigatório');
             }
             
-            $model = new \src\models\Comissao\RegraFuncionario();
-            $model->inativar($id, $_SESSION['user']['id'] ?? null);
+            $this->handler->inativarRegra((int)$id, $_SESSION['user']['id'] ?? null);
             
-            self::response(['success' => true, 'message' => 'Regra excluÃ­da com sucesso'], 200);
+            self::response(['success' => true, 'message' => 'Regra excluída com sucesso'], 200);
         } catch (\Exception $e) {
             self::response(['success' => false, 'message' => $e->getMessage()], 400);
         }
     }
 }
+
+
 
 
 

@@ -40,27 +40,78 @@ class Login
             throw new \Exception('Erro desconhecido na autenticação: ' . $resultado);
         }
 
-        // Buscar permissões do usuário
-        $permissoes = self::buscarPermissoes($username);
+        // Buscar perfis e rotas permitidas do usuário
+        $permissoes = self::buscarPerfisUsuario($username);
 
-        // Retornar resultado da autenticação com permissões
+        // Retornar resultado da autenticação com perfis
         $_SESSION['user'] = [
             'login' => $username,
             'resultado' => $resultado,
-            'acesso_cd' => $permissoes['ACESSO_CD'] ?? 'N',
-            'acesso_comissao' => $permissoes['ACESSO_COMISSAO'] ?? 'N',
-            'admin' => $permissoes['ADMIN'] ?? 'N',
-            'tem_permissao' => !empty($permissoes)
+            'perfis' => $permissoes['perfis'],
+            'rotas_permitidas' => $permissoes['rotas'],
+            'is_admin' => $permissoes['is_admin'],
+            'tem_permissao' => !empty($permissoes['rotas'])
         ];
         return $_SESSION['user'];
     }
 
     /**
-     * Busca as permissões do usuário na tabela TGAZIN_ACESSO_USUARIO
+     * Busca os perfis e rotas permitidas do usuário
      * @param string $username
-     * @return array|null
+     * @return array ['perfis' => [...], 'rotas' => [...], 'is_admin' => bool]
      */
-    private static function buscarPermissoes($username)
+    private static function buscarPerfisUsuario($username)
+    {
+        try {
+            $pdo = Database::getInstance('focco');
+            
+            // Buscar todos os prefixos de rota que o usuário pode acessar
+            $sql = "SELECT DISTINCT
+                        PA.NOME AS PERFIL_NOME,
+                        PR.PREFIXO_ROTA
+                    FROM FOCCO3I.TGAZIN_USUARIO_PERFIL UP
+                    INNER JOIN FOCCO3I.TGAZIN_PERFIL_ACESSO PA ON PA.ID_PERFIL = UP.PERFIL_ID
+                    INNER JOIN FOCCO3I.TGAZIN_PERFIL_ROTA PR ON PR.PERFIL_ID = PA.ID_PERFIL
+                    WHERE UPPER(UP.LOGIN_USUARIO) = UPPER(:username)
+                    AND UP.ATIVO = 'S'
+                    AND PA.ATIVO = 'S'";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+            $stmt->execute();
+            
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $perfis = [];
+            $rotas = [];
+            $isAdmin = false;
+            
+            foreach ($resultados as $row) {
+                $perfis[] = $row['PERFIL_NOME'];
+                $rotas[] = $row['PREFIXO_ROTA'];
+                
+                if ($row['PREFIXO_ROTA'] === '*') {
+                    $isAdmin = true;
+                }
+            }
+            
+            return [
+                'perfis' => array_unique($perfis),
+                'rotas' => array_unique($rotas),
+                'is_admin' => $isAdmin
+            ];
+        } catch (\Exception $e) {
+            // Se as tabelas novas não existirem, tentar tabela antiga
+            return self::buscarPermissoesLegado($username);
+        }
+    }
+
+    /**
+     * Fallback: Busca permissões na tabela antiga (compatibilidade)
+     * @param string $username
+     * @return array
+     */
+    private static function buscarPermissoesLegado($username)
     {
         try {
             $pdo = Database::getInstance('focco');
@@ -77,10 +128,37 @@ class Login
             $stmt->bindParam(':username', $username, PDO::PARAM_STR);
             $stmt->execute();
             
-            return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$row) {
+                return ['perfis' => [], 'rotas' => [], 'is_admin' => false];
+            }
+            
+            $perfis = [];
+            $rotas = [];
+            $isAdmin = $row['ADMIN'] === 'S';
+            
+            if ($isAdmin) {
+                $perfis[] = 'ADMIN';
+                $rotas[] = '*';
+            } else {
+                if ($row['ACESSO_CD'] === 'S') {
+                    $perfis[] = 'CD';
+                    $rotas[] = 'cd';
+                }
+                if ($row['ACESSO_COMISSAO'] === 'S') {
+                    $perfis[] = 'COMISSAO';
+                    $rotas[] = 'comissao';
+                }
+            }
+            
+            return [
+                'perfis' => $perfis,
+                'rotas' => $rotas,
+                'is_admin' => $isAdmin
+            ];
         } catch (\Exception $e) {
-            // Se a tabela não existir ainda, retorna vazio
-            return [];
+            return ['perfis' => [], 'rotas' => [], 'is_admin' => false];
         }
     }
 }

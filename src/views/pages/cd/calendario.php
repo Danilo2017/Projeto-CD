@@ -1,7 +1,9 @@
 <?php
-// Verificar permissão de acesso
-$acessoCd = $_SESSION['user']['acesso_cd'] ?? 'N';
-if ($acessoCd !== 'S') {
+// Verificar permissão de acesso (novo sistema de perfis)
+$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
+$isAdmin = $_SESSION['user']['is_admin'] ?? false;
+$acessoCd = $isAdmin || in_array('cd', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+if (!$acessoCd) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
 }

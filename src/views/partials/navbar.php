@@ -28,26 +28,29 @@
 <div class="cd-info-bar">
     <div class="cd-info-item">
         <?php 
-        // Verificar permissões do usuário
-        $acessoComissao = $_SESSION['user']['acesso_comissao'] ?? 'N';
-        $acessoCd = $_SESSION['user']['acesso_cd'] ?? 'N';
-        $isAdmin = $_SESSION['user']['admin'] ?? 'N';
+        // Verificar permissões do usuário (novo sistema de perfis)
+        $rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
+        $isAdmin = $_SESSION['user']['is_admin'] ?? false;
         $temPermissao = $_SESSION['user']['tem_permissao'] ?? false;
+        
+        // Verificar acesso aos módulos
+        $acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+        $acessoCd = $isAdmin || in_array('cd', $rotasPermitidas) || in_array('*', $rotasPermitidas);
         ?>
         
-        <?php if($acessoComissao === 'S'): ?>
+        <?php if($acessoComissao): ?>
         <!-- Menu Comissão -->
         <a href="<?= $base ?>comissao-cadastro" class="cd-btn-menu <?= (isset($pageActive) && $pageActive === 'comissao-cadastro') ? 'active' : '' ?>">⚙️ Cadastros</a>
         <a href="<?= $base ?>comissao-relatorio" class="cd-btn-menu <?= (isset($pageActive) && $pageActive === 'comissao-relatorio') ? 'active' : '' ?>">📋 Relatórios</a>
         <?php endif; ?>
         
-        <?php if($acessoCd === 'S'): ?>
+        <?php if($acessoCd): ?>
         <!-- Menu CD -->
         <a href="<?= $base ?>cd-dashboard" class="cd-btn-menu <?= (isset($pageActive) && $pageActive === 'dashboard') ? 'active' : '' ?>">🏠 Dashboard CD</a>
         <a href="<?= $base ?>cd-calendario" class="cd-btn-menu <?= (isset($pageActive) && $pageActive === 'calendario') ? 'active' : '' ?>">📅 Agendamento</a>
         <?php endif; ?>
         
-        <?php if($isAdmin === 'S'): ?>
+        <?php if($isAdmin): ?>
         <!-- Menu Admin -->
         <a href="<?= $base ?>permissao" class="cd-btn-menu <?= (isset($pageActive) && $pageActive === 'permissao') ? 'active' : '' ?>">🔐 Permissões</a>
         <?php endif; ?>

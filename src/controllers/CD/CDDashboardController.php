@@ -3,13 +3,23 @@
 namespace src\controllers\CD;
 
 use \core\Controller as ctrl;
-use src\models\CD\AvisosRecebimento;
-use src\models\CD\AgendamentoRecebimento;
+use src\handlers\CD\CDDashboardHandler;
 
+/**
+ * Controller do Dashboard CD
+ * Responsável por orquestrar requisições, delegando lógica ao Handler
+ */
 class CDDashboardController extends ctrl
 {
+    private CDDashboardHandler $handler;
+
+    public function __construct()
+    {
+        $this->handler = new CDDashboardHandler();
+    }
+
     /**
-     * Exibe a pÃ¡gina principal do Dashboard CD
+     * Exibe a página principal do Dashboard CD
      */
     public function index()
     {
@@ -27,25 +37,14 @@ class CDDashboardController extends ctrl
     public function getAvisosRecebimento()
     {
         try {
-            $model = new AvisosRecebimento();
-            $avisos = $model->listarAvisosHoje();
-            
-            // Buscar totais do mÃªs
-            $totaisMes = $model->getTotaisMes();
+            $resultado = $this->handler->getAvisosRecebimento();
 
-            $resultado = [
+            self::response([
                 'success' => true,
-                'data' => $avisos,
-                'resumo' => [
-                    'total' => $totaisMes['total'],
-                    'pendentes' => $totaisMes['pendentes'],
-                    'iniciados' => $totaisMes['iniciados'],
-                    'finalizados' => $totaisMes['finalizados']
-                ],
+                'data' => $resultado['avisos'],
+                'resumo' => $resultado['resumo'],
                 'ultima_atualizacao' => date('d/m/Y H:i:s')
-            ];
-
-            self::response($resultado, 200);
+            ], 200);
         } catch (\Exception $e) {
             self::response([
                 'success' => false,
@@ -60,16 +59,13 @@ class CDDashboardController extends ctrl
     public function getAgendamentosPendentes()
     {
         try {
-            $model = new AgendamentoRecebimento();
-            $agendamentos = $model->listarPendentes();
+            $resultado = $this->handler->getAgendamentosPendentes();
 
-            $resultado = [
+            self::response([
                 'success' => true,
-                'data' => $agendamentos,
-                'total' => count($agendamentos)
-            ];
-
-            self::response($resultado, 200);
+                'data' => $resultado['data'],
+                'total' => $resultado['total']
+            ], 200);
         } catch (\Exception $e) {
             self::response([
                 'success' => false,

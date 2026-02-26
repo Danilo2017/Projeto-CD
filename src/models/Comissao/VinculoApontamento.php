@@ -7,16 +7,16 @@ use PDO;
 use Exception;
 
 /**
- * Model para VÃ­nculo de Apontamentos sem Recurso
+ * Model para Vínculo de Apontamentos sem Recurso
  * 
  * Tabela: FOCCO3I.TGAZIN_VINC_APONTAMENTO
  * 
  * Regras:
- * - Lista apontamentos que nÃ£o possuem RECURSO_ID
- * - Permite vinculaÃ§Ã£o manual a um funcionÃ¡rio
- * - Registra usuÃ¡rio que vinculou e data da vinculaÃ§Ã£o
- * - NÃ£o permite alteraÃ§Ã£o se o apontamento estiver fechado
- * - Apenas apontamentos vinculados entram no cÃ¡lculo da comissÃ£o
+ * - Lista apontamentos que não possuem RECURSO_ID
+ * - Permite vinculação manual a um funcionário
+ * - Registra usuário que vinculou e data da vinculação
+ * - Não permite alteração se o apontamento estiver fechado
+ * - Apenas apontamentos vinculados entram no cálculo da comissão
  */
 class VinculoApontamento
 {
@@ -29,7 +29,7 @@ class VinculoApontamento
     {
         $pdo = Database::getInstance('focco');
 
-        // Query simplificada: apontamentos que NÃƒO possuem registro em TORD_MOV_FAB_MAQ
+        // Query simplificada: apontamentos que NÃO possuem registro em TORD_MOV_FAB_MAQ
         $sql = "SELECT 
                     TM.ID AS APONTAMENTO_ID,
                     TM.DT_APONT AS DATA_APONTAMENTO,
@@ -94,27 +94,27 @@ class VinculoApontamento
     }
 
     /**
-     * Vincular recurso (mÃ¡quina) ao apontamento
+     * Vincular recurso (máquina) ao apontamento
      * Insere registro na TORD_MOV_FAB_MAQ
      * @param int $apontamentoId ID do movimento da ordem (TORDENS_MOVTO.ID)
-     * @param int $recursoId ID da mÃ¡quina/recurso (TMAQUINAS.ID)
+     * @param int $recursoId ID da máquina/recurso (TMAQUINAS.ID)
      * @return bool
      */
     public function vincularRecurso($apontamentoId, $recursoId)
     {
         $pdo = Database::getInstance('focco');
         
-        // Verificar se jÃ¡ existe
+        // Verificar se já existe
         $sqlCheck = "SELECT COUNT(*) FROM FOCCO3I.TORD_MOV_FAB_MAQ WHERE ORDEM_MOVT_ID = :apt_id";
         $stmtCheck = $pdo->prepare($sqlCheck);
         $stmtCheck->bindParam(':apt_id', $apontamentoId, PDO::PARAM_INT);
         $stmtCheck->execute();
         
         if ($stmtCheck->fetchColumn() > 0) {
-            throw new Exception('Este apontamento jÃ¡ possui um recurso vinculado');
+            throw new Exception('Este apontamento já possui um recurso vinculado');
         }
         
-        // Buscar prÃ³ximo ID (MAX + 1, pois a tabela pode nÃ£o ter sequence)
+        // Buscar próximo ID (MAX + 1, pois a tabela pode não ter sequence)
         $sqlMax = "SELECT NVL(MAX(ID), 0) + 1 FROM FOCCO3I.TORD_MOV_FAB_MAQ";
         $stmtMax = $pdo->query($sqlMax);
         $nextId = $stmtMax->fetchColumn();
@@ -129,15 +129,15 @@ class VinculoApontamento
     }
 
     /**
-     * Vincular apontamento a funcionÃ¡rio
+     * Vincular apontamento a funcionário
      * @param array $dados
-     * @return int ID do vÃ­nculo
+     * @return int ID do vínculo
      */
     public function vincular($dados)
     {
-        // Verificar se jÃ¡ existe vÃ­nculo para este apontamento
+        // Verificar se já existe vínculo para este apontamento
         if ($this->verificarVinculoExistente($dados['id_apontamento'])) {
-            throw new Exception('Este apontamento jÃ¡ possui um vÃ­nculo');
+            throw new Exception('Este apontamento já possui um vínculo');
         }
 
         $sql = "INSERT INTO FOCCO3I.TGAZIN_VINC_APONTAMENTO (
@@ -173,7 +173,7 @@ class VinculoApontamento
 
         $stmt->execute();
 
-        // Buscar o ID inserido (tabela usa IDENTITY, nÃ£o sequence)
+        // Buscar o ID inserido (tabela usa IDENTITY, não sequence)
         $sqlId = "SELECT ID_VINC_APT FROM FOCCO3I.TGAZIN_VINC_APONTAMENTO 
                   WHERE ID_APONTAMENTO = :id_apontamento";
         $stmtId = $pdo->prepare($sqlId);
@@ -188,7 +188,7 @@ class VinculoApontamento
     }
 
     /**
-     * Verificar se jÃ¡ existe vÃ­nculo para um apontamento
+     * Verificar se já existe vínculo para um apontamento
      * @param int $idApontamento
      * @return bool
      */
@@ -206,7 +206,7 @@ class VinculoApontamento
     }
 
     /**
-     * Buscar vÃ­nculo por ID
+     * Buscar vínculo por ID
      * @param int $id
      * @return array|null
      */
@@ -237,7 +237,7 @@ class VinculoApontamento
     }
 
     /**
-     * Buscar vÃ­nculo por ID do apontamento
+     * Buscar vínculo por ID do apontamento
      * @param int $idApontamento
      * @return array|null
      */
@@ -267,7 +267,7 @@ class VinculoApontamento
     }
 
     /**
-     * Listar vÃ­nculos existentes por perÃ­odo
+     * Listar vínculos existentes por período
      * @param array $filtros
      * @return array
      */
@@ -328,7 +328,7 @@ class VinculoApontamento
     }
 
     /**
-     * Atualizar vÃ­nculo
+     * Atualizar vínculo
      * @param int $id
      * @param array $dados
      * @return bool
@@ -338,9 +338,9 @@ class VinculoApontamento
         // Buscar dados anteriores
         $dadosAnteriores = $this->buscarPorId($id);
 
-        // Verificar se estÃ¡ fechado
+        // Verificar se está fechado
         if ($dadosAnteriores && $dadosAnteriores['FECHADO'] === 'S') {
-            throw new Exception('Este vÃ­nculo estÃ¡ fechado e nÃ£o pode ser alterado');
+            throw new Exception('Este vínculo está fechado e não pode ser alterado');
         }
 
         $sql = "UPDATE FOCCO3I.TGAZIN_VINC_APONTAMENTO SET
@@ -370,7 +370,7 @@ class VinculoApontamento
     }
 
     /**
-     * Excluir vÃ­nculo
+     * Excluir vínculo
      * @param int $id
      * @param int $usuId
      * @return bool
@@ -380,9 +380,9 @@ class VinculoApontamento
         // Buscar dados anteriores
         $dadosAnteriores = $this->buscarPorId($id);
 
-        // Verificar se estÃ¡ fechado
+        // Verificar se está fechado
         if ($dadosAnteriores && $dadosAnteriores['FECHADO'] === 'S') {
-            throw new Exception('Este vÃ­nculo estÃ¡ fechado e nÃ£o pode ser excluÃ­do');
+            throw new Exception('Este vínculo está fechado e não pode ser excluído');
         }
 
         $sql = "DELETE FROM FOCCO3I.TGAZIN_VINC_APONTAMENTO WHERE ID_VINC_APT = :id";
@@ -400,7 +400,7 @@ class VinculoApontamento
     }
 
     /**
-     * Fechar vÃ­nculo (nÃ£o permite mais alteraÃ§Ãµes)
+     * Fechar vínculo (não permite mais alterações)
      * @param int $id
      * @param int $usuId
      * @return bool
@@ -423,12 +423,12 @@ class VinculoApontamento
     }
 
     /**
-     * Vincular mÃºltiplos apontamentos de uma vez
+     * Vincular múltiplos apontamentos de uma vez
      * @param array $apontamentos Lista de IDs de apontamentos
-     * @param int $funcId ID do funcionÃ¡rio
+     * @param int $funcId ID do funcionário
      * @param int $recursoId ID do recurso (opcional)
      * @param int $emprId ID da empresa
-     * @param int $usuId ID do usuÃ¡rio
+     * @param int $usuId ID do usuário
      * @return array Resultado [sucesso, erros]
      */
     public function vincularEmLote($apontamentos, $funcId, $recursoId, $emprId, $usuId)
@@ -506,7 +506,7 @@ class VinculoApontamento
 
             $stmt->execute();
         } catch (\Exception $e) {
-            error_log('Erro ao registrar log de auditoria: ' . $e->getMessage());
+            // Log de erro silenciado - não interrompe a operação principal
         }
     }
 }
