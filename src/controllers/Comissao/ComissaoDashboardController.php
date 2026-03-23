@@ -13,12 +13,6 @@ use src\handlers\Comissao\ComissaoDashboardHandler;
  */
 class ComissaoDashboardController extends ctrl
 {
-    private ComissaoDashboardHandler $handler;
-
-    public function __construct()
-    {
-        $this->handler = new ComissaoDashboardHandler();
-    }
     /**
      * Página principal do Dashboard
      */
@@ -38,7 +32,7 @@ class ComissaoDashboardController extends ctrl
     public function getFiliais()
     {
         try {
-            $resultado = $this->handler->listarFiliais();
+            $resultado = ComissaoDashboardHandler::listarFiliais();
             self::response($resultado, 200);
         } catch (\Exception $e) {
             self::response([
@@ -62,7 +56,7 @@ class ComissaoDashboardController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->getResumoGeral($dataInicio, $dataFim, (int)$emprId);
+            $resultado = ComissaoDashboardHandler::getResumoGeral($dataInicio, $dataFim, (int)$emprId);
             self::response($resultado, 200);
         } catch (\Exception $e) {
             self::response([
@@ -87,7 +81,7 @@ class ComissaoDashboardController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->getRankingFuncionarios($dataInicio, $dataFim, (int)$emprId, $limite);
+            $resultado = ComissaoDashboardHandler::getRankingFuncionarios($dataInicio, $dataFim, (int)$emprId, $limite);
             self::response($resultado, 200);
         } catch (\Exception $e) {
             self::response([
@@ -111,7 +105,7 @@ class ComissaoDashboardController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->getResumoPorCentro($dataInicio, $dataFim, (int)$emprId);
+            $resultado = ComissaoDashboardHandler::getResumoPorCentro($dataInicio, $dataFim, (int)$emprId);
             self::response($resultado, 200);
         } catch (\Exception $e) {
             self::response([
@@ -136,7 +130,7 @@ class ComissaoDashboardController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->getResumoPorRecurso($dataInicio, $dataFim, (int)$emprId, $centroTrabId);
+            $resultado = ComissaoDashboardHandler::getResumoPorRecurso($dataInicio, $dataFim, (int)$emprId, $centroTrabId);
             self::response($resultado, 200);
         } catch (\Exception $e) {
             self::response([
@@ -161,7 +155,31 @@ class ComissaoDashboardController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->simularComissoes($dataInicio, $dataFim, (int)$emprId, $centroTrabId);
+            $resultado = ComissaoDashboardHandler::simularComissoes($dataInicio, $dataFim, (int)$emprId, $centroTrabId);
+            self::response($resultado, 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API - Dashboard completo com comissões calculadas
+     */
+    public function getDashboardCompleto()
+    {
+        try {
+            $dataInicio = $_GET['dataInicio'] ?? date('Y-m-01');
+            $dataFim = $_GET['dataFim'] ?? date('Y-m-d');
+            $emprId = $_GET['emprId'] ?? ($_SESSION['empresa']['id'] ?? null);
+
+            if (!$emprId) {
+                throw new \Exception('Empresa não selecionada');
+            }
+
+            $resultado = ComissaoDashboardHandler::getDashboardCompleto($dataInicio, $dataFim, (int)$emprId);
             self::response($resultado, 200);
         } catch (\Exception $e) {
             self::response([

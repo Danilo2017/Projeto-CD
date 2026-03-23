@@ -29,11 +29,24 @@ class Controller {
 
     private function _render($folder, $viewName, $viewData = []) {
         if(file_exists('../src/views/'.$folder.'/'.$viewName.'.php')) {
+            $viewData = array_merge($this->getCommonViewData(), $viewData);
             extract($viewData);
             $render = fn($vN, $vD = []) => $this->renderPartial($vN, $vD);
             $base = $this->getBaseUrl();
             require '../src/views/'.$folder.'/'.$viewName.'.php';
         }
+    }
+
+    /**
+     * Dados comuns de sessão injetados automaticamente em todas as views/partials.
+     */
+    private function getCommonViewData() {
+        return [
+            'is_admin' => $_SESSION['user']['is_admin'] ?? false,
+            'rotas_permitidas' => $_SESSION['user']['rotas_permitidas'] ?? [],
+            'tem_permissao' => $_SESSION['user']['tem_permissao'] ?? false,
+            'empresa' => $_SESSION['empresa'] ?? null,
+        ];
     }
 
     private function renderPartial($viewName, $viewData = []) {

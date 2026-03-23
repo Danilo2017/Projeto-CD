@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,19 +11,23 @@ if (!$acessoComissao) {
     'showNavbar' => true,
     'pageActive' => 'comissao-relatorio-diario',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="comissao-dashboard-container">
     <!-- Filtros -->
     <!-- Empresa da sessão (hidden) -->
-    <input type="hidden" id="filtroEmpresa" value="<?= $_SESSION['empresa']['id'] ?? '' ?>">
+    <input type="hidden" id="filtroEmpresa" value="<?= $empresa['id'] ?? '' ?>">
 
     <div class="dashboard-filters">
         <div class="filter-row d-flex align-items-end flex-wrap">
             <div class="filter-group">
-                <label for="filtroData">Data *</label>
-                <input type="date" id="filtroData" class="form-control" required>
+                <label for="filtroDataInicio">Data Início *</label>
+                <input type="date" id="filtroDataInicio" class="form-control" required>
+            </div>
+            <div class="filter-group">
+                <label for="filtroDataFim">Data Fim *</label>
+                <input type="date" id="filtroDataFim" class="form-control" required>
             </div>
             <div class="filter-group">
                 <label for="filtroCentro">Centro de Trabalho</label>

@@ -21,39 +21,14 @@ use src\models\Comissao\RegraFuncionario;
  */
 class ComissaoCadastroHandler
 {
-    private PontuacaoProduto $pontuacaoModel;
-    private FaixaComissao $faixaModel;
-    private CentroTrabalho $centroModel;
-    private Funcionario $funcionarioModel;
-    private Recurso $recursoModel;
-    private Empresa $empresaModel;
-    private FaltaFuncionario $faltaModel;
-    private Retrabalho $retrabalhoModel;
-    private VinculoApontamento $vinculoApontamentoModel;
-    private RegraFuncionario $regraModel;
-
-    public function __construct()
-    {
-        $this->pontuacaoModel = new PontuacaoProduto();
-        $this->faixaModel = new FaixaComissao();
-        $this->centroModel = new CentroTrabalho();
-        $this->funcionarioModel = new Funcionario();
-        $this->recursoModel = new Recurso();
-        $this->empresaModel = new Empresa();
-        $this->faltaModel = new FaltaFuncionario();
-        $this->retrabalhoModel = new Retrabalho();
-        $this->vinculoApontamentoModel = new VinculoApontamento();
-        $this->regraModel = new RegraFuncionario();
-    }
-
     // ==================== PONTUAÇÃO ====================
 
     /**
      * Listar pontuações cadastradas
      */
-    public function listarPontuacoes(?int $emprId, bool $incluirInativas = false): array
+    public static function listarPontuacoes(?int $emprId, bool $incluirInativas = false): array
     {
-        $pontuacoes = $this->pontuacaoModel->listarTodas($emprId);
+        $pontuacoes = PontuacaoProduto::listarTodas($emprId);
         
         if (!$incluirInativas) {
             $pontuacoes = array_filter($pontuacoes, fn($p) => $p['ATIVO'] === 'S');
@@ -66,15 +41,15 @@ class ComissaoCadastroHandler
     /**
      * Buscar pontuação por ID
      */
-    public function buscarPontuacao(int $id): ?array
+    public static function buscarPontuacao(int $id): ?array
     {
-        return $this->pontuacaoModel->buscarPorId($id);
+        return PontuacaoProduto::buscarPorId($id);
     }
 
     /**
      * Salvar nova pontuação
      */
-    public function salvarPontuacao(array $dados): int
+    public static function salvarPontuacao(array $dados): int
     {
         $dadosModel = [
             'empr_id' => $dados['empr_id'],
@@ -92,13 +67,13 @@ class ComissaoCadastroHandler
             throw new \Exception('Produto é obrigatório');
         }
         
-        return $this->pontuacaoModel->inserir($dadosModel);
+        return PontuacaoProduto::inserir($dadosModel);
     }
 
     /**
      * Atualizar pontuação existente
      */
-    public function atualizarPontuacao(int $id, array $dados): void
+    public static function atualizarPontuacao(int $id, array $dados): void
     {
         $dadosModel = [
             'pontos_up' => $dados['pontuacao_up'],
@@ -107,26 +82,32 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        $this->pontuacaoModel->atualizar($id, $dadosModel);
+        PontuacaoProduto::atualizar($id, $dadosModel);
     }
 
     /**
      * Excluir pontuação
      */
-    public function excluirPontuacao(int $id, ?int $usuarioId): void
+    public static function excluirPontuacao(int $id, ?int $usuarioId): void
     {
-        $this->pontuacaoModel->excluir($id, $usuarioId);
+        PontuacaoProduto::excluir($id, $usuarioId);
     }
 
     /**
      * Importar pontuações em lote
      */
-    public function importarPontuacoes(array $linhas, int $emprId, ?int $idUsuario): array
+    public static function importarPontuacoes(array $linhas, int $emprId, ?int $idUsuario): array
     {
         $pdo = Database::getInstance('focco');
         $importados = 0;
+        $atualizados = 0;
         $erros = [];
-        
+
+        // Cache para evitar consultas repetidas ao banco
+        $cacheItens = [];
+        $cacheCentros = [];
+        $cacheMascaras = [];
+
         foreach ($linhas as $idx => $linha) {
             $numLinha = $idx + 2;
             
@@ -143,65 +124,100 @@ class ComissaoCadastroHandler
                     continue;
                 }
                 if (empty($pontosUp)) {
-                    $erros[] = "Linha {$numLinha}: PONTOS_UP vazio";
+                    $erros[] = "Linha {$numLinha}: PONTOS_UP vazio (Item: {$codItem})";
                     continue;
                 }
                 if (empty($dtIni)) {
-                    $erros[] = "Linha {$numLinha}: DT_VIGENCIA_INI vazio";
+                    $erros[] = "Linha {$numLinha}: DT_VIGENCIA_INI vazio (Item: {$codItem})";
                     continue;
                 }
                 
                 $pontosUp = str_replace(',', '.', $pontosUp);
-                $dtIniFormatada = $this->converterData($dtIni);
-                $dtFimFormatada = !empty($dtFim) ? $this->converterData($dtFim) : null;
+                $dtIniFormatada = self::converterData($dtIni);
+                $dtFimFormatada = !empty($dtFim) ? self::converterData($dtFim) : null;
                 
                 if (!$dtIniFormatada) {
-                    $erros[] = "Linha {$numLinha}: Data início inválida ({$dtIni})";
+                    $erros[] = "Linha {$numLinha}: Data início inválida '{$dtIni}' (Item: {$codItem})";
                     continue;
                 }
                 
-                // Buscar ITEM_ID pelo COD_ITEM
-                $item = $this->buscarItemPorCodigo($pdo, $codItem, $emprId);
+                // Buscar ITEM_ID pelo COD_ITEM (com cache)
+                if (!isset($cacheItens[$codItem])) {
+                    $cacheItens[$codItem] = self::buscarItemPorCodigo($pdo, $codItem, $emprId);
+                }
+                $item = $cacheItens[$codItem];
                 if (!$item) {
-                    $erros[] = "Linha {$numLinha}: Produto '{$codItem}' não encontrado";
+                    $erros[] = "Linha {$numLinha}: Produto COD_ITEM={$codItem} não encontrado na tabela TITENS";
                     continue;
                 }
                 
-                // Buscar ID_CENTRO_TRAB pelo COD_CENTRO
+                // Buscar ID_CENTRO_TRAB pelo COD_CENTRO (com cache por empresa)
                 $centroTrabId = null;
                 if (!empty($codCentro)) {
-                    $centro = $this->buscarCentroPorCodigo($pdo, $codCentro);
+                    $cacheKeyCentro = $codCentro . '_' . $emprId;
+                    if (!isset($cacheCentros[$cacheKeyCentro])) {
+                        $cacheCentros[$cacheKeyCentro] = self::buscarCentroPorCodigo($pdo, $codCentro, $emprId);
+                    }
+                    $centro = $cacheCentros[$cacheKeyCentro];
                     if ($centro) {
                         $centroTrabId = $centro['ID'];
                     } else {
-                        $erros[] = "Linha {$numLinha}: Centro '{$codCentro}' não encontrado (ignorado)";
+                        $erros[] = "Linha {$numLinha}: Centro de Trabalho '{$codCentro}' não encontrado (Item: {$codItem})";
                     }
                 }
                 
+                // Validar máscara antes do insert (com cache)
                 $mascaraId = !empty($idMascara) ? (int)$idMascara : null;
+                if ($mascaraId !== null) {
+                    if (!isset($cacheMascaras[$mascaraId])) {
+                        $cacheMascaras[$mascaraId] = self::verificarMascaraExiste($pdo, $mascaraId);
+                    }
+                    if (!$cacheMascaras[$mascaraId]) {
+                        $erros[] = "Linha {$numLinha}: Máscara ID_MASCARA={$idMascara} não existe na tabela TMASC_ITEM (Item: {$codItem}). Verifique o ID correto com: SELECT ID, MASCARA FROM TMASC_ITEM WHERE ITEM_ID = (SELECT ID FROM TITENS WHERE COD_ITEM = {$codItem})";
+                        continue;
+                    }
+                }
                 
-                $dadosModel = [
-                    'empr_id' => $emprId,
-                    'item_id' => $item['ITEM_ID'],
-                    'itempr_id' => $item['ITEMPR_ID'],
-                    'mascara_id' => $mascaraId,
-                    'centro_trab_id' => $centroTrabId,
-                    'pontos_up' => $pontosUp,
-                    'dt_vigencia_ini' => $dtIniFormatada,
-                    'dt_vigencia_fim' => $dtFimFormatada,
-                    'id_usuario' => $idUsuario
-                ];
+                // Verificar se já existe pontuação para este item+máscara+centro
+                $existente = PontuacaoProduto::buscarDuplicata(
+                    $item['ITEM_ID'], $emprId, $mascaraId, $centroTrabId
+                );
                 
-                $this->pontuacaoModel->inserir($dadosModel);
-                $importados++;
+                if ($existente) {
+                    // Atualizar pontos da pontuação existente
+                    $dadosUpdate = [
+                        'pontos_up' => $pontosUp,
+                        'dt_vigencia_ini' => $dtIniFormatada,
+                        'dt_vigencia_fim' => $dtFimFormatada,
+                        'id_usuario' => $idUsuario
+                    ];
+                    PontuacaoProduto::atualizar((int)$existente['ID_PONTUACAO'], $dadosUpdate);
+                    $atualizados++;
+                } else {
+                    // Inserir nova pontuação
+                    $dadosModel = [
+                        'empr_id' => $emprId,
+                        'item_id' => $item['ITEM_ID'],
+                        'itempr_id' => $item['ITEMPR_ID'],
+                        'mascara_id' => $mascaraId,
+                        'centro_trab_id' => $centroTrabId,
+                        'pontos_up' => $pontosUp,
+                        'dt_vigencia_ini' => $dtIniFormatada,
+                        'dt_vigencia_fim' => $dtFimFormatada,
+                        'id_usuario' => $idUsuario
+                    ];
+                    PontuacaoProduto::inserir($dadosModel);
+                    $importados++;
+                }
                 
             } catch (\Exception $e) {
-                $erros[] = "Linha {$numLinha}: " . $e->getMessage();
+                $erros[] = "Linha {$numLinha}: Erro ao inserir Item {$codItem} - " . $e->getMessage();
             }
         }
         
         return [
             'importados' => $importados,
+            'atualizados' => $atualizados,
             'erros' => $erros,
             'total' => count($linhas)
         ];
@@ -212,62 +228,62 @@ class ComissaoCadastroHandler
     /**
      * Listar faixas de comissão
      */
-    public function listarFaixas(?int $emprId, ?int $centroTrabId = null, bool $incluirInativas = false): array
+    public static function listarFaixas(?int $emprId, ?int $centroTrabId = null, bool $incluirInativas = false): array
     {
         if ($incluirInativas) {
-            return $this->faixaModel->listarTodas($emprId);
+            return FaixaComissao::listarTodas($emprId);
         }
-        return $this->faixaModel->listarAtivas($emprId, $centroTrabId);
+        return FaixaComissao::listarAtivas($emprId, $centroTrabId);
     }
 
     /**
      * Buscar faixa por ID
      */
-    public function buscarFaixa(int $id): ?array
+    public static function buscarFaixa(int $id): ?array
     {
-        return $this->faixaModel->buscarPorId($id);
+        return FaixaComissao::buscarPorId($id);
     }
 
     /**
      * Salvar nova faixa
      */
-    public function salvarFaixa(array $dados): int
+    public static function salvarFaixa(array $dados): int
     {
-        $dados = $this->normalizarDadosFaixa($dados);
+        $dados = self::normalizarDadosFaixa($dados);
         
         if (!in_array($dados['tipo'], [FaixaComissao::TIPO_PERCENTUAL, FaixaComissao::TIPO_QUANTIDADE])) {
             throw new \Exception('Tipo de faixa inválido');
         }
         
-        $conflito = $this->faixaModel->verificarConflito($dados);
+        $conflito = FaixaComissao::verificarConflito($dados);
         if ($conflito) {
-            throw new \Exception($this->formatarMensagemConflito($conflito));
+            throw new \Exception(self::formatarMensagemConflito($conflito));
         }
         
-        return $this->faixaModel->inserir($dados);
+        return FaixaComissao::inserir($dados);
     }
 
     /**
      * Atualizar faixa existente
      */
-    public function atualizarFaixa(int $id, array $dados): void
+    public static function atualizarFaixa(int $id, array $dados): void
     {
-        $dados = $this->normalizarDadosFaixa($dados);
+        $dados = self::normalizarDadosFaixa($dados);
         
-        $conflito = $this->faixaModel->verificarConflito($dados, $id);
+        $conflito = FaixaComissao::verificarConflito($dados, $id);
         if ($conflito) {
-            throw new \Exception($this->formatarMensagemConflito($conflito));
+            throw new \Exception(self::formatarMensagemConflito($conflito));
         }
         
-        $this->faixaModel->atualizar($id, $dados);
+        FaixaComissao::atualizar($id, $dados);
     }
 
     /**
      * Inativar faixa
      */
-    public function inativarFaixa(int $id, ?int $usuarioId): void
+    public static function inativarFaixa(int $id, ?int $usuarioId): void
     {
-        $this->faixaModel->inativar($id, $usuarioId);
+        FaixaComissao::inativar($id, $usuarioId);
     }
 
     // ==================== DADOS AUXILIARES ====================
@@ -275,52 +291,90 @@ class ComissaoCadastroHandler
     /**
      * Listar centros de trabalho
      */
-    public function listarCentrosTrabalho(?int $emprId): array
+    public static function listarCentrosTrabalho(?int $emprId): array
     {
-        return $this->centroModel->listarTodos($emprId);
+        return CentroTrabalho::listarTodos($emprId);
     }
 
     /**
      * Listar funcionários ativos
      */
-    public function listarFuncionarios(?int $emprId, ?string $busca = null): array
+    public static function listarFuncionarios(?int $emprId, ?string $busca = null): array
     {
-        return $this->funcionarioModel->listarAtivos($emprId, $busca);
+        return Funcionario::listarAtivos($emprId, $busca);
     }
 
     /**
      * Listar recursos/máquinas
      */
-    public function listarRecursos(?int $emprId, ?int $centroTrabId = null): array
+    public static function listarRecursos(?int $emprId, ?int $centroTrabId = null): array
     {
-        return $this->recursoModel->listarAtivos($emprId, $centroTrabId);
+        return Recurso::listarAtivos($emprId, $centroTrabId);
     }
 
     /**
      * Listar empresas para select
      */
-    public function listarEmpresas(): array
+    public static function listarEmpresas(): array
     {
-        return $this->empresaModel->listarParaSelect();
+        return Empresa::listarParaSelect();
     }
 
     /**
      * Buscar empresa por ID
      */
-    public function buscarEmpresa(int $id): ?array
+    public static function buscarEmpresa(int $id): ?array
     {
-        return $this->empresaModel->buscarPorId($id);
+        return Empresa::buscarPorId($id);
     }
 
     /**
-     * Buscar produtos com filtro
+     * Listar produtos (sem paginação, limite 200)
      */
-    public function buscarProdutos(?int $emprId, ?string $termo, int $page = 1, int $limit = 30): array
+    public static function listarProdutos(?int $emprId, ?string $termo): array
+    {
+        $pdo = Database::getInstance('focco');
+        
+        $sqlBase = self::getSqlBaseProdutos();
+        $params = [];
+        
+        if ($emprId) {
+            $sqlBase .= " AND TEMPRESAS.ID = :empr_id";
+            $params['empr_id'] = $emprId;
+        }
+        
+        if ($termo) {
+            $sqlBase .= " AND (UPPER(TITENS.COD_ITEM) LIKE UPPER(:termo) OR UPPER(TITENS.DESC_TECNICA) LIKE UPPER(:termo2))";
+            $params['termo'] = '%' . $termo . '%';
+            $params['termo2'] = '%' . $termo . '%';
+        }
+        
+        $sql = "SELECT DISTINCT
+                    TEMPRESAS.COD_EMP,
+                    TITENS.ID AS ID_ITEM,
+                    TITENS.COD_ITEM,
+                    TITENS.DESC_TECNICA AS DESCRICAO,
+                    TMASC_ITEM.ID AS ID_MASCARA,
+                    TMASC_ITEM.MASCARA,
+                    TITENS_EMPR.ID AS ITEMPR_ID
+                " . $sqlBase . "
+                ORDER BY TITENS.DESC_TECNICA ASC
+                FETCH FIRST 200 ROWS ONLY";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Buscar produtos com filtro e paginação (formato Select2)
+     */
+    public static function buscarProdutos(?int $emprId, ?string $termo, int $page = 1, int $limit = 30): array
     {
         $offset = ($page - 1) * $limit;
         $pdo = Database::getInstance('focco');
         
-        $sqlBase = $this->getSqlBaseProdutos();
+        $sqlBase = self::getSqlBaseProdutos();
         $params = [];
         
         if ($emprId) {
@@ -367,7 +421,7 @@ class ComissaoCadastroHandler
         $produtos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
         return [
-            'produtos' => $this->formatarProdutosSelect2($produtos),
+            'produtos' => self::formatarProdutosSelect2($produtos),
             'total' => $total,
             'hasMore' => ($offset + $limit) < $total
         ];
@@ -378,7 +432,7 @@ class ComissaoCadastroHandler
     /**
      * Listar vínculos centro/recurso/funcionário
      */
-    public function listarVinculos(array $filtros): array
+    public static function listarVinculos(array $filtros): array
     {
         return Vinculo::listar($filtros) ?: [];
     }
@@ -386,7 +440,7 @@ class ComissaoCadastroHandler
     /**
      * Listar centros que possuem vínculo
      */
-    public function listarCentrosComVinculo(?int $emprId): array
+    public static function listarCentrosComVinculo(?int $emprId): array
     {
         return Vinculo::listarCentrosComVinculo($emprId);
     }
@@ -394,7 +448,7 @@ class ComissaoCadastroHandler
     /**
      * Listar recursos que possuem vínculo
      */
-    public function listarRecursosComVinculo(?int $emprId, ?int $centroTrabId = null): array
+    public static function listarRecursosComVinculo(?int $emprId, ?int $centroTrabId = null): array
     {
         return Vinculo::listarRecursosComVinculo($emprId, $centroTrabId);
     }
@@ -402,7 +456,7 @@ class ComissaoCadastroHandler
     /**
      * Listar funcionários que possuem vínculo
      */
-    public function listarFuncionariosComVinculo(?int $emprId, ?string $busca = null): array
+    public static function listarFuncionariosComVinculo(?int $emprId, ?string $busca = null): array
     {
         return Vinculo::listarFuncionariosComVinculo($emprId, $busca);
     }
@@ -410,7 +464,7 @@ class ComissaoCadastroHandler
     /**
      * Salvar novo vínculo
      */
-    public function salvarVinculo(array $dados): bool
+    public static function salvarVinculo(array $dados): bool
     {
         $tipoVinculo = $dados['tipo_vinculo'] ?? 'N';
         $emprId = $dados['empr_id'] ?? 1;
@@ -434,7 +488,7 @@ class ComissaoCadastroHandler
     /**
      * Atualizar vínculo existente
      */
-    public function atualizarVinculo(int $id, array $dados): bool
+    public static function atualizarVinculo(int $id, array $dados): bool
     {
         $tipoVinculo = $dados['tipo_vinculo'] ?? 'N';
         
@@ -456,7 +510,7 @@ class ComissaoCadastroHandler
     /**
      * Alterar status do vínculo
      */
-    public function alterarStatusVinculo(int $id, string $ativo): bool
+    public static function alterarStatusVinculo(int $id, string $ativo): bool
     {
         $ativo = $ativo === 'S' ? 'S' : 'N';
         return Vinculo::alterarStatus($id, $ativo);
@@ -465,7 +519,7 @@ class ComissaoCadastroHandler
     /**
      * Excluir vínculo
      */
-    public function excluirVinculo(int $id): bool
+    public static function excluirVinculo(int $id): bool
     {
         return Vinculo::excluir($id);
     }
@@ -475,15 +529,15 @@ class ComissaoCadastroHandler
     /**
      * Listar faltas de funcionários
      */
-    public function listarFaltas(array $filtros): array
+    public static function listarFaltas(array $filtros): array
     {
-        return $this->faltaModel->listar($filtros);
+        return FaltaFuncionario::listar($filtros);
     }
 
     /**
      * Registrar nova falta
      */
-    public function salvarFalta(array $dados): int
+    public static function salvarFalta(array $dados): int
     {
         $dadosModel = [
             'id_empr' => $dados['id_empr'] ?? null,
@@ -494,13 +548,13 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        return $this->faltaModel->registrar($dadosModel);
+        return FaltaFuncionario::registrar($dadosModel);
     }
 
     /**
      * Atualizar falta
      */
-    public function atualizarFalta(int $id, array $dados): void
+    public static function atualizarFalta(int $id, array $dados): void
     {
         $dadosModel = [
             'dt_falta' => $dados['dt_falta'],
@@ -509,15 +563,15 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        $this->faltaModel->atualizar($id, $dadosModel);
+        FaltaFuncionario::atualizar($id, $dadosModel);
     }
 
     /**
      * Excluir falta
      */
-    public function excluirFalta(int $id, ?int $usuarioId): void
+    public static function excluirFalta(int $id, ?int $usuarioId): void
     {
-        $this->faltaModel->excluir($id, $usuarioId);
+        FaltaFuncionario::excluir($id, $usuarioId);
     }
 
     // ==================== RETRABALHO ====================
@@ -525,15 +579,15 @@ class ComissaoCadastroHandler
     /**
      * Listar retrabalhos
      */
-    public function listarRetrabalhos(array $filtros): array
+    public static function listarRetrabalhos(array $filtros): array
     {
-        return $this->retrabalhoModel->listar($filtros);
+        return Retrabalho::listar($filtros);
     }
 
     /**
      * Registrar retrabalho
      */
-    public function salvarRetrabalho(array $dados): int
+    public static function salvarRetrabalho(array $dados): int
     {
         $dadosModel = [
             'id_empr' => $dados['id_empr'] ?? null,
@@ -550,13 +604,13 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        return $this->retrabalhoModel->inserir($dadosModel);
+        return Retrabalho::inserir($dadosModel);
     }
 
     /**
      * Atualizar retrabalho
      */
-    public function atualizarRetrabalho(int $id, array $dados): void
+    public static function atualizarRetrabalho(int $id, array $dados): void
     {
         $dadosModel = [
             'id_funcionario' => $dados['id_funcionario'],
@@ -572,15 +626,15 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        $this->retrabalhoModel->atualizar($id, $dadosModel);
+        Retrabalho::atualizar($id, $dadosModel);
     }
 
     /**
      * Excluir retrabalho
      */
-    public function excluirRetrabalho(int $id, ?int $usuarioId): void
+    public static function excluirRetrabalho(int $id, ?int $usuarioId): void
     {
-        $this->retrabalhoModel->excluir($id, $usuarioId);
+        Retrabalho::excluir($id, $usuarioId);
     }
 
     // ==================== VÍNCULO DE APONTAMENTOS ====================
@@ -588,31 +642,31 @@ class ComissaoCadastroHandler
     /**
      * Listar apontamentos sem recurso
      */
-    public function listarApontamentosSemRecurso(array $filtros): array
+    public static function listarApontamentosSemRecurso(array $filtros): array
     {
-        return $this->vinculoApontamentoModel->listarApontamentosSemRecurso($filtros);
+        return VinculoApontamento::listarApontamentosSemRecurso($filtros);
     }
 
     /**
      * Listar vínculos de apontamentos
      */
-    public function listarVinculosApontamento(array $filtros): array
+    public static function listarVinculosApontamento(array $filtros): array
     {
-        return $this->vinculoApontamentoModel->listarVinculos($filtros);
+        return VinculoApontamento::listarVinculos($filtros);
     }
 
     /**
      * Vincular recurso ao apontamento
      */
-    public function vincularRecurso(int $apontamentoId, int $recursoId): bool
+    public static function vincularRecurso(int $apontamentoId, int $recursoId): bool
     {
-        return $this->vinculoApontamentoModel->vincularRecurso($apontamentoId, $recursoId);
+        return VinculoApontamento::vincularRecurso($apontamentoId, $recursoId);
     }
 
     /**
      * Vincular apontamento a funcionário
      */
-    public function vincularApontamento(array $dados): int
+    public static function vincularApontamento(array $dados): int
     {
         $dadosModel = [
             'id_empr' => $dados['id_empr'] ?? null,
@@ -623,15 +677,15 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        return $this->vinculoApontamentoModel->vincular($dadosModel);
+        return VinculoApontamento::vincular($dadosModel);
     }
 
     /**
      * Vincular apontamentos em lote
      */
-    public function vincularApontamentosLote(array $dados): array
+    public static function vincularApontamentosLote(array $dados): array
     {
-        return $this->vinculoApontamentoModel->vincularEmLote(
+        return VinculoApontamento::vincularEmLote(
             $dados['apontamentos'],
             $dados['id_funcionario'],
             $dados['id_recurso'] ?? null,
@@ -643,9 +697,9 @@ class ComissaoCadastroHandler
     /**
      * Atualizar vínculo de apontamento
      */
-    public function atualizarVinculoApontamento(int $id, array $dados): void
+    public static function atualizarVinculoApontamento(int $id, array $dados): void
     {
-        $this->vinculoApontamentoModel->atualizar($id, [
+        VinculoApontamento::atualizar($id, [
             'id_funcionario' => $dados['id_funcionario'],
             'id_recurso' => $dados['id_recurso'] ?? null,
             'observacao' => $dados['observacao'] ?? null,
@@ -656,9 +710,9 @@ class ComissaoCadastroHandler
     /**
      * Excluir vínculo de apontamento
      */
-    public function excluirVinculoApontamento(int $id, ?int $usuarioId): void
+    public static function excluirVinculoApontamento(int $id, ?int $usuarioId): void
     {
-        $this->vinculoApontamentoModel->excluir($id, $usuarioId);
+        VinculoApontamento::excluir($id, $usuarioId);
     }
 
     // ==================== REGRAS ESPECÍFICAS ====================
@@ -666,23 +720,23 @@ class ComissaoCadastroHandler
     /**
      * Listar regras específicas
      */
-    public function listarRegras(array $filtros): array
+    public static function listarRegras(array $filtros): array
     {
-        return $this->regraModel->listar($filtros) ?: [];
+        return RegraFuncionario::listar($filtros) ?: [];
     }
 
     /**
      * Buscar regra por ID
      */
-    public function buscarRegra(int $id): ?array
+    public static function buscarRegra(int $id): ?array
     {
-        return $this->regraModel->buscarPorId($id);
+        return RegraFuncionario::buscarPorId($id);
     }
 
     /**
      * Salvar nova regra
      */
-    public function salvarRegra(array $dados): int
+    public static function salvarRegra(array $dados): int
     {
         $dadosModel = [
             'id_empr' => $dados['id_empr'] ?? null,
@@ -698,15 +752,15 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        return $this->regraModel->inserir($dadosModel);
+        return RegraFuncionario::inserir($dadosModel);
     }
 
     /**
      * Atualizar regra existente
      */
-    public function atualizarRegra(int $id, array $dados): void
+    public static function atualizarRegra(int $id, array $dados): void
     {
-        $regraAtual = $this->regraModel->buscarPorId($id);
+        $regraAtual = RegraFuncionario::buscarPorId($id);
         
         if (!$regraAtual) {
             throw new \Exception('Regra não encontrada');
@@ -725,15 +779,15 @@ class ComissaoCadastroHandler
             'id_usuario' => $dados['id_usuario'] ?? null
         ];
         
-        $this->regraModel->atualizar($id, $dadosModel);
+        RegraFuncionario::atualizar($id, $dadosModel);
     }
 
     /**
      * Inativar regra
      */
-    public function inativarRegra(int $id, ?int $usuarioId): void
+    public static function inativarRegra(int $id, ?int $usuarioId): void
     {
-        $this->regraModel->inativar($id, $usuarioId);
+        RegraFuncionario::inativar($id, $usuarioId);
     }
 
     // ==================== MÉTODOS PRIVADOS ====================
@@ -741,7 +795,7 @@ class ComissaoCadastroHandler
     /**
      * Converter data DD/MM/AAAA ou YYYY-MM-DD para YYYY-MM-DD
      */
-    private function converterData(?string $data): ?string
+    private static function converterData(?string $data): ?string
     {
         if (empty($data)) return null;
         
@@ -759,7 +813,7 @@ class ComissaoCadastroHandler
     /**
      * Buscar item pelo código
      */
-    private function buscarItemPorCodigo(\PDO $pdo, string $codItem, int $emprId): ?array
+    private static function buscarItemPorCodigo(\PDO $pdo, string $codItem, int $emprId): ?array
     {
         $sql = "SELECT I.ID AS ITEM_ID, IE.ID AS ITEMPR_ID 
                 FROM FOCCO3I.TITENS I
@@ -774,21 +828,34 @@ class ComissaoCadastroHandler
     }
 
     /**
-     * Buscar centro pelo código
+     * Buscar centro pelo código e empresa
      */
-    private function buscarCentroPorCodigo(\PDO $pdo, string $codCentro): ?array
+    private static function buscarCentroPorCodigo(\PDO $pdo, string $codCentro, int $emprId): ?array
     {
-        $sql = "SELECT ID FROM FOCCO3I.TCENTROS_TRAB WHERE COD_CENTRO = :cod_centro FETCH FIRST 1 ROW ONLY";
+        $sql = "SELECT ID FROM FOCCO3I.TCENTROS_TRAB WHERE COD_CENTRO = :cod_centro AND EMPR_ID = :empr_id FETCH FIRST 1 ROW ONLY";
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':cod_centro', $codCentro, \PDO::PARAM_STR);
+        $stmt->bindValue(':empr_id', $emprId, \PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
     }
 
     /**
+     * Verificar se uma máscara existe na tabela TMASC_ITEM
+     */
+    private static function verificarMascaraExiste(\PDO $pdo, int $mascaraId): bool
+    {
+        $sql = "SELECT 1 FROM FOCCO3I.TMASC_ITEM WHERE ID = :id FETCH FIRST 1 ROW ONLY";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $mascaraId, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ? true : false;
+    }
+
+    /**
      * Normalizar dados da faixa
      */
-    private function normalizarDadosFaixa(array $dados): array
+    private static function normalizarDadosFaixa(array $dados): array
     {
         $dados['tipo'] = $dados['tipo'] ?? $dados['tipo_faixa'] ?? null;
         $dados['ponto_inicial'] = $dados['ponto_inicial'] ?? $dados['pontoInicial'] ?? null;
@@ -808,7 +875,7 @@ class ComissaoCadastroHandler
     /**
      * Formatar mensagem de conflito de faixa
      */
-    private function formatarMensagemConflito(array $conflito): string
+    private static function formatarMensagemConflito(array $conflito): string
     {
         $centroNome = $conflito['DESC_CENTRO'] 
             ? $conflito['COD_CENTRO'] . ' - ' . $conflito['DESC_CENTRO'] 
@@ -822,7 +889,7 @@ class ComissaoCadastroHandler
     /**
      * SQL base para busca de produtos
      */
-    private function getSqlBaseProdutos(): string
+    private static function getSqlBaseProdutos(): string
     {
         return "FROM FOCCO3I.TGRP_CLAS_ITE TGRP_CLAS_ITE,
                      FOCCO3I.TITENS_ENGENHARIA TITENS_ENGENHARIA,
@@ -854,7 +921,7 @@ class ComissaoCadastroHandler
     /**
      * Formatar produtos para Select2
      */
-    private function formatarProdutosSelect2(array $produtos): array
+    private static function formatarProdutosSelect2(array $produtos): array
     {
         $results = [];
         foreach ($produtos as $produto) {

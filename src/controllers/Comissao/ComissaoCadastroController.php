@@ -12,12 +12,6 @@ use src\handlers\Comissao\ComissaoCadastroHandler;
  */
 class ComissaoCadastroController extends ctrl
 {
-    private ComissaoCadastroHandler $handler;
-
-    public function __construct()
-    {
-        $this->handler = new ComissaoCadastroHandler();
-    }
     // ==================== PÁGINAS ====================
 
     /**
@@ -71,7 +65,7 @@ class ComissaoCadastroController extends ctrl
         $this->render('comissao/vinculo', $dados);
     }
 
-    // ==================== API PONTUAÃ‡ÃƒO ====================
+    // ==================== API PONTUAÇÃO ====================
 
     /**
      * Listar pontuações (API)
@@ -84,7 +78,7 @@ class ComissaoCadastroController extends ctrl
             // Se id foi passado, busca apenas esse registro
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $pontuacao = $this->handler->buscarPontuacao((int)$id);
+                $pontuacao = ComissaoCadastroHandler::buscarPontuacao((int)$id);
                 if (!$pontuacao) {
                     self::response([
                         'success' => false,
@@ -105,7 +99,7 @@ class ComissaoCadastroController extends ctrl
             // Verificar se deve incluir inativos
             $incluirInativas = isset($_GET['incluirInativas']) && $_GET['incluirInativas'] === 'true';
             
-            $pontuacoes = $this->handler->listarPontuacoes($emprId ? (int)$emprId : null, $incluirInativas);
+            $pontuacoes = ComissaoCadastroHandler::listarPontuacoes($emprId ? (int)$emprId : null, $incluirInativas);
 
             self::response([
                 'success' => true,
@@ -133,7 +127,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID é obrigatório');
             }
             
-            $pontuacao = $this->handler->buscarPontuacao((int)$id);
+            $pontuacao = ComissaoCadastroHandler::buscarPontuacao((int)$id);
 
             if (!$pontuacao) {
                 throw new \Exception('Pontuação não encontrada');
@@ -198,7 +192,7 @@ class ComissaoCadastroController extends ctrl
             }
             
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
-            $id = $this->handler->salvarPontuacao($dados);
+            $id = ComissaoCadastroHandler::salvarPontuacao($dados);
 
             self::response([
                 'success' => true,
@@ -233,7 +227,7 @@ class ComissaoCadastroController extends ctrl
             
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $this->handler->atualizarPontuacao((int)$id, $dados);
+            ComissaoCadastroHandler::atualizarPontuacao((int)$id, $dados);
 
             self::response([
                 'success' => true,
@@ -262,7 +256,7 @@ class ComissaoCadastroController extends ctrl
             
             $usuId = $_SESSION['user']['id'] ?? null;
             
-            $this->handler->excluirPontuacao((int)$id, $usuId);
+            ComissaoCadastroHandler::excluirPontuacao((int)$id, $usuId);
 
             self::response([
                 'success' => true,
@@ -295,14 +289,15 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('Empresa não identificada na sessão');
             }
             
-            $resultado = $this->handler->importarPontuacoes($dados['linhas'], (int)$emprId, $idUsuario);
+            $resultado = ComissaoCadastroHandler::importarPontuacoes($dados['linhas'], (int)$emprId, $idUsuario);
             
             self::response([
                 'success' => true,
                 'importados' => $resultado['importados'],
+                'atualizados' => $resultado['atualizados'],
                 'erros' => $resultado['erros'],
                 'total' => $resultado['total'],
-                'message' => "Importação concluída: {$resultado['importados']} registros importados"
+                'message' => "Importação concluída: {$resultado['importados']} novos, {$resultado['atualizados']} atualizados"
             ], 200);
             
         } catch (\Exception $e) {
@@ -312,26 +307,7 @@ class ComissaoCadastroController extends ctrl
             ], 400);
         }
     }
-    
-    /**
-     * Converte data DD/MM/AAAA ou YYYY-MM-DD para YYYY-MM-DD
-     */
-    private static function converterData($data)
-    {
-        if (empty($data)) return null;
-        
-        // Já está no formato YYYY-MM-DD
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $data)) {
-            return $data;
-        }
-        
-        // Formato DD/MM/AAAA
-        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $data, $m)) {
-            return "{$m[3]}-{$m[2]}-{$m[1]}";
-        }
-        
-        return null;
-    }
+
 
     // ==================== API FAIXAS ====================
 
@@ -344,7 +320,7 @@ class ComissaoCadastroController extends ctrl
             // Se veio id, busca faixa específica
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $faixa = $this->handler->buscarFaixa((int)$id);
+                $faixa = ComissaoCadastroHandler::buscarFaixa((int)$id);
                 
                 if (!$faixa) {
                     throw new \Exception('Faixa não encontrada');
@@ -362,9 +338,9 @@ class ComissaoCadastroController extends ctrl
             $incluirInativas = $_GET['incluir_inativas'] ?? false;
             
             if ($incluirInativas) {
-                $faixas = $this->handler->listarFaixas($emprId ? (int)$emprId : null);
+                $faixas = ComissaoCadastroHandler::listarFaixas($emprId ? (int)$emprId : null);
             } else {
-                $faixas = $this->handler->listarFaixas($emprId ? (int)$emprId : null, $centroTrabId ? (int)$centroTrabId : null);
+                $faixas = ComissaoCadastroHandler::listarFaixas($emprId ? (int)$emprId : null, $centroTrabId ? (int)$centroTrabId : null);
             }
 
             self::response([
@@ -392,7 +368,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID é obrigatório');
             }
             
-            $faixa = $this->handler->buscarFaixa((int)$id);
+            $faixa = ComissaoCadastroHandler::buscarFaixa((int)$id);
 
             if (!$faixa) {
                 throw new \Exception('Faixa não encontrada');
@@ -452,12 +428,12 @@ class ComissaoCadastroController extends ctrl
                 $centroNome = $conflito['DESC_CENTRO'] ? $conflito['COD_CENTRO'] . ' - ' . $conflito['DESC_CENTRO'] : 'Todos';
                 throw new \Exception(
                     'Já existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
-                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? 'âˆž') . ' ' .
+                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? '∞') . ' ' .
                     'que conflita com a vigência informada.'
                 );
             }
             
-            $id = $this->handler->salvarFaixa($dados);
+            $id = ComissaoCadastroHandler::salvarFaixa($dados);
 
             self::response([
                 'success' => true,
@@ -513,12 +489,12 @@ class ComissaoCadastroController extends ctrl
                 $centroNome = $conflito['DESC_CENTRO'] ? $conflito['COD_CENTRO'] . ' - ' . $conflito['DESC_CENTRO'] : 'Todos';
                 throw new \Exception(
                     'Já existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
-                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? 'âˆž') . ' ' .
+                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? '∞') . ' ' .
                     'que conflita com a vigência informada.'
                 );
             }
             
-            $this->handler->atualizarFaixa((int)$id, $dados);
+            ComissaoCadastroHandler::atualizarFaixa((int)$id, $dados);
 
             self::response([
                 'success' => true,
@@ -547,7 +523,7 @@ class ComissaoCadastroController extends ctrl
             
             $usuId = $_SESSION['user']['id'] ?? null;
             
-            $this->handler->inativarFaixa((int)$id, $usuId);
+            ComissaoCadastroHandler::inativarFaixa((int)$id, $usuId);
 
             self::response([
                 'success' => true,
@@ -573,7 +549,7 @@ class ComissaoCadastroController extends ctrl
             // Prioriza parâmetro GET, senão usa empresa da sessão
             $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null;
             
-            $centros = $this->handler->listarCentrosTrabalho($emprId ? (int)$emprId : null);
+            $centros = ComissaoCadastroHandler::listarCentrosTrabalho($emprId ? (int)$emprId : null);
 
             self::response([
                 'success' => true,
@@ -598,7 +574,7 @@ class ComissaoCadastroController extends ctrl
             // Prioriza parâmetro GET, senão usa empresa da sessão
             $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null;
             $busca = $_GET['busca'] ?? null;
-            $funcionarios = $this->handler->listarFuncionarios($emprId ? (int)$emprId : null, $busca);
+            $funcionarios = ComissaoCadastroHandler::listarFuncionarios($emprId ? (int)$emprId : null, $busca);
             self::response([
                 'success' => true,
                 'data' => $funcionarios,
@@ -623,7 +599,7 @@ class ComissaoCadastroController extends ctrl
             $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null;
             $centroTrabId = $_GET['centroTrabId'] ?? $_GET['centro_trab_id'] ?? $_GET['centro_id'] ?? null;
             
-            $recursos = $this->handler->listarRecursos($emprId ? (int)$emprId : null, $centroTrabId ? (int)$centroTrabId : null);
+            $recursos = ComissaoCadastroHandler::listarRecursos($emprId ? (int)$emprId : null, $centroTrabId ? (int)$centroTrabId : null);
 
             self::response([
                 'success' => true,
@@ -644,66 +620,13 @@ class ComissaoCadastroController extends ctrl
     public function getProdutos()
     {
         try {
-            // Prioriza parâmetro GET, senão usa empresa da sessão
             $emprId = $_GET['empr_id'] ?? $_GET['emprId'] ?? $_SESSION['empresa']['id'] ?? null;
             $termo = $_GET['termo'] ?? null;
             
-            $pdo = \core\Database::getInstance('focco');
-            
-            // Query completa com dados de itens fabricados
-            $sql = "SELECT DISTINCT
-                        TEMPRESAS.COD_EMP,
-                        TITENS.ID AS ID_ITEM,
-                        TITENS.COD_ITEM,
-                        TITENS.DESC_TECNICA AS DESCRICAO,
-                        TMASC_ITEM.ID AS ID_MASCARA,
-                        TMASC_ITEM.MASCARA,
-                        TITENS_EMPR.ID AS ITEMPR_ID
-                    FROM FOCCO3I.TGRP_CLAS_ITE TGRP_CLAS_ITE,
-                         FOCCO3I.TITENS_ENGENHARIA TITENS_ENGENHARIA,
-                         FOCCO3I.TITENS_ENG_CONF TITENS_ENG_CONF,
-                         FOCCO3I.TEMPRESAS TEMPRESAS,
-                         FOCCO3I.TITENS TITENS,
-                         FOCCO3I.TITENS_EMPR TITENS_EMPR,
-                         FOCCO3I.TMASC_ITEM TMASC_ITEM,
-                         FOCCO3I.TITENS_ESTOQUE TITENS_ESTOQUE,
-                         FOCCO3I.TALMOXARIFADOS TALMOXARIFADOS,
-                         FOCCO3I.TCAD_COD_BARRA TCAD_COD_BARRA,
-                         FOCCO3I.TITENS_CONTABIL TITENS_CONTABIL,
-                         FOCCO3I.TCLAS_FISC TCLAS_FISC
-                    WHERE TGRP_CLAS_ITE.ID = TITENS_ESTOQUE.GRP_CLAS_ID
-                      AND TITENS_ENGENHARIA.ID = TITENS_ENG_CONF.ITEG_ID(+)
-                      AND TEMPRESAS.ID = TITENS_EMPR.EMPR_ID
-                      AND TITENS.ID = TITENS_EMPR.ITEM_ID
-                      AND TITENS_EMPR.ID = TITENS_CONTABIL.ITEMPR_ID
-                      AND TITENS_EMPR.ID = TITENS_ESTOQUE.ITEMPR_ID
-                      AND TITENS_EMPR.ID = TMASC_ITEM.ITEMPR_ID(+)
-                      AND TITENS_EMPR.ID = TITENS_ENGENHARIA.ITEMPR_ID(+)
-                      AND TMASC_ITEM.ID = TCAD_COD_BARRA.TMASC_ITEM_ID(+)
-                      AND TMASC_ITEM.ID = TITENS_ENG_CONF.TMASC_ITEM_ID(+)
-                      AND TALMOXARIFADOS.ID = TITENS_ESTOQUE.ALMOX_ID
-                      AND TCLAS_FISC.ID = TITENS_CONTABIL.CLAS_FISC_ID
-                      AND TITENS_ENGENHARIA.TP_ITEM = 'F'";
-            
-            $params = [];
-            
-            if ($emprId) {
-                $sql .= " AND TEMPRESAS.ID = :empr_id";
-                $params['empr_id'] = $emprId;
-            }
-            
-            if ($termo) {
-                $sql .= " AND (UPPER(TITENS.COD_ITEM) LIKE UPPER(:termo) OR UPPER(TITENS.DESC_TECNICA) LIKE UPPER(:termo2))";
-                $params['termo'] = '%' . $termo . '%';
-                $params['termo2'] = '%' . $termo . '%';
-            }
-            
-            $sql .= " ORDER BY TITENS.DESC_TECNICA ASC";
-            $sql .= " FETCH FIRST 200 ROWS ONLY";
-            
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            $produtos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $produtos = ComissaoCadastroHandler::listarProdutos(
+                $emprId ? (int)$emprId : null,
+                $termo
+            );
 
             self::response([
                 'success' => true,
@@ -728,118 +651,19 @@ class ComissaoCadastroController extends ctrl
             $emprId = $_GET['empr_id'] ?? $_GET['emprId'] ?? $_SESSION['empresa']['id'] ?? null;
             $termo = $_GET['term'] ?? $_GET['q'] ?? '';
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-            $limit = 30;
-            $offset = ($page - 1) * $limit;
             
-            $pdo = \core\Database::getInstance('focco');
-            
-            // Query base
-            $sqlBase = "FROM FOCCO3I.TGRP_CLAS_ITE TGRP_CLAS_ITE,
-                         FOCCO3I.TITENS_ENGENHARIA TITENS_ENGENHARIA,
-                         FOCCO3I.TITENS_ENG_CONF TITENS_ENG_CONF,
-                         FOCCO3I.TEMPRESAS TEMPRESAS,
-                         FOCCO3I.TITENS TITENS,
-                         FOCCO3I.TITENS_EMPR TITENS_EMPR,
-                         FOCCO3I.TMASC_ITEM TMASC_ITEM,
-                         FOCCO3I.TITENS_ESTOQUE TITENS_ESTOQUE,
-                         FOCCO3I.TALMOXARIFADOS TALMOXARIFADOS,
-                         FOCCO3I.TCAD_COD_BARRA TCAD_COD_BARRA,
-                         FOCCO3I.TITENS_CONTABIL TITENS_CONTABIL,
-                         FOCCO3I.TCLAS_FISC TCLAS_FISC
-                    WHERE TGRP_CLAS_ITE.ID = TITENS_ESTOQUE.GRP_CLAS_ID
-                      AND TITENS_ENGENHARIA.ID = TITENS_ENG_CONF.ITEG_ID(+)
-                      AND TEMPRESAS.ID = TITENS_EMPR.EMPR_ID
-                      AND TITENS.ID = TITENS_EMPR.ITEM_ID
-                      AND TITENS_EMPR.ID = TITENS_CONTABIL.ITEMPR_ID
-                      AND TITENS_EMPR.ID = TITENS_ESTOQUE.ITEMPR_ID
-                      AND TITENS_EMPR.ID = TMASC_ITEM.ITEMPR_ID(+)
-                      AND TITENS_EMPR.ID = TITENS_ENGENHARIA.ITEMPR_ID(+)
-                      AND TMASC_ITEM.ID = TCAD_COD_BARRA.TMASC_ITEM_ID(+)
-                      AND TMASC_ITEM.ID = TITENS_ENG_CONF.TMASC_ITEM_ID(+)
-                      AND TALMOXARIFADOS.ID = TITENS_ESTOQUE.ALMOX_ID
-                      AND TCLAS_FISC.ID = TITENS_CONTABIL.CLAS_FISC_ID
-                      AND TITENS_ENGENHARIA.TP_ITEM = 'F'";
-            
-            $params = [];
-            
-            if ($emprId) {
-                $sqlBase .= " AND TEMPRESAS.ID = :empr_id";
-                $params['empr_id'] = $emprId;
-            }
-            
-            if ($termo) {
-                $sqlBase .= " AND (UPPER(TITENS.COD_ITEM) LIKE UPPER(:termo) 
-                              OR UPPER(TITENS.DESC_TECNICA) LIKE UPPER(:termo2)
-                              OR UPPER(TMASC_ITEM.MASCARA) LIKE UPPER(:termo3))";
-                $params['termo'] = '%' . $termo . '%';
-                $params['termo2'] = '%' . $termo . '%';
-                $params['termo3'] = '%' . $termo . '%';
-            }
-            
-            // Contar total
-            $sqlCount = "SELECT COUNT(DISTINCT TITENS_EMPR.ID || '-' || NVL(TMASC_ITEM.ID, 0)) " . $sqlBase;
-            $stmtCount = $pdo->prepare($sqlCount);
-            $stmtCount->execute($params);
-            $total = (int)$stmtCount->fetchColumn();
-            
-            // Buscar dados paginados
-            // ITEM_ID (FK para TITENS) = TITENS.ID
-            // ID_ITEMPR = TITENS_EMPR.ID
-            // ID_MASCARA = TMASC_ITEM.ID
-            $sql = "SELECT DISTINCT
-                        TEMPRESAS.ID AS ID_EMPRESA,
-                        TEMPRESAS.COD_EMP,
-                        TITENS.ID AS ITEM_ID,
-                        TITENS_EMPR.ID AS ID_ITEMPR,
-                        TITENS.COD_ITEM,
-                        TITENS.DESC_TECNICA AS DESCRICAO,
-                        TMASC_ITEM.ID AS ID_MASCARA,
-                        TMASC_ITEM.MASCARA
-                    " . $sqlBase . "
-                    ORDER BY TITENS.DESC_TECNICA ASC
-                    OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY";
-            
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
-            $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
-            foreach ($params as $key => $value) {
-                $stmt->bindValue(':' . $key, $value);
-            }
-            $stmt->execute();
-            $produtos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
-            // Formatar para Select2
-            $results = [];
-            foreach ($produtos as $produto) {
-                // Formato: COD_ITEM - ID_MASCARA - DESCRIÃ‡ÃƒO - MASCARA
-                $idMascaraDisplay = $produto['ID_MASCARA'] ?? '';
-                $texto = $produto['COD_ITEM'] . ' - ' . $idMascaraDisplay . ' - ' . $produto['DESCRICAO'];
-                if (!empty($produto['MASCARA'])) {
-                    $texto .= ' - ' . $produto['MASCARA'];
-                }
-                
-                // ITEM_ID = TITENS.ID (FK para TITENS)
-                // ID_ITEMPR = TITENS_EMPR.ID
-                // ID_MASCARA = TMASC_ITEM.ID
-                $results[] = [
-                    'id' => $produto['ITEM_ID'],            // TITENS.ID para ITEM_ID
-                    'text' => $texto,
-                    'cod_item' => $produto['COD_ITEM'],
-                    'descricao' => $produto['DESCRICAO'],
-                    'mascara' => $produto['MASCARA'],
-                    'id_mascara' => $produto['ID_MASCARA'], // TMASC_ITEM.ID
-                    'id_itempr' => $produto['ID_ITEMPR'],   // TITENS_EMPR.ID
-                    'id_empresa' => $produto['ID_EMPRESA']  // TEMPRESAS.ID
-                ];
-            }
-            
-            // Resposta no formato Select2
+            $resultado = ComissaoCadastroHandler::buscarProdutos(
+                $emprId ? (int)$emprId : null,
+                $termo ?: null,
+                $page
+            );
+
             self::response([
-                'results' => $results,
+                'results' => $resultado['produtos'],
                 'pagination' => [
-                    'more' => ($offset + $limit) < $total
+                    'more' => $resultado['hasMore']
                 ],
-                'total' => $total
+                'total' => $resultado['total']
             ], 200);
         } catch (\Exception $e) {
             self::response([
@@ -858,7 +682,7 @@ class ComissaoCadastroController extends ctrl
     public function getEmpresas()
     {
         try {
-            $empresas = $this->handler->listarEmpresas();
+            $empresas = ComissaoCadastroHandler::listarEmpresas();
 
             self::response([
                 'success' => true,
@@ -885,7 +709,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID da empresa é obrigatório');
             }
             
-            $empresa = $this->handler->buscarEmpresa((int)$dados['empr_id']);
+            $empresa = ComissaoCadastroHandler::buscarEmpresa((int)$dados['empr_id']);
             
             if (!$empresa) {
                 throw new \Exception('Empresa não encontrada');
@@ -1155,7 +979,7 @@ class ComissaoCadastroController extends ctrl
                 'dt_fim' => $_GET['dt_fim'] ?? null
             ];
             
-            $faltas = $this->handler->listarFaltas($filtros);
+            $faltas = ComissaoCadastroHandler::listarFaltas($filtros);
             
             self::response([
                 'success' => true,
@@ -1180,7 +1004,7 @@ class ComissaoCadastroController extends ctrl
             $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $id = $this->handler->salvarFalta($dados);
+            $id = ComissaoCadastroHandler::salvarFalta($dados);
             
             self::response([
                 'success' => true,
@@ -1206,7 +1030,7 @@ class ComissaoCadastroController extends ctrl
             
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $this->handler->atualizarFalta($dados['id'], $dados);
+            ComissaoCadastroHandler::atualizarFalta($dados['id'], $dados);
             
             self::response(['success' => true, 'message' => 'Falta atualizada com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1231,7 +1055,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID é obrigatório');
             }
             
-            $this->handler->excluirFalta((int)$id, $_SESSION['user']['id'] ?? null);
+            ComissaoCadastroHandler::excluirFalta((int)$id, $_SESSION['user']['id'] ?? null);
             
             self::response(['success' => true, 'message' => 'Falta excluída com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1270,7 +1094,7 @@ class ComissaoCadastroController extends ctrl
                 'dt_fim' => $_GET['dt_fim'] ?? null
             ];
             
-            $retrabalhos = $this->handler->listarRetrabalhos($filtros);
+            $retrabalhos = ComissaoCadastroHandler::listarRetrabalhos($filtros);
             
             self::response([
                 'success' => true,
@@ -1295,7 +1119,7 @@ class ComissaoCadastroController extends ctrl
             $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $id = $this->handler->salvarRetrabalho($dados);
+            $id = ComissaoCadastroHandler::salvarRetrabalho($dados);
             
             self::response([
                 'success' => true,
@@ -1321,7 +1145,7 @@ class ComissaoCadastroController extends ctrl
             
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $this->handler->atualizarRetrabalho((int)$dados['id'], $dados);
+            ComissaoCadastroHandler::atualizarRetrabalho((int)$dados['id'], $dados);
             
             self::response(['success' => true, 'message' => 'Retrabalho atualizado com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1341,7 +1165,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID é obrigatório');
             }
             
-            $this->handler->excluirRetrabalho((int)$dados['id'], $_SESSION['user']['id'] ?? null);
+            ComissaoCadastroHandler::excluirRetrabalho((int)$dados['id'], $_SESSION['user']['id'] ?? null);
             
             self::response(['success' => true, 'message' => 'Retrabalho excluído com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1377,7 +1201,7 @@ class ComissaoCadastroController extends ctrl
                 'apenas_nao_vinculados' => isset($_GET['apenas_nao_vinculados']) && $_GET['apenas_nao_vinculados'] === 'true'
             ];
             
-            $apontamentos = $this->handler->listarApontamentosSemRecurso($filtros);
+            $apontamentos = ComissaoCadastroHandler::listarApontamentosSemRecurso($filtros);
             
             self::response([
                 'success' => true,
@@ -1401,7 +1225,7 @@ class ComissaoCadastroController extends ctrl
                 'dt_fim' => $_GET['data_fim'] ?? date('Y-m-d')
             ];
             
-            $vinculos = $this->handler->listarVinculosApontamento($filtros);
+            $vinculos = ComissaoCadastroHandler::listarVinculosApontamento($filtros);
             
             self::response($vinculos, 200);
         } catch (\Exception $e) {
@@ -1420,7 +1244,7 @@ class ComissaoCadastroController extends ctrl
             
             self::verificarCamposVazios($dados, ['apontamento_id', 'recurso_id']);
             
-            $result = $this->handler->vincularRecurso($dados['apontamento_id'], $dados['recurso_id']);
+            $result = ComissaoCadastroHandler::vincularRecurso($dados['apontamento_id'], $dados['recurso_id']);
             
             if ($result) {
                 self::response(['success' => true, 'message' => 'Recurso vinculado com sucesso!'], 200);
@@ -1445,7 +1269,7 @@ class ComissaoCadastroController extends ctrl
             $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $id = $this->handler->vincularApontamento($dados);
+            $id = ComissaoCadastroHandler::vincularApontamento($dados);
             
             self::response([
                 'success' => true,
@@ -1474,7 +1298,7 @@ class ComissaoCadastroController extends ctrl
             $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $resultado = $this->handler->vincularApontamentosLote($dados);
+            $resultado = ComissaoCadastroHandler::vincularApontamentosLote($dados);
             
             self::response([
                 'success' => true,
@@ -1500,7 +1324,7 @@ class ComissaoCadastroController extends ctrl
             
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $this->handler->atualizarVinculoApontamento((int)$dados['id'], $dados);
+            ComissaoCadastroHandler::atualizarVinculoApontamento((int)$dados['id'], $dados);
             
             self::response(['success' => true, 'message' => 'Vínculo atualizado com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1520,7 +1344,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID é obrigatório');
             }
             
-            $this->handler->excluirVinculoApontamento((int)$dados['id'], $_SESSION['user']['id'] ?? null);
+            ComissaoCadastroHandler::excluirVinculoApontamento((int)$dados['id'], $_SESSION['user']['id'] ?? null);
             
             self::response(['success' => true, 'message' => 'Vínculo excluído com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1548,15 +1372,17 @@ class ComissaoCadastroController extends ctrl
     public function listarRegras()
     {
         try {
+            $incluirInativas = isset($_GET['incluir_inativas']) && $_GET['incluir_inativas'] == '1';
             $filtros = [
                 'id_empr' => $_GET['empr_id'] ?? $_SESSION['empresa']['id'] ?? null,
                 'id_funcionario' => $_GET['funcionario_id'] ?? null,
                 'id_centro_trab' => $_GET['centro_trab_id'] ?? null,
                 'apenas_ativos' => isset($_GET['apenas_ativos']) && $_GET['apenas_ativos'] === 'true',
-                'apenas_vigentes' => isset($_GET['apenas_vigentes']) && $_GET['apenas_vigentes'] === 'true'
+                'apenas_vigentes' => isset($_GET['apenas_vigentes']) && $_GET['apenas_vigentes'] === 'true',
+                'status' => $incluirInativas ? '' : 'S'
             ];
             
-            $regras = $this->handler->listarRegras($filtros);
+            $regras = ComissaoCadastroHandler::listarRegras($filtros);
             
             self::response([
                 'success' => true,
@@ -1580,7 +1406,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID é obrigatório');
             }
             
-            $regra = $this->handler->buscarRegra((int)$id);
+            $regra = ComissaoCadastroHandler::buscarRegra((int)$id);
             
             if (!$regra) {
                 throw new \Exception('Regra não encontrada');
@@ -1610,7 +1436,7 @@ class ComissaoCadastroController extends ctrl
             $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $id = $this->handler->salvarRegra($dados);
+            $id = ComissaoCadastroHandler::salvarRegra($dados);
             
             self::response([
                 'success' => true,
@@ -1637,7 +1463,7 @@ class ComissaoCadastroController extends ctrl
             $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
-            $this->handler->atualizarRegra((int)$dados['id'], $dados);
+            ComissaoCadastroHandler::atualizarRegra((int)$dados['id'], $dados);
             
             self::response(['success' => true, 'message' => 'Regra atualizada com sucesso'], 200);
         } catch (\Exception $e) {
@@ -1663,7 +1489,7 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID é obrigatório');
             }
             
-            $this->handler->inativarRegra((int)$id, $_SESSION['user']['id'] ?? null);
+            ComissaoCadastroHandler::inativarRegra((int)$id, $_SESSION['user']['id'] ?? null);
             
             self::response(['success' => true, 'message' => 'Regra excluída com sucesso'], 200);
         } catch (\Exception $e) {

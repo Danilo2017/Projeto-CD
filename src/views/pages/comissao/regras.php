@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,7 +11,7 @@ if (!$acessoComissao) {
     'showNavbar' => true,
     'pageActive' => 'comissao-regras',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 5px 10px; margin: 0;">
@@ -23,7 +21,7 @@ if (!$acessoComissao) {
             <div class="filter-group">
                 <label for="filtroEmpresa">Empresa</label>
                 <input type="text" id="filtroEmpresaDisplay" class="form-control" readonly style="background-color: #e9ecef;">
-                <input type="hidden" id="filtroEmpresa" value="<?= $_SESSION['empresa']['id'] ?? '' ?>">
+                <input type="hidden" id="filtroEmpresa" value="<?= $empresa['id'] ?? '' ?>">
             </div>
             <div class="filter-group">
                 <label for="filtroFuncionario">Funcionário</label>
@@ -59,7 +57,7 @@ if (!$acessoComissao) {
                     <th>Funcionário</th>
                     <th>Tipo Regra</th>
                     <th>Valor Base</th>
-                    <th>Percentual</th>
+                    <th>Detalhes</th>
                     <th>Prioridade</th>
                     <th>Vigência</th>
                     <th>Status</th>
@@ -165,8 +163,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function carregarEmpresas() {
-    const empresaSessao = '<?= $_SESSION['empresa']['id'] ?? '' ?>';
-    const empresaNome = '<?= ($_SESSION['empresa']['codigo'] ?? '') . ' - ' . ($_SESSION['empresa']['nome_fantasia'] ?? '') ?>';
+    const empresaSessao = '<?= $empresa['id'] ?? '' ?>';
+    const empresaNome = '<?= ($empresa['codigo'] ?? '') . ' - ' . ($empresa['nome_fantasia'] ?? '') ?>';
     
     // Exibir empresa travada no campo readonly
     document.getElementById('filtroEmpresaDisplay').value = empresaNome;
@@ -283,9 +281,37 @@ function carregarRegras() {
                 const tipos = {
                     'P': 'Percentual sobre Pontos',
                     'V': 'Valor por UP',
-                    'F': 'Valor Fixo Total'
+                    'F': 'Valor Fixo Total',
+                    'M': 'Valor Fixo + Por Ponto'
                 };
                 return tipos[tipo] || tipo;
+            }
+
+            // Formatar valor com casas decimais adequadas
+            function fmtValor(v) {
+                if (v === 0) return '0,00';
+                const s = v.toString();
+                const dec = s.includes('.') ? s.split('.')[1].length : 0;
+                return v.toLocaleString('pt-BR', { minimumFractionDigits: Math.max(2, dec), maximumFractionDigits: Math.max(2, dec) });
+            }
+
+            // Formatar valor base conforme tipo
+            function formatarValorBase(regra) {
+                const tipo = regra.TIPO_COMISSAO;
+                const valor = parseFloat(regra.VALOR_COMISSAO || 0);
+                const valorFixo = parseFloat(regra.VALOR_FIXO || 0);
+                switch(tipo) {
+                    case 'P':
+                        return fmtValor(valor) + '%';
+                    case 'V':
+                        return 'R$ ' + fmtValor(valor) + '/pt';
+                    case 'F':
+                        return 'R$ ' + fmtValor(valor);
+                    case 'M':
+                        return 'Fixo: R$ ' + fmtValor(valorFixo) + ' + R$ ' + fmtValor(valor) + '/pt';
+                    default:
+                        return 'R$ ' + fmtValor(valor);
+                }
             }
             
             regras.forEach(regra => {
@@ -301,8 +327,8 @@ function carregarRegras() {
                         <td>${regra.ID_REGRA}</td>
                         <td>${regra.COD_FUNC} - ${regra.NOME_FUNCIONARIO}</td>
                         <td>${tipoDesc}</td>
-                        <td>R$ ${parseFloat(regra.VALOR_COMISSAO || 0).toFixed(2)}</td>
-                        <td>-</td>
+                        <td>${formatarValorBase(regra)}</td>
+                        <td>${regra.TIPO_COMISSAO === 'P' ? fmtValor(parseFloat(regra.VALOR_COMISSAO || 0)) + '%' : (regra.TIPO_COMISSAO === 'M' ? 'R$ ' + fmtValor(parseFloat(regra.VALOR_FIXO || 0)) : '-')}</td>
                         <td>${regra.PRIORIDADE}</td>
                         <td>${regra.DT_VIGENCIA_INI_FMT || regra.DT_VIGENCIA_INI} até ${vigenciaFim}</td>
                         <td>${statusBadge}</td>

@@ -2,7 +2,7 @@
     'pageTitle' => 'Acesso Negado',
     'showNavbar' => true,
     'pageActive' => '',
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">

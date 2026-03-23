@@ -1,7 +1,6 @@
 <?php
-// Verificar permissão de admin
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-if (!$isAdmin) {
+// Verificar permissão de admin (dado vem do controller via $viewData)
+if (empty($is_admin)) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
 }
@@ -11,7 +10,7 @@ if (!$isAdmin) {
     'showNavbar' => true,
     'pageActive' => 'permissao',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
@@ -28,11 +27,9 @@ if (!$isAdmin) {
                 <input type="text" id="filtroLogin" class="form-control" placeholder="Digite o login...">
             </div>
             <div class="filter-group">
-                <label for="filtroAtivo">Status</label>
-                <select id="filtroAtivo" class="form-select">
+                <label for="filtroPerfil">Perfil</label>
+                <select id="filtroPerfil" class="form-select">
                     <option value="">Todos</option>
-                    <option value="S" selected>Ativos</option>
-                    <option value="N">Inativos</option>
                 </select>
             </div>
             <div class="filter-group d-flex gap-2 align-items-end">
@@ -51,18 +48,14 @@ if (!$isAdmin) {
         <table class="table table-striped table-hover" id="tabelaPermissoes" style="width: 100%;">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Login</th>
-                    <th>Acesso CD</th>
-                    <th>Acesso Comissão</th>
-                    <th>Admin</th>
+                    <th>Perfis</th>
                     <th>Status</th>
                     <th>Dt. Cadastro</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody id="tabelaPermissoesBody">
-                <!-- Dados serão carregados via JavaScript -->
             </tbody>
         </table>
     </div>
@@ -79,48 +72,21 @@ if (!$isAdmin) {
                 </div>
                 <div class="modal-body">
                     <form id="formPermissao">
-                        <input type="hidden" id="permissaoId">
-                        
+                        <input type="hidden" id="editandoLogin" value="">
+
                         <div class="mb-3">
                             <label for="login" class="form-label">Login do Usuário *</label>
-                            <input type="text" class="form-control" id="login" name="login" required 
+                            <input type="text" class="form-control" id="login" name="login" required
                                    placeholder="Digite o login FOCCO do usuário" style="text-transform: uppercase;">
                             <small class="text-muted">O mesmo login usado para autenticar no sistema FOCCO</small>
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label class="form-label">Permissões de Acesso</label>
+                            <label class="form-label">Perfis de Acesso *</label>
                             <div class="card">
-                                <div class="card-body">
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="acesso_cd" name="acesso_cd">
-                                        <label class="form-check-label" for="acesso_cd">
-                                            <i class="bi bi-box-seam text-info"></i> Acesso ao Módulo CD
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="acesso_comissao" name="acesso_comissao">
-                                        <label class="form-check-label" for="acesso_comissao">
-                                            <i class="bi bi-cash-stack text-success"></i> Acesso ao Módulo Comissão
-                                        </label>
-                                    </div>
-                                    <hr>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="admin" name="admin">
-                                        <label class="form-check-label" for="admin">
-                                            <i class="bi bi-person-gear text-danger"></i> Administrador
-                                            <small class="text-muted d-block">Pode gerenciar permissões de outros usuários</small>
-                                        </label>
-                                    </div>
+                                <div class="card-body" id="perfisCheckboxes">
+                                    <p class="text-muted">Carregando perfis...</p>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3" id="statusGroup" style="display: none;">
-                            <label class="form-label">Status</label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="ativo" name="ativo" checked>
-                                <label class="form-check-label" for="ativo">Ativo</label>
                             </div>
                         </div>
                     </form>
@@ -137,18 +103,64 @@ if (!$isAdmin) {
 </div>
 
 <script>
+let perfisDisponiveis = [];
+
 document.addEventListener('DOMContentLoaded', function() {
-    carregarPermissoes();
+    carregarPerfisDisponiveis().then(() => carregarPermissoes());
 });
+
+function carregarPerfisDisponiveis() {
+    return fetch('/permissao-api-perfis')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                perfisDisponiveis = data.data;
+                renderizarFiltroPerfis();
+                renderizarCheckboxesPerfis();
+            }
+        })
+        .catch(error => console.error('Erro ao carregar perfis:', error));
+}
+
+function renderizarFiltroPerfis() {
+    const select = document.getElementById('filtroPerfil');
+    select.innerHTML = '<option value="">Todos</option>';
+    perfisDisponiveis.forEach(p => {
+        select.innerHTML += `<option value="${p.ID_PERFIL}">${p.NOME}</option>`;
+    });
+}
+
+function renderizarCheckboxesPerfis(selecionados = []) {
+    const container = document.getElementById('perfisCheckboxes');
+    if (!perfisDisponiveis.length) {
+        container.innerHTML = '<p class="text-muted">Nenhum perfil cadastrado</p>';
+        return;
+    }
+
+    let html = '';
+    perfisDisponiveis.forEach(p => {
+        const checked = selecionados.includes(p.ID_PERFIL) ? 'checked' : '';
+        html += `
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input perfil-checkbox" type="checkbox" 
+                       id="perfil_${p.ID_PERFIL}" value="${p.ID_PERFIL}" ${checked}>
+                <label class="form-check-label" for="perfil_${p.ID_PERFIL}">
+                    <strong>${p.NOME}</strong>
+                    ${p.DESCRICAO ? '<small class="text-muted d-block">' + p.DESCRICAO + '</small>' : ''}
+                </label>
+            </div>`;
+    });
+    container.innerHTML = html;
+}
 
 function carregarPermissoes() {
     const login = document.getElementById('filtroLogin').value;
-    const ativo = document.getElementById('filtroAtivo').value;
-    
+    const perfilId = document.getElementById('filtroPerfil').value;
+
     let url = '/permissao-api-listar?';
     if (login) url += `login=${encodeURIComponent(login)}&`;
-    if (ativo) url += `ativo=${ativo}&`;
-    
+    if (perfilId) url += `perfil_id=${perfilId}&`;
+
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -166,56 +178,48 @@ function carregarPermissoes() {
 
 function renderizarTabela(dados) {
     const tbody = document.getElementById('tabelaPermissoesBody');
-    
+
     if (!dados || dados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhuma permissão cadastrada</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma permissão cadastrada</td></tr>';
         return;
     }
-    
+
+    const cores = ['bg-primary', 'bg-info', 'bg-success', 'bg-warning text-dark', 'bg-danger', 'bg-secondary'];
+
     let html = '';
     dados.forEach(item => {
-        const badgeCd = item.ACESSO_CD === 'S' 
-            ? '<span class="badge bg-info">Sim</span>' 
-            : '<span class="badge bg-secondary">Não</span>';
-        const badgeComissao = item.ACESSO_COMISSAO === 'S' 
-            ? '<span class="badge bg-success">Sim</span>' 
-            : '<span class="badge bg-secondary">Não</span>';
-        const badgeAdmin = item.ADMIN === 'S' 
-            ? '<span class="badge bg-danger">Sim</span>' 
-            : '<span class="badge bg-secondary">Não</span>';
-        const badgeStatus = item.ATIVO === 'S' 
-            ? '<span class="badge bg-success">Ativo</span>' 
+        const perfisHtml = (item.PERFIS || []).map((nome, i) => 
+            `<span class="badge ${cores[i % cores.length]} me-1">${nome}</span>`
+        ).join('');
+
+        const badgeStatus = item.ATIVO === 'S'
+            ? '<span class="badge bg-success">Ativo</span>'
             : '<span class="badge bg-danger">Inativo</span>';
-        
+
         const dtCadastro = item.DT_CADASTRO ? formatarData(item.DT_CADASTRO) : '-';
-        
+
         html += `
             <tr>
-                <td>${item.ID_ACESSO}</td>
                 <td><strong>${item.LOGIN_USUARIO}</strong></td>
-                <td class="text-center">${badgeCd}</td>
-                <td class="text-center">${badgeComissao}</td>
-                <td class="text-center">${badgeAdmin}</td>
+                <td>${perfisHtml || '<span class="text-muted">Nenhum</span>'}</td>
                 <td class="text-center">${badgeStatus}</td>
                 <td>${dtCadastro}</td>
                 <td>
-                    <button class="btn btn-sm btn-warning" onclick="editarPermissao(${item.ID_ACESSO})" title="Editar">
+                    <button class="btn btn-sm btn-warning" onclick="editarPermissao('${item.LOGIN_USUARIO}')" title="Editar">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="excluirPermissao(${item.ID_ACESSO})" title="Excluir">
+                    <button class="btn btn-sm btn-danger" onclick="excluirPermissao('${item.LOGIN_USUARIO}')" title="Remover">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
-            </tr>
-        `;
+            </tr>`;
     });
-    
+
     tbody.innerHTML = html;
 }
 
 function formatarData(data) {
     if (!data) return '-';
-    // Formato Oracle: DD-MON-YY ou YYYY-MM-DD
     try {
         const d = new Date(data);
         return d.toLocaleDateString('pt-BR');
@@ -226,28 +230,26 @@ function formatarData(data) {
 
 function novaPermissao() {
     document.getElementById('formPermissao').reset();
-    document.getElementById('permissaoId').value = '';
+    document.getElementById('editandoLogin').value = '';
     document.getElementById('login').disabled = false;
-    document.getElementById('statusGroup').style.display = 'none';
     document.getElementById('modalPermissaoTitulo').innerHTML = '<i class="bi bi-shield-plus"></i> Nova Permissão';
+    renderizarCheckboxesPerfis([]);
 }
 
-function editarPermissao(id) {
-    fetch(`/permissao-api-buscar?id=${id}`)
+function editarPermissao(login) {
+    fetch(`/permissao-api-buscar?login=${encodeURIComponent(login)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const p = data.data;
-                document.getElementById('permissaoId').value = p.ID_ACESSO;
-                document.getElementById('login').value = p.LOGIN_USUARIO;
+                const info = data.data;
+                document.getElementById('editandoLogin').value = info.LOGIN_USUARIO;
+                document.getElementById('login').value = info.LOGIN_USUARIO;
                 document.getElementById('login').disabled = true;
-                document.getElementById('acesso_cd').checked = p.ACESSO_CD === 'S';
-                document.getElementById('acesso_comissao').checked = p.ACESSO_COMISSAO === 'S';
-                document.getElementById('admin').checked = p.ADMIN === 'S';
-                document.getElementById('ativo').checked = p.ATIVO === 'S';
-                document.getElementById('statusGroup').style.display = 'block';
                 document.getElementById('modalPermissaoTitulo').innerHTML = '<i class="bi bi-shield"></i> Editar Permissão';
-                
+
+                const ids = (info.PERFIS_IDS || []).map(Number);
+                renderizarCheckboxesPerfis(ids);
+
                 const modal = new bootstrap.Modal(document.getElementById('modalPermissao'));
                 modal.show();
             } else {
@@ -261,27 +263,30 @@ function editarPermissao(id) {
 }
 
 function salvarPermissao() {
-    const id = document.getElementById('permissaoId').value;
+    const editando = document.getElementById('editandoLogin').value;
     const login = document.getElementById('login').value.trim().toUpperCase();
-    const acessoCd = document.getElementById('acesso_cd').checked ? 'S' : 'N';
-    const acessoComissao = document.getElementById('acesso_comissao').checked ? 'S' : 'N';
-    const admin = document.getElementById('admin').checked ? 'S' : 'N';
-    const ativo = document.getElementById('ativo').checked ? 'S' : 'N';
-    
+
     if (!login) {
         alert('Digite o login do usuário');
         return;
     }
-    
-    const url = id ? '/permissao-api-atualizar' : '/permissao-api-salvar';
-    const body = id 
-        ? { id, acesso_cd: acessoCd, acesso_comissao: acessoComissao, admin, ativo }
-        : { login, acesso_cd: acessoCd, acesso_comissao: acessoComissao, admin };
-    
+
+    const perfis = [];
+    document.querySelectorAll('.perfil-checkbox:checked').forEach(cb => {
+        perfis.push(Number(cb.value));
+    });
+
+    if (perfis.length === 0) {
+        alert('Selecione ao menos um perfil');
+        return;
+    }
+
+    const url = editando ? '/permissao-api-atualizar' : '/permissao-api-salvar';
+
     fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ login, perfis })
     })
     .then(response => response.json())
     .then(data => {
@@ -299,15 +304,15 @@ function salvarPermissao() {
     });
 }
 
-function excluirPermissao(id) {
-    if (!confirm('Deseja realmente remover esta permissão?')) {
+function excluirPermissao(login) {
+    if (!confirm(`Deseja realmente remover todas as permissões de ${login}?`)) {
         return;
     }
-    
+
     fetch('/permissao-api-excluir', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ login })
     })
     .then(response => response.json())
     .then(data => {

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use core\Router;
 
@@ -36,17 +36,18 @@ $router->get('/cd', 'CD\\CDDashboardController@index', true);
 
 // ========== Rotas do Sistema de Comissão ==========
 
-// Páginas de Dashboard (desativado)
-// $router->get('/comissao', 'Comissao\\ComissaoDashboardController@index', true);
-// $router->get('/comissao-dashboard', 'Comissao\\ComissaoDashboardController@index', true);
+// Páginas de Dashboard
+$router->get('/comissao', 'Comissao\\ComissaoDashboardController@index', true);
+$router->get('/comissao-dashboard', 'Comissao\\ComissaoDashboardController@index', true);
 
-// APIs do Dashboard (desativado)
-// $router->get('/comissao-api-filiais', 'Comissao\\ComissaoDashboardController@getFiliais', true);
-// $router->get('/comissao-api-resumo', 'Comissao\\ComissaoDashboardController@getResumoGeral', true);
-// $router->get('/comissao-api-ranking', 'Comissao\\ComissaoDashboardController@getRankingFuncionarios', true);
-// $router->get('/comissao-api-resumo-centro', 'Comissao\\ComissaoDashboardController@getResumoPorCentro', true);
-// $router->get('/comissao-api-resumo-recurso', 'Comissao\\ComissaoDashboardController@getResumoPorRecurso', true);
-// $router->get('/comissao-api-simular', 'Comissao\\ComissaoDashboardController@simularComissoes', true);
+// APIs do Dashboard
+$router->get('/comissao-api-filiais', 'Comissao\\ComissaoDashboardController@getFiliais', true);
+$router->get('/comissao-api-resumo', 'Comissao\\ComissaoDashboardController@getResumoGeral', true);
+$router->get('/comissao-api-ranking', 'Comissao\\ComissaoDashboardController@getRankingFuncionarios', true);
+$router->get('/comissao-api-resumo-centro', 'Comissao\\ComissaoDashboardController@getResumoPorCentro', true);
+$router->get('/comissao-api-resumo-recurso', 'Comissao\\ComissaoDashboardController@getResumoPorRecurso', true);
+$router->get('/comissao-api-simular', 'Comissao\\ComissaoDashboardController@simularComissoes', true);
+$router->get('/comissao-api-dashboard-completo', 'Comissao\\ComissaoDashboardController@getDashboardCompleto', true);
 
 // Páginas de Cadastro
 $router->get('/comissao-cadastro', 'Comissao\\ComissaoCadastroController@index', true);
@@ -80,7 +81,7 @@ $router->get('/comissao-api-centros', 'Comissao\\ComissaoCadastroController@getC
 $router->get('/comissao-api-recursos', 'Comissao\\ComissaoCadastroController@getRecursos', true);
 $router->get('/comissao-api-produtos', 'Comissao\\ComissaoCadastroController@getProdutos', true);
 $router->get('/comissao-api-produtos-busca', 'Comissao\\ComissaoCadastroController@buscarProdutos', true);
-$router->get('/comissao-api-empresas', 'Comissao\\ComissaoCadastroController@getEmpresas', true);
+$router->get('/comissao-api-empresas', 'Comissao\\ComissaoCadastroController@getEmpresas', false);
 
 // APIs de Busca filtradas por vínculo (para relatórios)
 $router->get('/comissao-api-centros-vinculados', 'Comissao\\ComissaoCadastroController@getCentrosComVinculo', true);
@@ -141,11 +142,17 @@ $router->get('/comissao-api-funcionario', 'Comissao\\ComissaoRelatorioController
 
 // ========== Rotas de Permissões ==========
 $router->get('/permissao', 'PermissaoController@index', true);
+$router->get('/permissao-api-perfis', 'PermissaoController@listarPerfis', true);
 $router->get('/permissao-api-listar', 'PermissaoController@listar', true);
 $router->get('/permissao-api-buscar', 'PermissaoController@buscar', true);
 $router->post('/permissao-api-salvar', 'PermissaoController@salvar', true);
 $router->post('/permissao-api-atualizar', 'PermissaoController@atualizar', true);
 $router->post('/permissao-api-excluir', 'PermissaoController@excluir', true);
 
-// ========== Página de Sem Acesso ==========
-$router->get('/sem-acesso', 'HomeController@semAcesso', true);
+// ========== Admin - Gerenciamento de SQLs ==========
+$router->get('/admin-sqls', 'AdminSqlsController@index', true);
+$router->get('/admin-api-sqls', 'AdminSqlsController@listar', true);
+$router->get('/admin-api-sql', 'AdminSqlsController@buscar', true);
+$router->post('/admin-api-sql-salvar', 'AdminSqlsController@salvar', true);
+$router->put('/admin-api-sql-atualizar', 'AdminSqlsController@atualizar', true);
+$router->delete('/admin-api-sql-excluir', 'AdminSqlsController@excluir', true);

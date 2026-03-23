@@ -247,31 +247,34 @@ function carregarVinculos() {
         console.error('Erro ao carregar vínculos:', xhr.status, xhr.responseText);
         let errMsg = 'Erro ao carregar vínculos';
         try { let r = JSON.parse(xhr.responseText); if(r.error) errMsg = r.error; } catch(e){}
-        $('#tabelaVinculosBody').html('<tr><td colspan="8" class="text-center text-danger">' + errMsg + '</td></tr>');
-        if (!$.fn.DataTable.isDataTable('#tabelaVinculos')) {
-            $('#tabelaVinculos').DataTable({
-                language: {
-                    processing: "Processando...",
-                    search: "Pesquisar:",
-                    lengthMenu: "Exibir _MENU_ resultados por página",
-                    info: "Mostrando _START_ até _END_ de _TOTAL_ registros",
-                    infoEmpty: "Mostrando 0 até 0 de 0 registros",
-                    infoFiltered: "(filtrado de _MAX_ registros no total)",
-                    loadingRecords: "Carregando...",
-                    zeroRecords: "Nenhum registro encontrado",
-                    emptyTable: "Nenhum dado disponível na tabela",
-                    paginate: {
-                        first: "Primeiro",
-                        previous: "Anterior",
-                        next: "Próximo",
-                        last: "Último"
-                    }
-                },
-                lengthChange: false,
-                pageLength: 10,
-                order: [[0, 'desc']]
-            });
+        // Limpa tbody antes de inicializar DataTables (colspan causa erro)
+        if ($.fn.DataTable.isDataTable('#tabelaVinculos')) {
+            $('#tabelaVinculos').DataTable().destroy();
         }
+        $('#tabelaVinculosBody').html('');
+        $('#tabelaVinculos').DataTable({
+            language: {
+                processing: "Processando...",
+                search: "Pesquisar:",
+                lengthMenu: "Exibir _MENU_ resultados por página",
+                info: "Mostrando _START_ até _END_ de _TOTAL_ registros",
+                infoEmpty: "Mostrando 0 até 0 de 0 registros",
+                infoFiltered: "(filtrado de _MAX_ registros no total)",
+                loadingRecords: "Carregando...",
+                zeroRecords: "Nenhum registro encontrado",
+                emptyTable: "Nenhum dado disponível na tabela",
+                paginate: {
+                    first: "Primeiro",
+                    previous: "Anterior",
+                    next: "Próximo",
+                    last: "Último"
+                }
+            },
+            lengthChange: false,
+            pageLength: 10,
+            order: [[0, 'desc']]
+        });
+        alert(errMsg);
     });
 }
 

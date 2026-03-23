@@ -3,61 +3,27 @@
 namespace src\models\CD;
 
 use core\Database;
-use PDO;
 
 class AgendamentoRecebimento
 {
-    /**
-     * Listar agendamentos pendentes (hoje ou anteriores)
-     * @return array
-     */
-    public function listarPendentes()
+    public static function listarPendentes()
     {
-        $sql = "SELECT
-            EMPRESA_NOME AS EMPRESA,
-            ALMOXARIFADO AS ALMOX,
-            PLACA_VEICULO AS PLACA,
-            TO_CHAR(DATA_HORA_CHEGADA, 'DD/MM/YYYY HH24:MI') AS CHEGADA,
-            FORNECEDOR,
-            OBSERVACOES,
-            STATUS
-        FROM TGAZIN_AGENDAMENTO_RECEBIMENTO
-        WHERE STATUS = 'PENDENTE'
-          AND TRUNC(DATA_HORA_CHEGADA) <= TRUNC(SYSDATE)
-        ORDER BY DATA_HORA_CHEGADA ASC";
-
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = Database::switchParams('focco', [], 'cd.agendamento.listarPendentes', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return $result['retorno'];
     }
 
-    /**
-     * Listar todos os recebimentos agendados
-     * @return array
-     */
-    public function listarTodos()
+    public static function listarTodos()
     {
-        $sql = "SELECT 
-            ID,
-            TO_CHAR(DATA_HORA_CHEGADA, 'YYYY-MM-DD') AS DATA,
-            TO_CHAR(DATA_HORA_CHEGADA, 'HH24:MI') AS HORA,
-            FORNECEDOR,
-            PLACA_VEICULO AS PLACA,
-            OBSERVACOES AS DESCRICAO,
-            PESO,
-            VOLUME,
-            CASE WHEN STATUS = 'FINALIZADO' THEN 'S' ELSE 'N' END AS RECEBIDO
-        FROM TGAZIN_AGENDAMENTO_RECEBIMENTO
-        ORDER BY DATA_HORA_CHEGADA";
+        $result = Database::switchParams('focco', [], 'cd.agendamento.listarTodos', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
 
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        
         $recebimentos = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        foreach ($result['retorno'] as $row) {
             $recebimentos[] = [
                 'id' => $row['ID'],
                 'data' => $row['DATA'],
@@ -70,49 +36,34 @@ class AgendamentoRecebimento
                 'recebido' => $row['RECEBIDO'] === 'S'
             ];
         }
-        
         return $recebimentos;
     }
 
-    /**
-     * Verificar se existe um registro duplicado (mesmo fornecedor, data e hora)
-     * @param array $input
-     * @return bool
-     */
-    public function verificarDuplicataRecente($input)
+    public static function verificarDuplicataRecente($input)
     {
         $hora = isset($input['hora']) && $input['hora'] ? $input['hora'] : '00:00';
         $data_hora = $input['data'] . ' ' . $hora;
         $fornecedor = $input['fornecedor'];
         $descricao = isset($input['descricao']) ? $input['descricao'] : '';
         $placa = isset($input['placa']) && trim($input['placa']) !== '' ? strtoupper(trim($input['placa'])) : null;
-
-        $sql = "SELECT COUNT(*) AS QTD FROM TGAZIN_AGENDAMENTO_RECEBIMENTO 
-                WHERE DATA_HORA_CHEGADA = TO_DATE(:data_hora, 'YYYY-MM-DD HH24:MI')
-                AND UPPER(TRIM(FORNECEDOR)) = UPPER(TRIM(:fornecedor))
-                AND UPPER(TRIM(NVL(OBSERVACOES, ''))) = UPPER(TRIM(:descricao))
-                AND NVL(UPPER(TRIM(PLACA_VEICULO)), 'VAZIO') = NVL(UPPER(TRIM(:placa)), 'VAZIO')";
-
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
         $placaCheck = $placa !== null ? $placa : 'VAZIO';
-        $stmt->bindParam(':data_hora', $data_hora);
-        $stmt->bindParam(':fornecedor', $fornecedor);
-        $stmt->bindParam(':descricao', $descricao);
-        $stmt->bindParam(':placa', $placaCheck);
-        $stmt->execute();
-        
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
+        $params = [
+            'data_hora' => "'" . $data_hora . "'",
+            'fornecedor' => "'" . str_replace("'", "''", $fornecedor) . "'",
+            'descricao' => "'" . str_replace("'", "''", $descricao) . "'",
+            'placa' => "'" . str_replace("'", "''", $placaCheck) . "'"
+        ];
+
+        $result = Database::switchParams('focco', $params, 'cd.agendamento.verificarDuplicata', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        $row = $result['retorno'][0] ?? null;
         return $row && $row['QTD'] > 0;
     }
 
-    /**
-     * Inserir novo agendamento
-     * @param array $input
-     * @return int ID do registro inserido
-     */
-    public function inserir($input)
+    public static function inserir($input)
     {
         $hora = isset($input['hora']) && $input['hora'] ? $input['hora'] : '00:00';
         $data_hora = $input['data'] . ' ' . $hora;
@@ -123,53 +74,35 @@ class AgendamentoRecebimento
         $volume = isset($input['volume']) && $input['volume'] !== null ? floatval($input['volume']) : null;
         $status = isset($input['recebido']) && $input['recebido'] ? 'FINALIZADO' : 'PENDENTE';
 
-        $sql = "INSERT INTO TGAZIN_AGENDAMENTO_RECEBIMENTO (
-            EMPRESA_COD,
-            EMPRESA_NOME,
-            ALMOXARIFADO,
-            PLACA_VEICULO,
-            DATA_HORA_CHEGADA,
-            FORNECEDOR,
-            OBSERVACOES,
-            PESO,
-            VOLUME,
-            STATUS
-        ) VALUES (
-            '1',
-            '1 - GAZIN INDUSTRIA E COMERCIO',
-            '1',
-            :placa,
-            TO_DATE(:data_hora, 'YYYY-MM-DD HH24:MI'),
-            :fornecedor,
-            :descricao,
-            :peso,
-            :volume,
-            :status
-        ) RETURNING ID INTO :id";
+        $params = [
+            'placa' => $placa !== null ? "'" . str_replace("'", "''", $placa) . "'" : 'NULL',
+            'data_hora' => "'" . $data_hora . "'",
+            'fornecedor' => "'" . str_replace("'", "''", $fornecedor) . "'",
+            'descricao' => "'" . str_replace("'", "''", $descricao) . "'",
+            'peso' => $peso !== null ? $peso : 'NULL',
+            'volume' => $volume !== null ? $volume : 'NULL',
+            'status' => "'" . $status . "'"
+        ];
 
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
+        $result = Database::switchParams('focco', $params, 'cd.agendamento.inserir', true, true,
+            ['table' => 'FOCCO3I.TGAZIN_AGENDAMENTO_RECEBIMENTO']);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+
         $id = null;
-        $stmt->bindParam(':placa', $placa);
-        $stmt->bindParam(':data_hora', $data_hora);
-        $stmt->bindParam(':fornecedor', $fornecedor);
-        $stmt->bindParam(':descricao', $descricao);
-        $stmt->bindParam(':peso', $peso);
-        $stmt->bindParam(':volume', $volume);
-        $stmt->bindParam(':status', $status);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT | PDO::PARAM_INPUT_OUTPUT, 32);
-        $stmt->execute();
-        
+        if (!empty($result['retorno'])) {
+            foreach ($result['retorno'] as $row) {
+                if (isset($row['currval'])) {
+                    $id = $row['currval'];
+                    break;
+                }
+            }
+        }
         return $id;
     }
 
-    /**
-     * Atualizar agendamento existente
-     * @param array $input
-     * @return bool
-     */
-    public function atualizar($input)
+    public static function atualizar($input)
     {
         $id = $input['id'];
         $hora = isset($input['hora']) && $input['hora'] ? $input['hora'] : '00:00';
@@ -181,75 +114,57 @@ class AgendamentoRecebimento
         $volume = isset($input['volume']) && $input['volume'] !== null ? floatval($input['volume']) : null;
         $status = isset($input['recebido']) && $input['recebido'] ? 'FINALIZADO' : 'PENDENTE';
 
-        $sql = "UPDATE TGAZIN_AGENDAMENTO_RECEBIMENTO 
-                SET PLACA_VEICULO = :placa,
-                    DATA_HORA_CHEGADA = TO_DATE(:data_hora, 'YYYY-MM-DD HH24:MI'),
-                    FORNECEDOR = :fornecedor,
-                    OBSERVACOES = :descricao,
-                    PESO = :peso,
-                    VOLUME = :volume,
-                    STATUS = :status
-                WHERE ID = :id";
+        $params = [
+            'id' => intval($id),
+            'placa' => $placa !== null ? "'" . str_replace("'", "''", $placa) . "'" : 'NULL',
+            'data_hora' => "'" . $data_hora . "'",
+            'fornecedor' => "'" . str_replace("'", "''", $fornecedor) . "'",
+            'descricao' => "'" . str_replace("'", "''", $descricao) . "'",
+            'peso' => $peso !== null ? $peso : 'NULL',
+            'volume' => $volume !== null ? $volume : 'NULL',
+            'status' => "'" . $status . "'"
+        ];
 
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
-        $stmt->bindParam(':id', $id);
-        $stmt->bindParam(':placa', $placa);
-        $stmt->bindParam(':data_hora', $data_hora);
-        $stmt->bindParam(':fornecedor', $fornecedor);
-        $stmt->bindParam(':descricao', $descricao);
-        $stmt->bindParam(':peso', $peso);
-        $stmt->bindParam(':volume', $volume);
-        $stmt->bindParam(':status', $status);
-        
-        return $stmt->execute();
+        $result = Database::switchParams('focco', $params, 'cd.agendamento.atualizar', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return true;
     }
 
-    /**
-     * Excluir agendamento
-     * @param int $id
-     * @return bool
-     */
-    public function excluir($id)
+    public static function excluir($id)
     {
-        $sql = "DELETE FROM TGAZIN_AGENDAMENTO_RECEBIMENTO WHERE ID = :id";
-
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':id', $id);
-        
-        return $stmt->execute();
+        $params = ['id' => intval($id)];
+        $result = Database::switchParams('focco', $params, 'cd.agendamento.excluir', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return true;
     }
 
-    /**
-     * Alternar status do agendamento (PENDENTE <-> FINALIZADO)
-     * @param int $id
-     * @return array Status atualizado
-     */
-    public function alterarStatus($id)
+    public static function alterarStatus($id)
     {
-        // Primeiro busca o status atual
-        $sqlSelect = "SELECT STATUS FROM TGAZIN_AGENDAMENTO_RECEBIMENTO WHERE ID = :id";
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sqlSelect);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
+        $params = ['id' => intval($id)];
+        $result = Database::switchParams('focco', $params, 'cd.agendamento.buscarStatus', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        $row = $result['retorno'][0] ?? null;
         if (!$row) {
             throw new \Exception('Registro não encontrado');
         }
-        
-        // Alterna o status
+
         $novoStatus = ($row['STATUS'] === 'FINALIZADO') ? 'PENDENTE' : 'FINALIZADO';
-        
-        $sqlUpdate = "UPDATE TGAZIN_AGENDAMENTO_RECEBIMENTO SET STATUS = :status WHERE ID = :id";
-        $stmtUpdate = $pdo->prepare($sqlUpdate);
-        $stmtUpdate->bindParam(':status', $novoStatus);
-        $stmtUpdate->bindParam(':id', $id);
-        $stmtUpdate->execute();
-        
+
+        $paramsUpdate = [
+            'status' => "'" . $novoStatus . "'",
+            'id' => intval($id)
+        ];
+        $resultUpdate = Database::switchParams('focco', $paramsUpdate, 'cd.agendamento.alterarStatus', true);
+        if ($resultUpdate['error']) {
+            throw new \Exception($resultUpdate['error']);
+        }
+
         return [
             'id' => $id,
             'status' => $novoStatus,

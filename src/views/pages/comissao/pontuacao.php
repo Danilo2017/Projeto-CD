@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,7 +11,7 @@ if (!$acessoComissao) {
     'showNavbar' => true,
     'pageActive' => 'comissao-pontuacao',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
@@ -44,6 +42,9 @@ if (!$acessoComissao) {
                 </button>
                 <button type="button" class="btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#modalImportacao">
                     <i class="bi bi-file-earmark-arrow-up"></i> Importar
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm ms-2" onclick="exportarExcel()">
+                    <i class="bi bi-file-earmark-excel"></i> Exportar Excel
                 </button>
             </div>
         </div>

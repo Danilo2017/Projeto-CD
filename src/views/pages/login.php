@@ -25,14 +25,8 @@
 	}
 
 	@keyframes fadeInUp {
-		from {
-			opacity: 0;
-			transform: translateY(30px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
+		from { opacity: 0; transform: translateY(30px); }
+		to { opacity: 1; transform: translateY(0); }
 	}
 
 	.login-container {
@@ -88,7 +82,7 @@
 
 	.form-group {
 		width: 100%;
-		margin-bottom: 24px;
+		margin-bottom: 20px;
 		position: relative;
 	}
 
@@ -106,7 +100,8 @@
 		width: 100%;
 	}
 
-	.form-group input {
+	.form-group input,
+	.form-group select {
 		width: 100%;
 		padding: 14px 16px;
 		border: 2px solid #e2e8f0;
@@ -118,13 +113,28 @@
 		outline: none;
 	}
 
-	.form-group input:focus {
+	.form-group input:focus,
+	.form-group select:focus {
 		border-color: #0066cc;
 		background: #f0f7ff;
 		box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 	}
 
 	.form-group input::placeholder {
+		color: #a0aec0;
+	}
+
+	.form-group select {
+		cursor: pointer;
+		appearance: none;
+		-webkit-appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23718096' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 16px center;
+		padding-right: 40px;
+	}
+
+	.form-group .select-loading {
 		color: #a0aec0;
 	}
 
@@ -179,76 +189,6 @@
 		75% { transform: translateX(10px); }
 	}
 
-	/* Responsividade */
-	@media (max-width: 768px) {
-		body {
-			padding: 16px;
-		}
-
-		.login-container {
-			padding: 36px 28px;
-			border-radius: 16px;
-		}
-
-		.logo-container img {
-			width: 160px;
-		}
-
-		.login-title {
-			font-size: 1.5rem;
-		}
-
-		.login-subtitle {
-			font-size: 0.9rem;
-		}
-
-		.form-group {
-			margin-bottom: 20px;
-		}
-
-		.btn-login {
-			padding: 14px;
-			font-size: 1rem;
-		}
-	}
-
-	@media (max-width: 480px) {
-		.login-container {
-			padding: 28px 20px;
-		}
-
-		.logo-container img {
-			width: 140px;
-		}
-
-		.login-title {
-			font-size: 1.35rem;
-		}
-
-		.form-group label {
-			font-size: 0.85rem;
-		}
-
-		.form-group input {
-			padding: 12px 14px;
-			font-size: 0.95rem;
-		}
-	}
-
-	@media (max-width: 360px) {
-		body {
-			padding: 12px;
-		}
-
-		.login-container {
-			padding: 24px 16px;
-		}
-
-		.logo-container {
-			margin-bottom: 24px;
-		}
-	}
-
 	/* Loading state */
 	.btn-login.loading {
 		position: relative;
@@ -274,7 +214,31 @@
 		to { transform: rotate(360deg); }
 	}
 
-	/* Acessibilidade */
+	/* Responsividade */
+	@media (max-width: 768px) {
+		body { padding: 16px; }
+		.login-container { padding: 36px 28px; border-radius: 16px; }
+		.logo-container img { width: 160px; }
+		.login-title { font-size: 1.5rem; }
+		.login-subtitle { font-size: 0.9rem; }
+		.form-group { margin-bottom: 16px; }
+		.btn-login { padding: 14px; font-size: 1rem; }
+	}
+
+	@media (max-width: 480px) {
+		.login-container { padding: 28px 20px; }
+		.logo-container img { width: 140px; }
+		.login-title { font-size: 1.35rem; }
+		.form-group label { font-size: 0.85rem; }
+		.form-group input, .form-group select { padding: 12px 14px; font-size: 0.95rem; }
+	}
+
+	@media (max-width: 360px) {
+		body { padding: 12px; }
+		.login-container { padding: 24px 16px; }
+		.logo-container { margin-bottom: 24px; }
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		* {
 			animation-duration: 0.01ms !important;
@@ -291,9 +255,16 @@
 		</div>
 		
 		<h2 class="login-title">Bem-vindo</h2>
-		<p class="login-subtitle">Faça login para continuar</p>
+		<p class="login-subtitle">Informe suas credenciais para continuar</p>
 		
 		<div class="login-error" id="loginError"></div>
+
+		<div class="form-group">
+			<label for="empresaSelect">Filial</label>
+			<select id="empresaSelect" name="empresa" required>
+				<option value="">Carregando filiais...</option>
+			</select>
+		</div>
 		
 		<div class="form-group">
 			<label for="usuario">Usuário</label>
@@ -324,236 +295,117 @@
 		
 		<button type="submit" class="btn-login">Entrar</button>
 	</form>
-
-	<!-- Modal de Seleção de Empresa -->
-	<div class="empresa-modal" id="empresaModal" style="display: none;">
-		<div class="empresa-modal-content">
-			<div class="logo-container">
-				<img src="https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png" alt="Logo Gazin">
-			</div>
-			<h2 class="login-title">Selecione a Empresa</h2>
-			<p class="login-subtitle">Escolha a empresa para trabalhar</p>
-			
-			<div class="form-group">
-				<label for="empresaSelect">Empresa</label>
-				<select id="empresaSelect" class="form-select" required>
-					<option value="">Carregando empresas...</option>
-				</select>
-			</div>
-			
-			<button type="button" class="btn-login" id="btnSelecionarEmpresa">
-				Continuar
-			</button>
-		</div>
-	</div>
 </div>
 
-<style>
-	/* Estilos do modal de empresa */
-	.empresa-modal {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(135deg, #0066cc 0%, #003d7a 100%);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-		animation: fadeIn 0.3s ease;
-	}
-	
-	@keyframes fadeIn {
-		from { opacity: 0; }
-		to { opacity: 1; }
-	}
-	
-	.empresa-modal-content {
-		background: #ffffff;
-		padding: 48px 40px;
-		border-radius: 20px;
-		box-shadow: 0 20px 60px rgba(0, 61, 122, 0.3);
-		width: 100%;
-		max-width: 440px;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		border-top: 4px solid #0066cc;
-		animation: fadeInUp 0.6s ease-out;
-	}
-	
-	.empresa-modal-content .logo-container {
-		margin-bottom: 24px;
-		padding-bottom: 16px;
-		border-bottom: 2px solid #e8f2ff;
-	}
-	
-	.form-select {
-		width: 100%;
-		padding: 14px 16px;
-		border: 2px solid #e2e8f0;
-		border-radius: 10px;
-		font-size: 1rem;
-		color: #2d3748;
-		background: #f7fafc;
-		transition: all 0.3s ease;
-		outline: none;
-		cursor: pointer;
-	}
-	
-	.form-select:focus {
-		border-color: #0066cc;
-		background: #f0f7ff;
-		box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-	}
-</style>
 <script>
+	// Carregar empresas ao abrir a página
+	document.addEventListener('DOMContentLoaded', carregarEmpresas);
+
+	async function carregarEmpresas() {
+		const select = document.getElementById('empresaSelect');
+		try {
+			const response = await fetch('/comissao-api-empresas');
+			const text = await response.text();
+			let result;
+			try {
+				result = JSON.parse(text);
+			} catch (e) {
+				select.innerHTML = '<option value="">Erro ao carregar filiais</option>';
+				return;
+			}
+			
+			select.innerHTML = '<option value="">Selecione a filial</option>';
+			
+			if (result.success && result.data) {
+				result.data.forEach(empresa => {
+					const option = document.createElement('option');
+					option.value = empresa.ID;
+					option.textContent = empresa.CODIGO + ' - ' + (empresa.NOME_FANTASIA || empresa.RAZAO_SOCIAL);
+					select.appendChild(option);
+				});
+			} else {
+				select.innerHTML = '<option value="">Erro ao carregar filiais</option>';
+			}
+		} catch (err) {
+			select.innerHTML = '<option value="">Erro de conexão</option>';
+		}
+	}
+
+	// Submit do formulário - login + selecionar empresa em sequência
 	document.getElementById('formLogin').addEventListener('submit', async function(e) {
 		e.preventDefault();
 		
 		const usuario = document.getElementById('usuario').value.trim();
 		const senha = document.getElementById('senha').value;
+		const emprId = document.getElementById('empresaSelect').value;
 		const errorDiv = document.getElementById('loginError');
 		const submitBtn = this.querySelector('button[type="submit"]');
 		
-		// Limpar erros anteriores
 		errorDiv.style.display = 'none';
 		errorDiv.textContent = '';
+
+		if (!emprId) {
+			errorDiv.textContent = 'Selecione uma filial para continuar.';
+			errorDiv.style.display = 'block';
+			return;
+		}
 		
-		// Adicionar estado de loading
 		submitBtn.classList.add('loading');
 		submitBtn.disabled = true;
 		
 		try {
-			const response = await fetch('/login', {
+			// 1. Fazer login
+			const loginResponse = await fetch('/login', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ usuario, senha })
 			});
 			
-			const result = await response.json();
+			const loginResult = await loginResponse.json();
 			
-			if (result.success) {
-				// Armazenar permissões do usuário
-				window.userPermissions = result.user || {};
-				
-				// Login bem-sucedido - mostrar modal de empresa
-				await carregarEmpresas();
-				document.getElementById('empresaModal').style.display = 'flex';
-				document.getElementById('formLogin').parentElement.querySelector('.login-container').style.display = 'none';
-			} else {
-				// Mostrar erro
-				errorDiv.textContent = result.error || 'Usuário ou senha inválidos.';
+			if (!loginResult.success) {
+				errorDiv.textContent = loginResult.error || 'Usuário ou senha inválidos.';
 				errorDiv.style.display = 'block';
-				
-				// Remover estado de loading
 				submitBtn.classList.remove('loading');
 				submitBtn.disabled = false;
-				
-				// Focar no campo de senha para nova tentativa
 				document.getElementById('senha').focus();
 				document.getElementById('senha').select();
-			}
-		} catch (err) {
-			// Erro de conexão
-			errorDiv.textContent = 'Erro ao conectar ao servidor. Verifique sua conexão.';
-			errorDiv.style.display = 'block';
-			
-			// Remover estado de loading
-			submitBtn.classList.remove('loading');
-			submitBtn.disabled = false;
-		}
-	});
-	
-	// Carregar empresas para o select
-	async function carregarEmpresas() {
-		try {
-			console.log('Carregando empresas...');
-			const response = await fetch('/comissao-api-empresas');
-			console.log('Response status:', response.status);
-			
-			const text = await response.text();
-			console.log('Response text:', text);
-			
-			let result;
-			try {
-				result = JSON.parse(text);
-			} catch (parseErr) {
-				console.error('Erro ao parsear JSON:', parseErr);
-				console.error('Texto recebido:', text);
 				return;
 			}
-			
-			const select = document.getElementById('empresaSelect');
-			select.innerHTML = '<option value="">Selecione uma empresa</option>';
-			
-			if (result.success && result.data) {
-				console.log('Empresas encontradas:', result.data.length);
-				result.data.forEach(empresa => {
-					const option = document.createElement('option');
-					option.value = empresa.ID;
-					option.textContent = `${empresa.CODIGO} - ${empresa.NOME_FANTASIA || empresa.RAZAO_SOCIAL}`;
-					select.appendChild(option);
-				});
-			} else {
-				console.error('Erro na resposta:', result.error || 'Sem dados');
-				select.innerHTML = '<option value="">Erro ao carregar empresas</option>';
-			}
-		} catch (err) {
-			console.error('Erro ao carregar empresas:', err);
-			document.getElementById('empresaSelect').innerHTML = '<option value="">Erro de conexão</option>';
-		}
-	}
-	
-	// Selecionar empresa e continuar
-	document.getElementById('btnSelecionarEmpresa').addEventListener('click', async function() {
-		const select = document.getElementById('empresaSelect');
-		const emprId = select.value;
-		
-		if (!emprId) {
-			alert('Selecione uma empresa para continuar');
-			return;
-		}
-		
-		this.classList.add('loading');
-		this.disabled = true;
-		
-		try {
-			const response = await fetch('/comissao-api-selecionar-empresa', {
+
+			// Armazenar permissões
+			window.userPermissions = loginResult.user || {};
+
+			// 2. Selecionar empresa
+			const empresaResponse = await fetch('/comissao-api-selecionar-empresa', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ empr_id: emprId })
 			});
 			
-			const result = await response.json();
+			const empresaResult = await empresaResponse.json();
 			
-			if (result.success) {
-				// Redirecionar baseado nas permissões do usuário
-				const redirectUrl = getRedirectUrl();
-				window.location.href = redirectUrl;
+			if (empresaResult.success) {
+				window.location.href = getRedirectUrl();
 			} else {
-				alert(result.error || 'Erro ao selecionar empresa');
-				this.classList.remove('loading');
-				this.disabled = false;
+				errorDiv.textContent = empresaResult.error || 'Erro ao selecionar filial.';
+				errorDiv.style.display = 'block';
+				submitBtn.classList.remove('loading');
+				submitBtn.disabled = false;
 			}
 		} catch (err) {
-			alert('Erro ao conectar ao servidor');
-			this.classList.remove('loading');
-			this.disabled = false;
+			errorDiv.textContent = 'Erro ao conectar ao servidor. Verifique sua conexão.';
+			errorDiv.style.display = 'block';
+			submitBtn.classList.remove('loading');
+			submitBtn.disabled = false;
 		}
 	});
 	
-	// Determinar URL de redirecionamento baseado nas permissões
 	function getRedirectUrl() {
-		// Verificar permissões retornadas do login (armazenadas em variável global)
 		if (window.userPermissions) {
-			// Novo sistema de permissões
 			if (window.userPermissions.is_admin === true) {
 				return '/permissao';
 			}
-			
-			// Verificar rotas permitidas
 			const rotas = window.userPermissions.rotas_permitidas || [];
 			if (rotas.includes('*')) {
 				return '/permissao';
@@ -565,7 +417,6 @@
 				return '/permissao';
 			}
 		}
-		// Fallback - tenta página de relatórios
 		return '/comissao-relatorio';
 	}
 	

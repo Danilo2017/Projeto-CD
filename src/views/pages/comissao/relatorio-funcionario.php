@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,7 +11,7 @@ if (!$acessoComissao) {
     'showNavbar' => true,
     'pageActive' => 'comissao-relatorio-funcionario',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="comissao-dashboard-container" style="max-width: 100%; overflow-x: hidden;">
@@ -260,6 +258,11 @@ if (!$acessoComissao) {
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+
+                    <!-- Info Valor Fixo (tipo M) -->
+                    <div id="comprovanteValorFixoInfo" style="display:none; padding: 8px 12px; margin: 8px 0; background: #f0f7ff; border-left: 3px solid #0d6efd; font-size: 13px;">
+                        <strong>Regra Misto:</strong> Valor Fixo <span id="comprovanteValorFixo">-</span> + Valor por Ponto <span id="comprovanteValorPorPonto">-</span>
                     </div>
 
                     <!-- Assinaturas -->

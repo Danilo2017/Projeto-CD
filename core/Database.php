@@ -82,6 +82,12 @@ class Database
                 foreach ($params as $nome => $valor) {
                     @$rpl = str_replace('\"', "'", $valor);
                     $valor = is_string($valor) ? trim($rpl) : $valor;
+                    // '--' como comentário de linha não funciona em SQL single-line (CLOB),
+                    // pois comenta tudo após ele na mesma linha (GROUP BY, ORDER BY, etc).
+                    // Substitui por string vazia para simplesmente remover o filtro.
+                    if ($valor === '--') {
+                        $valor = '';
+                    }
                     @$sql = preg_replace('/:' . (string)$nome . '\b/i', $valor, $sql);
                 }
             }
@@ -165,6 +171,9 @@ class Database
         foreach ($params as $nome => $valor) {
             @$rpl = str_replace('\"', "'", $valor);
             $valor = is_string($valor) ? trim($rpl) : $valor;
+            if ($valor === '--') {
+                $valor = '';
+            }
             @$sql = preg_replace('/:' . (string)$nome . '\b/i', $valor, $sql);
         };
         return $sql;

@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,7 +11,7 @@ if (!$acessoComissao) {
     'showNavbar' => true,
     'pageActive' => 'comissao-faltas',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
@@ -23,8 +21,8 @@ if (!$acessoComissao) {
             <div class="filter-group">
                 <label for="filtroEmpresa">Empresa</label>
                 <input type="text" id="filtroEmpresaNome" class="form-control" readonly 
-                       value="<?= ($_SESSION['empresa']['codigo'] ?? '') . ' - ' . ($_SESSION['empresa']['nome_fantasia'] ?? 'Não selecionada') ?>">
-                <input type="hidden" id="filtroEmpresa" value="<?= $_SESSION['empresa']['id'] ?? '' ?>">
+                       value="<?= ($empresa['codigo'] ?? '') . ' - ' . ($empresa['nome_fantasia'] ?? 'Não selecionada') ?>">
+                <input type="hidden" id="filtroEmpresa" value="<?= $empresa['id'] ?? '' ?>">
             </div>
             <div class="filter-group">
                 <label for="filtroFuncionario">Funcionário</label>

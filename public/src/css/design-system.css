@@ -1,0 +1,1125 @@
+/* ============================================
+   DESIGN SYSTEM - Padrão Visual Unificado
+   Baseado no modelo de Dashboard de Precificação
+   ============================================ */
+
+/* ============================================
+   1. CSS VARIABLES (Tokens de Design)
+   ============================================ */
+:root {
+    /* Cores primárias */
+    --ds-primary: #4361ee;
+    --ds-primary-dark: #3a56d4;
+    --ds-primary-light: #eef1fd;
+
+    /* Cores de ação */
+    --ds-success: #2dc653;
+    --ds-success-dark: #25a847;
+    --ds-success-light: #e8f9ed;
+
+    --ds-warning: #e85d04;
+    --ds-warning-dark: #cc5003;
+    --ds-warning-light: #fef0e6;
+
+    --ds-danger: #dc3545;
+    --ds-danger-dark: #c82333;
+    --ds-danger-light: #fde8ea;
+
+    --ds-dark: #2b2d42;
+    --ds-dark-light: #3d3f56;
+
+    --ds-info: #0dcaf0;
+    --ds-info-dark: #0bb2d4;
+    --ds-info-light: #e7fafe;
+
+    /* Cores neutras */
+    --ds-white: #ffffff;
+    --ds-bg: #f5f7fa;
+    --ds-bg-card: #ffffff;
+    --ds-border: #e8ecf1;
+    --ds-border-light: #f0f2f5;
+
+    /* Texto */
+    --ds-text-primary: #1a1d2e;
+    --ds-text-secondary: #6b7280;
+    --ds-text-muted: #9ca3af;
+    --ds-text-label: #8b8fa3;
+
+    /* Sombras */
+    --ds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --ds-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --ds-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --ds-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.10);
+
+    /* Border Radius */
+    --ds-radius-sm: 6px;
+    --ds-radius: 10px;
+    --ds-radius-lg: 14px;
+    --ds-radius-xl: 20px;
+    --ds-radius-pill: 50px;
+
+    /* Tipografia */
+    --ds-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --ds-font-size-xs: 0.7rem;
+    --ds-font-size-sm: 0.8rem;
+    --ds-font-size-base: 0.875rem;
+    --ds-font-size-md: 1rem;
+    --ds-font-size-lg: 1.25rem;
+    --ds-font-size-xl: 1.5rem;
+    --ds-font-size-2xl: 2rem;
+
+    /* Espaçamento */
+    --ds-space-xs: 4px;
+    --ds-space-sm: 8px;
+    --ds-space-md: 16px;
+    --ds-space-lg: 24px;
+    --ds-space-xl: 32px;
+    --ds-space-2xl: 48px;
+
+    /* Header */
+    --ds-header-height: 64px;
+    --ds-nav-height: 52px;
+}
+
+/* ============================================
+   2. RESET & BASE
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-base);
+    line-height: 1.6;
+    color: var(--ds-text-primary);
+    background: var(--ds-bg) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   3. TIPOGRAFIA
+   ============================================ */
+h1 {
+    font-size: var(--ds-font-size-xl);
+    font-weight: 700;
+    color: var(--ds-text-primary);
+    line-height: 1.3;
+}
+
+h2 {
+    font-size: var(--ds-font-size-lg);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+    line-height: 1.3;
+}
+
+h3 {
+    font-size: var(--ds-font-size-md);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+}
+
+h4, h5, h6 {
+    font-size: var(--ds-font-size-base);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+}
+
+p {
+    color: var(--ds-text-secondary);
+    line-height: 1.6;
+}
+
+/* ============================================
+   4. HEADER & NAVEGAÇÃO (Modelo Precificação)
+   ============================================ */
+.ds-header {
+    background: var(--ds-white);
+    height: var(--ds-header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--ds-space-lg);
+    border-bottom: 1px solid var(--ds-border);
+    box-shadow: var(--ds-shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.ds-header-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-header-title h1 {
+    font-size: var(--ds-font-size-lg);
+    font-weight: 700;
+    color: var(--ds-primary);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.ds-header-title .ds-subtitle {
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-text-muted);
+    margin: 0;
+}
+
+.ds-header-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-sm);
+}
+
+.ds-header-user {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-sm);
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-text-muted);
+    margin-left: var(--ds-space-md);
+}
+
+/* ============================================
+   5. BOTÕES (Padronizados)
+   ============================================ */
+
+/* Botão Base */
+.ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 18px;
+    font-family: var(--ds-font);
+    font-size: var(--ds-font-size-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    border-radius: var(--ds-radius);
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.ds-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ds-shadow-md);
+    text-decoration: none;
+}
+
+.ds-btn:active {
+    transform: translateY(0);
+}
+
+.ds-btn i {
+    font-size: 0.9em;
+}
+
+/* Botão Primário (Azul - Dashboard) */
+.ds-btn-primary,
+.btn-primary {
+    background: var(--ds-primary) !important;
+    color: var(--ds-white) !important;
+    border-color: var(--ds-primary) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+    font-family: var(--ds-font) !important;
+}
+
+.ds-btn-primary:hover,
+.btn-primary:hover {
+    background: var(--ds-primary-dark) !important;
+    border-color: var(--ds-primary-dark) !important;
+    color: var(--ds-white) !important;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.35) !important;
+}
+
+/* Botão Success (Verde - Nova Simulação) */
+.ds-btn-success,
+.btn-success {
+    background: var(--ds-success) !important;
+    color: var(--ds-white) !important;
+    border-color: var(--ds-success) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+    font-family: var(--ds-font) !important;
+}
+
+.ds-btn-success:hover,
+.btn-success:hover {
+    background: var(--ds-success-dark) !important;
+    border-color: var(--ds-success-dark) !important;
+    color: var(--ds-white) !important;
+    box-shadow: 0 4px 12px rgba(45, 198, 83, 0.35) !important;
+}
+
+/* Botão Warning (Laranja - Parametrizações) */
+.ds-btn-warning,
+.btn-warning {
+    background: var(--ds-warning) !important;
+    color: var(--ds-white) !important;
+    border-color: var(--ds-warning) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+    font-family: var(--ds-font) !important;
+}
+
+.ds-btn-warning:hover,
+.btn-warning:hover {
+    background: var(--ds-warning-dark) !important;
+    border-color: var(--ds-warning-dark) !important;
+    color: var(--ds-white) !important;
+    box-shadow: 0 4px 12px rgba(232, 93, 4, 0.35) !important;
+}
+
+/* Botão Dark (Escuro - Auditoria) */
+.ds-btn-dark,
+.btn-dark {
+    background: var(--ds-dark) !important;
+    color: var(--ds-white) !important;
+    border-color: var(--ds-dark) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+    font-family: var(--ds-font) !important;
+}
+
+.ds-btn-dark:hover,
+.btn-dark:hover {
+    background: var(--ds-dark-light) !important;
+    border-color: var(--ds-dark-light) !important;
+    color: var(--ds-white) !important;
+    box-shadow: 0 4px 12px rgba(43, 45, 66, 0.35) !important;
+}
+
+/* Botão Danger (Vermelho) */
+.ds-btn-danger,
+.btn-danger {
+    background: var(--ds-danger) !important;
+    color: var(--ds-white) !important;
+    border-color: var(--ds-danger) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+    font-family: var(--ds-font) !important;
+}
+
+.ds-btn-danger:hover,
+.btn-danger:hover {
+    background: var(--ds-danger-dark) !important;
+    border-color: var(--ds-danger-dark) !important;
+    color: var(--ds-white) !important;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.35) !important;
+}
+
+/* Botão Info */
+.ds-btn-info,
+.btn-info {
+    background: var(--ds-info) !important;
+    color: var(--ds-white) !important;
+    border-color: var(--ds-info) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+    font-family: var(--ds-font) !important;
+}
+
+.ds-btn-info:hover,
+.btn-info:hover {
+    background: var(--ds-info-dark) !important;
+    border-color: var(--ds-info-dark) !important;
+    color: var(--ds-white) !important;
+}
+
+/* Botão Outlined (Sair) */
+.ds-btn-outline {
+    background: var(--ds-white);
+    color: var(--ds-text-primary);
+    border: 2px solid var(--ds-border);
+    border-radius: var(--ds-radius);
+    font-weight: 600;
+}
+
+.ds-btn-outline:hover {
+    background: var(--ds-bg);
+    border-color: var(--ds-text-muted);
+    color: var(--ds-text-primary);
+}
+
+.btn-outline-primary {
+    background: var(--ds-white) !important;
+    color: var(--ds-primary) !important;
+    border: 2px solid var(--ds-primary) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+}
+
+.btn-outline-primary:hover {
+    background: var(--ds-primary) !important;
+    color: var(--ds-white) !important;
+}
+
+.btn-outline-secondary {
+    background: var(--ds-white) !important;
+    color: var(--ds-text-secondary) !important;
+    border: 2px solid var(--ds-border) !important;
+    border-radius: var(--ds-radius) !important;
+    font-weight: 600 !important;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--ds-bg) !important;
+    color: var(--ds-text-primary) !important;
+    border-color: var(--ds-text-muted) !important;
+}
+
+/* Tamanhos de botão */
+.ds-btn-sm,
+.btn-sm {
+    padding: 5px 12px !important;
+    font-size: var(--ds-font-size-xs) !important;
+    border-radius: var(--ds-radius-sm) !important;
+}
+
+.ds-btn-lg,
+.btn-lg {
+    padding: 12px 24px !important;
+    font-size: var(--ds-font-size-base) !important;
+    border-radius: var(--ds-radius) !important;
+}
+
+/* Botão global override */
+.btn {
+    font-family: var(--ds-font) !important;
+    font-weight: 600 !important;
+    border-radius: var(--ds-radius) !important;
+    transition: all 0.2s ease !important;
+    letter-spacing: 0.01em;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* ============================================
+   6. CARDS (Modelo Precificação)
+   ============================================ */
+.ds-card {
+    background: var(--ds-bg-card);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-lg);
+    padding: var(--ds-space-lg);
+    transition: all 0.2s ease;
+}
+
+.ds-card:hover {
+    box-shadow: var(--ds-shadow-md);
+}
+
+.ds-card-label {
+    font-size: var(--ds-font-size-xs);
+    font-weight: 500;
+    color: var(--ds-text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--ds-space-sm);
+}
+
+.ds-card-value {
+    font-size: var(--ds-font-size-2xl);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.ds-card-value.text-primary { color: var(--ds-primary); }
+.ds-card-value.text-success { color: var(--ds-success); }
+.ds-card-value.text-warning { color: var(--ds-warning); }
+.ds-card-value.text-danger { color: var(--ds-danger); }
+.ds-card-value.text-dark { color: var(--ds-text-primary); }
+
+.ds-card-description {
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-text-muted);
+    margin-top: var(--ds-space-xs);
+}
+
+.ds-card-description .dot-green {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--ds-success);
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+/* Card como Bootstrap override */
+.card {
+    border: 1px solid var(--ds-border) !important;
+    border-radius: var(--ds-radius-lg) !important;
+    box-shadow: var(--ds-shadow-sm) !important;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: var(--ds-shadow) !important;
+    transform: none !important;
+}
+
+.card-header {
+    background: var(--ds-white) !important;
+    border-bottom: 1px solid var(--ds-border) !important;
+    font-size: var(--ds-font-size-base) !important;
+    font-weight: 600 !important;
+    color: var(--ds-text-primary) !important;
+    padding: var(--ds-space-md) var(--ds-space-lg) !important;
+    font-family: var(--ds-font) !important;
+}
+
+.card-body {
+    padding: var(--ds-space-lg) !important;
+    font-family: var(--ds-font) !important;
+}
+
+/* Grid de Cards (4 colunas como no modelo) */
+.ds-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--ds-space-md);
+    margin-bottom: var(--ds-space-lg);
+}
+
+/* ============================================
+   7. FORMULÁRIOS
+   ============================================ */
+.form-label,
+label {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-xs) !important;
+    font-weight: 600 !important;
+    color: var(--ds-text-secondary) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px !important;
+}
+
+.form-control,
+.form-select,
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-base) !important;
+    border: 1px solid var(--ds-border) !important;
+    border-radius: var(--ds-radius-sm) !important;
+    padding: 8px 12px !important;
+    color: var(--ds-text-primary) !important;
+    background: var(--ds-white) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    height: auto !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--ds-primary) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12) !important;
+    outline: none !important;
+}
+
+.form-control-sm,
+.form-select-sm {
+    font-size: var(--ds-font-size-xs) !important;
+    padding: 5px 10px !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--ds-primary) !important;
+    border-color: var(--ds-primary) !important;
+}
+
+/* ============================================
+   8. TABELAS
+   ============================================ */
+.table,
+table {
+    font-family: var(--ds-font) !important;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table thead th,
+table thead th {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-xs) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ds-text-secondary) !important;
+    background: var(--ds-bg) !important;
+    border-bottom: 2px solid var(--ds-border) !important;
+    padding: 10px 14px !important;
+    white-space: nowrap;
+}
+
+.table tbody td,
+table tbody td {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-sm) !important;
+    color: var(--ds-text-primary) !important;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid var(--ds-border-light) !important;
+    vertical-align: middle !important;
+}
+
+.table tbody tr:hover,
+table tbody tr:hover {
+    background: var(--ds-primary-light) !important;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+.table tfoot td,
+table tfoot td {
+    font-size: var(--ds-font-size-xs) !important;
+    font-weight: 600 !important;
+    padding: 10px 14px !important;
+    background: var(--ds-bg) !important;
+}
+
+/* ============================================
+   9. BADGES & STATUS
+   ============================================ */
+.badge,
+.ds-badge {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-xs) !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-radius: var(--ds-radius-sm) !important;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.ds-badge-success,
+.badge.bg-success,
+.status-badge.status-ativo,
+.status-badge.status-aprovado {
+    background: var(--ds-success-light) !important;
+    color: var(--ds-success-dark) !important;
+}
+
+.ds-badge-danger,
+.badge.bg-danger,
+.status-badge.status-inativo,
+.status-badge.status-cancelado {
+    background: var(--ds-danger-light) !important;
+    color: var(--ds-danger-dark) !important;
+}
+
+.ds-badge-warning,
+.badge.bg-warning,
+.status-badge.status-pendente {
+    background: var(--ds-warning-light) !important;
+    color: var(--ds-warning-dark) !important;
+}
+
+.ds-badge-primary,
+.badge.bg-primary {
+    background: var(--ds-primary-light) !important;
+    color: var(--ds-primary-dark) !important;
+}
+
+.ds-badge-info,
+.badge.bg-info {
+    background: var(--ds-info-light) !important;
+    color: var(--ds-info-dark) !important;
+}
+
+.ds-badge-dark,
+.badge.bg-dark {
+    background: #e8e9ed !important;
+    color: var(--ds-dark) !important;
+}
+
+/* ============================================
+   10. MODAIS
+   ============================================ */
+.modal-content {
+    border: none !important;
+    border-radius: var(--ds-radius-lg) !important;
+    box-shadow: var(--ds-shadow-lg) !important;
+    font-family: var(--ds-font) !important;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: var(--ds-primary) !important;
+    color: var(--ds-white) !important;
+    padding: var(--ds-space-md) var(--ds-space-lg) !important;
+    border-bottom: none !important;
+}
+
+.modal-header .modal-title {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-md) !important;
+    font-weight: 600 !important;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1) !important;
+}
+
+.modal-body {
+    padding: var(--ds-space-lg) !important;
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-base) !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--ds-border) !important;
+    padding: var(--ds-space-md) var(--ds-space-lg) !important;
+}
+
+/* ============================================
+   11. FILTROS (Barra de filtros estilo modelo)
+   ============================================ */
+.ds-filter-bar {
+    background: var(--ds-white);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-lg);
+    padding: var(--ds-space-md) var(--ds-space-lg);
+    margin-bottom: var(--ds-space-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--ds-space-md);
+}
+
+.ds-filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ds-space-sm);
+}
+
+/* Toggle buttons (Todas / Abertas / Fechadas) */
+.ds-toggle-group {
+    display: inline-flex;
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius);
+    overflow: hidden;
+}
+
+.ds-toggle-btn {
+    padding: 6px 16px;
+    font-size: var(--ds-font-size-xs);
+    font-weight: 600;
+    color: var(--ds-text-secondary);
+    background: var(--ds-white);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--ds-font);
+}
+
+.ds-toggle-btn:not(:last-child) {
+    border-right: 1px solid var(--ds-border);
+}
+
+.ds-toggle-btn.active,
+.ds-toggle-btn:hover {
+    background: var(--ds-primary);
+    color: var(--ds-white);
+}
+
+/* Period badge (verde) */
+.ds-period-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--ds-success-light);
+    color: var(--ds-success-dark);
+    padding: 4px 12px;
+    border-radius: var(--ds-radius-pill);
+    font-size: var(--ds-font-size-xs);
+    font-weight: 600;
+}
+
+/* ============================================
+   12. ALERTAS
+   ============================================ */
+.alert {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-sm) !important;
+    border-radius: var(--ds-radius) !important;
+    border: none !important;
+    padding: 12px 18px !important;
+}
+
+.alert-success {
+    background: var(--ds-success-light) !important;
+    color: var(--ds-success-dark) !important;
+}
+
+.alert-danger {
+    background: var(--ds-danger-light) !important;
+    color: var(--ds-danger-dark) !important;
+}
+
+.alert-warning {
+    background: var(--ds-warning-light) !important;
+    color: var(--ds-warning-dark) !important;
+}
+
+.alert-info {
+    background: var(--ds-primary-light) !important;
+    color: var(--ds-primary-dark) !important;
+}
+
+/* ============================================
+   13. SEÇÕES DE CONTEÚDO
+   ============================================ */
+.ds-section {
+    background: var(--ds-white);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-lg);
+    margin-bottom: var(--ds-space-lg);
+    overflow: hidden;
+}
+
+.ds-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ds-space-md) var(--ds-space-lg);
+    border-bottom: 1px solid var(--ds-border);
+}
+
+.ds-section-title {
+    font-size: var(--ds-font-size-base);
+    font-weight: 700;
+    color: var(--ds-text-primary);
+    margin: 0;
+}
+
+.ds-section-body {
+    padding: 0;
+}
+
+.ds-section-link {
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-primary);
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ds-section-link:hover {
+    color: var(--ds-primary-dark);
+}
+
+/* ============================================
+   14. LISTA DE ITENS (Simulações Recentes)
+   ============================================ */
+.ds-list-item {
+    display: flex;
+    align-items: center;
+    padding: var(--ds-space-md) var(--ds-space-lg);
+    border-bottom: 1px solid var(--ds-border-light);
+    transition: background 0.15s ease;
+    gap: var(--ds-space-md);
+}
+
+.ds-list-item:hover {
+    background: var(--ds-bg);
+}
+
+.ds-list-item:last-child {
+    border-bottom: none;
+}
+
+.ds-list-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ds-font-size-xs);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ds-list-avatar.avatar-primary {
+    background: var(--ds-primary-light);
+    color: var(--ds-primary);
+}
+
+.ds-list-avatar.avatar-success {
+    background: var(--ds-success-light);
+    color: var(--ds-success);
+}
+
+.ds-list-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.ds-list-title {
+    font-size: var(--ds-font-size-base);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+}
+
+.ds-list-subtitle {
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-text-muted);
+}
+
+.ds-list-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.ds-list-value {
+    font-size: var(--ds-font-size-base);
+    font-weight: 600;
+    color: var(--ds-text-primary);
+}
+
+.ds-list-date {
+    font-size: var(--ds-font-size-xs);
+    color: var(--ds-text-muted);
+}
+
+/* ============================================
+   15. PROGRESSO CIRCULAR (Margem Média)
+   ============================================ */
+.ds-progress-circle {
+    width: 56px;
+    height: 56px;
+    position: relative;
+}
+
+.ds-progress-circle svg {
+    transform: rotate(-90deg);
+}
+
+.ds-progress-circle .progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: var(--ds-font-size-xs);
+    font-weight: 700;
+    color: var(--ds-text-primary);
+}
+
+/* ============================================
+   16. DATATABLES OVERRIDE
+   ============================================ */
+.dataTables_wrapper {
+    font-family: var(--ds-font) !important;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-xs) !important;
+    padding: 12px 16px !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid var(--ds-border) !important;
+    border-radius: var(--ds-radius-sm) !important;
+    padding: 5px 10px !important;
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-sm) !important;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--ds-primary) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12) !important;
+    outline: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: var(--ds-radius-sm) !important;
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-xs) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--ds-primary) !important;
+    color: var(--ds-white) !important;
+    border-color: var(--ds-primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--ds-primary-light) !important;
+    color: var(--ds-primary) !important;
+    border-color: var(--ds-primary-light) !important;
+}
+
+/* ============================================
+   17. SELECT2 OVERRIDE
+   ============================================ */
+.select2-container .select2-selection--single {
+    border: 1px solid var(--ds-border) !important;
+    border-radius: var(--ds-radius-sm) !important;
+    min-height: 36px !important;
+    font-family: var(--ds-font) !important;
+    font-size: var(--ds-font-size-base) !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 34px !important;
+    font-family: var(--ds-font) !important;
+    color: var(--ds-text-primary) !important;
+}
+
+.select2-container--focus .select2-selection--single {
+    border-color: var(--ds-primary) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12) !important;
+}
+
+.select2-dropdown {
+    border: 1px solid var(--ds-border) !important;
+    border-radius: var(--ds-radius-sm) !important;
+    box-shadow: var(--ds-shadow-md) !important;
+    font-family: var(--ds-font) !important;
+}
+
+.select2-results__option--highlighted {
+    background: var(--ds-primary) !important;
+}
+
+/* ============================================
+   18. LOADING STATES
+   ============================================ */
+.ds-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ds-space-2xl);
+    color: var(--ds-text-muted);
+    font-size: var(--ds-font-size-sm);
+}
+
+.ds-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--ds-border);
+    border-top-color: var(--ds-primary);
+    border-radius: 50%;
+    animation: ds-spin 0.7s linear infinite;
+}
+
+@keyframes ds-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   19. RESPONSIVIDADE
+   ============================================ */
+@media (max-width: 992px) {
+    .ds-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ds-header {
+        padding: 0 var(--ds-space-md);
+    }
+    
+    .ds-header-nav {
+        gap: var(--ds-space-xs);
+    }
+    
+    .ds-btn {
+        padding: 6px 12px;
+        font-size: var(--ds-font-size-xs);
+    }
+}
+
+@media (max-width: 768px) {
+    .ds-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ds-header {
+        flex-wrap: wrap;
+        height: auto;
+        padding: var(--ds-space-md);
+        gap: var(--ds-space-sm);
+    }
+    
+    .ds-header-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .ds-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ds-list-item {
+        flex-wrap: wrap;
+    }
+}
+
+/* ============================================
+   20. ANIMAÇÕES
+   ============================================ */
+@keyframes ds-fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ds-animate {
+    animation: ds-fadeIn 0.4s ease-out;
+}
+
+/* ============================================
+   21. UTILITÁRIOS
+   ============================================ */
+.ds-text-primary { color: var(--ds-primary) !important; }
+.ds-text-success { color: var(--ds-success) !important; }
+.ds-text-warning { color: var(--ds-warning) !important; }
+.ds-text-danger { color: var(--ds-danger) !important; }
+.ds-text-muted { color: var(--ds-text-muted) !important; }
+
+.ds-bg-primary { background: var(--ds-primary-light) !important; }
+.ds-bg-success { background: var(--ds-success-light) !important; }
+.ds-bg-warning { background: var(--ds-warning-light) !important; }
+.ds-bg-danger { background: var(--ds-danger-light) !important; }
+
+.ds-fw-bold { font-weight: 700 !important; }
+.ds-fw-semibold { font-weight: 600 !important; }
+.ds-fw-medium { font-weight: 500 !important; }
+
+.ds-mt-0 { margin-top: 0 !important; }
+.ds-mb-0 { margin-bottom: 0 !important; }
+.ds-mb-sm { margin-bottom: var(--ds-space-sm) !important; }
+.ds-mb-md { margin-bottom: var(--ds-space-md) !important; }
+.ds-mb-lg { margin-bottom: var(--ds-space-lg) !important; }

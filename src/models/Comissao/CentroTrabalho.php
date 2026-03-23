@@ -3,7 +3,6 @@
 namespace src\models\Comissao;
 
 use core\Database;
-use PDO;
 
 /**
  * Model para consulta de Centros de Trabalho no FOCCO
@@ -11,134 +10,50 @@ use PDO;
  */
 class CentroTrabalho
 {
-    /**
-     * Listar todos os centros de trabalho
-     * @param int $emprId ID da empresa (opcional)
-     * @return array
-     */
-    public function listarTodos($emprId = null)
+    public static function listarTodos($emprId = null)
     {
-        $sql = "SELECT 
-                    CT.ID,
-                    CT.COD_CENTRO,
-                    CT.DESCRICAO,
-                    CT.EMPR_ID
-                FROM FOCCO3I.TCENTROS_TRAB CT
-                INNER JOIN FOCCO3I.TEMP_CC tc ON tc.ID = CT.EMP_CC_ID
-                INNER JOIN FOCCO3I.TCC t ON t.ID = tc.CC_ID
-                WHERE t.TIPO_CC = 'PRO'";
-        
-        if ($emprId) {
-            $sql .= " AND CT.EMPR_ID = :empr_id";
+        $params = [
+            'filtro_empr' => $emprId ? "AND CT.EMPR_ID = " . intval($emprId) : '--'
+        ];
+        $result = Database::switchParams('focco', $params, 'comissao.centroTrabalho.listarTodos', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
         }
-        
-        $sql .= " ORDER BY CT.COD_CENTRO";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
-        if ($emprId) {
-            $stmt->bindParam(':empr_id', $emprId, PDO::PARAM_INT);
-        }
-        
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result['retorno'];
     }
 
-    /**
-     * Buscar centro de trabalho por ID
-     * @param int $id
-     * @return array|null
-     */
-    public function buscarPorId($id)
+    public static function buscarPorId($id)
     {
-        $sql = "SELECT 
-                    CT.ID,
-                    CT.COD_CENTRO,
-                    CT.DESCRICAO,
-                    CT.EMP_CC_ID,
-                    CT.EMPR_ID,
-                    CT.CAPACIDADE,
-                    E.RAZAO_SOCIAL AS EMPRESA
-                FROM FOCCO3I.TCENTROS_TRAB CT
-                LEFT JOIN FOCCO3I.TEMPRESAS E ON E.ID = CT.EMPR_ID
-                WHERE CT.ID = :id";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $params = ['id' => intval($id)];
+        $result = Database::switchParams('focco', $params, 'comissao.centroTrabalho.buscarPorId', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return $result['retorno'][0] ?? null;
     }
 
-    /**
-     * Buscar centro de trabalho por código
-     * @param string $codCentro
-     * @param int $emprId
-     * @return array|null
-     */
-    public function buscarPorCodigo($codCentro, $emprId = null)
+    public static function buscarPorCodigo($codCentro, $emprId = null)
     {
-        $sql = "SELECT 
-                    CT.ID,
-                    CT.COD_CENTRO,
-                    CT.DESCRICAO,
-                    CT.EMP_CC_ID,
-                    CT.EMPR_ID,
-                    CT.CAPACIDADE,
-                    E.RAZAO_SOCIAL AS EMPRESA
-                FROM FOCCO3I.TCENTROS_TRAB CT
-                LEFT JOIN FOCCO3I.TEMPRESAS E ON E.ID = CT.EMPR_ID
-                WHERE CT.COD_CENTRO = :cod_centro";
-        
-        if ($emprId) {
-            $sql .= " AND CT.EMPR_ID = :empr_id";
+        $params = [
+            'cod_centro' => "'" . str_replace("'", "''", $codCentro) . "'",
+            'filtro_empr' => $emprId ? "AND CT.EMPR_ID = " . intval($emprId) : '--'
+        ];
+        $result = Database::switchParams('focco', $params, 'comissao.centroTrabalho.buscarPorCodigo', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
         }
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':cod_centro', $codCentro, PDO::PARAM_STR);
-        
-        if ($emprId) {
-            $stmt->bindParam(':empr_id', $emprId, PDO::PARAM_INT);
-        }
-        
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['retorno'][0] ?? null;
     }
 
-    /**
-     * Listar centros de trabalho com recursos associados
-     * @param int $emprId
-     * @return array
-     */
-    public function listarComRecursos($emprId = null)
+    public static function listarComRecursos($emprId = null)
     {
-        $sql = "SELECT 
-                    CT.ID,
-                    CT.COD_CENTRO,
-                    CT.DESCRICAO,
-                    CT.EMPR_ID,
-                    COUNT(M.ID) AS QTD_RECURSOS
-                FROM FOCCO3I.TCENTROS_TRAB CT
-                LEFT JOIN FOCCO3I.TMAQUINAS M ON M.CENTR_TRAB_ID = CT.ID AND M.SIT = 1";
-        
-        if ($emprId) {
-            $sql .= " WHERE CT.EMPR_ID = :empr_id";
+        $params = [
+            'filtro_where' => $emprId ? "WHERE CT.EMPR_ID = " . intval($emprId) : '--'
+        ];
+        $result = Database::switchParams('focco', $params, 'comissao.centroTrabalho.listarComRecursos', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
         }
-        
-        $sql .= " GROUP BY CT.ID, CT.COD_CENTRO, CT.DESCRICAO, CT.EMPR_ID
-                  ORDER BY CT.COD_CENTRO";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
-        if ($emprId) {
-            $stmt->bindParam(':empr_id', $emprId, PDO::PARAM_INT);
-        }
-        
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result['retorno'];
     }
 }

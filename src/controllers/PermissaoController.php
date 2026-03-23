@@ -3,12 +3,12 @@
 namespace src\controllers;
 
 use core\Request;
-use src\models\PermissaoUsuario;
+use src\models\PerfilAcesso;
 use \core\Controller as ctrl;
 
 /**
  * Controller para gerenciamento de permissões de acesso
- * Usa tabela TGAZIN_ACESSO_USUARIO
+ * Usa tabelas TGAZIN_USUARIO_PERFIL / TGAZIN_PERFIL_ACESSO
  */
 class PermissaoController extends ctrl
 {
@@ -19,14 +19,36 @@ class PermissaoController extends ctrl
     {
         $dados = [
             'titulo' => 'Gerenciar Permissões de Acesso',
-            'pagina' => 'Permissões'
+            'pagina' => 'Permissões',
+            'is_admin' => $_SESSION['user']['is_admin'] ?? false,
         ];
 
         $this->render('permissao/index', $dados);
     }
 
     /**
-     * API - Lista todas as permissões de usuários
+     * API - Lista perfis disponíveis (para popular selects/checkboxes)
+     */
+    public function listarPerfis()
+    {
+        try {
+            $perfis = PerfilAcesso::listarPerfisAtivos();
+
+            self::response([
+                'success' => true,
+                'data' => $perfis
+            ], 200);
+
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API - Lista usuários com seus perfis
      */
     public function listar()
     {
@@ -40,12 +62,16 @@ class PermissaoController extends ctrl
             if (isset($_GET['ativo']) && $_GET['ativo'] !== '') {
                 $filtros['ativo'] = $_GET['ativo'];
             }
+
+            if (!empty($_GET['perfil_id'])) {
+                $filtros['perfil_id'] = $_GET['perfil_id'];
+            }
             
-            $permissoes = PermissaoUsuario::listar($filtros);
+            $usuarios = PerfilAcesso::listarUsuariosAgrupados($filtros);
             
             self::response([
                 'success' => true,
-                'data' => $permissoes
+                'data' => $usuarios
             ], 200);
             
         } catch (\Exception $e) {
@@ -57,33 +83,26 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Busca uma permissão específica por ID ou login
+     * API - Busca perfis de um usuário por login
      */
     public function buscar()
     {
         try {
-            $id = $_GET['id'] ?? null;
             $login = $_GET['login'] ?? null;
             
-            if (!$id && !$login) {
-                throw new \Exception('ID ou Login é obrigatório');
+            if (!$login) {
+                throw new \Exception('Login é obrigatório');
             }
             
-            $permissao = null;
-            
-            if ($id) {
-                $permissao = PermissaoUsuario::buscarPorId($id);
-            } else {
-                $permissao = PermissaoUsuario::buscarPorLogin($login);
-            }
-            
-            if (!$permissao) {
-                throw new \Exception('Permissão não encontrada');
-            }
+            $perfis = PerfilAcesso::buscarPerfisUsuario($login);
             
             self::response([
                 'success' => true,
-                'data' => $permissao
+                'data' => [
+                    'LOGIN_USUARIO' => strtoupper($login),
+                    'PERFIS' => $perfis,
+                    'PERFIS_IDS' => array_column($perfis, 'PERFIL_ID'),
+                ]
             ], 200);
             
         } catch (\Exception $e) {
@@ -95,7 +114,7 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Salva nova permissão
+     * API - Define perfis de um usuário (novo ou existente)
      */
     public function salvar()
     {
@@ -103,20 +122,21 @@ class PermissaoController extends ctrl
             $body = Request::getJsonBody();
             
             $login = $body['login'] ?? null;
-            $acessoCd = $body['acesso_cd'] ?? 'N';
-            $acessoComissao = $body['acesso_comissao'] ?? 'N';
-            $admin = $body['admin'] ?? 'N';
+            $perfisIds = $body['perfis'] ?? [];
             
             if (!$login) {
                 throw new \Exception('Login do usuário é obrigatório');
             }
+
+            if (empty($perfisIds)) {
+                throw new \Exception('Selecione ao menos um perfil');
+            }
             
-            $id = PermissaoUsuario::inserir($login, $acessoCd, $acessoComissao, $admin);
+            PerfilAcesso::definirPerfisUsuario($login, $perfisIds);
             
             self::response([
                 'success' => true,
-                'message' => 'Permissão salva com sucesso',
-                'id' => $id
+                'message' => 'Perfis salvos com sucesso'
             ], 200);
             
         } catch (\Exception $e) {
@@ -128,28 +148,29 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Atualiza permissão existente
+     * API - Atualiza perfis de um usuário
      */
     public function atualizar()
     {
         try {
             $body = Request::getJsonBody();
             
-            $id = $body['id'] ?? null;
-            $acessoCd = $body['acesso_cd'] ?? 'N';
-            $acessoComissao = $body['acesso_comissao'] ?? 'N';
-            $admin = $body['admin'] ?? 'N';
-            $ativo = $body['ativo'] ?? 'S';
+            $login = $body['login'] ?? null;
+            $perfisIds = $body['perfis'] ?? [];
             
-            if (!$id) {
-                throw new \Exception('ID é obrigatório');
+            if (!$login) {
+                throw new \Exception('Login do usuário é obrigatório');
+            }
+
+            if (empty($perfisIds)) {
+                throw new \Exception('Selecione ao menos um perfil');
             }
             
-            PermissaoUsuario::atualizar($id, $acessoCd, $acessoComissao, $admin, $ativo);
+            PerfilAcesso::definirPerfisUsuario($login, $perfisIds);
             
             self::response([
                 'success' => true,
-                'message' => 'Permissão atualizada com sucesso'
+                'message' => 'Perfis atualizados com sucesso'
             ], 200);
             
         } catch (\Exception $e) {
@@ -161,23 +182,23 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Exclui (inativa) uma permissão
+     * API - Remove todos os perfis de um usuário (inativa)
      */
     public function excluir()
     {
         try {
             $body = Request::getJsonBody();
-            $id = $body['id'] ?? null;
+            $login = $body['login'] ?? null;
             
-            if (!$id) {
-                throw new \Exception('ID é obrigatório');
+            if (!$login) {
+                throw new \Exception('Login é obrigatório');
             }
             
-            PermissaoUsuario::excluir($id);
+            PerfilAcesso::definirPerfisUsuario($login, []);
             
             self::response([
                 'success' => true,
-                'message' => 'Permissão removida com sucesso'
+                'message' => 'Permissões removidas com sucesso'
             ], 200);
             
         } catch (\Exception $e) {

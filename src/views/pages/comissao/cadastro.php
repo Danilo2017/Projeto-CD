@@ -1,91 +1,99 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
 }
 ?>
 <?= $render('header', [
-    'pageTitle' => 'Cadastros - Sistema de Comissão',
+    'pageTitle' => 'Cadastro Comissão',
     'showNavbar' => true,
     'pageActive' => 'comissao-cadastro',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
-<div class="comissao-dashboard-container" style="padding-top: 10px;">
-    <!-- Cadastros Básicos -->
-    <h5 class="mb-3" style="color: #004080;"><i class="bi bi-gear-fill"></i> Cadastros Básicos</h5>
-    <div class="comissao-metrics-grid" style="margin-top: 0;">
-        <a href="<?= $base ?>comissao-pontuacao" class="comissao-metric-card" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-star-fill"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">PONTUAÇÃO UP</div>
-                <div class="comissao-metric-value">Cadastro de pontos por produto</div>
-            </div>
-        </a>
-        <a href="<?= $base ?>comissao-faixas" class="comissao-metric-card success" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-graph-up-arrow"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">FAIXAS DE COMISSÃO</div>
-                <div class="comissao-metric-value">Definir faixas e valores</div>
+<div class="comissao-dashboard-container">
+    <div class="ds-cards-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <a href="<?= $base ?>comissao-pontuacao" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">PONTUAÇÃO UP</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Cadastro de pontos por produto</div>
+                </div>
             </div>
         </a>
-        <a href="<?= $base ?>comissao-vinculo" class="comissao-metric-card info" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-link-45deg"></i>
+        <a href="<?= $base ?>comissao-faixas" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: var(--ds-success-light); color: var(--ds-success);">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">FAIXAS DE COMISSÃO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Definir faixas e valores</div>
+                </div>
             </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">VÍNCULO CENTRO/RECURSO/FUNCIONÁRIO</div>
-                <div class="comissao-metric-value">Cadastrar vínculo</div>
+        </a>
+        <a href="<?= $base ?>comissao-vinculo" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: var(--ds-info-light); color: var(--ds-info);">
+                    <i class="bi bi-link-45deg"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">VÍNCULO CENTRO/RECURSO/FUNCIONÁRIO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Cadastrar vínculo</div>
+                </div>
             </div>
         </a>
     </div>
 
-    <!-- Controles de Comissão -->
-    <h5 class="mb-3 mt-4" style="color: #004080;"><i class="bi bi-sliders"></i> Controles de Comissão</h5>
-    <div class="comissao-metrics-grid">
-        <a href="<?= $base ?>comissao-faltas" class="comissao-metric-card warning" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-calendar-x"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">CONTROLE DE FALTAS</div>
-                <div class="comissao-metric-value">Registrar faltas (bloqueia comissão)</div>
-            </div>
-        </a>
-        <a href="<?= $base ?>comissao-retrabalho" class="comissao-metric-card danger" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-arrow-repeat"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">RETRABALHO</div>
-                <div class="comissao-metric-value">Controle de retrabalho com impacto</div>
+    <div class="ds-cards-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <a href="<?= $base ?>comissao-faltas" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: var(--ds-warning-light); color: var(--ds-warning);">
+                    <i class="bi bi-calendar-x"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">CONTROLE DE FALTAS</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Registrar faltas (bloqueia comissão)</div>
+                </div>
             </div>
         </a>
-        <a href="<?= $base ?>comissao-vinculo-apontamento" class="comissao-metric-card" style="text-decoration: none; cursor: pointer; background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-diagram-3"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">VÍNCULO DE APONTAMENTOS</div>
-                <div class="comissao-metric-value">Vincular apontamentos sem recurso</div>
+        <a href="<?= $base ?>comissao-retrabalho" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: var(--ds-danger-light); color: var(--ds-danger);">
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">RETRABALHO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Controle de retrabalho com impacto</div>
+                </div>
             </div>
         </a>
-        <a href="<?= $base ?>comissao-regras" class="comissao-metric-card" style="text-decoration: none; cursor: pointer; background: linear-gradient(135deg, #20c997 0%, #38d9a9 100%);">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-person-gear"></i>
+        <a href="<?= $base ?>comissao-vinculo-apontamento" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: #f0ebfe; color: #6f42c1;">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">VÍNCULO DE APONTAMENTOS</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Vincular apontamentos sem recurso</div>
+                </div>
             </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">REGRAS POR FUNCIONÁRIO</div>
-                <div class="comissao-metric-value">Regras específicas de comissão</div>
+        </a>
+        <a href="<?= $base ?>comissao-regras" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: #e6f9f1; color: #20c997;">
+                    <i class="bi bi-person-gear"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">REGRAS POR FUNCIONÁRIO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Regras específicas de comissão</div>
+                </div>
             </div>
         </a>
     </div>

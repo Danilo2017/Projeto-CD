@@ -635,6 +635,73 @@ function novaPontuacao() {
     modal.show();
 }
 
+// ==================== EXPORTAÇÃO EXCEL ====================
+
+/**
+ * Exporta os dados da tabela de pontuações para Excel (CSV)
+ */
+function exportarExcel() {
+    exportarTabelaExcel('tabelaPontuacoes', 'Pontuacao_UEP');
+}
+
+function exportarTabelaExcel(tabelaId, nomeArquivo) {
+    const tabela = document.getElementById(tabelaId);
+    if (!tabela) { alert('Tabela não encontrada'); return; }
+
+    let csvContent = '\uFEFF';
+
+    // Headers (excluir coluna Ações)
+    const headers = [];
+    const thList = tabela.querySelectorAll('thead th');
+    const totalCols = thList.length;
+    thList.forEach((th, idx) => {
+        if (idx < totalCols - 1) { // ignora última coluna (Ações)
+            let texto = th.innerText.replace(/"/g, '""');
+            headers.push('"' + texto + '"');
+        }
+    });
+    csvContent += headers.join(';') + '\n';
+
+    // Rows - usar DataTable API para pegar TODAS as linhas (incluindo paginadas)
+    try {
+        const dtInstance = $(tabela).DataTable();
+        if (dtInstance && dtInstance.rows().count() > 0) {
+            dtInstance.rows({ search: 'applied' }).every(function() {
+                const row = this.node();
+                const cols = [];
+                const tdList = row.querySelectorAll('td');
+                tdList.forEach((td, idx) => {
+                    if (idx < totalCols - 1) {
+                        let texto = td.innerText.replace(/"/g, '""');
+                        cols.push('"' + texto + '"');
+                    }
+                });
+                csvContent += cols.join(';') + '\n';
+            });
+        }
+    } catch(e) {
+        // Fallback DOM
+        tabela.querySelectorAll('tbody tr').forEach(tr => {
+            const cols = [];
+            const tdList = tr.querySelectorAll('td');
+            tdList.forEach((td, idx) => {
+                if (idx < totalCols - 1) {
+                    let texto = td.innerText.replace(/"/g, '""');
+                    cols.push('"' + texto + '"');
+                }
+            });
+            csvContent += cols.join(';') + '\n';
+        });
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = nomeArquivo + '_' + new Date().toISOString().split('T')[0] + '.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
 // ==================== IMPORTAÇÃO ====================
 
 let dadosImportacao = [];
@@ -744,8 +811,13 @@ function confirmarImportacao() {
         return;
     }
     
-    document.getElementById('btnConfirmarImportacao').disabled = true;
-    document.getElementById('btnConfirmarImportacao').innerHTML = '<i class="bi bi-hourglass-split"></i> Importando...';
+    const btnImportar = document.getElementById('btnConfirmarImportacao');
+    btnImportar.disabled = true;
+    btnImportar.innerHTML = '<i class="bi bi-hourglass-split"></i> Importando...';
+    
+    const resultado = document.getElementById('importacaoResultado');
+    resultado.style.display = 'block';
+    resultado.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split"></i> Processando ' + dadosImportacao.length + ' registros, aguarde...</div>';
     
     fetch('/comissao-api-pontuacao-importar', {
         method: 'POST',
@@ -754,20 +826,25 @@ function confirmarImportacao() {
     })
     .then(response => response.json())
     .then(data => {
-        const resultado = document.getElementById('importacaoResultado');
-        resultado.style.display = 'block';
-        
         if (data.success) {
             let html = '<div class="alert alert-success">';
             html += '<i class="bi bi-check-circle"></i> <strong>Importação concluída!</strong><br>';
-            html += 'Importados: <strong>' + data.importados + '</strong> de ' + data.total + ' registros';
+            html += 'Novos: <strong>' + data.importados + '</strong>';
+            if (data.atualizados > 0) {
+                html += ' | Atualizados: <strong>' + data.atualizados + '</strong>';
+            }
+            html += ' | Total processado: ' + data.total + ' registros';
             html += '</div>';
             
             if (data.erros && data.erros.length > 0) {
-                html += '<div class="alert alert-warning" style="max-height: 200px; overflow-y: auto;">';
-                html += '<strong>Erros encontrados:</strong><br>';
-                data.erros.forEach(erro => { html += erro + '<br>'; });
-                html += '</div>';
+                html += '<div class="alert alert-warning" style="max-height: 300px; overflow-y: auto;">';
+                html += '<strong><i class="bi bi-exclamation-triangle"></i> Erros encontrados (' + data.erros.length + '):</strong>';
+                html += '<table class="table table-sm table-bordered mt-2 mb-0" style="font-size: 0.85em;">';
+                html += '<thead><tr><th style="width:60px">#</th><th>Detalhe do Erro</th></tr></thead><tbody>';
+                data.erros.forEach(function(erro, i) {
+                    html += '<tr><td>' + (i + 1) + '</td><td>' + erro + '</td></tr>';
+                });
+                html += '</tbody></table></div>';
             }
             
             resultado.innerHTML = html;
@@ -776,16 +853,15 @@ function confirmarImportacao() {
             resultado.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> Erro: ' + data.error + '</div>';
         }
         
-        document.getElementById('btnConfirmarImportacao').disabled = false;
-        document.getElementById('btnConfirmarImportacao').innerHTML = '<i class="bi bi-upload"></i> Importar';
+        btnImportar.disabled = false;
+        btnImportar.innerHTML = '<i class="bi bi-upload"></i> Importar';
     })
     .catch(error => {
         console.error('Erro na importação:', error);
-        document.getElementById('importacaoResultado').innerHTML = 
+        resultado.innerHTML = 
             '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> Erro na importação: ' + error.message + '</div>';
-        document.getElementById('importacaoResultado').style.display = 'block';
-        document.getElementById('btnConfirmarImportacao').disabled = false;
-        document.getElementById('btnConfirmarImportacao').innerHTML = '<i class="bi bi-upload"></i> Importar';
+        btnImportar.disabled = false;
+        btnImportar.innerHTML = '<i class="bi bi-upload"></i> Importar';
     });
 }
 

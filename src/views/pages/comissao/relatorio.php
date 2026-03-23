@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,46 +11,44 @@ if (!$acessoComissao) {
     'showNavbar' => true,
     'pageActive' => 'comissao-relatorio',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="comissao-dashboard-container">
-    <h2 style="text-align: center; color: #004080; margin-bottom: 30px;">
-        <i class="bi bi-clipboard-data"></i> Relatórios do Sistema de Comissão
-    </h2>
-    
-    <div class="comissao-metrics-grid">
-        <a href="<?= $base ?>comissao-relatorio-diario" class="comissao-metric-card" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-calendar-day"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">PRODUTIVIDADE DIÁRIA</div>
-                <div class="comissao-metric-value">Acompanhamento por dia</div>
+    <div class="ds-cards-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <a href="<?= $base ?>comissao-relatorio-diario" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">PRODUTIVIDADE DIÁRIA</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Acompanhamento por dia</div>
+                </div>
             </div>
         </a>
-        
-        <a href="<?= $base ?>comissao-relatorio-comissoes" class="comissao-metric-card success" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-currency-dollar"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">COMISSÕES</div>
-                <div class="comissao-metric-value">Valores calculados</div>
-            </div>
-        </a>
-        
-        <a href="<?= $base ?>comissao-relatorio-funcionario" class="comissao-metric-card info" style="text-decoration: none; cursor: pointer;">
-            <div class="comissao-metric-icon">
-                <i class="bi bi-person-badge"></i>
-            </div>
-            <div class="comissao-metric-content">
-                <div class="comissao-metric-label">POR FUNCIONÁRIO</div>
-                <div class="comissao-metric-value">Desempenho individual</div>
+        <a href="<?= $base ?>comissao-relatorio-comissoes" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: var(--ds-success-light); color: var(--ds-success);">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">COMISSÕES</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Valores calculados</div>
+                </div>
             </div>
         </a>
-        
-
+        <a href="<?= $base ?>comissao-relatorio-funcionario" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: var(--ds-info-light); color: var(--ds-info);">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">POR FUNCIONÁRIO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Desempenho individual</div>
+                </div>
+            </div>
+        </a>
     </div>
 </div>
 

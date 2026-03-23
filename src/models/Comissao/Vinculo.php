@@ -3,7 +3,6 @@
 namespace src\models\Comissao;
 
 use core\Database;
-use PDO;
 
 /**
  * Model para Vínculo de Funcionário com Centro de Trabalho e Recurso
@@ -15,23 +14,21 @@ class Vinculo
     const TIPO_NORMAL = 'N';
     const TIPO_APOIO = 'A';
 
+    private static $colunaApoioCache = null;
+
     /**
      * Verifica se a coluna TIPO_VINCULO existe na tabela
-     * Para compatibilidade retroativa
+     * Para compatibilidade retroativa (resultado cacheado)
      */
     public static function verificarColunaApoio()
     {
-        $pdo = Database::getInstance('focco');
-        $sql = "
-            SELECT COUNT(*) AS EXISTE
-            FROM ALL_TAB_COLUMNS
-            WHERE TABLE_NAME = 'TGAZIN_VINC_FUNC'
-              AND COLUMN_NAME = 'TIPO_VINCULO'
-              AND OWNER = 'FOCCO3I'
-        ";
-        $stmt = $pdo->query($sql);
-        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-        return ($resultado['EXISTE'] ?? 0) > 0;
+        if (self::$colunaApoioCache !== null) {
+            return self::$colunaApoioCache;
+        }
+        $result = Database::switchParams('focco', [], 'comissao.vinculo.verificarColunaApoio', true);
+        $row = $result['retorno'][0] ?? null;
+        self::$colunaApoioCache = ($row['EXISTE'] ?? 0) > 0;
+        return self::$colunaApoioCache;
     }
 
     /**
@@ -39,71 +36,32 @@ class Vinculo
      */
     public static function listar($filtros = [])
     {
-        $pdo = Database::getInstance('focco');
-        
-        // Verificar se a coluna TIPO_VINCULO existe
-        $temColunaApoio = self::verificarColunaApoio();
-        $selectTipo = $temColunaApoio ? ", v.TIPO_VINCULO" : ", 'N' AS TIPO_VINCULO";
-        
-        $sql = "
-            SELECT 
-                v.ID_VINCULO,
-                v.ID_EMPR,
-                v.ID_FUNCIONARIO,
-                f.COD_FUNC,
-                f.NOME AS FUNCIONARIO_NOME,
-                v.ID_CENTRO_TRAB,
-                c.COD_CENTRO,
-                c.DESCRICAO AS CENTRO_DESCRICAO,
-                v.ID_RECURSO,
-                r.COD_MAQUINA,
-                r.DESCRICAO AS RECURSO_DESCRICAO,
-                v.ATIVO,
-                TO_CHAR(v.DT_CADASTRO, 'DD/MM/YYYY HH24:MI') AS DT_CADASTRO
-                {$selectTipo}
-            FROM FOCCO3I.TGAZIN_VINC_FUNC v
-            INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO
-            INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB
-            LEFT JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO
-            WHERE 1=1
-        ";
+        $params = [
+            'filtro_empr' => !empty($filtros['id_empr']) ? "AND v.ID_EMPR = " . intval($filtros['id_empr']) : '--',
+            'filtro_centro' => !empty($filtros['id_centro_trab']) ? "AND v.ID_CENTRO_TRAB = " . intval($filtros['id_centro_trab']) : '--',
+            'filtro_recurso' => !empty($filtros['id_recurso']) ? "AND v.ID_RECURSO = " . intval($filtros['id_recurso']) : '--',
+            'filtro_func' => !empty($filtros['id_funcionario']) ? "AND v.ID_FUNCIONARIO = " . intval($filtros['id_funcionario']) : '--',
+            'filtro_ativo' => isset($filtros['ativo']) ? "AND v.ATIVO = '" . ($filtros['ativo'] === 'S' ? 'S' : 'N') . "'" : '--',
+        ];
 
-        $params = [];
-
-        if (!empty($filtros['id_empr'])) {
-            $sql .= " AND v.ID_EMPR = :id_empr";
-            $params[':id_empr'] = $filtros['id_empr'];
+        try {
+            $result = Database::switchParams('focco', $params, 'comissao.vinculo.listar', true);
+            return $result['retorno'] ?? [];
+        } catch (\Throwable $e) {
+            // Fallback: SQL sem TIPO_VINCULO caso a coluna não exista
+            $sqlFallback = "SELECT v.ID_VINCULO, v.ID_EMPR, v.ID_FUNCIONARIO, f.COD_FUNC, f.NOME AS FUNCIONARIO_NOME, "
+                . "v.ID_CENTRO_TRAB, c.COD_CENTRO, c.DESCRICAO AS CENTRO_DESCRICAO, "
+                . "v.ID_RECURSO, r.COD_MAQUINA, r.DESCRICAO AS RECURSO_DESCRICAO, v.ATIVO, "
+                . "'N' AS TIPO_VINCULO "
+                . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
+                . "INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO "
+                . "INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB "
+                . "LEFT JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO "
+                . "WHERE 1=1 :filtro_empr :filtro_centro :filtro_recurso :filtro_func :filtro_ativo "
+                . "ORDER BY c.DESCRICAO, f.NOME";
+            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlFallback);
+            return $result['retorno'] ?? [];
         }
-
-        if (!empty($filtros['id_centro_trab'])) {
-            $sql .= " AND v.ID_CENTRO_TRAB = :id_centro_trab";
-            $params[':id_centro_trab'] = $filtros['id_centro_trab'];
-        }
-
-        if (!empty($filtros['id_recurso'])) {
-            $sql .= " AND v.ID_RECURSO = :id_recurso";
-            $params[':id_recurso'] = $filtros['id_recurso'];
-        }
-
-        if (!empty($filtros['id_funcionario'])) {
-            $sql .= " AND v.ID_FUNCIONARIO = :id_funcionario";
-            $params[':id_funcionario'] = $filtros['id_funcionario'];
-        }
-
-        if (isset($filtros['ativo'])) {
-            $sql .= " AND v.ATIVO = :ativo";
-            $params[':ativo'] = $filtros['ativo'];
-        }
-
-        $sql .= " ORDER BY c.DESCRICAO, f.NOME";
-
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -111,48 +69,17 @@ class Vinculo
      */
     public static function listarApoioPorCentro($idCentroTrab, $idEmpr = null)
     {
-        $pdo = Database::getInstance('focco');
-        
-        // Verificar se a coluna TIPO_VINCULO existe
         if (!self::verificarColunaApoio()) {
-            return []; // Se não tem a coluna, não há funcionários de apoio
-        }
-        
-        $sql = "
-            SELECT 
-                v.ID_VINCULO,
-                v.ID_FUNCIONARIO,
-                f.COD_FUNC,
-                f.NOME AS NOME_FUNCIONARIO,
-                v.ID_CENTRO_TRAB,
-                c.COD_CENTRO,
-                c.DESCRICAO AS NOME_CENTRO,
-                v.ID_RECURSO,
-                v.TIPO_VINCULO
-            FROM FOCCO3I.TGAZIN_VINC_FUNC v
-            INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO
-            INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB
-            WHERE v.ID_CENTRO_TRAB = :id_centro_trab
-              AND v.TIPO_VINCULO = 'A'
-              AND v.ATIVO = 'S'
-        ";
-
-        $params = [':id_centro_trab' => $idCentroTrab];
-
-        if ($idEmpr) {
-            $sql .= " AND v.ID_EMPR = :id_empr";
-            $params[':id_empr'] = $idEmpr;
+            return [];
         }
 
-        $sql .= " ORDER BY f.NOME";
+        $params = [
+            'id_centro_trab' => intval($idCentroTrab),
+            'filtro_empr' => $idEmpr ? "AND v.ID_EMPR = " . intval($idEmpr) : '--',
+        ];
 
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.listarApoioPorCentro', true);
+        return $result['retorno'] ?? [];
     }
 
     /**
@@ -160,47 +87,16 @@ class Vinculo
      */
     public static function inserir($idEmpr, $idFuncionario, $idCentroTrab, $idRecurso = null, $tipoVinculo = 'N')
     {
-        $pdo = Database::getInstance('focco');
-        
-        // Verificar se a coluna TIPO_VINCULO existe
-        $temColunaApoio = self::verificarColunaApoio();
-        
-        if ($temColunaApoio) {
-            $sql = "
-                INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC (
-                    ID_EMPR, ID_FUNCIONARIO, ID_CENTRO_TRAB, ID_RECURSO, TIPO_VINCULO, ATIVO, DT_CADASTRO
-                ) VALUES (
-                    :id_empr, :id_funcionario, :id_centro_trab, :id_recurso, :tipo_vinculo, 'S', SYSDATE
-                )
-            ";
-            $params = [
-                ':id_empr' => $idEmpr,
-                ':id_funcionario' => $idFuncionario,
-                ':id_centro_trab' => $idCentroTrab,
-                ':id_recurso' => $idRecurso,
-                ':tipo_vinculo' => $tipoVinculo
-            ];
-        } else {
-            $sql = "
-                INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC (
-                    ID_EMPR, ID_FUNCIONARIO, ID_CENTRO_TRAB, ID_RECURSO, ATIVO, DT_CADASTRO
-                ) VALUES (
-                    :id_empr, :id_funcionario, :id_centro_trab, :id_recurso, 'S', SYSDATE
-                )
-            ";
-            $params = [
-                ':id_empr' => $idEmpr,
-                ':id_funcionario' => $idFuncionario,
-                ':id_centro_trab' => $idCentroTrab,
-                ':id_recurso' => $idRecurso
-            ];
-        }
+        $params = [
+            'id_empr' => intval($idEmpr),
+            'id_funcionario' => intval($idFuncionario),
+            'id_centro_trab' => intval($idCentroTrab),
+            'id_recurso' => $idRecurso !== null ? intval($idRecurso) : 'NULL',
+            'tipo_vinculo' => "'" . ($tipoVinculo === 'A' ? 'A' : 'N') . "'",
+        ];
 
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        return $stmt->execute();
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.inserir', true);
+        return !$result['error'];
     }
 
     /**
@@ -208,44 +104,15 @@ class Vinculo
      */
     public static function atualizar($id, $idCentroTrab, $idRecurso = null, $tipoVinculo = 'N')
     {
-        $pdo = Database::getInstance('focco');
-        
-        // Verificar se a coluna TIPO_VINCULO existe
-        $temColunaApoio = self::verificarColunaApoio();
-        
-        if ($temColunaApoio) {
-            $sql = "
-                UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET
-                    ID_CENTRO_TRAB = :id_centro_trab,
-                    ID_RECURSO = :id_recurso,
-                    TIPO_VINCULO = :tipo_vinculo
-                WHERE ID_VINCULO = :id
-            ";
-            $params = [
-                ':id' => $id,
-                ':id_centro_trab' => $idCentroTrab,
-                ':id_recurso' => $idRecurso,
-                ':tipo_vinculo' => $tipoVinculo
-            ];
-        } else {
-            $sql = "
-                UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET
-                    ID_CENTRO_TRAB = :id_centro_trab,
-                    ID_RECURSO = :id_recurso
-                WHERE ID_VINCULO = :id
-            ";
-            $params = [
-                ':id' => $id,
-                ':id_centro_trab' => $idCentroTrab,
-                ':id_recurso' => $idRecurso
-            ];
-        }
+        $params = [
+            'id' => intval($id),
+            'id_centro_trab' => intval($idCentroTrab),
+            'id_recurso' => $idRecurso !== null ? intval($idRecurso) : 'NULL',
+            'tipo_vinculo' => "'" . ($tipoVinculo === 'A' ? 'A' : 'N') . "'",
+        ];
 
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        return $stmt->execute();
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.atualizar', true);
+        return !$result['error'];
     }
 
     /**
@@ -253,18 +120,13 @@ class Vinculo
      */
     public static function alterarStatus($id, $ativo)
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "
-            UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET
-                ATIVO = :ativo
-            WHERE ID_VINCULO = :id
-        ";
+        $params = [
+            'id' => intval($id),
+            'ativo' => "'" . ($ativo ? 'S' : 'N') . "'",
+        ];
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':id', $id);
-        $stmt->bindValue(':ativo', $ativo ? 'S' : 'N');
-        return $stmt->execute();
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.alterarStatus', true);
+        return !$result['error'];
     }
 
     /**
@@ -272,12 +134,10 @@ class Vinculo
      */
     public static function excluir($id)
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "DELETE FROM FOCCO3I.TGAZIN_VINC_FUNC WHERE ID_VINCULO = :id";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':id', $id);
-        return $stmt->execute();
+        $params = ['id' => intval($id)];
+
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.excluir', true);
+        return !$result['error'];
     }
 
     /**
@@ -285,40 +145,17 @@ class Vinculo
      */
     public static function existeVinculo($idFuncionario, $idCentroTrab, $idRecurso = null, $idEmpr = null)
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "
-            SELECT COUNT(*) AS TOTAL
-            FROM FOCCO3I.TGAZIN_VINC_FUNC
-            WHERE ID_FUNCIONARIO = :id_funcionario
-              AND ID_CENTRO_TRAB = :id_centro_trab
-        ";
-
         $params = [
-            ':id_funcionario' => $idFuncionario,
-            ':id_centro_trab' => $idCentroTrab
+            'id_funcionario' => intval($idFuncionario),
+            'id_centro_trab' => intval($idCentroTrab),
+            'filtro_recurso_valor' => $idRecurso ? "AND ID_RECURSO = " . intval($idRecurso) : '--',
+            'filtro_recurso_null' => !$idRecurso ? "AND ID_RECURSO IS NULL" : '--',
+            'filtro_empr' => $idEmpr ? "AND ID_EMPR = " . intval($idEmpr) : '--',
         ];
 
-        if ($idRecurso) {
-            $sql .= " AND ID_RECURSO = :id_recurso";
-            $params[':id_recurso'] = $idRecurso;
-        } else {
-            $sql .= " AND ID_RECURSO IS NULL";
-        }
-
-        if ($idEmpr) {
-            $sql .= " AND ID_EMPR = :id_empr";
-            $params[':id_empr'] = $idEmpr;
-        }
-
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        return ($resultado['TOTAL'] ?? 0) > 0;
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.existeVinculo', true);
+        $row = $result['retorno'][0] ?? null;
+        return ($row['TOTAL'] ?? 0) > 0;
     }
 
     /**
@@ -326,37 +163,23 @@ class Vinculo
      */
     public static function listarCentrosComVinculo($idEmpr = null)
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "
-            SELECT DISTINCT
-                c.ID,
-                c.COD_CENTRO,
-                c.DESCRICAO
-            FROM FOCCO3I.TGAZIN_VINC_FUNC v
-            INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB
-            INNER JOIN FOCCO3I.TEMP_CC tc ON tc.ID = c.EMP_CC_ID
-            INNER JOIN FOCCO3I.TCC t ON t.ID = tc.CC_ID
-            WHERE v.ATIVO = 'S'
-              AND t.TIPO_CC = 'PRO'
-        ";
+        $params = [
+            'filtro_empr' => $idEmpr ? "AND v.ID_EMPR = " . intval($idEmpr) : '--',
+        ];
 
-        $params = [];
-
-        if ($idEmpr) {
-            $sql .= " AND v.ID_EMPR = :id_empr";
-            $params[':id_empr'] = $idEmpr;
+        try {
+            $result = Database::switchParams('focco', $params, 'comissao.vinculo.listarCentrosComVinculo', true);
+            return $result['retorno'] ?? [];
+        } catch (\Throwable $e) {
+            // Fallback: SQL simplificada sem joins extras (TEMP_CC/TCC)
+            $sqlFallback = "SELECT DISTINCT c.ID, c.COD_CENTRO, c.DESCRICAO "
+                . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
+                . "INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB "
+                . "WHERE v.ATIVO = 'S' :filtro_empr "
+                . "ORDER BY c.COD_CENTRO, c.DESCRICAO";
+            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlFallback);
+            return $result['retorno'] ?? [];
         }
-
-        $sql .= " ORDER BY c.COD_CENTRO, c.DESCRICAO";
-
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -364,41 +187,24 @@ class Vinculo
      */
     public static function listarRecursosComVinculo($idEmpr = null, $idCentroTrab = null)
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "
-            SELECT DISTINCT
-                r.ID,
-                r.COD_MAQUINA,
-                r.DESCRICAO
-            FROM FOCCO3I.TGAZIN_VINC_FUNC v
-            INNER JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO
-            WHERE v.ATIVO = 'S'
-              AND v.ID_RECURSO IS NOT NULL
-              AND r.TP_RECURSO = 'M'
-        ";
+        $params = [
+            'filtro_empr' => $idEmpr ? "AND v.ID_EMPR = " . intval($idEmpr) : '--',
+            'filtro_centro' => $idCentroTrab ? "AND v.ID_CENTRO_TRAB = " . intval($idCentroTrab) : '--',
+        ];
 
-        $params = [];
-
-        if ($idEmpr) {
-            $sql .= " AND v.ID_EMPR = :id_empr";
-            $params[':id_empr'] = $idEmpr;
+        try {
+            $result = Database::switchParams('focco', $params, 'comissao.vinculo.listarRecursosComVinculo', true);
+            return $result['retorno'] ?? [];
+        } catch (\Throwable $e) {
+            // Fallback: SQL simplificada sem filtro TP_RECURSO
+            $sqlFallback = "SELECT DISTINCT r.ID, r.COD_MAQUINA, r.DESCRICAO "
+                . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
+                . "INNER JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO "
+                . "WHERE v.ATIVO = 'S' AND v.ID_RECURSO IS NOT NULL :filtro_empr :filtro_centro "
+                . "ORDER BY r.COD_MAQUINA, r.DESCRICAO";
+            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlFallback);
+            return $result['retorno'] ?? [];
         }
-
-        if ($idCentroTrab) {
-            $sql .= " AND v.ID_CENTRO_TRAB = :id_centro_trab";
-            $params[':id_centro_trab'] = $idCentroTrab;
-        }
-
-        $sql .= " ORDER BY r.COD_MAQUINA, r.DESCRICAO";
-
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -406,38 +212,13 @@ class Vinculo
      */
     public static function listarFuncionariosComVinculo($idEmpr = null, $busca = null)
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "
-            SELECT DISTINCT
-                f.ID,
-                f.COD_FUNC,
-                f.NOME
-            FROM FOCCO3I.TGAZIN_VINC_FUNC v
-            INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO
-            WHERE v.ATIVO = 'S'
-        ";
+        $buscaSanitizada = $busca ? str_replace("'", "''", $busca) : null;
+        $params = [
+            'filtro_empr' => $idEmpr ? "AND v.ID_EMPR = " . intval($idEmpr) : '--',
+            'filtro_busca' => $buscaSanitizada ? "AND (UPPER(f.NOME) LIKE UPPER('%" . $buscaSanitizada . "%') OR TO_CHAR(f.COD_FUNC) LIKE '%" . $buscaSanitizada . "%')" : '--',
+        ];
 
-        $params = [];
-
-        if ($idEmpr) {
-            $sql .= " AND v.ID_EMPR = :id_empr";
-            $params[':id_empr'] = $idEmpr;
-        }
-
-        if ($busca) {
-            $sql .= " AND (UPPER(f.NOME) LIKE UPPER(:busca) OR TO_CHAR(f.COD_FUNC) LIKE :busca)";
-            $params[':busca'] = '%' . $busca . '%';
-        }
-
-        $sql .= " ORDER BY f.NOME";
-
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.listarFuncionariosComVinculo', true);
+        return $result['retorno'] ?? [];
     }
 }

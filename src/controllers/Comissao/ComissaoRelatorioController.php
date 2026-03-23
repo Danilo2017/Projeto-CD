@@ -12,13 +12,6 @@ use src\handlers\Comissao\ComissaoRelatorioHandler;
  */
 class ComissaoRelatorioController extends ctrl
 {
-    private ComissaoRelatorioHandler $handler;
-
-    public function __construct()
-    {
-        $this->handler = new ComissaoRelatorioHandler();
-    }
-
     // ==================== PÁGINAS ====================
 
     /**
@@ -82,6 +75,7 @@ class ComissaoRelatorioController extends ctrl
     {
         try {
             $data = $_GET['data'] ?? date('Y-m-d');
+            $dataFim = $_GET['dataFim'] ?? $_GET['data_fim'] ?? null;
             $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? ($_SESSION['empresa']['id'] ?? null);
             $centroTrabId = isset($_GET['centroTrabId']) || isset($_GET['centro_trab_id']) 
                 ? (int)($_GET['centroTrabId'] ?? $_GET['centro_trab_id']) 
@@ -94,7 +88,7 @@ class ComissaoRelatorioController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->getProdutividadeDiaria($data, (int)$emprId, $recursoId, $centroTrabId);
+            $resultado = ComissaoRelatorioHandler::getProdutividadeDiaria($data, (int)$emprId, $recursoId, $centroTrabId, $dataFim);
 
             self::response([
                 'success' => true,
@@ -117,6 +111,7 @@ class ComissaoRelatorioController extends ctrl
     public function getComissoes()
     {
         try {
+            set_time_limit(300);
             $dataInicio = $_GET['dataInicio'] ?? $_GET['data_inicio'] ?? null;
             $dataFim = $_GET['dataFim'] ?? $_GET['data_fim'] ?? null;
             $centroTrabId = isset($_GET['centroTrabId']) || isset($_GET['centro_trab_id']) 
@@ -133,7 +128,7 @@ class ComissaoRelatorioController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->getComissoes($dataInicio, $dataFim, (int)$emprId, $centroTrabId, $status);
+            $resultado = ComissaoRelatorioHandler::getComissoes($dataInicio, $dataFim, (int)$emprId, $centroTrabId, $status);
 
             self::response([
                 'success' => true,
@@ -156,6 +151,7 @@ class ComissaoRelatorioController extends ctrl
     public function getComissaoDetalhes()
     {
         try {
+            set_time_limit(120);
             $dataInicio = $_GET['dataInicio'] ?? $_GET['data_inicio'] ?? null;
             $dataFim = $_GET['dataFim'] ?? $_GET['data_fim'] ?? null;
             $funcId = $_GET['funcId'] ?? $_GET['func_id'] ?? null;
@@ -171,7 +167,7 @@ class ComissaoRelatorioController extends ctrl
                 throw new \Exception('Funcionário é obrigatório');
             }
 
-            $resultado = $this->handler->getComissaoDetalhes((int)$funcId, $dataInicio, $dataFim, $centroTrabId);
+            $resultado = ComissaoRelatorioHandler::getComissaoDetalhes((int)$funcId, $dataInicio, $dataFim, $centroTrabId);
 
             self::response([
                 'success' => true,
@@ -192,6 +188,7 @@ class ComissaoRelatorioController extends ctrl
     public function processarComissoes()
     {
         try {
+            set_time_limit(300);
             $dados = Request::getJsonBody();
 
             $dataInicio = $dados['dataInicio'] ?? $dados['data_inicio'] ?? null;
@@ -211,7 +208,7 @@ class ComissaoRelatorioController extends ctrl
 
             $usuId = $_SESSION['usu']['id'] ?? null;
 
-            $resultado = $this->handler->processarComissoes($dataInicio, $dataFim, (int)$emprId, $centroTrabId, $usuId);
+            $resultado = ComissaoRelatorioHandler::processarComissoes($dataInicio, $dataFim, (int)$emprId, $centroTrabId, $usuId);
 
             self::response([
                 'success' => true,
@@ -233,6 +230,7 @@ class ComissaoRelatorioController extends ctrl
     public function processarComissoesCompleto()
     {
         try {
+            set_time_limit(300);
             $dados = Request::getJsonBody();
 
             $dataInicio = $dados['dataInicio'] ?? $dados['data_inicio'] ?? null;
@@ -252,7 +250,7 @@ class ComissaoRelatorioController extends ctrl
 
             $usuId = $_SESSION['usu']['id'] ?? null;
 
-            $resultado = $this->handler->processarComissoesCompleto($dataInicio, $dataFim, (int)$emprId, $centroTrabId, $usuId);
+            $resultado = ComissaoRelatorioHandler::processarComissoesCompleto($dataInicio, $dataFim, (int)$emprId, $centroTrabId, $usuId);
 
             self::response([
                 'success' => true,
@@ -286,7 +284,7 @@ class ComissaoRelatorioController extends ctrl
                 throw new \Exception('Usuário não autenticado');
             }
 
-            $resultado = $this->handler->aprovarComissoes($dados['comissoes'], (int)$usuId);
+            $resultado = ComissaoRelatorioHandler::aprovarComissoes($dados['comissoes'], (int)$usuId);
 
             self::response([
                 'success' => true,
@@ -320,7 +318,7 @@ class ComissaoRelatorioController extends ctrl
 
             $motivo = $dados['motivo'] ?? null;
 
-            $resultado = $this->handler->cancelarComissoes($dados['comissoes'], (int)$usuId, $motivo);
+            $resultado = ComissaoRelatorioHandler::cancelarComissoes($dados['comissoes'], (int)$usuId, $motivo);
 
             self::response([
                 'success' => true,
@@ -340,6 +338,7 @@ class ComissaoRelatorioController extends ctrl
      */
     public function getRelatorioFuncionario()
     {
+        set_time_limit(120);
         try {
             $funcionarioId = $_GET['funcionarioId'] ?? $_GET['funcionario_id'] ?? $_GET['funcId'] ?? null;
             $dataInicio = $_GET['dataInicio'] ?? $_GET['data_inicio'] ?? null;
@@ -361,7 +360,7 @@ class ComissaoRelatorioController extends ctrl
                 throw new \Exception('Empresa não selecionada');
             }
 
-            $resultado = $this->handler->getRelatorioFuncionario((int)$funcionarioId, $dataInicio, $dataFim, (int)$emprId, $centroTrabId);
+            $resultado = ComissaoRelatorioHandler::getRelatorioFuncionario((int)$funcionarioId, $dataInicio, $dataFim, (int)$emprId, $centroTrabId);
 
             self::response([
                 'success' => true,

@@ -27,6 +27,23 @@ async function carregarDados() {
         
         // Carregar avisos de recebimento
         const response = await fetch(BASE + 'cd-api-avisos');
+        
+        // Verificar se a sessão expirou (redirect para login)
+        if (response.redirected || response.url.includes('login')) {
+            mostrarErro('Sessão expirada. Faça login novamente.');
+            mostrarErroAgendamentos('Sessão expirada.');
+            setTimeout(() => { window.location.href = BASE + 'login'; }, 2000);
+            return;
+        }
+
+        if (!response.ok) {
+            const texto = await response.text();
+            console.error('Erro HTTP ' + response.status + ':', texto);
+            mostrarErro('Erro HTTP ' + response.status);
+            await carregarAgendamentosPendentes();
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -38,7 +55,8 @@ async function carregarDados() {
             const hora = String(agora.getHours()).padStart(2, '0');
             const min = String(agora.getMinutes()).padStart(2, '0');
             const seg = String(agora.getSeconds()).padStart(2, '0');
-            document.getElementById('ultima-atualizacao').textContent = `${hora}:${min}:${seg}`;
+            const elUltAtualizacao = document.getElementById('ultima-atualizacao');
+            if (elUltAtualizacao) elUltAtualizacao.textContent = `${hora}:${min}:${seg}`;
         } else {
             console.error('Erro ao carregar dados:', data.error);
             mostrarErro(data.error);
@@ -49,7 +67,7 @@ async function carregarDados() {
         
     } catch (error) {
         console.error('Erro na requisição:', error);
-        mostrarErro('Erro ao conectar com o servidor');
+        mostrarErro('Erro ao conectar com o servidor: ' + error.message);
     }
 }
 
@@ -61,6 +79,18 @@ async function carregarAgendamentosPendentes() {
         mostrarCarregandoAgendamentos();
         
         const response = await fetch(BASE + 'cd-api-agendamentos');
+        
+        if (response.redirected || response.url.includes('login')) {
+            mostrarErroAgendamentos('Sessão expirada.');
+            return;
+        }
+
+        if (!response.ok) {
+            console.error('Erro HTTP agendamentos:', response.status);
+            mostrarErroAgendamentos('Erro HTTP ' + response.status);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -71,7 +101,7 @@ async function carregarAgendamentosPendentes() {
         }
     } catch (error) {
         console.error('Erro na requisição de agendamentos:', error);
-        mostrarErroAgendamentos('Erro ao conectar com o servidor');
+        mostrarErroAgendamentos('Erro ao conectar: ' + error.message);
     }
 }
 

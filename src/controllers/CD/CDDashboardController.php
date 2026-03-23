@@ -11,13 +11,6 @@ use src\handlers\CD\CDDashboardHandler;
  */
 class CDDashboardController extends ctrl
 {
-    private CDDashboardHandler $handler;
-
-    public function __construct()
-    {
-        $this->handler = new CDDashboardHandler();
-    }
-
     /**
      * Exibe a página principal do Dashboard CD
      */
@@ -37,7 +30,7 @@ class CDDashboardController extends ctrl
     public function getAvisosRecebimento()
     {
         try {
-            $resultado = $this->handler->getAvisosRecebimento();
+            $resultado = CDDashboardHandler::getAvisosRecebimento();
 
             self::response([
                 'success' => true,
@@ -59,7 +52,7 @@ class CDDashboardController extends ctrl
     public function getAgendamentosPendentes()
     {
         try {
-            $resultado = $this->handler->getAgendamentosPendentes();
+            $resultado = CDDashboardHandler::getAgendamentosPendentes();
 
             self::response([
                 'success' => true,

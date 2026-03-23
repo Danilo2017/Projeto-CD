@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoCd = $isAdmin || in_array('cd', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoCd = $is_admin || in_array('cd', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoCd) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,27 +11,39 @@ if (!$acessoCd) {
     'showNavbar' => true,
     'pageActive' => 'dashboard',
     'customCSS' => ['src/css/cd-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0; font-family: \'Arial\', \'Helvetica\', sans-serif;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="cd-dashboard-container">
     <!-- Cards de Resumo do Mês -->
     <div class="cd-metrics-grid">
         <div class="cd-metric-card">
-            <div class="cd-metric-label">TOTAL DO MÊS</div>
-            <div class="cd-metric-value" id="totalAvisos">0</div>
+            <div class="cd-metric-icon"><i class="bi bi-calendar-check"></i></div>
+            <div class="cd-metric-info">
+                <div class="cd-metric-label">TOTAL DO MÊS</div>
+                <div class="cd-metric-value" id="totalAvisos">0</div>
+            </div>
         </div>
         <div class="cd-metric-card pendente">
-            <div class="cd-metric-label">PENDENTES</div>
-            <div class="cd-metric-value" id="totalPendentes">0</div>
+            <div class="cd-metric-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="cd-metric-info">
+                <div class="cd-metric-label">PENDENTES</div>
+                <div class="cd-metric-value" id="totalPendentes">0</div>
+            </div>
         </div>
         <div class="cd-metric-card iniciado">
-            <div class="cd-metric-label">INICIADOS</div>
-            <div class="cd-metric-value" id="totalIniciados">0</div>
+            <div class="cd-metric-icon"><i class="bi bi-play-circle"></i></div>
+            <div class="cd-metric-info">
+                <div class="cd-metric-label">INICIADOS</div>
+                <div class="cd-metric-value" id="totalIniciados">0</div>
+            </div>
         </div>
         <div class="cd-metric-card finalizado">
-            <div class="cd-metric-label">FINALIZADOS</div>
-            <div class="cd-metric-value" id="totalFinalizados">0</div>
+            <div class="cd-metric-icon"><i class="bi bi-check-circle"></i></div>
+            <div class="cd-metric-info">
+                <div class="cd-metric-label">FINALIZADOS</div>
+                <div class="cd-metric-value" id="totalFinalizados">0</div>
+            </div>
         </div>
     </div>
 

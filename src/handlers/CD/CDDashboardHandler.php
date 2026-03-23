@@ -20,11 +20,10 @@ class CDDashboardHandler
      * 
      * @return array Dados formatados para resposta
      */
-    public function getAvisosRecebimento(): array
+    public static function getAvisosRecebimento(): array
     {
-        $model = new AvisosRecebimento();
-        $avisos = $model->listarAvisosHoje();
-        $totaisMes = $model->getTotaisMes();
+        $avisos = AvisosRecebimento::listarAvisosHoje();
+        $totaisMes = AvisosRecebimento::getTotaisMes();
 
         return [
             'avisos' => $avisos,
@@ -43,10 +42,9 @@ class CDDashboardHandler
      * 
      * @return array Dados formatados para resposta
      */
-    public function getAgendamentosPendentes(): array
+    public static function getAgendamentosPendentes(): array
     {
-        $model = new AgendamentoRecebimento();
-        $agendamentos = $model->listarPendentes();
+        $agendamentos = AgendamentoRecebimento::listarPendentes();
 
         return [
             'data' => $agendamentos,

@@ -3,7 +3,6 @@
 namespace src\models\Comissao;
 
 use core\Database;
-use PDO;
 use Exception;
 use src\models\Comissao\FaltaFuncionario;
 use src\models\Comissao\ApontamentoProducao;
@@ -210,7 +209,8 @@ class Comissao
                     'id' => $regraEspecifica['ID_REGRA'],
                     'descricao' => $regraEspecifica['DESCRICAO'],
                     'tipo' => $regraEspecifica['TIPO_COMISSAO'],
-                    'valor' => $regraEspecifica['VALOR_COMISSAO']
+                    'valor' => $regraEspecifica['VALOR_COMISSAO'],
+                    'valor_fixo' => $regraEspecifica['VALOR_FIXO'] ?? null
                 ];
                 
                 $valorComissaoBruto = $regraModel->calcularComissao(
@@ -269,6 +269,118 @@ class Comissao
             $resultado['error'] = $e->getMessage();
         }
         
+        return $resultado;
+    }
+
+    /**
+     * Calcular comissão usando totalPontosAposFalta já calculado externamente.
+     * Evita re-buscar faltas e pontos que já foram obtidos pelo chamador.
+     * Busca apenas: retrabalho, regra específica e faixa.
+     *
+     * @param int $funcId
+     * @param string $periodoIni (YYYY-MM-DD)
+     * @param string $periodoFim (YYYY-MM-DD)
+     * @param int $emprId
+     * @param float $totalPontosAposFalta Pontos já com desconto de falta
+     * @param array $faltas Array de faltas já buscadas
+     * @param int|null $centroTrabId
+     * @return array
+     */
+    public function calcularComissaoPreCalculada(
+        int $funcId,
+        string $periodoIni,
+        string $periodoFim,
+        int $emprId,
+        float $totalPontosAposFalta,
+        array $faltas = [],
+        ?int $centroTrabId = null
+    ): array {
+        $resultado = [
+            'success' => true,
+            'func_id' => $funcId,
+            'total_pontos_apos_falta' => round($totalPontosAposFalta, 2),
+            'dias_com_falta' => count($faltas),
+            'total_retrabalho' => 0,
+            'desconto_retrabalho' => 0,
+            'usa_regra_especifica' => false,
+            'regra_aplicada' => null,
+            'faixa_aplicada' => null,
+            'valor_comissao_bruto' => 0,
+            'valor_comissao_final' => 0,
+        ];
+
+        try {
+            // PASSO 1: Buscar retrabalho
+            $retrabalhoModel = new Retrabalho();
+            $retrabalhos = $retrabalhoModel->buscarPorFuncionariosPeriodo(
+                [$funcId], $periodoIni, $periodoFim, $emprId
+            );
+
+            $totalPontosRetrabalho = 0;
+            foreach ($retrabalhos as $ret) {
+                $totalPontosRetrabalho += floatval($ret['QUANTIDADE']) * floatval($ret['PONTOS_UP']);
+            }
+            $resultado['total_retrabalho'] = round($totalPontosRetrabalho, 2);
+
+            // PASSO 2: Verificar regra específica do funcionário
+            $regraModel = new RegraFuncionario();
+            $regraEspecifica = $regraModel->buscarRegraAtiva($funcId, $centroTrabId, $periodoFim, $emprId);
+
+            $valorComissaoBruto = 0;
+
+            if ($regraEspecifica) {
+                $resultado['usa_regra_especifica'] = true;
+                $resultado['regra_aplicada'] = [
+                    'id' => $regraEspecifica['ID_REGRA'],
+                    'descricao' => $regraEspecifica['DESCRICAO'],
+                    'tipo' => $regraEspecifica['TIPO_COMISSAO'],
+                    'valor' => $regraEspecifica['VALOR_COMISSAO'],
+                    'valor_fixo' => $regraEspecifica['VALOR_FIXO'] ?? null
+                ];
+                $valorComissaoBruto = $regraModel->calcularComissao($totalPontosAposFalta, $regraEspecifica);
+            } else {
+                // PASSO 3: Aplicar cálculo padrão (faixas)
+                $faixaModel = new FaixaComissao();
+                $faixa = $faixaModel->buscarFaixaAplicavel($totalPontosAposFalta, $centroTrabId, $periodoFim);
+
+                if ($faixa) {
+                    $resultado['faixa_aplicada'] = [
+                        'id' => $faixa['ID_FAIXA'],
+                        'descricao' => $faixa['DESCRICAO'],
+                        'tipo' => $faixa['TIPO'],
+                        'valor' => $faixa['VALOR_COMISSAO']
+                    ];
+
+                    if ($faixa['TIPO'] == FaixaComissao::TIPO_PERCENTUAL) {
+                        $valorComissaoBruto = $totalPontosAposFalta * ($faixa['VALOR_COMISSAO'] / 100);
+                    } elseif ($faixa['TIPO'] == FaixaComissao::TIPO_QUANTIDADE) {
+                        $valorComissaoBruto = $totalPontosAposFalta * floatval($faixa['VALOR_COMISSAO']);
+                    } else {
+                        $valorComissaoBruto = floatval($faixa['VALOR_COMISSAO']);
+                    }
+                }
+            }
+
+            $resultado['valor_comissao_bruto'] = round($valorComissaoBruto, 2);
+
+            // PASSO 4: Aplicar desconto de retrabalho
+            $descontoRetrabalho = 0;
+            foreach ($retrabalhos as $ret) {
+                $pontosRet = floatval($ret['QUANTIDADE']) * floatval($ret['PONTOS_UP']);
+                $impacto = $retrabalhoModel->calcularImpacto(
+                    $valorComissaoBruto, $pontosRet, $ret['TIPO_IMPACTO'], $ret['VALOR_IMPACTO']
+                );
+                $descontoRetrabalho += $impacto['valor_desconto'];
+            }
+
+            $resultado['desconto_retrabalho'] = round($descontoRetrabalho, 2);
+            $resultado['valor_comissao_final'] = round(max(0, $valorComissaoBruto - $descontoRetrabalho), 2);
+
+        } catch (Exception $e) {
+            $resultado['success'] = false;
+            $resultado['error'] = $e->getMessage();
+        }
+
         return $resultado;
     }
 
@@ -590,52 +702,26 @@ class Comissao
      */
     public function salvarCalculo($dados)
     {
-        $sql = "INSERT INTO FOCCO3I.TGAZIN_COMISSAO_CALC (
-                    ID_COMISSAO,
-                    FUNCIONARIO_ID,
-                    FAIXA_ID,
-                    DT_INICIO,
-                    DT_FIM,
-                    TOTAL_PONTOS,
-                    VALOR_COMISSAO,
-                    STATUS,
-                    DT_PROCESSAMENTO,
-                    ID_USUARIO_PROC,
-                    OBSERVACAO
-                ) VALUES (
-                    FOCCO3I.SEQ_GAZIN_COMISSAO_CALC.NEXTVAL,
-                    :funcionario_id,
-                    :faixa_id,
-                    TO_DATE(:dt_inicio, 'YYYY-MM-DD'),
-                    TO_DATE(:dt_fim, 'YYYY-MM-DD'),
-                    :total_pontos,
-                    :valor_comissao,
-                    'P',
-                    SYSDATE,
-                    :id_usuario,
-                    :observacao
-                )";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
-        $stmt->bindParam(':funcionario_id', $dados['funcionario_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':faixa_id', $dados['faixa_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':dt_inicio', $dados['dt_inicio'], PDO::PARAM_STR);
-        $stmt->bindParam(':dt_fim', $dados['dt_fim'], PDO::PARAM_STR);
-        $stmt->bindParam(':total_pontos', $dados['total_pontos'], PDO::PARAM_STR);
-        $stmt->bindParam(':valor_comissao', $dados['valor_comissao'], PDO::PARAM_STR);
-        $stmt->bindParam(':id_usuario', $dados['id_usuario'], PDO::PARAM_INT);
-        $obs = $dados['observacao'] ?? null;
-        $stmt->bindParam(':observacao', $obs, PDO::PARAM_STR);
-        
-        $stmt->execute();
-        
+        $obs = $dados['observacao'] ?? '';
+        $params = [
+            'funcionario_id' => intval($dados['funcionario_id']),
+            'faixa_id' => intval($dados['faixa_id']),
+            'dt_inicio' => "'" . str_replace("'", "''", $dados['dt_inicio']) . "'",
+            'dt_fim' => "'" . str_replace("'", "''", $dados['dt_fim']) . "'",
+            'total_pontos' => floatval($dados['total_pontos']),
+            'valor_comissao' => floatval($dados['valor_comissao']),
+            'id_usuario' => intval($dados['id_usuario']),
+            'observacao' => $obs ? "'" . str_replace("'", "''", $obs) . "'" : 'NULL',
+        ];
+
+        $result = Database::switchParams('focco', $params, 'comissao.comissao.salvarCalculo', true);
+        if ($result['error']) {
+            throw new \Exception('Erro ao salvar cálculo: ' . $result['error']);
+        }
+
         // Buscar o ID recém-inserido via sequence
-        $stmtId = $pdo->query("SELECT FOCCO3I.SEQ_GAZIN_COMISSAO_CALC.CURRVAL FROM DUAL");
-        $id = $stmtId->fetchColumn();
-        
-        return $id;
+        $resultId = Database::switchParams('focco', [], 'comissao.comissao.buscarCurrvalCalculo', true);
+        return $resultId['retorno'][0]['CURRVAL'] ?? null;
     }
 
     /**
@@ -646,19 +732,13 @@ class Comissao
      */
     public function aprovar($id, $usuId)
     {
-        $sql = "UPDATE FOCCO3I.TGAZIN_COMISSAO_CALC
-                SET STATUS = 'A',
-                    ID_USUARIO_APROV = :usu_id,
-                    DT_APROVACAO = SYSDATE
-                WHERE ID_COMISSAO = :id AND STATUS = 'P'";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
-        $stmt->bindParam(':usu_id', $usuId, PDO::PARAM_INT);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        
-        return $stmt->execute();
+        $params = [
+            'usu_id' => intval($usuId),
+            'id' => intval($id),
+        ];
+
+        $result = Database::switchParams('focco', $params, 'comissao.comissao.aprovar', true);
+        return !$result['error'];
     }
 
     /**
@@ -670,21 +750,14 @@ class Comissao
      */
     public function cancelar($id, $usuId, $motivo = null)
     {
-        $sql = "UPDATE FOCCO3I.TGAZIN_COMISSAO_CALC
-                SET STATUS = 'C',
-                    ID_USUARIO_APROV = :usu_id,
-                    DT_APROVACAO = SYSDATE,
-                    OBSERVACAO = NVL(:motivo, OBSERVACAO)
-                WHERE ID_COMISSAO = :id AND STATUS = 'P'";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
-        $stmt->bindParam(':usu_id', $usuId, PDO::PARAM_INT);
-        $stmt->bindParam(':motivo', $motivo, PDO::PARAM_STR);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        
-        return $stmt->execute();
+        $params = [
+            'usu_id' => intval($usuId),
+            'motivo' => $motivo ? "'" . str_replace("'", "''", $motivo) . "'" : 'NULL',
+            'id' => intval($id),
+        ];
+
+        $result = Database::switchParams('focco', $params, 'comissao.comissao.cancelar', true);
+        return !$result['error'];
     }
 
     /**
@@ -697,70 +770,15 @@ class Comissao
      */
     public function listarCalculos($status = null, $periodoIni = null, $periodoFim = null, $funcionarioId = null)
     {
-        $sql = "SELECT 
-                    CC.ID_COMISSAO,
-                    CC.FUNCIONARIO_ID,
-                    CC.FAIXA_ID,
-                    CC.DT_INICIO,
-                    CC.DT_FIM,
-                    CC.TOTAL_PONTOS,
-                    CC.VALOR_COMISSAO,
-                    CC.STATUS,
-                    CASE CC.STATUS 
-                        WHEN 'P' THEN 'Pendente' 
-                        WHEN 'A' THEN 'Aprovado' 
-                        WHEN 'C' THEN 'Cancelado' 
-                    END AS DESC_STATUS,
-                    CC.DT_PROCESSAMENTO,
-                    CC.DT_APROVACAO,
-                    CC.OBSERVACAO,
-                    F.COD_FUNC,
-                    F.NOME AS NOME_FUNC,
-                    FC.DESCRICAO AS DESC_FAIXA
-                FROM FOCCO3I.TGAZIN_COMISSAO_CALC CC
-                INNER JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = CC.FUNCIONARIO_ID
-                LEFT JOIN FOCCO3I.TGAZIN_FAIXA_COMISSAO FC ON FC.ID_FAIXA = CC.FAIXA_ID
-                WHERE 1=1";
-        
-        if ($status) {
-            $sql .= " AND CC.STATUS = :status";
-        }
-        
-        if ($periodoIni) {
-            $sql .= " AND CC.DT_INICIO >= TO_DATE(:periodo_ini, 'YYYY-MM-DD')";
-        }
-        
-        if ($periodoFim) {
-            $sql .= " AND CC.DT_FIM <= TO_DATE(:periodo_fim, 'YYYY-MM-DD')";
-        }
-        
-        if ($funcionarioId) {
-            $sql .= " AND CC.FUNCIONARIO_ID = :funcionario_id";
-        }
-        
-        $sql .= " ORDER BY CC.DT_PROCESSAMENTO DESC, F.NOME";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        
-        if ($status) {
-            $stmt->bindParam(':status', $status, PDO::PARAM_STR);
-        }
-        
-        if ($periodoIni) {
-            $stmt->bindParam(':periodo_ini', $periodoIni, PDO::PARAM_STR);
-        }
-        
-        if ($periodoFim) {
-            $stmt->bindParam(':periodo_fim', $periodoFim, PDO::PARAM_STR);
-        }
-        
-        if ($funcionarioId) {
-            $stmt->bindParam(':funcionario_id', $funcionarioId, PDO::PARAM_INT);
-        }
-        
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $params = [
+            'filtro_status' => $status ? "AND CC.STATUS = '" . ($status === 'A' ? 'A' : ($status === 'C' ? 'C' : 'P')) . "'" : '--',
+            'filtro_periodo_ini' => $periodoIni ? "AND CC.DT_INICIO >= TO_DATE('" . str_replace("'", "''", $periodoIni) . "', 'YYYY-MM-DD')" : '--',
+            'filtro_periodo_fim' => $periodoFim ? "AND CC.DT_FIM <= TO_DATE('" . str_replace("'", "''", $periodoFim) . "', 'YYYY-MM-DD')" : '--',
+            'filtro_funcionario' => $funcionarioId ? "AND CC.FUNCIONARIO_ID = " . intval($funcionarioId) : '--',
+        ];
+
+        $result = Database::switchParams('focco', $params, 'comissao.comissao.listarCalculos', true);
+        return $result['retorno'] ?? [];
     }
 
     /**
@@ -770,32 +788,10 @@ class Comissao
      */
     public function buscarPorId($id)
     {
-        $sql = "SELECT 
-                    CC.ID_COMISSAO,
-                    CC.FUNCIONARIO_ID,
-                    CC.FAIXA_ID,
-                    CC.DT_INICIO,
-                    CC.DT_FIM,
-                    CC.TOTAL_PONTOS,
-                    CC.VALOR_COMISSAO,
-                    CC.STATUS,
-                    CC.DT_PROCESSAMENTO,
-                    CC.DT_APROVACAO,
-                    CC.OBSERVACAO,
-                    F.COD_FUNC,
-                    F.NOME AS NOME_FUNC,
-                    FC.DESCRICAO AS DESC_FAIXA
-                FROM FOCCO3I.TGAZIN_COMISSAO_CALC CC
-                INNER JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = CC.FUNCIONARIO_ID
-                LEFT JOIN FOCCO3I.TGAZIN_FAIXA_COMISSAO FC ON FC.ID_FAIXA = CC.FAIXA_ID
-                WHERE CC.ID_COMISSAO = :id";
-        
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $params = ['id' => intval($id)];
+        $result = Database::switchParams('focco', $params, 'comissao.comissao.buscarPorId', true);
+        $rows = $result['retorno'] ?? [];
+        return $rows[0] ?? null;
     }
 
     /**
@@ -807,32 +803,15 @@ class Comissao
      */
     public function buscarPorFuncPeriodo($funcId, $dataInicio, $dataFim)
     {
-        $sql = "SELECT 
-                    CC.ID_COMISSAO,
-                    CC.FUNCIONARIO_ID,
-                    CC.FAIXA_ID,
-                    CC.DT_INICIO,
-                    CC.DT_FIM,
-                    CC.TOTAL_PONTOS,
-                    CC.VALOR_COMISSAO,
-                    CC.STATUS
-                FROM FOCCO3I.TGAZIN_COMISSAO_CALC CC
-                WHERE CC.FUNCIONARIO_ID = :func_id
-                  AND CC.DT_INICIO = TO_DATE(:dt_inicio, 'YYYY-MM-DD')
-                  AND CC.DT_FIM = TO_DATE(:dt_fim, 'YYYY-MM-DD')
-                  AND CC.STATUS = 'P'
-                ORDER BY CC.ID_COMISSAO DESC
-                FETCH FIRST 1 ROWS ONLY";
+        $params = [
+            'func_id' => intval($funcId),
+            'dt_inicio' => "'" . str_replace("'", "''", $dataInicio) . "'",
+            'dt_fim' => "'" . str_replace("'", "''", $dataFim) . "'",
+        ];
 
-        $pdo = Database::getInstance('focco');
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':func_id', $funcId, PDO::PARAM_INT);
-        $stmt->bindParam(':dt_inicio', $dataInicio, PDO::PARAM_STR);
-        $stmt->bindParam(':dt_fim', $dataFim, PDO::PARAM_STR);
-        $stmt->execute();
-
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        $result = Database::switchParams('focco', $params, 'comissao.comissao.buscarPorFuncPeriodo', true);
+        $rows = $result['retorno'] ?? [];
+        return $rows[0] ?? null;
     }
 
     /**
@@ -889,6 +868,18 @@ class Comissao
         $dadosFuncionarios = [];
         foreach ($resumoFuncionarios as $func) {
             $dadosFuncionarios[(int)$func['FUNC_ID']] = $func;
+        }
+        
+        // Buscar TIPO_VINCULO direto da tabela de vínculos (garante valor correto)
+        $inIds = implode(',', array_map('intval', $funcIds));
+        $params = ['func_ids' => $inIds];
+        $resultVinc = Database::switchParams('focco', $params, 'comissao.vinculo.buscarTipoVinculoBatch', true);
+        $vinculoRows = $resultVinc['retorno'] ?? [];
+        foreach ($vinculoRows as $rowVinc) {
+            $fId = (int)$rowVinc['ID_FUNCIONARIO'];
+            if (isset($dadosFuncionarios[$fId])) {
+                $dadosFuncionarios[$fId]['TIPO_VINCULO'] = $rowVinc['TIPO_VINCULO'] ?? 'N';
+            }
         }
         
         // =============================================
@@ -992,7 +983,8 @@ class Comissao
                     'id' => $regraEspecifica['ID_REGRA'],
                     'descricao' => $regraEspecifica['DESCRICAO'],
                     'tipo' => $regraEspecifica['TIPO_COMISSAO'],
-                    'valor' => $regraEspecifica['VALOR_COMISSAO']
+                    'valor' => $regraEspecifica['VALOR_COMISSAO'],
+                    'valor_fixo' => $regraEspecifica['VALOR_FIXO'] ?? null
                 ];
                 $valorComissaoBruto = $regraModel->calcularComissao($totalPontosAposFalta, $regraEspecifica);
             } else {
@@ -1043,6 +1035,7 @@ class Comissao
                 'centro_trab_id' => $dadosFunc['CENTRO_TRAB_ID'] ?? null,
                 'cod_centro' => $dadosFunc['COD_CENTRO'] ?? null,
                 'desc_centro' => $dadosFunc['DESC_CENTRO'] ?? null,
+                'tipo_vinculo' => $dadosFunc['TIPO_VINCULO'] ?? 'N',
                 'periodo_ini' => $periodoIni,
                 'periodo_fim' => $periodoFim,
                 'dias_trabalhados' => $diasTrabalhados,

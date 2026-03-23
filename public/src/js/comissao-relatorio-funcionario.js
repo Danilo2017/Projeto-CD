@@ -544,6 +544,16 @@ function gerarComprovante() {
     document.getElementById('comprovanteTotalPontos').textContent = formatarNumero(resumo.TOTAL_PONTOS || 0, 2);
     document.getElementById('comprovanteTotalComissao').textContent = formatarMoeda(resumo.TOTAL_COMISSAO || 0);
     
+    // Mostrar info de valor fixo para tipo M (Misto)
+    const infoFixo = document.getElementById('comprovanteValorFixoInfo');
+    if (resumo.TIPO_REGRA === 'M' && resumo.VALOR_FIXO > 0) {
+        document.getElementById('comprovanteValorFixo').textContent = formatarMoeda(resumo.VALOR_FIXO);
+        document.getElementById('comprovanteValorPorPonto').textContent = 'R$ ' + formatarNumero(resumo.VALOR_POR_PONTO || 0, 4) + '/pt';
+        infoFixo.style.display = 'block';
+    } else {
+        infoFixo.style.display = 'none';
+    }
+    
     // Data de geração
     const agora = new Date();
     document.getElementById('comprovanteDataGeracao').textContent = agora.toLocaleString('pt-BR');
@@ -705,6 +715,12 @@ function imprimirComprovante() {
                     </tr>
                 </tfoot>
             </table>
+            
+            ${resumo.TIPO_REGRA === 'M' && resumo.VALOR_FIXO > 0 ? `
+            <div style="padding: 8px 12px; margin: 8px 0; background: #f0f7ff; border-left: 3px solid #0d6efd; font-size: 11px;">
+                <strong>Regra Misto:</strong> Valor Fixo ${formatarMoeda(resumo.VALOR_FIXO)} + Valor por Ponto R$ ${formatarNumero(resumo.VALOR_POR_PONTO || 0, 4)}/pt
+            </div>
+            ` : ''}
             
             <div class="assinaturas">
                 <div class="assinatura-box">

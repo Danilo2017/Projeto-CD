@@ -345,6 +345,7 @@ function processarComissoes() {
     
     document.getElementById('btnProcessar').disabled = true;
     document.getElementById('btnProcessar').innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+    mostrarLoading('Processando comissões... Isso pode levar alguns minutos.');
     
     fetch('/comissao-api-processar', {
         method: 'POST',
@@ -359,8 +360,9 @@ function processarComissoes() {
     })
     .then(response => response.json())
     .then(data => {
+        esconderLoading();
         document.getElementById('btnProcessar').disabled = false;
-        document.getElementById('btnProcessar').innerHTML = '<i class="bi bi-calculator"></i> Processar Comissões';
+        document.getElementById('btnProcessar').innerHTML = '<i class="bi bi-calculator"></i> Processar';
         
         if (data.success) {
             exibirMensagemSucesso(`Processadas ${data.processadas} comissões`);
@@ -370,8 +372,9 @@ function processarComissoes() {
         }
     })
     .catch(error => {
+        esconderLoading();
         document.getElementById('btnProcessar').disabled = false;
-        document.getElementById('btnProcessar').innerHTML = '<i class="bi bi-calculator"></i> Processar Comissões';
+        document.getElementById('btnProcessar').innerHTML = '<i class="bi bi-calculator"></i> Processar';
         console.error('Erro ao processar:', error);
         exibirMensagemErro('Erro ao processar comissões');
     });
@@ -388,6 +391,9 @@ function verDetalhes(idx) {
     }
     comissaoAtualId = idx;
 
+    // Mostrar loading
+    mostrarLoading('Carregando detalhes...');
+
     // Buscar apontamentos do funcionário no período
     const params = new URLSearchParams({
         dataInicio: filtrosAtuais.dataInicio,
@@ -402,6 +408,7 @@ function verDetalhes(idx) {
     fetch(`/comissao-api-comissao-detalhes?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
+            esconderLoading();
             const detalhes = {
                 NOME_FUNC: item.NOME_FUNC,
                 CODIGO_FUNC: item.CODIGO_FUNC,
@@ -418,6 +425,7 @@ function verDetalhes(idx) {
             modal.show();
         })
         .catch(error => {
+            esconderLoading();
             console.error('Erro ao carregar apontamentos:', error);
             // Mostrar modal mesmo sem apontamentos
             const detalhes = {

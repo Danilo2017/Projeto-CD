@@ -6,7 +6,7 @@
    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
    <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-   <title><?= isset($pageTitle) ? $pageTitle . ' - CD' : 'CD - Sistema de Gestão' ?></title>
+   <title><?= isset($pageTitle) ? $pageTitle : 'Sistema de Comissão' ?></title>
    <meta content="Sistema de Gestão CD" name="description">
    <meta content="gestão, sistema, dashboard" name="keywords">
 
@@ -28,6 +28,9 @@
    
    <!-- Template Custom CSS -->
    <link href="<?= $base; ?>src/css/template-style.css" rel="stylesheet">
+   
+   <!-- Design System (Padrão Visual Unificado) -->
+   <link href="<?= $base; ?>src/css/design-system.css" rel="stylesheet">
 
    <?php if(isset($customCSS)): ?>
       <?php foreach((array)$customCSS as $css): ?>

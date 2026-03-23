@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoComissao = $isAdmin || in_array('comissao', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -13,7 +11,7 @@ if (!$acessoComissao) {
     'showNavbar' => true,
     'pageActive' => 'comissao-vinculo-apontamento',
     'customCSS' => ['src/css/comissao-dashboard.css'],
-    'bodyStyle' => 'background: #f0f0f0; margin: 0; padding: 0;'
+    'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
 <div class="container-fluid p-2">
@@ -100,7 +98,7 @@ if (!$acessoComissao) {
 let apontamentos = [];
 let recursos = [];
 let selecionados = [];
-const emprId = '<?= $_SESSION['empresa']['id'] ?? '' ?>';
+const emprId = '<?= $empresa['id'] ?? '' ?>';
 
 document.addEventListener('DOMContentLoaded', function() {
     carregarCentrosTrabalho();
@@ -129,8 +127,7 @@ function carregarCentrosTrabalho() {
 }
 
 function carregarRecursos() {
-    // Carregar TODOS os recursos da empresa
-    fetch(`/comissao-api-recursos?empr_id=${emprId}`)
+    fetch(`/comissao-api-recursos-vinculados?empr_id=${emprId}`)
         .then(r => r.json())
         .then(result => {
             recursos = result.data || result;

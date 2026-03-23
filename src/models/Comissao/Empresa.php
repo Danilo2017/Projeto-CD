@@ -3,7 +3,6 @@
 namespace src\models\Comissao;
 
 use core\Database;
-use PDO;
 
 /**
  * Model para Empresas/Filiais
@@ -13,73 +12,31 @@ use PDO;
  */
 class Empresa
 {
-    /**
-     * Listar todas as empresas/filiais ativas
-     * @return array
-     */
-    public function listarAtivas()
+    public static function listarAtivas()
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "SELECT 
-                    ID,
-                    COD_EMP AS CODIGO,
-                    RAZAO_SOCIAL,
-                    NOME_FAN AS NOME_FANTASIA,
-                    CNPJ
-                FROM FOCCO3I.TEMPRESAS 
-                ORDER BY COD_EMP";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = Database::switchParams('focco', [], 'comissao.empresa.listarAtivas', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return $result['retorno'];
     }
 
-    /**
-     * Buscar empresa por ID
-     * @param int $id
-     * @return array|null
-     */
-    public function buscarPorId($id)
+    public static function buscarPorId($id)
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "SELECT 
-                    ID,
-                    COD_EMP AS CODIGO,
-                    RAZAO_SOCIAL,
-                    NOME_FAN AS NOME_FANTASIA,
-                    CNPJ
-                FROM FOCCO3I.TEMPRESAS 
-                WHERE ID = :id";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $params = ['id' => intval($id)];
+        $result = Database::switchParams('focco', $params, 'comissao.empresa.buscarPorId', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return $result['retorno'][0] ?? null;
     }
 
-    /**
-     * Listar empresas para select (formato simplificado)
-     * @return array
-     */
-    public function listarParaSelect()
+    public static function listarParaSelect()
     {
-        $pdo = Database::getInstance('focco');
-        
-        $sql = "SELECT 
-                    ID,
-                    COD_EMP AS CODIGO,
-                    RAZAO_SOCIAL,
-                    NOME_FAN AS NOME_FANTASIA
-                FROM FOCCO3I.TEMPRESAS 
-                ORDER BY COD_EMP";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = Database::switchParams('focco', [], 'comissao.empresa.listarParaSelect', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return $result['retorno'];
     }
 }

@@ -12,13 +12,6 @@ use src\handlers\CD\CDCalendarioHandler;
  */
 class CDCalendarioController extends ctrl
 {
-    private CDCalendarioHandler $handler;
-
-    public function __construct()
-    {
-        $this->handler = new CDCalendarioHandler();
-    }
-
     /**
      * Exibe a página do Calendário de Recebimento
      */
@@ -38,7 +31,7 @@ class CDCalendarioController extends ctrl
     public function listar()
     {
         try {
-            $recebimentos = $this->handler->listarRecebimentos();
+            $recebimentos = CDCalendarioHandler::listarRecebimentos();
 
             self::response([
                 'success' => true,
@@ -64,7 +57,7 @@ class CDCalendarioController extends ctrl
                 throw new \Exception('Campos obrigatórios não preenchidos');
             }
 
-            $id = $this->handler->salvarRecebimento($input);
+            $id = CDCalendarioHandler::salvarRecebimento($input);
 
             self::response([
                 'success' => true,
@@ -91,7 +84,7 @@ class CDCalendarioController extends ctrl
                 throw new \Exception('ID não informado');
             }
 
-            $this->handler->atualizarRecebimento($input);
+            CDCalendarioHandler::atualizarRecebimento($input);
 
             self::response([
                 'success' => true,
@@ -117,7 +110,7 @@ class CDCalendarioController extends ctrl
                 throw new \Exception('ID não informado');
             }
 
-            $this->handler->excluirRecebimento((int)$input['id']);
+            CDCalendarioHandler::excluirRecebimento((int)$input['id']);
 
             self::response([
                 'success' => true,
@@ -143,7 +136,7 @@ class CDCalendarioController extends ctrl
                 throw new \Exception('ID não informado');
             }
 
-            $resultado = $this->handler->alterarStatusRecebimento((int)$input['id']);
+            $resultado = CDCalendarioHandler::alterarStatusRecebimento((int)$input['id']);
 
             self::response([
                 'success' => true,
@@ -170,7 +163,7 @@ class CDCalendarioController extends ctrl
                 throw new \Exception('Preencha todos os campos obrigatórios.');
             }
 
-            $resultado = $this->handler->gerarRecibo($input);
+            $resultado = CDCalendarioHandler::gerarRecibo($input);
 
             self::response([
                 'success' => true,
@@ -197,7 +190,7 @@ class CDCalendarioController extends ctrl
                 throw new \Exception('ID do recibo não informado');
             }
 
-            $recibo = $this->handler->buscarRecibo($id);
+            $recibo = CDCalendarioHandler::buscarRecibo($id);
 
             if (!$recibo) {
                 throw new \Exception('Recibo não encontrado');
@@ -227,7 +220,7 @@ class CDCalendarioController extends ctrl
                 throw new \Exception('ID do agendamento não informado');
             }
 
-            $recibos = $this->handler->listarRecibosPorAgendamento($agendamentoId);
+            $recibos = CDCalendarioHandler::listarRecibosPorAgendamento($agendamentoId);
 
             self::response([
                 'success' => true,

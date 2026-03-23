@@ -31,10 +31,9 @@ class ComissaoRelatorioHandler
      * @param int|null $centroTrabId ID do centro de trabalho (opcional)
      * @return array Dados formatados
      */
-    public function getProdutividadeDiaria(string $data, int $emprId, ?int $recursoId = null, ?int $centroTrabId = null): array
+    public static function getProdutividadeDiaria(string $data, int $emprId, ?int $recursoId = null, ?int $centroTrabId = null, ?string $dataFim = null): array
     {
-        $model = new ApontamentoProducao();
-        $dados = $model->produtividadeDiaria($data, $emprId, $recursoId, $centroTrabId);
+        $dados = ApontamentoProducao::produtividadeDiaria($data, $emprId, $recursoId, $centroTrabId, $dataFim);
 
         $apontamentos = [];
         $produtividadePorFunc = [];
@@ -53,16 +52,29 @@ class ComissaoRelatorioHandler
         // OTIMIZADO: Extrair IDs únicos de funcionários e buscar todas as faltas de uma vez
         $funcIds = array_unique(array_filter(array_map(fn($item) => $item['ID_FUNCIONARIO'] ?? null, $dados)));
         
-        $faltaModel = new FaltaFuncionario();
-        $faltasCache = [];
+        $faltasCache = []; // Indexado por funcId => [data => ['TIPO_FALTA' => ..., 'MOTIVO' => ...]]
+        $funcTemFalta = []; // funcId => true se tem ao menos uma falta no período
+        
+        $dataFimReal = $dataFim ?: $data;
         
         if (!empty($funcIds)) {
             // Usa método batch para buscar todas as faltas em uma única query
-            $faltasPorFunc = $faltaModel->verificarFaltasPeriodoBatch(array_values($funcIds), $data, $data, $emprId);
+            $faltasPorFunc = FaltaFuncionario::verificarFaltasPeriodoBatch(array_values($funcIds), $data, $dataFimReal, $emprId);
             
-            // Mapear para cache de acesso rápido
+            // Mapear para cache indexado por funcId + data para desconto correto por dia
             foreach ($faltasPorFunc as $funcId => $faltas) {
-                $faltasCache[$funcId] = !empty($faltas) ? $faltas[0] : null;
+                if (!empty($faltas)) {
+                    $funcTemFalta[$funcId] = true;
+                    foreach ($faltas as $falta) {
+                        $dtFalta = substr($falta['DT_FALTA'] ?? '', 0, 10);
+                        if ($dtFalta) {
+                            $faltasCache[$funcId][$dtFalta] = [
+                                'TIPO_FALTA' => $falta['TIPO_FALTA'] ?? 'I',
+                                'MOTIVO' => $falta['MOTIVO'] ?? null
+                            ];
+                        }
+                    }
+                }
             }
         }
 
@@ -72,12 +84,19 @@ class ComissaoRelatorioHandler
             $pontosUp = floatval($item['PONTOS_UP'] ?? 0);
             $totalPontos = $quantidade * $pontosUp;
             
-            // Verificar falta (cache já preenchido acima)
+            // Verificar falta comparando a data do apontamento com as datas de falta
             $temFalta = false;
             $tipoFalta = null;
-            if ($funcId && isset($faltasCache[$funcId]) && $faltasCache[$funcId]) {
-                $temFalta = true;
-                $tipoFalta = $faltasCache[$funcId]['TIPO_FALTA'] ?? null;
+            if ($funcId && isset($faltasCache[$funcId])) {
+                // Extrair data do apontamento (DT_APONT vem como DD-MON-RR do Oracle)
+                $dtApont = $item['DT_APONT'] ?? null;
+                if ($dtApont) {
+                    $dtApontStr = date('Y-m-d', strtotime($dtApont));
+                    if (isset($faltasCache[$funcId][$dtApontStr])) {
+                        $temFalta = true;
+                        $tipoFalta = $faltasCache[$funcId][$dtApontStr]['TIPO_FALTA'];
+                    }
+                }
             }
             
             // Validações
@@ -86,7 +105,7 @@ class ComissaoRelatorioHandler
             $temVinculo = ($item['TEM_VINCULO'] ?? 'N') === 'S';
             
             // Calcular pontos com desconto de falta
-            $pontosComDesconto = $this->calcularPontosComDesconto($totalPontos, $temFalta, $tipoFalta);
+            $pontosComDesconto = self::calcularPontosComDesconto($totalPontos, $temFalta, $tipoFalta);
             
             // Mapeamento para apontamentos (detalhamento)
             $apontamentos[] = [
@@ -94,6 +113,7 @@ class ComissaoRelatorioHandler
                 'FUNC_ID' => $funcId,
                 'PRODUTO' => $item['DESC_PRODUTO'] ?? '',
                 'CODIGO_PRODUTO' => $item['CODIGO_PRODUTO'] ?? '',
+                'ID_ITEM' => $item['ID_MASCARA'] ?? '',
                 'MASCARA' => $item['MASCARA'] ?? '',
                 'CENTRO_TRAB' => $item['COD_CENTRO'] ? ($item['COD_CENTRO'] . ' - ' . $item['DESC_CENTRO']) : '-',
                 'OPERACAO' => $item['DESC_OPERACAO'] ?? '-',
@@ -120,6 +140,19 @@ class ComissaoRelatorioHandler
             $funcKey = $funcId ?: 'sem_vinculo_' . ($item['ID_MAQUINA'] ?? 0) . '_' . ($item['ID_CENTRO_TRAB'] ?? 0);
             if (!isset($produtividadePorFunc[$funcKey])) {
                 $funcionariosUnicos[] = $funcKey;
+                // Verificar se o funcionário tem ao menos uma falta no período (para badge)
+                $funcTemFaltaPeriodo = isset($funcTemFalta[$funcId]);
+                $tipoFaltaFunc = null;
+                if ($funcTemFaltaPeriodo && isset($faltasCache[$funcId])) {
+                    // Pegar o tipo mais restritivo: I (integral) > P (parcial)
+                    foreach ($faltasCache[$funcId] as $faltaDia) {
+                        if ($faltaDia['TIPO_FALTA'] === 'I') {
+                            $tipoFaltaFunc = 'I';
+                            break;
+                        }
+                        $tipoFaltaFunc = $faltaDia['TIPO_FALTA'];
+                    }
+                }
                 $produtividadePorFunc[$funcKey] = [
                     'NOME' => $item['NOME_FUNCIONARIO'] ?? 'Sem vínculo',
                     'CODIGO' => $item['COD_FUNCIONARIO'] ?? '-',
@@ -132,8 +165,8 @@ class ComissaoRelatorioHandler
                     'TEM_PONTUACAO' => true,
                     'TEM_FAIXA' => $temFaixa,
                     'TEM_VINCULO' => $temVinculo,
-                    'TEM_FALTA' => $temFalta,
-                    'TIPO_FALTA' => $tipoFalta
+                    'TEM_FALTA' => $funcTemFaltaPeriodo,
+                    'TIPO_FALTA' => $tipoFaltaFunc
                 ];
             }
             $produtividadePorFunc[$funcKey]['QTD_ITENS']++;
@@ -161,10 +194,10 @@ class ComissaoRelatorioHandler
      * @param string|null $status Filtro de status (opcional)
      * @return array Dados formatados
      */
-    public function getComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?string $status = null): array
+    public static function getComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?string $status = null): array
     {
-        $comissaoModel = new Comissao();
         // OTIMIZADO: Usa versão batch que faz ~6 queries ao invés de N*5 queries
+        $comissaoModel = new Comissao();
         $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         $funcionarios = $resultado['funcionarios'] ?? [];
@@ -172,7 +205,7 @@ class ComissaoRelatorioHandler
         
         $comissoes = [];
         foreach ($funcionarios as $func) {
-            $faixaDesc = $this->formatarDescricaoFaixa($func);
+            $faixaDesc = self::formatarDescricaoFaixa($func);
             
             $comissoes[] = [
                 'FUNC_ID' => $func['func_id'] ?? null,
@@ -194,8 +227,8 @@ class ComissaoRelatorioHandler
         }
 
         // Calcular resumo e agrupamento por centro
-        $resumo = $this->calcularResumoComissoes($comissoes);
-        $porCentro = $this->agruparPorCentro($comissoes);
+        $resumo = self::calcularResumoComissoes($comissoes);
+        $porCentro = self::agruparPorCentro($comissoes);
 
         // Filtrar por status se especificado
         if ($status) {
@@ -218,14 +251,13 @@ class ComissaoRelatorioHandler
      * @param int|null $centroTrabId ID do centro de trabalho (opcional)
      * @return array Dados formatados
      */
-    public function getComissaoDetalhes(int $funcId, string $dataInicio, string $dataFim, ?int $centroTrabId = null): array
+    public static function getComissaoDetalhes(int $funcId, string $dataInicio, string $dataFim, ?int $centroTrabId = null): array
     {
         // Buscar empresa do vínculo do funcionário
         $vinculos = Vinculo::listar(['id_funcionario' => $funcId, 'ativo' => 'S']);
         $emprIdApontamentos = !empty($vinculos) ? ($vinculos[0]['ID_EMPR'] ?? null) : null;
 
-        $model = new ApontamentoProducao();
-        $apontamentosBrutos = $model->listarApontamentosVinculados($funcId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
+        $apontamentosBrutos = ApontamentoProducao::listarApontamentosVinculados($funcId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
         
         $apontamentos = [];
         foreach ($apontamentosBrutos as $ap) {
@@ -253,25 +285,27 @@ class ComissaoRelatorioHandler
      * @param int|null $usuId ID do usuário que processou
      * @return array Resultado do processamento
      */
-    public function processarComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?int $usuId = null): array
+    public static function processarComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?int $usuId = null): array
     {
+        // Usa versão batch otimizada (~6 queries ao invés de N*3)
         $comissaoModel = new Comissao();
-        $resultado = $comissaoModel->calcularComissaoTodos($dataInicio, $dataFim, $emprId, $centroTrabId);
+        $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
 
+        $funcionarios = $resultado['funcionarios'] ?? [];
         $processadas = 0;
         
-        foreach ($resultado as $calc) {
+        foreach ($funcionarios as $calc) {
             $dadosCalc = [
-                'funcionario_id' => $calc['FUNC_ID'] ?? $calc['funcionario_id'],
-                'faixa_id' => $calc['FAIXA_ID'] ?? $calc['faixa_id'],
+                'funcionario_id' => $calc['func_id'] ?? $calc['FUNC_ID'],
+                'faixa_id' => isset($calc['faixa_aplicada']['id']) ? $calc['faixa_aplicada']['id'] : null,
                 'dt_inicio' => $dataInicio,
                 'dt_fim' => $dataFim,
-                'total_pontos' => $calc['TOTAL_PONTOS'] ?? $calc['total_pontos'],
-                'valor_comissao' => $calc['VALOR_COMISSAO'] ?? $calc['valor_comissao'],
+                'total_pontos' => $calc['total_pontos_apos_falta'] ?? $calc['TOTAL_PONTOS'],
+                'valor_comissao' => $calc['valor_comissao_final'] ?? $calc['VALOR_COMISSAO'],
                 'id_usuario_proc' => $usuId
             ];
             
-            if ($comissaoModel->salvarCalculo($dadosCalc)) {
+            if (Comissao::salvarCalculo($dadosCalc)) {
                 $processadas++;
             }
         }
@@ -292,10 +326,10 @@ class ComissaoRelatorioHandler
      * @param int|null $usuId ID do usuário que processou
      * @return array Resultado do processamento
      */
-    public function processarComissoesCompleto(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?int $usuId = null): array
+    public static function processarComissoesCompleto(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?int $usuId = null): array
     {
-        $comissaoModel = new Comissao();
         // OTIMIZADO: Usa versão batch que faz ~6 queries ao invés de N*5 queries
+        $comissaoModel = new Comissao();
         $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         $funcionarios = $resultado['funcionarios'] ?? [];
@@ -332,7 +366,7 @@ class ComissaoRelatorioHandler
                 'id_usuario_proc' => $usuId
             ];
             
-            if ($comissaoModel->salvarCalculo($dadosCalc)) {
+            if (Comissao::salvarCalculo($dadosCalc)) {
                 $processadas++;
             }
         }
@@ -351,16 +385,15 @@ class ComissaoRelatorioHandler
      * @param int $usuId ID do usuário
      * @return array Resultado
      */
-    public function aprovarComissoes(array $comissoes, int $usuId): array
+    public static function aprovarComissoes(array $comissoes, int $usuId): array
     {
-        $comissaoModel = new Comissao();
         $aprovadas = 0;
 
         foreach ($comissoes as $comissao) {
             $idComissao = $comissao['ID_COMISSAO'] ?? $comissao['id_comissao'] ?? null;
             
             if ($idComissao) {
-                if ($comissaoModel->aprovar($idComissao, $usuId)) {
+                if (Comissao::aprovar($idComissao, $usuId)) {
                     $aprovadas++;
                 }
             } else {
@@ -376,7 +409,7 @@ class ComissaoRelatorioHandler
                     'status' => Comissao::STATUS_APROVADO
                 ];
                 
-                if ($comissaoModel->salvarCalculo($dadosCalc)) {
+                if (Comissao::salvarCalculo($dadosCalc)) {
                     $aprovadas++;
                 }
             }
@@ -395,16 +428,15 @@ class ComissaoRelatorioHandler
      * @param string|null $motivo Motivo do cancelamento
      * @return array Resultado
      */
-    public function cancelarComissoes(array $comissoes, int $usuId, ?string $motivo = null): array
+    public static function cancelarComissoes(array $comissoes, int $usuId, ?string $motivo = null): array
     {
-        $comissaoModel = new Comissao();
         $canceladas = 0;
 
         foreach ($comissoes as $comissao) {
             $idComissao = $comissao['ID_COMISSAO'] ?? $comissao['id_comissao'] ?? null;
             
             if ($idComissao) {
-                if ($comissaoModel->cancelar($idComissao, $usuId, $motivo)) {
+                if (Comissao::cancelar($idComissao, $usuId, $motivo)) {
                     $canceladas++;
                 }
             }
@@ -425,11 +457,10 @@ class ComissaoRelatorioHandler
      * @param int|null $centroTrabId ID do centro de trabalho (opcional)
      * @return array Dados completos do relatório
      */
-    public function getRelatorioFuncionario(int $funcionarioId, string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null): array
+    public static function getRelatorioFuncionario(int $funcionarioId, string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null): array
     {
         // Buscar dados do funcionário
-        $funcModel = new Funcionario();
-        $funcionario = $funcModel->buscarPorId($funcionarioId);
+        $funcionario = Funcionario::buscarPorId($funcionarioId);
 
         if (!$funcionario) {
             throw new \Exception('Funcionário não encontrado');
@@ -449,38 +480,60 @@ class ComissaoRelatorioHandler
         $emprIdApontamentos = $vinculo ? $vinculo['ID_EMPR'] : $emprId;
 
         // Buscar pontos por dia
-        $apontModel = new ApontamentoProducao();
-        $diario = $apontModel->pontosPorDiaFuncionario($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
+        $diario = ApontamentoProducao::pontosPorDiaFuncionario($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
 
         // Buscar apontamentos detalhados
-        $apontamentos = $apontModel->listarApontamentosVinculados($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
+        $apontamentos = ApontamentoProducao::listarApontamentosVinculados($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
 
         // Verificar faltas
-        $faltaModel = new FaltaFuncionario();
-        $faltas = $faltaModel->verificarFaltasPeriodo($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos);
-        $diasComFalta = $this->mapearDiasComFalta($faltas);
+        $faltas = FaltaFuncionario::verificarFaltasPeriodo($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos);
+        $diasComFalta = self::mapearDiasComFalta($faltas);
 
-        // Calcular comissão
+        // Calcular totalPontosAposFalta a partir dos dados já buscados (evita re-consultar)
+        $totalPontosAposFalta = 0;
+        foreach ($diario as $dia) {
+            $dataStr = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
+            $pontos = floatval($dia['TOTAL_PONTOS'] ?? 0);
+            if ($dataStr && isset($diasComFalta[$dataStr])) {
+                if ($diasComFalta[$dataStr]['tipo'] !== 'I') {
+                    $totalPontosAposFalta += $pontos * 0.5;
+                }
+            } else {
+                $totalPontosAposFalta += $pontos;
+            }
+        }
+
+        // Calcular comissão usando método otimizado (sem re-buscar faltas/pontos)
         $comissaoModel = new Comissao();
-        $resultadoComissao = $comissaoModel->calcularComissaoCompleta(
+        $resultadoComissao = $comissaoModel->calcularComissaoPreCalculada(
             $funcionarioId,
             $dataInicio,
             $dataFim,
             $emprIdApontamentos,
+            $totalPontosAposFalta,
+            $faltas,
             $centroTrabId
         );
         
         $totalComissao = $resultadoComissao['valor_comissao_final'] ?? 0;
         $faixaAplicada = $resultadoComissao['faixa_aplicada'] ?? null;
         $regraAplicada = $resultadoComissao['regra_aplicada'] ?? null;
-        $valorPorPonto = $this->getValorPorPonto($faixaAplicada, $regraAplicada);
+        $valorPorPonto = self::getValorPorPonto($faixaAplicada, $regraAplicada);
 
         // Processar diário com faltas e comissões
-        $diario = $this->processarDiarioComFaltas($diario, $diasComFalta, $valorPorPonto);
+        $diario = self::processarDiarioComFaltas($diario, $diasComFalta, $valorPorPonto, $regraAplicada);
 
         // Calcular totais
         $totalPontos = array_sum(array_column($diario, 'TOTAL_PONTOS_ORIGINAL'));
         $totalPontosAposFalta = array_sum(array_column($diario, 'PONTOS_COM_DESCONTO'));
+
+        // Para tipo M, extrair valor fixo da regra
+        $valorFixo = 0;
+        $tipoRegra = null;
+        if ($regraAplicada) {
+            $tipoRegra = $regraAplicada['tipo'] ?? null;
+            $valorFixo = floatval($regraAplicada['valor_fixo'] ?? 0);
+        }
 
         // Montar resumo
         $resumo = [
@@ -496,7 +549,9 @@ class ComissaoRelatorioHandler
             'FAIXA_APLICADA' => $faixaAplicada,
             'REGRA_APLICADA' => $regraAplicada,
             'USA_REGRA_ESPECIFICA' => $resultadoComissao['usa_regra_especifica'] ?? false,
-            'VALOR_POR_PONTO' => $valorPorPonto
+            'VALOR_POR_PONTO' => $valorPorPonto,
+            'VALOR_FIXO' => $valorFixo,
+            'TIPO_REGRA' => $tipoRegra
         ];
 
         // Buscar comissões já salvas
@@ -518,7 +573,7 @@ class ComissaoRelatorioHandler
     /**
      * Calcular pontos com desconto de falta
      */
-    private function calcularPontosComDesconto(float $totalPontos, bool $temFalta, ?string $tipoFalta): float
+    private static function calcularPontosComDesconto(float $totalPontos, bool $temFalta, ?string $tipoFalta): float
     {
         if (!$temFalta) {
             return $totalPontos;
@@ -536,23 +591,47 @@ class ComissaoRelatorioHandler
     /**
      * Formatar descrição da faixa aplicada
      */
-    private function formatarDescricaoFaixa(array $func): string
+    private static function formatarDescricaoFaixa(array $func): string
     {
+        $isApoio = ($func['tipo_vinculo'] ?? 'N') === 'A';
+
         if (!empty($func['faixa_aplicada']['descricao'])) {
             return $func['faixa_aplicada']['descricao'];
         }
         
-        if (!empty($func['regra_aplicada']['descricao'])) {
-            return 'Regra: ' . $func['regra_aplicada']['descricao'];
+        if (!empty($func['regra_aplicada'])) {
+            $tipoLabel = self::labelTipoComissao($func['regra_aplicada']['tipo'] ?? '');
+            if ($isApoio) {
+                return 'APOIO - ' . $tipoLabel;
+            }
+            return 'Regra: ' . ($func['regra_aplicada']['descricao'] ?? $tipoLabel);
+        }
+        
+        if ($isApoio) {
+            return 'APOIO';
         }
         
         return 'Sem faixa';
     }
 
     /**
+     * Converter código TIPO_COMISSAO em label legível
+     */
+    private static function labelTipoComissao(string $tipo): string
+    {
+        return match ($tipo) {
+            'P' => 'PERCENTUAL',
+            'V' => 'VALOR POR UP',
+            'F' => 'FIXO',
+            'M' => 'VALOR UP + FIXO',
+            default => $tipo,
+        };
+    }
+
+    /**
      * Calcular resumo das comissões
      */
-    private function calcularResumoComissoes(array $comissoes): array
+    private static function calcularResumoComissoes(array $comissoes): array
     {
         $resumo = [
             'TOTAL_FUNCIONARIOS' => count($comissoes),
@@ -574,7 +653,7 @@ class ComissaoRelatorioHandler
     /**
      * Agrupar comissões por centro de trabalho
      */
-    private function agruparPorCentro(array $comissoes): array
+    private static function agruparPorCentro(array $comissoes): array
     {
         $porCentro = [];
         
@@ -599,7 +678,7 @@ class ComissaoRelatorioHandler
     /**
      * Mapear dias com falta para array indexado por data
      */
-    private function mapearDiasComFalta(array $faltas): array
+    private static function mapearDiasComFalta(array $faltas): array
     {
         $diasComFalta = [];
         
@@ -623,7 +702,7 @@ class ComissaoRelatorioHandler
     /**
      * Obter valor por ponto da faixa ou regra
      */
-    private function getValorPorPonto(?array $faixaAplicada, ?array $regraAplicada): float
+    private static function getValorPorPonto(?array $faixaAplicada, ?array $regraAplicada): float
     {
         if ($faixaAplicada) {
             return floatval($faixaAplicada['valor'] ?? 0);
@@ -639,8 +718,27 @@ class ComissaoRelatorioHandler
     /**
      * Processar diário adicionando informações de falta e comissão
      */
-    private function processarDiarioComFaltas(array $diario, array $diasComFalta, float $valorPorPonto): array
+    private static function processarDiarioComFaltas(array $diario, array $diasComFalta, float $valorPorPonto, ?array $regraAplicada = null): array
     {
+        // Para tipo M (Misto), ratear valor fixo entre dias efetivamente trabalhados
+        $tipoRegra = $regraAplicada['tipo'] ?? null;
+        $valorFixo = floatval($regraAplicada['valor_fixo'] ?? 0);
+        $valorFixoDiario = 0;
+        if ($tipoRegra === 'M' && $valorFixo > 0 && count($diario) > 0) {
+            // Contar dias sem falta integral
+            $diasEfetivos = 0;
+            foreach ($diario as $dia) {
+                $dataStr = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
+                $temFaltaIntegral = $dataStr && isset($diasComFalta[$dataStr]) && $diasComFalta[$dataStr]['tipo'] === 'I';
+                if (!$temFaltaIntegral) {
+                    $diasEfetivos++;
+                }
+            }
+            if ($diasEfetivos > 0) {
+                $valorFixoDiario = $valorFixo / $diasEfetivos;
+            }
+        }
+
         foreach ($diario as &$dia) {
             // Normalizar campo DATA
             $dataStr = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
@@ -660,14 +758,14 @@ class ComissaoRelatorioHandler
                 } else {
                     $pontosComDesconto = $pontosDia * 0.5;
                     $dia['PONTOS_COM_DESCONTO'] = $pontosComDesconto;
-                    $dia['COMISSAO_DIA'] = $pontosComDesconto * $valorPorPonto;
+                    $dia['COMISSAO_DIA'] = ($pontosComDesconto * $valorPorPonto) + $valorFixoDiario;
                 }
             } else {
                 $dia['TEM_FALTA'] = false;
                 $dia['TIPO_FALTA'] = null;
                 $dia['MOTIVO_FALTA'] = null;
                 $dia['PONTOS_COM_DESCONTO'] = $pontosDia;
-                $dia['COMISSAO_DIA'] = $pontosDia * $valorPorPonto;
+                $dia['COMISSAO_DIA'] = ($pontosDia * $valorPorPonto) + $valorFixoDiario;
             }
         }
 

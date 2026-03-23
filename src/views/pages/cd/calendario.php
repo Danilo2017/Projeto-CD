@@ -1,8 +1,6 @@
 <?php
-// Verificar permissão de acesso (novo sistema de perfis)
-$rotasPermitidas = $_SESSION['user']['rotas_permitidas'] ?? [];
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$acessoCd = $isAdmin || in_array('cd', $rotasPermitidas) || in_array('*', $rotasPermitidas);
+// Verificar permissão de acesso (dados injetados pelo Controller)
+$acessoCd = $is_admin || in_array('cd', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoCd) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
@@ -18,9 +16,11 @@ if (!$acessoCd) {
 
 <style>
         .container {
-            max-width: 1800px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
             padding: 0 10px;
+            box-sizing: border-box;
         }
 
         /* Controles do calendário */
@@ -29,9 +29,9 @@ if (!$acessoCd) {
             align-items: center;
             justify-content: center;
             gap: 20px;
-            padding: 20px;
+            padding: 15px;
             background: white;
-            margin: 20px;
+            margin: 10px 10px 10px 10px;
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
@@ -79,12 +79,12 @@ if (!$acessoCd) {
 
         /* Grade do calendário anual */
         .calendario-wrapper {
-            margin: 20px;
+            margin: 0 10px 20px 10px;
             background: white;
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            padding: 20px;
+            padding: 15px;
         }
 
         .calendario-anual {

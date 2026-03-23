@@ -58,7 +58,9 @@ const dtLanguagePtBr = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('filtroData').value = new Date().toISOString().split('T')[0];
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('filtroDataInicio').value = hoje;
+    document.getElementById('filtroDataFim').value = hoje;
     carregarCentrosTrabalho();
     carregarRecursos();
 });
@@ -67,7 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
  * Carrega centros de trabalho para o select (apenas vinculados)
  */
 function carregarCentrosTrabalho() {
-    fetch('/comissao-api-centros-vinculados')
+    const emprId = document.getElementById('filtroEmpresa').value;
+    const params = new URLSearchParams();
+    if (emprId) params.append('emprId', emprId);
+    
+    fetch(`/comissao-api-centros-vinculados?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -76,6 +82,8 @@ function carregarCentrosTrabalho() {
                 data.data.forEach(centro => {
                     select.innerHTML += `<option value="${centro.ID}">${centro.COD_CENTRO} - ${centro.DESCRICAO}</option>`;
                 });
+            } else {
+                console.error('Erro ao carregar centros:', data.error);
             }
         })
         .catch(error => console.error('Erro ao carregar centros:', error));
@@ -109,27 +117,48 @@ function carregarRecursos() {
  * Carrega o relatório
  */
 function carregarRelatorio() {
-    const data = document.getElementById('filtroData').value;
+    // Forçar commit de qualquer input de data que esteja sendo editado
+    document.getElementById('filtroDataInicio').blur();
+    document.getElementById('filtroDataFim').blur();
     
-    if (!data) {
-        exibirMensagemErro('Selecione uma data');
+    // Ler valores após blur para garantir que foram commitados
+    setTimeout(function() {
+        _executarCarregarRelatorio();
+    }, 50);
+}
+
+function _executarCarregarRelatorio() {
+    const hoje = new Date().toISOString().split('T')[0];
+    const dataInicio = document.getElementById('filtroDataInicio').value || hoje;
+    const dataFim = document.getElementById('filtroDataFim').value || hoje;
+    
+    // Garantir que os inputs tenham valores
+    if (!document.getElementById('filtroDataInicio').value) {
+        document.getElementById('filtroDataInicio').value = hoje;
+    }
+    if (!document.getElementById('filtroDataFim').value) {
+        document.getElementById('filtroDataFim').value = hoje;
+    }
+    
+    if (dataFim < dataInicio) {
+        exibirMensagemErro('A data fim não pode ser anterior à data início');
         return;
     }
     
     // Mostrar loading
     mostrarLoading('Gerando relatório diário...');
     
-    const filtros = {
-        data: data,
-        emprId: document.getElementById('filtroEmpresa').value,
-        centroTrabId: document.getElementById('filtroCentro').value,
-        recursoId: document.getElementById('filtroRecurso').value
-    };
-    
     const params = new URLSearchParams();
-    Object.keys(filtros).forEach(key => {
-        if (filtros[key]) params.append(key, filtros[key]);
-    });
+    params.append('data', dataInicio);
+    params.append('dataFim', dataFim);
+    
+    const emprId = document.getElementById('filtroEmpresa').value;
+    const centroTrabId = document.getElementById('filtroCentro').value;
+    const recursoId = document.getElementById('filtroRecurso').value;
+    
+    if (emprId) params.append('emprId', emprId);
+    if (centroTrabId) params.append('centroTrabId', centroTrabId);
+    if (recursoId) params.append('recursoId', recursoId);
     
     fetch(`/comissao-api-produtividade-diaria?${params.toString()}`)
         .then(response => response.json())
@@ -191,6 +220,12 @@ function badgeValidacao(valido) {
  * Renderiza a tabela de produtividade por funcionário
  */
 function renderizarTabelaProdutividade(dados) {
+    // Destruir DataTable ANTES de alterar o DOM
+    if (dataTableProdutividade) {
+        dataTableProdutividade.destroy();
+        dataTableProdutividade = null;
+    }
+
     const tbody = document.getElementById('tabelaProdutividadeBody');
     
     if (!dados || dados.length === 0) {
@@ -237,6 +272,12 @@ function renderizarTabelaProdutividade(dados) {
  * Renderiza a tabela de detalhamento dos apontamentos
  */
 function renderizarTabelaApontamentos(dados) {
+    // Destruir DataTable ANTES de alterar o DOM
+    if (dataTableApontamentos) {
+        dataTableApontamentos.destroy();
+        dataTableApontamentos = null;
+    }
+
     const tbody = document.getElementById('tabelaApontamentosBody');
     
     if (!dados || dados.length === 0) {
@@ -251,7 +292,7 @@ function renderizarTabelaApontamentos(dados) {
         html += `
             <tr class="${rowClass}">
                 <td><small>${item.FUNCIONARIO}</small></td>
-                <td><small>${item.PRODUTO}</small><br><small class="text-muted" style="font-size:0.7rem">${item.MASCARA || ''}</small></td>
+                <td><small><strong>${item.CODIGO_PRODUTO || ''}</strong> (${item.ID_ITEM || ''})</small><br><small>${item.PRODUTO || ''}</small><br><small class="text-muted" style="font-size:0.7rem">${item.MASCARA || ''}</small></td>
                 <td><small>${item.CENTRO_TRAB || '-'}</small></td>
                 <td><small>${item.OPERACAO || '-'}</small></td>
                 <td><small>${item.RECURSO || '-'}</small></td>
@@ -276,6 +317,7 @@ function renderizarTabelaApontamentos(dados) {
 function initDataTableProdutividade() {
     if (dataTableProdutividade) {
         dataTableProdutividade.destroy();
+        dataTableProdutividade = null;
     }
     
     dataTableProdutividade = $('#tabelaProdutividade').DataTable({
@@ -292,6 +334,7 @@ function initDataTableProdutividade() {
 function initDataTableApontamentos() {
     if (dataTableApontamentos) {
         dataTableApontamentos.destroy();
+        dataTableApontamentos = null;
     }
     
     dataTableApontamentos = $('#tabelaApontamentos').DataTable({
@@ -338,8 +381,9 @@ function exportarExcel() {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     
-    const dataFiltro = document.getElementById('filtroData').value || new Date().toISOString().split('T')[0];
-    link.download = `Relatorio_Produtividade_${dataFiltro}.csv`;
+    const dataInicio = document.getElementById('filtroDataInicio').value || new Date().toISOString().split('T')[0];
+    const dataFim = document.getElementById('filtroDataFim').value || dataInicio;
+    link.download = `Relatorio_Produtividade_${dataInicio}_a_${dataFim}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
 }

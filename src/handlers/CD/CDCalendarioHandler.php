@@ -15,23 +15,14 @@ use src\models\CD\ReciboDescarga;
  */
 class CDCalendarioHandler
 {
-    private AgendamentoRecebimento $agendamentoModel;
-    private ReciboDescarga $reciboModel;
-
-    public function __construct()
-    {
-        $this->agendamentoModel = new AgendamentoRecebimento();
-        $this->reciboModel = new ReciboDescarga();
-    }
-
     /**
      * Listar todos os recebimentos
      * 
      * @return array Lista de recebimentos
      */
-    public function listarRecebimentos(): array
+    public static function listarRecebimentos(): array
     {
-        return $this->agendamentoModel->listarTodos();
+        return AgendamentoRecebimento::listarTodos();
     }
 
     /**
@@ -41,14 +32,14 @@ class CDCalendarioHandler
      * @return array Resultado com ID do registro criado
      * @throws \Exception Se duplicata recente ou erro
      */
-    public function salvarRecebimento(array $dados): array
+    public static function salvarRecebimento(array $dados): array
     {
         // Verificar duplicata recente (regra de negócio)
-        if ($this->agendamentoModel->verificarDuplicataRecente($dados)) {
+        if (AgendamentoRecebimento::verificarDuplicataRecente($dados)) {
             throw new \Exception('Aguarde alguns segundos antes de cadastrar novamente');
         }
 
-        $id = $this->agendamentoModel->inserir($dados);
+        $id = AgendamentoRecebimento::inserir($dados);
 
         return [
             'id' => $id,
@@ -62,9 +53,9 @@ class CDCalendarioHandler
      * @param array $dados Dados do recebimento (deve incluir 'id')
      * @return array Resultado da operação
      */
-    public function atualizarRecebimento(array $dados): array
+    public static function atualizarRecebimento(array $dados): array
     {
-        $this->agendamentoModel->atualizar($dados);
+        AgendamentoRecebimento::atualizar($dados);
 
         return [
             'message' => 'Recebimento atualizado com sucesso!'
@@ -77,9 +68,9 @@ class CDCalendarioHandler
      * @param int $id ID do recebimento
      * @return array Resultado da operação
      */
-    public function excluirRecebimento(int $id): array
+    public static function excluirRecebimento(int $id): array
     {
-        $this->agendamentoModel->excluir($id);
+        AgendamentoRecebimento::excluir($id);
 
         return [
             'message' => 'Recebimento excluído com sucesso!'
@@ -92,9 +83,9 @@ class CDCalendarioHandler
      * @param int $id ID do recebimento
      * @return array Dados atualizados
      */
-    public function alterarStatusRecebimento(int $id): array
+    public static function alterarStatusRecebimento(int $id): array
     {
-        $resultado = $this->agendamentoModel->alterarStatus($id);
+        $resultado = AgendamentoRecebimento::alterarStatus($id);
 
         return [
             'data' => $resultado,
@@ -108,9 +99,9 @@ class CDCalendarioHandler
      * @param array $dados Dados do recibo
      * @return array Resultado com dados do recibo gerado
      */
-    public function gerarRecibo(array $dados): array
+    public static function gerarRecibo(array $dados): array
     {
-        $resultado = $this->reciboModel->inserir($dados);
+        $resultado = ReciboDescarga::inserir($dados);
 
         return [
             'data' => $resultado,
@@ -124,9 +115,9 @@ class CDCalendarioHandler
      * @param int $id ID do recibo
      * @return array|null Dados do recibo ou null se não encontrado
      */
-    public function buscarRecibo(int $id): ?array
+    public static function buscarRecibo(int $id): ?array
     {
-        return $this->reciboModel->buscarPorId($id);
+        return ReciboDescarga::buscarPorId($id);
     }
 
     /**
@@ -135,8 +126,8 @@ class CDCalendarioHandler
      * @param int $agendamentoId ID do agendamento
      * @return array Lista de recibos
      */
-    public function listarRecibosPorAgendamento(int $agendamentoId): array
+    public static function listarRecibosPorAgendamento(int $agendamentoId): array
     {
-        return $this->reciboModel->listarPorAgendamento($agendamentoId);
+        return ReciboDescarga::listarPorAgendamento($agendamentoId);
     }
 }
