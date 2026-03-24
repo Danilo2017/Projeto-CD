@@ -292,12 +292,29 @@ function salvarFaixa() {
         return;
     }
     
+    // Validar limite máximo dos pontos
+    if (parseFloat(dados.pontoInicial) > 999999) {
+        exibirMensagemErro('O ponto inicial não pode ultrapassar 999.999');
+        return;
+    }
+    if (dados.pontoFinal && parseFloat(dados.pontoFinal) > 999999) {
+        exibirMensagemErro('O ponto final não pode ultrapassar 999.999');
+        return;
+    }
+
     // Validar range de pontos
     if (dados.pontoFinal && parseFloat(dados.pontoFinal) <= parseFloat(dados.pontoInicial)) {
         exibirMensagemErro('O ponto final deve ser maior que o ponto inicial');
         return;
     }
     
+    // Desabilitar botão para evitar duplo clique
+    const btnSalvar = document.getElementById('btnSalvarFaixa');
+    if (btnSalvar) {
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...';
+    }
+
     const metodo = id ? 'PUT' : 'POST';
     if (id) dados.id = id;
     
@@ -321,6 +338,12 @@ function salvarFaixa() {
     .catch(error => {
         console.error('Erro ao salvar:', error);
         exibirMensagemErro('Erro ao salvar faixa');
+    })
+    .finally(() => {
+        if (btnSalvar) {
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = '<i class="bi bi-check"></i> Salvar';
+        }
     });
 }
 

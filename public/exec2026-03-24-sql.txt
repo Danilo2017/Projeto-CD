@@ -1,0 +1,3248 @@
+Array
+(
+    [data] => 2026-03-24 11:33:57
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1400, 14, 34494, 335002, 691102, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1400
+            [empr_id] => 14
+            [item_id] => 34494
+            [itempr_id] => 335002
+            [mascara_id] => 691102
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:33:58
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 38469 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 691654 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 38469
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 691654
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:33:58
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1401
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:33:59
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1401, 14, 38469, 335102, 691654, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1401
+            [empr_id] => 14
+            [item_id] => 38469
+            [itempr_id] => 335102
+            [mascara_id] => 691654
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:33:59
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 45871 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 692047 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 45871
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 692047
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:00
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1402
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:00
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1402, 14, 45871, 335151, 692047, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1402
+            [empr_id] => 14
+            [item_id] => 45871
+            [itempr_id] => 335151
+            [mascara_id] => 692047
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:01
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 72491 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 696542 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 72491
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 696542
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:01
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1403
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:02
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1403, 14, 72491, 335472, 696542, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1403
+            [empr_id] => 14
+            [item_id] => 72491
+            [itempr_id] => 335472
+            [mascara_id] => 696542
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:02
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 38730 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 965372 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 38730
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 965372
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:03
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1404
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:03
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1404, 14, 38730, 366801, 965372, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1404
+            [empr_id] => 14
+            [item_id] => 38730
+            [itempr_id] => 366801
+            [mascara_id] => 965372
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:04
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34306 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 678499 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34306
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 678499
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:04
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1405
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:05
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1405, 14, 34306, 334274, 678499, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1405
+            [empr_id] => 14
+            [item_id] => 34306
+            [itempr_id] => 334274
+            [mascara_id] => 678499
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:05
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34338 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 672226 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34338
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 672226
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:06
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1406
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:06
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1406, 14, 34338, 333904, 672226, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1406
+            [empr_id] => 14
+            [item_id] => 34338
+            [itempr_id] => 333904
+            [mascara_id] => 672226
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:07
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 65531 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 901372 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 65531
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 901372
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:07
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1407
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:08
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1407, 14, 65531, 335410, 901372, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1407
+            [empr_id] => 14
+            [item_id] => 65531
+            [itempr_id] => 335410
+            [mascara_id] => 901372
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:08
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 69070 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 696402 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 69070
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 696402
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:09
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1408
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:09
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1408, 14, 69070, 335460, 696402, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1408
+            [empr_id] => 14
+            [item_id] => 69070
+            [itempr_id] => 335460
+            [mascara_id] => 696402
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:10
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 69070 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 696403 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 69070
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 696403
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:10
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1409
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:11
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1409, 14, 69070, 335460, 696403, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1409
+            [empr_id] => 14
+            [item_id] => 69070
+            [itempr_id] => 335460
+            [mascara_id] => 696403
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:11
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 78910 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 907226 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 78910
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 907226
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:12
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1410
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:12
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1410, 14, 78910, 345263, 907226, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1410
+            [empr_id] => 14
+            [item_id] => 78910
+            [itempr_id] => 345263
+            [mascara_id] => 907226
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:13
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60953 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 695312 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60953
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 695312
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:14
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1411
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:14
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1411, 14, 60953, 335343, 695312, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1411
+            [empr_id] => 14
+            [item_id] => 60953
+            [itempr_id] => 335343
+            [mascara_id] => 695312
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:15
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 49576 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 901819 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 49576
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 901819
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:15
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1412
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:16
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1412, 14, 49576, 335194, 901819, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1412
+            [empr_id] => 14
+            [item_id] => 49576
+            [itempr_id] => 335194
+            [mascara_id] => 901819
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:16
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 68330 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 696243 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 68330
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 696243
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:17
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1413
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:17
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1413, 14, 68330, 335448, 696243, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1413
+            [empr_id] => 14
+            [item_id] => 68330
+            [itempr_id] => 335448
+            [mascara_id] => 696243
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:18
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60671 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 683796 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60671
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 683796
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:18
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1414
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:19
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1414, 14, 60671, 334529, 683796, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1414
+            [empr_id] => 14
+            [item_id] => 60671
+            [itempr_id] => 334529
+            [mascara_id] => 683796
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:19
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60950 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677022 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60950
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677022
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:20
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1415
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:20
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1415, 14, 60950, 334198, 677022, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1415
+            [empr_id] => 14
+            [item_id] => 60950
+            [itempr_id] => 334198
+            [mascara_id] => 677022
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:21
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60950 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677104 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60950
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677104
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:21
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1416
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:22
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1416, 14, 60950, 334198, 677104, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1416
+            [empr_id] => 14
+            [item_id] => 60950
+            [itempr_id] => 334198
+            [mascara_id] => 677104
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:22
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60950 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677103 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60950
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677103
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:23
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1417
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:23
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1417, 14, 60950, 334198, 677103, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1417
+            [empr_id] => 14
+            [item_id] => 60950
+            [itempr_id] => 334198
+            [mascara_id] => 677103
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:24
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 61059 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677861 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 61059
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677861
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:24
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1418
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:25
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1418, 14, 61059, 334229, 677861, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1418
+            [empr_id] => 14
+            [item_id] => 61059
+            [itempr_id] => 334229
+            [mascara_id] => 677861
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:25
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 61061 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677916 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 61061
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677916
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:26
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1419
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:26
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1419, 14, 61061, 334232, 677916, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1419
+            [empr_id] => 14
+            [item_id] => 61061
+            [itempr_id] => 334232
+            [mascara_id] => 677916
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:27
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34361 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 672627 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34361
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 672627
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:28
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1420
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:28
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1420, 14, 34361, 333949, 672627, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1420
+            [empr_id] => 14
+            [item_id] => 34361
+            [itempr_id] => 333949
+            [mascara_id] => 672627
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:29
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34303 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 664051 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34303
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 664051
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:29
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1421
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:30
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1421, 14, 34303, 333698, 664051, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1421
+            [empr_id] => 14
+            [item_id] => 34303
+            [itempr_id] => 333698
+            [mascara_id] => 664051
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:30
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 45777 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 675029 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 45777
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 675029
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:31
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1422
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:31
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1422, 14, 45777, 334001, 675029, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1422
+            [empr_id] => 14
+            [item_id] => 45777
+            [itempr_id] => 334001
+            [mascara_id] => 675029
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:32
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 45777 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 675028 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 45777
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 675028
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:32
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1423
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:33
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1423, 14, 45777, 334001, 675028, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1423
+            [empr_id] => 14
+            [item_id] => 45777
+            [itempr_id] => 334001
+            [mascara_id] => 675028
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:33
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 65531 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 901373 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 65531
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 901373
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:34
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1424
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:34
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1424, 14, 65531, 335410, 901373, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1424
+            [empr_id] => 14
+            [item_id] => 65531
+            [itempr_id] => 335410
+            [mascara_id] => 901373
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:35
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34367 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 689750 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34367
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 689750
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:35
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1425
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:36
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1425, 14, 34367, 334818, 689750, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1425
+            [empr_id] => 14
+            [item_id] => 34367
+            [itempr_id] => 334818
+            [mascara_id] => 689750
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:36
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34367 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 689751 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34367
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 689751
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:37
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1426
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:37
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1426, 14, 34367, 334818, 689751, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1426
+            [empr_id] => 14
+            [item_id] => 34367
+            [itempr_id] => 334818
+            [mascara_id] => 689751
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:38
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 49576 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 901820 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 49576
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 901820
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:38
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1427
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:39
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1427, 14, 49576, 335194, 901820, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1427
+            [empr_id] => 14
+            [item_id] => 49576
+            [itempr_id] => 335194
+            [mascara_id] => 901820
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:39
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 68330 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 696244 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 68330
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 696244
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:40
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1428
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:40
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1428, 14, 68330, 335448, 696244, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1428
+            [empr_id] => 14
+            [item_id] => 68330
+            [itempr_id] => 335448
+            [mascara_id] => 696244
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:41
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 72814 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 699299 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 72814
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 699299
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:41
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1429
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:42
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1429, 14, 72814, 335661, 699299, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1429
+            [empr_id] => 14
+            [item_id] => 72814
+            [itempr_id] => 335661
+            [mascara_id] => 699299
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:42
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 84171 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 890161 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 84171
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 890161
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:43
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1430
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:44
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1430, 14, 84171, 343033, 890161, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1430
+            [empr_id] => 14
+            [item_id] => 84171
+            [itempr_id] => 343033
+            [mascara_id] => 890161
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:44
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34338 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 672227 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34338
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 672227
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:45
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1431
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:45
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1431, 14, 34338, 333904, 672227, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1431
+            [empr_id] => 14
+            [item_id] => 34338
+            [itempr_id] => 333904
+            [mascara_id] => 672227
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:46
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34338 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 672229 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34338
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 672229
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:46
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1432
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:47
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1432, 14, 34338, 333904, 672229, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1432
+            [empr_id] => 14
+            [item_id] => 34338
+            [itempr_id] => 333904
+            [mascara_id] => 672229
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:47
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34300 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 662217 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34300
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 662217
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:48
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1433
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:48
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1433, 14, 34300, 333530, 662217, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1433
+            [empr_id] => 14
+            [item_id] => 34300
+            [itempr_id] => 333530
+            [mascara_id] => 662217
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:49
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34300 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 662216 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34300
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 662216
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:49
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1434
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:50
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1434, 14, 34300, 333530, 662216, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1434
+            [empr_id] => 14
+            [item_id] => 34300
+            [itempr_id] => 333530
+            [mascara_id] => 662216
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:50
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34305 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 1006754 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34305
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 1006754
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:51
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1435
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:51
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1435, 14, 34305, 334657, 1006754, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1435
+            [empr_id] => 14
+            [item_id] => 34305
+            [itempr_id] => 334657
+            [mascara_id] => 1006754
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:52
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34305 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 1006756 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34305
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 1006756
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:52
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1436
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:53
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1436, 14, 34305, 334657, 1006756, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1436
+            [empr_id] => 14
+            [item_id] => 34305
+            [itempr_id] => 334657
+            [mascara_id] => 1006756
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:53
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 69070 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 696399 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 69070
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 696399
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:54
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1437
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:54
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1437, 14, 69070, 335460, 696399, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1437
+            [empr_id] => 14
+            [item_id] => 69070
+            [itempr_id] => 335460
+            [mascara_id] => 696399
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:55
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 78910 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 907225 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 78910
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 907225
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:55
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1438
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:56
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1438, 14, 78910, 345263, 907225, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1438
+            [empr_id] => 14
+            [item_id] => 78910
+            [itempr_id] => 345263
+            [mascara_id] => 907225
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:57
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34367 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 689748 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34367
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 689748
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:57
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1439
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:58
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1439, 14, 34367, 334818, 689748, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1439
+            [empr_id] => 14
+            [item_id] => 34367
+            [itempr_id] => 334818
+            [mascara_id] => 689748
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:58
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34304 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 1058606 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34304
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 1058606
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:59
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1440
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:34:59
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1440, 14, 34304, 333778, 1058606, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1440
+            [empr_id] => 14
+            [item_id] => 34304
+            [itempr_id] => 333778
+            [mascara_id] => 1058606
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:00
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60950 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677027 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60950
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677027
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:00
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1441
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:01
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1441, 14, 60950, 334198, 677027, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1441
+            [empr_id] => 14
+            [item_id] => 60950
+            [itempr_id] => 334198
+            [mascara_id] => 677027
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:01
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 61055 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677491 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 61055
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677491
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:02
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1442
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:02
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1442, 14, 61055, 334224, 677491, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1442
+            [empr_id] => 14
+            [item_id] => 61055
+            [itempr_id] => 334224
+            [mascara_id] => 677491
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:03
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60951 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 677111 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60951
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 677111
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:03
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1443
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:04
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1443, 14, 60951, 334206, 677111, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1443
+            [empr_id] => 14
+            [item_id] => 60951
+            [itempr_id] => 334206
+            [mascara_id] => 677111
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:04
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34362 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 672663 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34362
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 672663
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:05
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1444
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:05
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1444, 14, 34362, 333953, 672663, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1444
+            [empr_id] => 14
+            [item_id] => 34362
+            [itempr_id] => 333953
+            [mascara_id] => 672663
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:06
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 75063 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 683732 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 75063
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 683732
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:06
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1445
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:07
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1445, 14, 75063, 334517, 683732, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1445
+            [empr_id] => 14
+            [item_id] => 75063
+            [itempr_id] => 334517
+            [mascara_id] => 683732
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:08
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 80811 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 942223 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 80811
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 942223
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:08
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1446
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:08
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1446, 14, 80811, 357225, 942223, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1446
+            [empr_id] => 14
+            [item_id] => 80811
+            [itempr_id] => 357225
+            [mascara_id] => 942223
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:09
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 69070 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 696404 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 69070
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 696404
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:10
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1447
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:10
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1447, 14, 69070, 335460, 696404, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1447
+            [empr_id] => 14
+            [item_id] => 69070
+            [itempr_id] => 335460
+            [mascara_id] => 696404
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:11
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 78910 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 907223 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 78910
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 907223
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:11
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1448
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:12
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1448, 14, 78910, 345263, 907223, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1448
+            [empr_id] => 14
+            [item_id] => 78910
+            [itempr_id] => 345263
+            [mascara_id] => 907223
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:12
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60650 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 876718 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60650
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 876718
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:13
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1449
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:13
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1449, 14, 60650, 335318, 876718, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1449
+            [empr_id] => 14
+            [item_id] => 60650
+            [itempr_id] => 335318
+            [mascara_id] => 876718
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:14
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 60650 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 876719 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 60650
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 876719
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:14
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1450
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:15
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1450, 14, 60650, 335318, 876719, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1450
+            [empr_id] => 14
+            [item_id] => 60650
+            [itempr_id] => 335318
+            [mascara_id] => 876719
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:15
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 44895 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 691894 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 44895
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 691894
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:16
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1451
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:16
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1451, 14, 44895, 335142, 691894, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1451
+            [empr_id] => 14
+            [item_id] => 44895
+            [itempr_id] => 335142
+            [mascara_id] => 691894
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:17
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 34313 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 678699 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 34313
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 678699
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:17
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1452
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:18
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1452, 14, 34313, 334283, 678699, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1452
+            [empr_id] => 14
+            [item_id] => 34313
+            [itempr_id] => 334283
+            [mascara_id] => 678699
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:18
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 75069 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 778091 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 75069
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 778091
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:19
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1453
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:19
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1453, 14, 75069, 337862, 778091, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1453
+            [empr_id] => 14
+            [item_id] => 75069
+            [itempr_id] => 337862
+            [mascara_id] => 778091
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:20
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 75069 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 778092 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 75069
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 778092
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:20
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1454
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:21
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1454, 14, 75069, 337862, 778092, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1454
+            [empr_id] => 14
+            [item_id] => 75069
+            [itempr_id] => 337862
+            [mascara_id] => 778092
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:21
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 80551 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 904209 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 80551
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 904209
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:22
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1455
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:22
+    [sql] => INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD) VALUES (1455, 14, 80551, 344732, 904209, 1107, 1, TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2099-12-30', 'YYYY-MM-DD'), 'S', SYSDATE, NULL)
+    [params] => Array
+        (
+            [id_pontuacao] => 1455
+            [empr_id] => 14
+            [item_id] => 80551
+            [itempr_id] => 344732
+            [mascara_id] => 904209
+            [centro_trab_id] => 1107
+            [pontos_up] => 1
+            [dt_vigencia_ini] => '2026-01-01'
+            [dt_vigencia_fim] => '2099-12-30'
+            [id_usuario] => NULL
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:23
+    [sql] => SELECT PP.ID_PONTUACAO, PP.PONTOS_UP FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP WHERE PP.ITEM_ID = 45490 AND PP.ATIVO = 'S' AND PP.ID_EMPR = 14 AND PP.ID_MASCARA = 699204 AND PP.ID_CENTRO_TRAB = 1107 FETCH FIRST 1 ROW ONLY
+    [params] => Array
+        (
+            [item_id] => 45490
+            [empr_id] => 14
+            [filtro_mascara] => AND PP.ID_MASCARA = 699204
+            [filtro_centro] => AND PP.ID_CENTRO_TRAB = 1107
+        )
+
+    [res] => Array
+        (
+        )
+
+)
+Array
+(
+    [data] => 2026-03-24 11:35:23
+    [sql] => SELECT FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL AS ID FROM DUAL
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [ID] => 1456
+                )
+
+        )
+
+)

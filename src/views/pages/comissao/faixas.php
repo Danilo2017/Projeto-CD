@@ -112,11 +112,11 @@ if (!$acessoComissao) {
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="pontoInicial" class="form-label">Ponto Inicial *</label>
-                                <input type="number" id="pontoInicial" class="form-control" step="0.01" min="0" required>
+                                <input type="number" id="pontoInicial" class="form-control" step="0.01" min="0" max="999999" required>
                             </div>
                             <div class="col-md-4">
                                 <label for="pontoFinal" class="form-label">Ponto Final</label>
-                                <input type="number" id="pontoFinal" class="form-control" step="0.01" min="0">
+                                <input type="number" id="pontoFinal" class="form-control" step="0.01" min="0" max="999999">
                                 <small class="text-muted">Deixe em branco para sem limite</small>
                             </div>
                             <div class="col-md-4">
@@ -149,8 +149,8 @@ if (!$acessoComissao) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="salvarFaixa()">
-                        <i class="bi bi-check-lg"></i> Salvar
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSalvarFaixa" onclick="salvarFaixa()">
+                        <i class="bi bi-check"></i> Salvar
                     </button>
                 </div>
             </div>
