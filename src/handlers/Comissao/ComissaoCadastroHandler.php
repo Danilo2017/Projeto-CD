@@ -94,7 +94,9 @@ class ComissaoCadastroHandler
     }
 
     /**
-     * Importar pontuações em lote
+     * Importar pontuações em lote (OTIMIZADO)
+     * Usa uma única conexão PDO, prepared statements reutilizáveis,
+     * pré-carregamento de duplicatas em batch e transação única.
      */
     public static function importarPontuacoes(array $linhas, int $emprId, ?int $idUsuario): array
     {
@@ -108,111 +110,184 @@ class ComissaoCadastroHandler
         $cacheCentros = [];
         $cacheMascaras = [];
 
+        // ===== FASE 1: Validação e resolução de lookups (sem transação) =====
+
+        // Prepared statements reutilizáveis para lookups (1 prepare, N executes)
+        $stmtItem = $pdo->prepare(
+            "SELECT I.ID AS ITEM_ID, IE.ID AS ITEMPR_ID 
+             FROM FOCCO3I.TITENS I
+             LEFT JOIN FOCCO3I.TITENS_EMPR IE ON IE.ITEM_ID = I.ID AND IE.EMPR_ID = :empr_id
+             WHERE I.COD_ITEM = :cod_item
+             FETCH FIRST 1 ROW ONLY"
+        );
+        $stmtCentro = $pdo->prepare(
+            "SELECT ID FROM FOCCO3I.TCENTROS_TRAB WHERE COD_CENTRO = :cod_centro AND EMPR_ID = :empr_id FETCH FIRST 1 ROW ONLY"
+        );
+        $stmtMascara = $pdo->prepare(
+            "SELECT 1 FROM FOCCO3I.TMASC_ITEM WHERE ID = :id FETCH FIRST 1 ROW ONLY"
+        );
+
+        // Pré-validar todas as linhas e resolver lookups
+        $linhasValidas = [];
         foreach ($linhas as $idx => $linha) {
             $numLinha = $idx + 2;
             
-            try {
-                $codItem = trim($linha['COD_ITEM'] ?? '');
-                $idMascara = trim($linha['ID_MASCARA'] ?? '');
-                $codCentro = trim($linha['COD_CENTRO'] ?? '');
-                $pontosUp = trim($linha['PONTOS_UP'] ?? '');
-                $dtIni = trim($linha['DT_VIGENCIA_INI'] ?? '');
-                $dtFim = trim($linha['DT_VIGENCIA_FIM'] ?? '');
-                
-                if (empty($codItem)) {
-                    $erros[] = "Linha {$numLinha}: COD_ITEM vazio";
+            $codItem = trim($linha['COD_ITEM'] ?? '');
+            $idMascara = trim($linha['ID_MASCARA'] ?? '');
+            $codCentro = trim($linha['COD_CENTRO'] ?? '');
+            $pontosUp = trim($linha['PONTOS_UP'] ?? '');
+            $dtIni = trim($linha['DT_VIGENCIA_INI'] ?? '');
+            $dtFim = trim($linha['DT_VIGENCIA_FIM'] ?? '');
+            
+            if (empty($codItem)) {
+                $erros[] = "Linha {$numLinha}: COD_ITEM vazio";
+                continue;
+            }
+            if (empty($pontosUp)) {
+                $erros[] = "Linha {$numLinha}: PONTOS_UP vazio (Item: {$codItem})";
+                continue;
+            }
+            if (empty($dtIni)) {
+                $erros[] = "Linha {$numLinha}: DT_VIGENCIA_INI vazio (Item: {$codItem})";
+                continue;
+            }
+            
+            $pontosUp = str_replace(',', '.', $pontosUp);
+            $dtIniFormatada = self::converterData($dtIni);
+            $dtFimFormatada = !empty($dtFim) ? self::converterData($dtFim) : null;
+            
+            if (!$dtIniFormatada) {
+                $erros[] = "Linha {$numLinha}: Data início inválida '{$dtIni}' (Item: {$codItem})";
+                continue;
+            }
+            
+            // Buscar ITEM_ID pelo COD_ITEM (com cache + prepared statement)
+            if (!isset($cacheItens[$codItem])) {
+                $stmtItem->execute([':empr_id' => $emprId, ':cod_item' => $codItem]);
+                $cacheItens[$codItem] = $stmtItem->fetch(\PDO::FETCH_ASSOC) ?: null;
+            }
+            $item = $cacheItens[$codItem];
+            if (!$item) {
+                $erros[] = "Linha {$numLinha}: Produto COD_ITEM={$codItem} não encontrado na tabela TITENS";
+                continue;
+            }
+            
+            // Buscar ID_CENTRO_TRAB pelo COD_CENTRO (com cache)
+            $centroTrabId = null;
+            if (!empty($codCentro)) {
+                $cacheKeyCentro = $codCentro . '_' . $emprId;
+                if (!isset($cacheCentros[$cacheKeyCentro])) {
+                    $stmtCentro->execute([':cod_centro' => $codCentro, ':empr_id' => $emprId]);
+                    $cacheCentros[$cacheKeyCentro] = $stmtCentro->fetch(\PDO::FETCH_ASSOC) ?: null;
+                }
+                $centro = $cacheCentros[$cacheKeyCentro];
+                if ($centro) {
+                    $centroTrabId = $centro['ID'];
+                } else {
+                    $erros[] = "Linha {$numLinha}: Centro de Trabalho '{$codCentro}' não encontrado (Item: {$codItem})";
+                }
+            }
+            
+            // Validar máscara (com cache)
+            $mascaraId = !empty($idMascara) ? (int)$idMascara : null;
+            if ($mascaraId !== null) {
+                if (!isset($cacheMascaras[$mascaraId])) {
+                    $stmtMascara->execute([':id' => $mascaraId]);
+                    $cacheMascaras[$mascaraId] = $stmtMascara->fetch(\PDO::FETCH_ASSOC) ? true : false;
+                }
+                if (!$cacheMascaras[$mascaraId]) {
+                    $erros[] = "Linha {$numLinha}: Máscara ID_MASCARA={$idMascara} não existe na tabela TMASC_ITEM (Item: {$codItem})";
                     continue;
                 }
-                if (empty($pontosUp)) {
-                    $erros[] = "Linha {$numLinha}: PONTOS_UP vazio (Item: {$codItem})";
-                    continue;
-                }
-                if (empty($dtIni)) {
-                    $erros[] = "Linha {$numLinha}: DT_VIGENCIA_INI vazio (Item: {$codItem})";
-                    continue;
-                }
+            }
+            
+            $linhasValidas[] = [
+                'numLinha' => $numLinha,
+                'codItem' => $codItem,
+                'item' => $item,
+                'mascaraId' => $mascaraId,
+                'centroTrabId' => $centroTrabId,
+                'pontosUp' => $pontosUp,
+                'dtIniFormatada' => $dtIniFormatada,
+                'dtFimFormatada' => $dtFimFormatada,
+            ];
+        }
+
+        if (empty($linhasValidas)) {
+            return [
+                'importados' => 0,
+                'atualizados' => 0,
+                'erros' => $erros,
+                'total' => count($linhas)
+            ];
+        }
+
+        // ===== FASE 2: Pré-carregar TODAS as duplicatas da empresa em uma única query =====
+        $stmtDuplicatas = $pdo->prepare(
+            "SELECT PP.ID_PONTUACAO, PP.ITEM_ID, PP.ID_MASCARA, PP.ID_CENTRO_TRAB
+             FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
+             WHERE PP.ATIVO = 'S' AND PP.ID_EMPR = :empr_id"
+        );
+        $stmtDuplicatas->execute([':empr_id' => $emprId]);
+        $todasDuplicatas = $stmtDuplicatas->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Indexar duplicatas por chave composta: item_id|mascara_id|centro_trab_id
+        $mapaDuplicatas = [];
+        foreach ($todasDuplicatas as $dup) {
+            $chave = $dup['ITEM_ID'] . '|' . ($dup['ID_MASCARA'] ?? 'NULL') . '|' . ($dup['ID_CENTRO_TRAB'] ?? 'NULL');
+            $mapaDuplicatas[$chave] = $dup['ID_PONTUACAO'];
+        }
+        unset($todasDuplicatas);
+
+        // ===== FASE 3: Executar INSERTs e UPDATEs em transação única =====
+        $stmtInsert = $pdo->prepare(
+            "INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO 
+             (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD)
+             VALUES (FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL, :empr_id, :item_id, :itempr_id, :mascara_id, :centro_trab_id, :pontos_up, TO_DATE(:dt_ini, 'YYYY-MM-DD'), TO_DATE(:dt_fim, 'YYYY-MM-DD'), 'S', SYSDATE, :id_usuario)"
+        );
+        $stmtUpdate = $pdo->prepare(
+            "UPDATE FOCCO3I.TGAZIN_PONTUACAO_PRODUTO 
+             SET PONTOS_UP = :pontos_up, DT_VIGENCIA_INI = TO_DATE(:dt_ini, 'YYYY-MM-DD'), DT_VIGENCIA_FIM = TO_DATE(:dt_fim, 'YYYY-MM-DD'), DT_ALTERACAO = SYSDATE, ID_USUARIO_ALT = :id_usuario
+             WHERE ID_PONTUACAO = :id_pontuacao"
+        );
+
+        $pdo->beginTransaction();
+        try {
+            foreach ($linhasValidas as $lv) {
+                $chave = $lv['item']['ITEM_ID'] . '|' . ($lv['mascaraId'] ?? 'NULL') . '|' . ($lv['centroTrabId'] ?? 'NULL');
                 
-                $pontosUp = str_replace(',', '.', $pontosUp);
-                $dtIniFormatada = self::converterData($dtIni);
-                $dtFimFormatada = !empty($dtFim) ? self::converterData($dtFim) : null;
-                
-                if (!$dtIniFormatada) {
-                    $erros[] = "Linha {$numLinha}: Data início inválida '{$dtIni}' (Item: {$codItem})";
-                    continue;
-                }
-                
-                // Buscar ITEM_ID pelo COD_ITEM (com cache)
-                if (!isset($cacheItens[$codItem])) {
-                    $cacheItens[$codItem] = self::buscarItemPorCodigo($pdo, $codItem, $emprId);
-                }
-                $item = $cacheItens[$codItem];
-                if (!$item) {
-                    $erros[] = "Linha {$numLinha}: Produto COD_ITEM={$codItem} não encontrado na tabela TITENS";
-                    continue;
-                }
-                
-                // Buscar ID_CENTRO_TRAB pelo COD_CENTRO (com cache por empresa)
-                $centroTrabId = null;
-                if (!empty($codCentro)) {
-                    $cacheKeyCentro = $codCentro . '_' . $emprId;
-                    if (!isset($cacheCentros[$cacheKeyCentro])) {
-                        $cacheCentros[$cacheKeyCentro] = self::buscarCentroPorCodigo($pdo, $codCentro, $emprId);
-                    }
-                    $centro = $cacheCentros[$cacheKeyCentro];
-                    if ($centro) {
-                        $centroTrabId = $centro['ID'];
-                    } else {
-                        $erros[] = "Linha {$numLinha}: Centro de Trabalho '{$codCentro}' não encontrado (Item: {$codItem})";
-                    }
-                }
-                
-                // Validar máscara antes do insert (com cache)
-                $mascaraId = !empty($idMascara) ? (int)$idMascara : null;
-                if ($mascaraId !== null) {
-                    if (!isset($cacheMascaras[$mascaraId])) {
-                        $cacheMascaras[$mascaraId] = self::verificarMascaraExiste($pdo, $mascaraId);
-                    }
-                    if (!$cacheMascaras[$mascaraId]) {
-                        $erros[] = "Linha {$numLinha}: Máscara ID_MASCARA={$idMascara} não existe na tabela TMASC_ITEM (Item: {$codItem}). Verifique o ID correto com: SELECT ID, MASCARA FROM TMASC_ITEM WHERE ITEM_ID = (SELECT ID FROM TITENS WHERE COD_ITEM = {$codItem})";
-                        continue;
-                    }
-                }
-                
-                // Verificar se já existe pontuação para este item+máscara+centro
-                $existente = PontuacaoProduto::buscarDuplicata(
-                    $item['ITEM_ID'], $emprId, $mascaraId, $centroTrabId
-                );
-                
-                if ($existente) {
-                    // Atualizar pontos da pontuação existente
-                    $dadosUpdate = [
-                        'pontos_up' => $pontosUp,
-                        'dt_vigencia_ini' => $dtIniFormatada,
-                        'dt_vigencia_fim' => $dtFimFormatada,
-                        'id_usuario' => $idUsuario
-                    ];
-                    PontuacaoProduto::atualizar((int)$existente['ID_PONTUACAO'], $dadosUpdate);
+                if (isset($mapaDuplicatas[$chave])) {
+                    // UPDATE
+                    $stmtUpdate->execute([
+                        ':pontos_up' => $lv['pontosUp'],
+                        ':dt_ini' => $lv['dtIniFormatada'],
+                        ':dt_fim' => $lv['dtFimFormatada'],
+                        ':id_usuario' => $idUsuario,
+                        ':id_pontuacao' => $mapaDuplicatas[$chave],
+                    ]);
                     $atualizados++;
                 } else {
-                    // Inserir nova pontuação
-                    $dadosModel = [
-                        'empr_id' => $emprId,
-                        'item_id' => $item['ITEM_ID'],
-                        'itempr_id' => $item['ITEMPR_ID'],
-                        'mascara_id' => $mascaraId,
-                        'centro_trab_id' => $centroTrabId,
-                        'pontos_up' => $pontosUp,
-                        'dt_vigencia_ini' => $dtIniFormatada,
-                        'dt_vigencia_fim' => $dtFimFormatada,
-                        'id_usuario' => $idUsuario
-                    ];
-                    PontuacaoProduto::inserir($dadosModel);
+                    // INSERT
+                    $stmtInsert->execute([
+                        ':empr_id' => $emprId,
+                        ':item_id' => $lv['item']['ITEM_ID'],
+                        ':itempr_id' => $lv['item']['ITEMPR_ID'],
+                        ':mascara_id' => $lv['mascaraId'],
+                        ':centro_trab_id' => $lv['centroTrabId'],
+                        ':pontos_up' => $lv['pontosUp'],
+                        ':dt_ini' => $lv['dtIniFormatada'],
+                        ':dt_fim' => $lv['dtFimFormatada'],
+                        ':id_usuario' => $idUsuario,
+                    ]);
                     $importados++;
+                    // Registrar no mapa para evitar duplicatas em linhas subsequentes do mesmo CSV
+                    $mapaDuplicatas[$chave] = 'new';
                 }
-                
-            } catch (\Exception $e) {
-                $erros[] = "Linha {$numLinha}: Erro ao inserir Item {$codItem} - " . $e->getMessage();
             }
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            $erros[] = "Erro na transação de importação: " . $e->getMessage();
         }
         
         return [
