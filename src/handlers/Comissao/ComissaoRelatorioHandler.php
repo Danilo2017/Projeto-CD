@@ -305,7 +305,7 @@ class ComissaoRelatorioHandler
                 'id_usuario_proc' => $usuId
             ];
             
-            if (Comissao::salvarCalculo($dadosCalc)) {
+            if ($comissaoModel->salvarCalculo($dadosCalc)) {
                 $processadas++;
             }
         }
@@ -366,7 +366,7 @@ class ComissaoRelatorioHandler
                 'id_usuario_proc' => $usuId
             ];
             
-            if (Comissao::salvarCalculo($dadosCalc)) {
+            if ($comissaoModel->salvarCalculo($dadosCalc)) {
                 $processadas++;
             }
         }
@@ -388,12 +388,13 @@ class ComissaoRelatorioHandler
     public static function aprovarComissoes(array $comissoes, int $usuId): array
     {
         $aprovadas = 0;
+        $comissaoModel = new Comissao();
 
         foreach ($comissoes as $comissao) {
             $idComissao = $comissao['ID_COMISSAO'] ?? $comissao['id_comissao'] ?? null;
             
             if ($idComissao) {
-                if (Comissao::aprovar($idComissao, $usuId)) {
+                if ($comissaoModel->aprovar($idComissao, $usuId)) {
                     $aprovadas++;
                 }
             } else {
@@ -409,7 +410,7 @@ class ComissaoRelatorioHandler
                     'status' => Comissao::STATUS_APROVADO
                 ];
                 
-                if (Comissao::salvarCalculo($dadosCalc)) {
+                if ($comissaoModel->salvarCalculo($dadosCalc)) {
                     $aprovadas++;
                 }
             }
@@ -431,12 +432,13 @@ class ComissaoRelatorioHandler
     public static function cancelarComissoes(array $comissoes, int $usuId, ?string $motivo = null): array
     {
         $canceladas = 0;
+        $comissaoModel = new Comissao();
 
         foreach ($comissoes as $comissao) {
             $idComissao = $comissao['ID_COMISSAO'] ?? $comissao['id_comissao'] ?? null;
             
             if ($idComissao) {
-                if (Comissao::cancelar($idComissao, $usuId, $motivo)) {
+                if ($comissaoModel->cancelar($idComissao, $usuId, $motivo)) {
                     $canceladas++;
                 }
             }

@@ -83,7 +83,8 @@ class ComissaoDashboardHandler
      */
     public static function simularComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null): array
     {
-        $simulacao = Comissao::calcularComissaoTodos($dataInicio, $dataFim, $emprId, $centroTrabId);
+        $comissaoModel = new Comissao();
+        $simulacao = $comissaoModel->calcularComissaoTodos($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         // Calcular totais
         $totais = [
