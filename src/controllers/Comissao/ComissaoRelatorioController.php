@@ -307,7 +307,7 @@ class ComissaoRelatorioController extends ctrl
         } catch (\Exception $e) {
             self::response([
                 'success' => false,
-                'error' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

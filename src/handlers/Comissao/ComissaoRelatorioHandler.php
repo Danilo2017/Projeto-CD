@@ -217,6 +217,7 @@ class ComissaoRelatorioHandler
                 'CENTRO_TRABALHO' => $func['cod_centro'] ? ($func['cod_centro'] . ' - ' . $func['desc_centro']) : 'SEM CENTRO',
                 'TOTAL_PONTOS' => $func['total_pontos_apos_falta'] ?? $func['total_pontos_bruto'] ?? 0,
                 'VALOR_COMISSAO' => $func['valor_comissao_final'] ?? 0,
+                'FAIXA_ID' => $func['faixa_aplicada']['id'] ?? null,
                 'FAIXA_DESCRICAO' => $faixaDesc,
                 'DIAS_TRABALHADOS' => $func['dias_trabalhados'] ?? 0,
                 'DIAS_COM_FALTA' => $func['dias_com_falta'] ?? 0,
@@ -302,7 +303,7 @@ class ComissaoRelatorioHandler
                 'dt_fim' => $dataFim,
                 'total_pontos' => $calc['total_pontos_apos_falta'] ?? $calc['TOTAL_PONTOS'],
                 'valor_comissao' => $calc['valor_comissao_final'] ?? $calc['VALOR_COMISSAO'],
-                'id_usuario_proc' => $usuId
+                'id_usuario' => $usuId
             ];
             
             if ($comissaoModel->salvarCalculo($dadosCalc)) {
@@ -363,7 +364,7 @@ class ComissaoRelatorioHandler
                 'dt_fim' => $dataFim,
                 'total_pontos' => $calc['total_pontos_apos_falta'] ?? $calc['TOTAL_PONTOS'],
                 'valor_comissao' => $calc['valor_comissao_final'] ?? $calc['VALOR_COMISSAO'],
-                'id_usuario_proc' => $usuId
+                'id_usuario' => $usuId
             ];
             
             if ($comissaoModel->salvarCalculo($dadosCalc)) {
@@ -406,11 +407,13 @@ class ComissaoRelatorioHandler
                     'dt_fim' => $comissao['DATA_FIM'] ?? $comissao['data_fim'],
                     'total_pontos' => $comissao['TOTAL_PONTOS'] ?? $comissao['total_pontos'],
                     'valor_comissao' => $comissao['VALOR_COMISSAO'] ?? $comissao['valor_comissao'],
-                    'id_usuario_proc' => $usuId,
-                    'status' => Comissao::STATUS_APROVADO
+                    'id_usuario' => $usuId
                 ];
                 
-                if ($comissaoModel->salvarCalculo($dadosCalc)) {
+                $novoId = $comissaoModel->salvarCalculo($dadosCalc);
+                if ($novoId) {
+                    // Aprovar a comissão recém-criada
+                    $comissaoModel->aprovar($novoId, $usuId);
                     $aprovadas++;
                 }
             }
