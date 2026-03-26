@@ -919,7 +919,7 @@ class Comissao
         // PASSO 6: Carregar faixas de comissão (1 query - cache)
         // =============================================
         $faixaModel = new FaixaComissao();
-        $faixas = $faixaModel->listarAtivas(null, $centroTrabId);
+        $faixas = $faixaModel->listarAtivas($emprId, $centroTrabId);
         
         // =============================================
         // PASSO 7: Processar cada funcionário EM MEMÓRIA (sem queries)
