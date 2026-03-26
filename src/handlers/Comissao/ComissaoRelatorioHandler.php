@@ -573,6 +573,103 @@ class ComissaoRelatorioHandler
     // ==================== MÉTODOS AUXILIARES (privados) ====================
 
     /**
+     * Obter relatório por centro de trabalho com todos os funcionários
+     * 
+     * @param int $centroTrabId ID do centro de trabalho
+     * @param string $dataInicio Data início
+     * @param string $dataFim Data fim
+     * @param int $emprId ID da empresa
+     * @return array Dados completos do relatório por centro
+     */
+    public static function getRelatorioCentroTrabalho(int $centroTrabId, string $dataInicio, string $dataFim, int $emprId): array
+    {
+        // Buscar dados do centro de trabalho
+        $centro = CentroTrabalho::buscarPorId($centroTrabId);
+        if (!$centro) {
+            throw new \Exception('Centro de trabalho não encontrado');
+        }
+
+        // Buscar todos os funcionários vinculados a este centro
+        $vinculos = Vinculo::listar([
+            'id_centro_trab' => $centroTrabId,
+            'ativo' => 'S'
+        ]);
+
+        if (empty($vinculos)) {
+            return [
+                'centro' => [
+                    'ID' => $centro['ID'] ?? $centroTrabId,
+                    'CODIGO' => $centro['COD_CENTRO'] ?? '-',
+                    'DESCRICAO' => $centro['DESCRICAO'] ?? '-'
+                ],
+                'resumo' => [
+                    'TOTAL_FUNCIONARIOS' => 0,
+                    'TOTAL_PONTOS' => 0,
+                    'TOTAL_COMISSAO' => 0,
+                    'TOTAL_COM_FALTA' => 0
+                ],
+                'funcionarios' => []
+            ];
+        }
+
+        // Usar cálculo batch otimizado para o centro
+        $comissaoModel = new Comissao();
+        $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
+
+        $funcionariosBatch = $resultado['funcionarios'] ?? [];
+        
+        $funcionarios = [];
+        $totalPontos = 0;
+        $totalComissao = 0;
+        $totalComFalta = 0;
+
+        foreach ($funcionariosBatch as $func) {
+            $pontosFunc = $func['total_pontos_apos_falta'] ?? $func['total_pontos_bruto'] ?? 0;
+            $comissaoFunc = $func['valor_comissao_final'] ?? 0;
+            $diasComFalta = $func['dias_com_falta'] ?? 0;
+
+            $faixaDesc = self::formatarDescricaoFaixa($func);
+
+            $funcionarios[] = [
+                'FUNC_ID' => $func['func_id'] ?? null,
+                'COD_FUNC' => $func['cod_func'] ?? '',
+                'NOME_FUNC' => $func['nome_func'] ?? '',
+                'TOTAL_PONTOS' => $pontosFunc,
+                'VALOR_COMISSAO' => $comissaoFunc,
+                'FAIXA_DESCRICAO' => $faixaDesc,
+                'DIAS_TRABALHADOS' => $func['dias_trabalhados'] ?? 0,
+                'DIAS_COM_FALTA' => $diasComFalta,
+                'TEM_FALTA' => $diasComFalta > 0,
+                'USA_REGRA_ESPECIFICA' => $func['usa_regra_especifica'] ?? false,
+                'TIPO_VINCULO' => $func['tipo_vinculo'] ?? 'N'
+            ];
+
+            $totalPontos += $pontosFunc;
+            $totalComissao += $comissaoFunc;
+            if ($diasComFalta > 0) $totalComFalta++;
+        }
+
+        // Ordenar por nome
+        usort($funcionarios, fn($a, $b) => strcmp($a['NOME_FUNC'], $b['NOME_FUNC']));
+
+        return [
+            'centro' => [
+                'ID' => $centro['ID'] ?? $centroTrabId,
+                'CODIGO' => $centro['COD_CENTRO'] ?? '-',
+                'DESCRICAO' => $centro['DESCRICAO'] ?? '-'
+            ],
+            'resumo' => [
+                'TOTAL_FUNCIONARIOS' => count($funcionarios),
+                'TOTAL_PONTOS' => $totalPontos,
+                'TOTAL_COMISSAO' => $totalComissao,
+                'TOTAL_COM_FALTA' => $totalComFalta
+            ],
+            'funcionarios' => $funcionarios
+        ];
+    }
+
+
+    /**
      * Calcular pontos com desconto de falta
      */
     private static function calcularPontosComDesconto(float $totalPontos, bool $temFalta, ?string $tipoFalta): float

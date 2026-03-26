@@ -15,7 +15,7 @@ if (!$acessoComissao) {
 ]) ?>
 
 <div class="comissao-dashboard-container">
-    <div class="ds-cards-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="ds-cards-grid" style="grid-template-columns: repeat(4, 1fr);">
         <a href="<?= $base ?>comissao-relatorio-diario" class="ds-card" style="text-decoration: none; cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div class="comissao-metric-icon">
@@ -46,6 +46,17 @@ if (!$acessoComissao) {
                 <div>
                     <div class="ds-card-label">POR FUNCIONÁRIO</div>
                     <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Desempenho individual</div>
+                </div>
+            </div>
+        </a>
+        <a href="<?= $base ?>comissao-relatorio-centro-trabalho" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: var(--ds-warning-light, #fff3cd); color: var(--ds-warning, #856404);">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">POR CENTRO DE TRABALHO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Comissões e comprovantes</div>
                 </div>
             </div>
         </a>

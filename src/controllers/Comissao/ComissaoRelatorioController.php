@@ -66,6 +66,19 @@ class ComissaoRelatorioController extends ctrl
         $this->render('comissao/relatorio-funcionario', $dados);
     }
 
+    /**
+     * Página de relatório por centro de trabalho
+     */
+    public function porCentroTrabalhoIndex()
+    {
+        $dados = [
+            'titulo' => 'Relatório por Centro de Trabalho',
+            'pagina' => 'Por Centro de Trabalho'
+        ];
+
+        $this->render('comissao/relatorio-centro-trabalho', $dados);
+    }
+
     // ==================== API RELATÓRIOS ====================
 
     /**
@@ -371,6 +384,47 @@ class ComissaoRelatorioController extends ctrl
                 'comissoes' => $resultado['comissoes'],
                 'vinculos' => $resultado['vinculos'],
                 'faltas' => $resultado['faltas']
+            ], 200);
+
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API - Relatório por centro de trabalho
+     */
+    public function getRelatorioCentroTrabalho()
+    {
+        set_time_limit(300);
+        try {
+            $centroTrabId = $_GET['centroTrabId'] ?? $_GET['centro_trab_id'] ?? null;
+            $dataInicio = $_GET['dataInicio'] ?? $_GET['data_inicio'] ?? null;
+            $dataFim = $_GET['dataFim'] ?? $_GET['data_fim'] ?? null;
+            $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? ($_SESSION['empresa']['id'] ?? null);
+
+            if (!$centroTrabId) {
+                throw new \Exception('Centro de trabalho é obrigatório');
+            }
+
+            if (!$dataInicio || !$dataFim) {
+                throw new \Exception('Período é obrigatório');
+            }
+
+            if (!$emprId) {
+                throw new \Exception('Empresa não selecionada');
+            }
+
+            $resultado = ComissaoRelatorioHandler::getRelatorioCentroTrabalho((int)$centroTrabId, $dataInicio, $dataFim, (int)$emprId);
+
+            self::response([
+                'success' => true,
+                'centro' => $resultado['centro'],
+                'resumo' => $resultado['resumo'],
+                'funcionarios' => $resultado['funcionarios']
             ], 200);
 
         } catch (\Exception $e) {

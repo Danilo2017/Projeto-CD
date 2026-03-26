@@ -129,6 +129,7 @@ $router->get('/comissao-relatorio', 'Comissao\\ComissaoRelatorioController@index
 $router->get('/comissao-relatorio-diario', 'Comissao\\ComissaoRelatorioController@produtividadeDiariaIndex', true);
 $router->get('/comissao-relatorio-comissoes', 'Comissao\\ComissaoRelatorioController@comissoesIndex', true);
 $router->get('/comissao-relatorio-funcionario', 'Comissao\\ComissaoRelatorioController@porFuncionarioIndex', true);
+$router->get('/comissao-relatorio-centro-trabalho', 'Comissao\\ComissaoRelatorioController@porCentroTrabalhoIndex', true);
 
 // APIs de Relatórios
 $router->get('/comissao-api-produtividade-diaria', 'Comissao\\ComissaoRelatorioController@getProdutividadeDiaria', true);
@@ -139,6 +140,7 @@ $router->post('/comissao-api-processar-completo', 'Comissao\\ComissaoRelatorioCo
 $router->post('/comissao-api-aprovar', 'Comissao\\ComissaoRelatorioController@aprovarComissao', true);
 $router->post('/comissao-api-cancelar', 'Comissao\\ComissaoRelatorioController@cancelarComissao', true);
 $router->get('/comissao-api-funcionario', 'Comissao\\ComissaoRelatorioController@getRelatorioFuncionario', true);
+$router->get('/comissao-api-relatorio-centro-trabalho', 'Comissao\\ComissaoRelatorioController@getRelatorioCentroTrabalho', true);
 
 // ========== Rotas de Permissões ==========
 $router->get('/permissao', 'PermissaoController@index', true);
