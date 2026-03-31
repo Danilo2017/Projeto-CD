@@ -34,7 +34,7 @@
 
    <?php if(isset($customCSS)): ?>
       <?php foreach((array)$customCSS as $css): ?>
-         <link href="<?= $base . $css ?>" rel="stylesheet">
+         <link href="<?= $base . $css ?>?v=<?= time() ?>" rel="stylesheet">
       <?php endforeach; ?>
    <?php endif; ?>
    

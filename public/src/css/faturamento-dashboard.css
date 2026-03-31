@@ -1,0 +1,511 @@
+/* ========================================
+   FATURAMENTO DASHBOARD - Design System
+   ======================================== */
+
+/* Container Principal */
+.faturamento-container {
+    max-width: 100%;
+    height: calc(100vh - 60px);
+    margin: 0 auto;
+    background: white;
+    border-radius: 10px;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.faturamento-header {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.faturamento-logo {
+    display: flex;
+    align-items: center;
+}
+
+.faturamento-logo img {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
+.faturamento-title-section {
+    flex: 1;
+    text-align: center;
+}
+
+.faturamento-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+    color: #ffffff;
+}
+
+.faturamento-update-info {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 2px;
+}
+
+.faturamento-meta-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.faturamento-meta-label {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 3px;
+    text-align: center;
+}
+
+.faturamento-meta-value {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Info Bar */
+.faturamento-info-bar {
+    background: #f5f5f5;
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #ddd;
+    flex-shrink: 0;
+}
+
+.faturamento-info-item {
+    font-size: 12px;
+}
+
+.faturamento-info-label {
+    color: #666;
+}
+
+.faturamento-info-value {
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c3e5f;
+}
+
+.faturamento-info-date {
+    color: #666;
+}
+
+/* Métricas Grid */
+.faturamento-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f9f9f9;
+    flex-shrink: 0;
+}
+
+.faturamento-metric-card {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%);
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.faturamento-metric-card:hover {
+    transform: translateY(-3px);
+}
+
+.faturamento-metric-card.negative {
+    background: #dc3545;
+}
+
+.faturamento-metric-card.highlight {
+    background: #28a745;
+}
+
+.faturamento-metric-label {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    opacity: 0.9;
+    line-height: 1.2;
+}
+
+.faturamento-metric-value {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Section Header */
+.faturamento-section-header {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%);
+    color: white;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 20px 0;
+    border-radius: 6px 6px 0 0;
+    flex-shrink: 0;
+}
+
+/* Pedidos Grid */
+.faturamento-pedidos-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    padding: 10px 20px;
+    margin: 0 20px;
+    background: #f0f4f8;
+    border-radius: 0 0 6px 6px;
+    flex-shrink: 0;
+}
+
+.faturamento-pedido-card {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%);
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.faturamento-pedido-card.highlight {
+    background: #28a745;
+}
+
+.faturamento-pedido-label {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.faturamento-pedido-value {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Content Layout */
+.faturamento-content-layout {
+    display: flex;
+    gap: 10px;
+    padding: 10px 15px 15px;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Iframe Section */
+.faturamento-iframe-section {
+    flex: 1;
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.faturamento-iframe-header {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%);
+    color: white;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.faturamento-painel-vendas-tabela {
+    flex: 1;
+    overflow: auto;
+    background: white;
+}
+
+.faturamento-tabela-painel {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.faturamento-tabela-painel thead {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.faturamento-tabela-painel th {
+    padding: 4px 2px;
+    text-align: center;
+    font-weight: bold;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 9px;
+}
+
+.faturamento-tabela-painel tbody tr {
+    transition: background 0.2s;
+}
+
+.faturamento-tabela-painel tbody tr:hover {
+    background: #f0f8ff;
+}
+
+.faturamento-tabela-painel tbody tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.faturamento-tabela-painel tbody tr.row-total {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%) !important;
+    color: white !important;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.faturamento-tabela-painel tbody tr.row-total td {
+    color: white !important;
+    background: transparent !important;
+}
+
+.faturamento-tabela-painel td {
+    padding: 3px 2px;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    border-right: 1px solid #e0e0e0;
+    font-weight: bold;
+    font-size: 10px;
+}
+
+.faturamento-tabela-painel td.text-right {
+    text-align: right;
+}
+
+.faturamento-loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+/* Table Section - FAT LIQ x META */
+.faturamento-table-section {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    width: 620px;
+    flex-shrink: 0;
+}
+
+.faturamento-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.faturamento-data-table thead {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.faturamento-data-table th {
+    padding: 8px 4px;
+    text-align: center;
+    font-weight: bold;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 9px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    color: white !important;
+}
+
+.faturamento-data-table th:first-child {
+    text-align: left;
+    padding-left: 8px;
+}
+
+.faturamento-data-table th:last-child {
+    border-right: none;
+}
+
+.faturamento-data-table tbody {
+    overflow-y: auto;
+}
+
+.faturamento-data-table tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+.faturamento-data-table tbody tr:nth-child(even) {
+    background: #f5f9ff;
+}
+
+.faturamento-data-table tbody tr:hover {
+    background: #e8f4ff;
+}
+
+.faturamento-data-table tbody tr:last-child {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%) !important;
+    color: white;
+    font-weight: bold;
+}
+
+.faturamento-data-table tbody tr:last-child:hover {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%) !important;
+}
+
+.faturamento-data-table td {
+    padding: 4px 3px;
+    text-align: right;
+    border-bottom: 1px solid #eee;
+    border-right: 1px solid #eee;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.faturamento-data-table td:first-child {
+    text-align: left;
+    padding-left: 6px;
+    font-weight: 600;
+    color: #333;
+    font-size: 10px;
+}
+
+.faturamento-data-table td:last-child {
+    border-right: none;
+    font-weight: bold;
+    color: #004080;
+}
+
+.faturamento-data-table tbody tr:last-child td {
+    border-bottom: none;
+    color: white;
+}
+
+.faturamento-data-table tbody tr:last-child td:last-child {
+    color: #7FFF7F;
+}
+
+.row-total-fat-meta {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%) !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.row-total-fat-meta td {
+    background: transparent !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+/* Estilos específicos para tabela FAT LIQ x META */
+.fat-meta thead {
+    background: linear-gradient(135deg, #004080 0%, #003366 100%) !important;
+}
+
+.fat-meta thead tr th {
+    color: #ffffff !important;
+    font-size: 10px !important;
+    padding: 8px 5px !important;
+    text-align: center !important;
+}
+
+.fat-meta thead tr th:first-child {
+    text-align: left !important;
+    padding-left: 8px !important;
+}
+
+/* Responsividade */
+@media (max-width: 1400px) {
+    .faturamento-metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .faturamento-pedidos-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .faturamento-content-layout {
+        flex-direction: column;
+    }
+    
+    .faturamento-table-section {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .faturamento-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .faturamento-pedidos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .faturamento-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .faturamento-title-section {
+        order: -1;
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.faturamento-metric-card,
+.faturamento-pedido-card {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.faturamento-metric-card:nth-child(1) { animation-delay: 0.05s; }
+.faturamento-metric-card:nth-child(2) { animation-delay: 0.1s; }
+.faturamento-metric-card:nth-child(3) { animation-delay: 0.15s; }
+.faturamento-metric-card:nth-child(4) { animation-delay: 0.2s; }
+.faturamento-metric-card:nth-child(5) { animation-delay: 0.25s; }
+.faturamento-metric-card:nth-child(6) { animation-delay: 0.3s; }
+.faturamento-metric-card:nth-child(7) { animation-delay: 0.35s; }
+
+.faturamento-pedido-card:nth-child(1) { animation-delay: 0.4s; }
+.faturamento-pedido-card:nth-child(2) { animation-delay: 0.45s; }
+.faturamento-pedido-card:nth-child(3) { animation-delay: 0.5s; }
+.faturamento-pedido-card:nth-child(4) { animation-delay: 0.55s; }
+.faturamento-pedido-card:nth-child(5) { animation-delay: 0.6s; }
+.faturamento-pedido-card:nth-child(6) { animation-delay: 0.65s; }

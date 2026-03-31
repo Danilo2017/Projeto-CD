@@ -151,6 +151,17 @@ $router->post('/permissao-api-salvar', 'PermissaoController@salvar', true);
 $router->post('/permissao-api-atualizar', 'PermissaoController@atualizar', true);
 $router->post('/permissao-api-excluir', 'PermissaoController@excluir', true);
 
+// ========== Rotas do Faturamento Indústrias ==========
+// Página do Dashboard
+$router->get('/faturamento', 'Faturamento\\FaturamentoDashboardController@index', true);
+$router->get('/faturamento-dashboard', 'Faturamento\\FaturamentoDashboardController@index', true);
+
+// APIs de Faturamento
+$router->get('/faturamento-api-resumo', 'Faturamento\\FaturamentoDashboardController@getResumoMensal', true);
+$router->get('/faturamento-api-painel', 'Faturamento\\FaturamentoDashboardController@getPainelVendas', true);
+$router->get('/faturamento-api-pedidos', 'Faturamento\\FaturamentoDashboardController@getPedidos', true);
+$router->get('/faturamento-api-pedidos-planejado', 'Faturamento\\FaturamentoDashboardController@getPedidosPlanejado', true);
+
 // ========== Admin - Gerenciamento de SQLs ==========
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);
 $router->get('/admin-api-sqls', 'AdminSqlsController@listar', true);

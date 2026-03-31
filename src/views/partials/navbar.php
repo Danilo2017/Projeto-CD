@@ -14,6 +14,7 @@
         <?php 
         $acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
         $acessoCd = $is_admin || in_array('cd', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+        $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
         ?>
 
         <?php if($acessoComissao): ?>
@@ -34,6 +35,12 @@
         </a>
         <a href="<?= $base ?>cd-calendario" class="ds-hdr-btn ds-hdr-btn-dark <?= (isset($pageActive) && $pageActive === 'calendario') ? 'active' : '' ?>">
             <i class="bi bi-calendar3"></i> Agendamento
+        </a>
+        <?php endif; ?>
+
+        <?php if($acessoFaturamento): ?>
+        <a href="<?= $base ?>faturamento-dashboard" class="ds-hdr-btn ds-hdr-btn-info <?= (isset($pageActive) && $pageActive === 'faturamento-dashboard') ? 'active' : '' ?>">
+            <i class="bi bi-cash-stack"></i> Faturamento
         </a>
         <?php endif; ?>
 
@@ -210,6 +217,17 @@
         background: #3d3f56;
         color: #fff !important;
         box-shadow: 0 6px 20px rgba(43, 45, 66, 0.4);
+    }
+
+    /* Ciano - Faturamento */
+    .ds-hdr-btn-info {
+        background: #17a2b8;
+        color: #fff !important;
+    }
+    .ds-hdr-btn-info:hover {
+        background: #138496;
+        color: #fff !important;
+        box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
     }
 
     /* Outline - Sair */
