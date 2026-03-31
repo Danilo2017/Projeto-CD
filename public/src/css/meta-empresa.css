@@ -176,13 +176,83 @@
 }
 
 .btn-icon {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: 8px;
+}
+
+/* Botões de Ação da Tabela */
+.btn-acao {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+
+.btn-editar {
+    border: 2px solid #4A7CC9;
+    color: #4A7CC9;
+}
+
+.btn-editar:hover {
+    background: #f0f5ff;
+    box-shadow: 0 2px 8px rgba(74, 124, 201, 0.3);
+}
+
+.btn-excluir {
+    border: 2px solid #E05555;
+    color: #E05555;
+}
+
+.btn-excluir:hover {
+    background: #fff5f5;
+    box-shadow: 0 2px 8px rgba(224, 85, 85, 0.3);
+}
+
+/* Animação Spin */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin-icon {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+.btn-icon.btn-primary {
+    background: white !important;
+    border-color: #004080 !important;
+    color: #004080 !important;
+}
+
+.btn-icon.btn-primary:hover {
+    background: #f0f7ff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 64, 128, 0.2);
+}
+
+.btn-icon.btn-danger {
+    background: white !important;
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+}
+
+.btn-icon.btn-danger:hover {
+    background: #fff5f5 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
 }
 
 /* Tabela Container */

@@ -22,15 +22,15 @@ if (!$acessoFaturamento) {
                 <input type="month" id="filtro-mes" class="form-input">
             </div>
             <button type="button" id="btn-filtrar" class="btn-primary">
-                <i class="fas fa-search"></i> Filtrar
+                <i class="bi bi-search"></i> Filtrar
             </button>
             <button type="button" id="btn-limpar" class="btn-secondary">
-                <i class="fas fa-eraser"></i> Limpar
+                <i class="bi bi-eraser"></i> Limpar
             </button>
         </div>
         <div class="meta-actions">
             <button type="button" id="btn-nova-meta" class="btn-success">
-                <i class="fas fa-plus"></i> Nova Meta
+                <i class="bi bi-plus-lg"></i> Nova Meta
             </button>
         </div>
     </div>
@@ -91,7 +91,7 @@ if (!$acessoFaturamento) {
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" id="btn-cancelar">Cancelar</button>
                 <button type="submit" class="btn-success" id="btn-salvar">
-                    <i class="fas fa-save"></i> Salvar
+                    <i class="bi bi-floppy"></i> Salvar
                 </button>
             </div>
         </form>
@@ -115,7 +115,7 @@ if (!$acessoFaturamento) {
         <div class="modal-footer">
             <button type="button" class="btn-secondary" id="btn-cancelar-excluir">Cancelar</button>
             <button type="button" class="btn-danger" id="btn-confirmar-excluir">
-                <i class="fas fa-trash"></i> Excluir
+                <i class="bi bi-trash3"></i> Excluir
             </button>
         </div>
     </div>

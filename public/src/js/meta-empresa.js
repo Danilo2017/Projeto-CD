@@ -143,11 +143,11 @@ function renderizarTabela(dados) {
             <td class="valor">R$ ${metaFormatada}</td>
             <td class="valor">R$ ${metaEstoqueFormatada}</td>
             <td class="acoes">
-                <button type="button" class="btn-primary btn-icon" onclick="editarMeta(${meta.EMPR_ID}, '${meta.MES_ANO}')" title="Editar">
-                    <i class="fas fa-edit"></i>
+                <button type="button" class="btn-acao btn-editar" onclick="editarMeta(${meta.EMPR_ID}, '${meta.MES_ANO}')" title="Editar">
+                    <i class="bi bi-pencil"></i>
                 </button>
-                <button type="button" class="btn-danger btn-icon" onclick="excluirMeta(${meta.EMPR_ID}, '${meta.MES_ANO}', '${nomeEmpresa}')" title="Excluir">
-                    <i class="fas fa-trash"></i>
+                <button type="button" class="btn-acao btn-excluir" onclick="excluirMeta(${meta.EMPR_ID}, '${meta.MES_ANO}', '${nomeEmpresa}')" title="Excluir">
+                    <i class="bi bi-trash3"></i>
                 </button>
             </td>
         `;
@@ -289,7 +289,7 @@ async function salvarMeta(e) {
     
     const btnSalvar = document.getElementById('btn-salvar');
     btnSalvar.disabled = true;
-    btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    btnSalvar.innerHTML = '<i class="bi bi-arrow-repeat spin-icon"></i> Salvando...';
     
     try {
         const dados = {
@@ -321,7 +321,7 @@ async function salvarMeta(e) {
         mostrarToast('Erro de conexão', 'error');
     } finally {
         btnSalvar.disabled = false;
-        btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar';
+        btnSalvar.innerHTML = '<i class="bi bi-floppy"></i> Salvar';
     }
 }
 
@@ -356,7 +356,7 @@ async function confirmarExcluir() {
     
     const btnExcluir = document.getElementById('btn-confirmar-excluir');
     btnExcluir.disabled = true;
-    btnExcluir.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+    btnExcluir.innerHTML = '<i class="bi bi-arrow-repeat spin-icon"></i> Excluindo...';
     
     try {
         const response = await fetch('meta-empresa-api-excluir', {
@@ -381,7 +381,7 @@ async function confirmarExcluir() {
         mostrarToast('Erro de conexão', 'error');
     } finally {
         btnExcluir.disabled = false;
-        btnExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+        btnExcluir.innerHTML = '<i class="bi bi-trash3"></i> Excluir';
     }
 }
 
