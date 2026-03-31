@@ -9,7 +9,8 @@ let dadosFaturamentoGlobal = null;
 // ========== FUNÇÕES AUXILIARES ==========
 
 /**
- * Formata número no padrão brasileiro (1.234,56)
+ * Formata número no padrão brasileiro (1.234.567,89)
+ * Aceita valores numéricos ou strings no formato americano (1,234,567.89)
  */
 function formatarNumero(valor) {
     if (valor === null || valor === undefined || valor === '' || valor === '-') return '-';
@@ -18,35 +19,15 @@ function formatarNumero(valor) {
     if (typeof valor === 'number') {
         num = valor;
     } else {
-        let str = valor.toString();
-        str = str.replace(/\s/g, '');
-        str = str.replace(/\./g, '');
-        str = str.replace(/,/g, '.');
+        // Remove vírgulas (separador de milhar americano) e converte
+        let str = valor.toString().replace(/,/g, '');
         num = parseFloat(str);
     }
     
     if (isNaN(num)) return '-';
     
-    num = Math.round(num * 100) / 100;
-    
-    const negativo = num < 0;
-    if (negativo) num = -num;
-    
-    const numStr = num.toFixed(2);
-    const partes = numStr.split('.');
-    let inteiro = partes[0];
-    const decimal = partes[1];
-    
-    let formatado = '';
-    const len = inteiro.length;
-    for (let i = 0; i < len; i++) {
-        if (i > 0 && (len - i) % 3 === 0) {
-            formatado += '.';
-        }
-        formatado += inteiro.charAt(i);
-    }
-    
-    return (negativo ? '-' : '') + formatado + ',' + decimal;
+    // Usa toLocaleString para formatação brasileira
+    return num.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 /**
@@ -56,7 +37,8 @@ function formatarNumero(valor) {
 function formatarNumeroCompacto(valor) {
     if (valor === null || valor === undefined || valor === '' || valor === '-') return '-';
     
-    let num = typeof valor === 'number' ? valor : parseFloat(valor.toString().replace(/\./g, '').replace(/,/g, '.'));
+    // Remove vírgulas (separador de milhar americano)
+    let num = typeof valor === 'number' ? valor : parseFloat(valor.toString().replace(/,/g, ''));
     
     if (isNaN(num)) return '-';
     
@@ -77,7 +59,7 @@ function formatarNumeroCompacto(valor) {
 
 /**
  * Formata valor para exibição em tabela (padrão brasileiro)
- * Recebe valores que podem vir como string do banco
+ * Recebe valores no formato americano do Oracle (1,234,567.89)
  */
 function formatarValorTabela(valor) {
     if (valor === null || valor === undefined || valor === '' || valor === '-') return '-';
@@ -86,15 +68,8 @@ function formatarValorTabela(valor) {
     if (typeof valor === 'number') {
         num = valor;
     } else {
-        // Remove espaços e converte para número
-        let str = valor.toString().trim();
-        // Se já tem ponto como separador de milhar e vírgula como decimal (BR)
-        if (str.includes('.') && str.includes(',')) {
-            str = str.replace(/\./g, '').replace(',', '.');
-        } else if (str.includes(',') && !str.includes('.')) {
-            // Só vírgula = decimal BR
-            str = str.replace(',', '.');
-        }
+        // Remove vírgulas (separador de milhar americano) e converte
+        let str = valor.toString().replace(/,/g, '');
         num = parseFloat(str);
     }
     
@@ -445,6 +420,15 @@ function atualizarPainelVendas(dados) {
         return;
     }
     
+    // Converte valor do formato americano (1,234,567.89) para brasileiro (1.234.567,89)
+    function formatarValorBR(valor) {
+        if (!valor || valor === '-' || valor === 'null') return '-';
+        // Remove vírgulas (separador de milhar americano) e converte ponto decimal
+        const num = parseFloat(String(valor).replace(/,/g, ''));
+        if (isNaN(num)) return '-';
+        return num.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    
     tbody.innerHTML = '';
     
     for (let i = 0; i < dados.dados.length; i++) {
@@ -457,15 +441,15 @@ function atualizarPainelVendas(dados) {
         
         tr.innerHTML = `
             <td>${row.EMPR_ID || '-'}</td>
-            <td class="text-right">${row.META_FATURAMENTO || '-'}</td>
-            <td class="text-right">${row.FATURAMENTO || '-'}</td>
+            <td class="text-right">${formatarValorBR(row.META_FATURAMENTO)}</td>
+            <td class="text-right">${formatarValorBR(row.FATURAMENTO)}</td>
             <td class="text-right">${row.PCT_ATINGIDO ? row.PCT_ATINGIDO.replace('.', ',') + '%' : '-'}</td>
-            <td class="text-right">${row.PLANEJADO || '-'}</td>
-            <td class="text-right">${row.FAT_PROJETADO || '-'}</td>
+            <td class="text-right">${formatarValorBR(row.PLANEJADO)}</td>
+            <td class="text-right">${formatarValorBR(row.FAT_PROJETADO)}</td>
             <td class="text-right">${row.PCT_PROJETADO ? row.PCT_PROJETADO.replace('.', ',') + '%' : '-'}</td>
-            <td class="text-right">${row.CARTEIRA || '-'}</td>
-            <td class="text-right">${row.META_ESTOQUE || '-'}</td>
-            <td class="text-right">${row.ESTOQUE_ATUAL || '-'}</td>
+            <td class="text-right">${formatarValorBR(row.CARTEIRA)}</td>
+            <td class="text-right">${formatarValorBR(row.META_ESTOQUE)}</td>
+            <td class="text-right">${formatarValorBR(row.ESTOQUE_ATUAL)}</td>
             <td class="text-right">${row.PCT_ESTOQUE ? row.PCT_ESTOQUE.replace('.', ',') + '%' : '-'}</td>
         `;
         

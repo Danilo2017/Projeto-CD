@@ -52536,3 +52536,1459 @@ Array
         )
 
 )
+Array
+(
+    [data] => 2026-03-31 08:13:03
+    [sql] => SELECT TRUNC(SYSDATE) Data_Atual,
+       CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END Numero_Filial,
+       TO_CHAR(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) ELSE (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) END),'FM999G999G990D00') Faturamento,
+       TO_CHAR(sum(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END),'FM999G999G990D00') Devolucoes,
+       TO_CHAR(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)+NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)+NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END),'FM999G999G990D00') Faturamento_Liquido,
+       TO_CHAR(MAX(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN TSADIG_VALOR_X_CUSTO.VLR_FATURADO ELSE TSADIG_VALOR_X_CUSTO.VLR_FATURADO END),'FM999G999G990D00') Valor_da_Meta,
+       TO_CHAR(SUM(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) ELSE (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Faturamento,
+       TO_CHAR(SUM(sum(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Devolucoes,
+       TO_CHAR(SUM(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL((VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA+VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA),0) ELSE NVL((VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA+VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA),0) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Faturamento_Li,
+       TO_CHAR(sum(MAX(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN TSADIG_VALOR_X_CUSTO.VLR_FATURADO ELSE TSADIG_VALOR_X_CUSTO.VLR_FATURADO END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Meta
+  FROM VGAZIN_FAT_COM_DEV_IMP_NW VGAZIN_FAT_COM_DEV_IMP_NW,
+       TSADIG_VALOR_X_CUSTO TSADIG_VALOR_X_CUSTO
+ WHERE (VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA = 0 OR TIPO_NOTA_ENTRADA = 5)
+   AND (VGAZIN_FAT_COM_DEV_IMP_NW.NUM_PED_ORIGEM NOT like '28411905%' or VGAZIN_FAT_COM_DEV_IMP_NW.NUM_PED_ORIGEM is null)
+   AND (VGAZIN_FAT_COM_DEV_IMP_NW.COD_GRUP_IPI = 1 OR VGAZIN_FAT_COM_DEV_IMP_NW.BI_RECEITA_OP = 'SIM')
+   AND TO_CHAR(VGAZIN_FAT_COM_DEV_IMP_NW.DT_NOTA,'MM/RRRR')=TO_CHAR(SYSDATE,'MM/RRRR')
+   AND TSADIG_VALOR_X_CUSTO.MES_ANO(+) = TRUNC(VGAZIN_FAT_COM_DEV_IMP_NW.DT_NOTA,'MONTH')
+   AND TSADIG_VALOR_X_CUSTO.EMPR_ID(+)=VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA
+GROUP BY TRUNC(SYSDATE),
+         CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END
+ORDER BY CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END ASC
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 1
+                    [FATURAMENTO] => 28,247,057.60
+                    [DEVOLUCOES] => -530,364.39
+                    [FATURAMENTO_LIQUIDO] => 27,716,693.21
+                    [VALOR_DA_META] => 27,316,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [1] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 2
+                    [FATURAMENTO] => 13,077,471.36
+                    [DEVOLUCOES] => -453,177.44
+                    [FATURAMENTO_LIQUIDO] => 12,624,293.92
+                    [VALOR_DA_META] => 13,159,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [2] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 3
+                    [FATURAMENTO] => 10,222,740.37
+                    [DEVOLUCOES] => -174,426.21
+                    [FATURAMENTO_LIQUIDO] => 10,048,314.16
+                    [VALOR_DA_META] => 12,067,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [3] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 4
+                    [FATURAMENTO] => 6,491,929.39
+                    [DEVOLUCOES] => -188,960.25
+                    [FATURAMENTO_LIQUIDO] => 6,302,969.14
+                    [VALOR_DA_META] => 12,150,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [4] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 5
+                    [FATURAMENTO] => 11,174,113.36
+                    [DEVOLUCOES] => -416,712.89
+                    [FATURAMENTO_LIQUIDO] => 10,757,400.47
+                    [VALOR_DA_META] => 11,640,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [5] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 7
+                    [FATURAMENTO] => 61,307.72
+                    [DEVOLUCOES] => 0.00
+                    [FATURAMENTO_LIQUIDO] => 61,307.72
+                    [VALOR_DA_META] => 0.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [6] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 9
+                    [FATURAMENTO] => 1,277,006.04
+                    [DEVOLUCOES] => -96,281.89
+                    [FATURAMENTO_LIQUIDO] => 1,180,724.15
+                    [VALOR_DA_META] => 1,316,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [7] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 10
+                    [FATURAMENTO] => 7,742,066.23
+                    [DEVOLUCOES] => -47,853.90
+                    [FATURAMENTO_LIQUIDO] => 7,694,212.33
+                    [VALOR_DA_META] => 9,470,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [8] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 11
+                    [FATURAMENTO] => 1,575,780.83
+                    [DEVOLUCOES] => -11,257.18
+                    [FATURAMENTO_LIQUIDO] => 1,564,523.65
+                    [VALOR_DA_META] => 720,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [9] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 13
+                    [FATURAMENTO] => 7,323,650.00
+                    [DEVOLUCOES] => -579,324.66
+                    [FATURAMENTO_LIQUIDO] => 6,744,325.34
+                    [VALOR_DA_META] => 7,997,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [10] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 14
+                    [FATURAMENTO] => 9,154,859.57
+                    [DEVOLUCOES] => -116,310.01
+                    [FATURAMENTO_LIQUIDO] => 9,038,549.56
+                    [VALOR_DA_META] => 11,640,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [11] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 15
+                    [FATURAMENTO] => 1,970,875.72
+                    [DEVOLUCOES] => -11,467.00
+                    [FATURAMENTO_LIQUIDO] => 1,959,408.72
+                    [VALOR_DA_META] => 0.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:13:13
+    [sql] => SELECT * FROM ( SELECT TO_CHAR(V.EMPR_ID) AS EMPR_ID, TO_CHAR(V.META, 'FM999G999G999G990D00') AS META_FATURAMENTO, TO_CHAR(V.FATURAMENTO_LIQUIDO, 'FM999G999G999G990D00') AS FATURAMENTO, TO_CHAR(ROUND(V.FATURAMENTO_LIQUIDO / NULLIF(V.META, 0) * 100, 1), 'FM990D0') AS PCT_ATINGIDO, TO_CHAR(V.PEDIDOS_PLANEJADO, 'FM999G999G999G990D00') AS PLANEJADO, TO_CHAR( NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0),'FM999G999G999G990D00') AS FAT_PROJETADO, TO_CHAR(ROUND((NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)) / NULLIF(V.META, 0) * 100, 1), 'FM990D0') AS PCT_PROJETADO, TO_CHAR(V.PEDIDOS_LIBERADOS, 'FM999G999G999G990D00') AS CARTEIRA, TO_CHAR(V.META_ESTOQUE, 'FM999G999G999G990D00') AS META_ESTOQUE, TO_CHAR(NVL(E.ESTOQUE_ATUAL, 0), 'FM999G999G999G990D00') AS ESTOQUE_ATUAL, TO_CHAR(ROUND(NVL(E.ESTOQUE_ATUAL, 0) / NULLIF(V.META_ESTOQUE, 0) * 100, 1), 'FM990D0') AS PCT_ESTOQUE, 1 AS ORDEM FROM VW_META_FATURAMENTO_PEDIDOS V LEFT JOIN ( SELECT COD_EMP, SUM(ESTOQUE_PRINCIPAL) AS ESTOQUE_ATUAL FROM ESTOQUE_EMPRESA_HORA GROUP BY COD_EMP ) E ON E.COD_EMP = V.EMPR_ID UNION ALL SELECT 'TOTAL', TO_CHAR(SUM(V.META), 'FM999G999G999G990D00'), TO_CHAR(SUM(V.FATURAMENTO_LIQUIDO), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(V.FATURAMENTO_LIQUIDO) / NULLIF(SUM(V.META), 0) * 100, 1), 'FM990D0'), TO_CHAR(SUM(V.PEDIDOS_PLANEJADO), 'FM999G999G999G990D00'), TO_CHAR(SUM(NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)) / NULLIF(SUM(V.META), 0) * 100, 1), 'FM990D0'), TO_CHAR(SUM(V.PEDIDOS_LIBERADOS), 'FM999G999G999G990D00'), TO_CHAR(SUM(V.META_ESTOQUE), 'FM999G999G999G990D00'), TO_CHAR(SUM(NVL(E.ESTOQUE_ATUAL, 0)), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(NVL(E.ESTOQUE_ATUAL, 0)) / NULLIF(SUM(V.META_ESTOQUE), 0) * 100, 1), 'FM990D0'), 2 FROM VW_META_FATURAMENTO_PEDIDOS V LEFT JOIN ( SELECT COD_EMP, SUM(ESTOQUE_PRINCIPAL) AS ESTOQUE_ATUAL FROM ESTOQUE_EMPRESA_HORA GROUP BY COD_EMP ) E ON E.COD_EMP = V.EMPR_ID ) ORDER BY ORDEM, CASE WHEN EMPR_ID = 'TOTAL' THEN 999999 ELSE TO_NUMBER(EMPR_ID) END
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [EMPR_ID] => 1
+                    [META_FATURAMENTO] => 27,316,000.00
+                    [FATURAMENTO] => 27,716,693.21
+                    [PCT_ATINGIDO] => 101.5
+                    [PLANEJADO] => 2,617,701.68
+                    [FAT_PROJETADO] => 30,334,394.89
+                    [PCT_PROJETADO] => 111.0
+                    [CARTEIRA] => 80,511,654.24
+                    [META_ESTOQUE] => 23,387,000.00
+                    [ESTOQUE_ATUAL] => 17,946,923.98
+                    [PCT_ESTOQUE] => 76.7
+                    [ORDEM] => 1
+                )
+
+            [1] => Array
+                (
+                    [EMPR_ID] => 2
+                    [META_FATURAMENTO] => 13,159,000.00
+                    [FATURAMENTO] => 12,624,293.92
+                    [PCT_ATINGIDO] => 95.9
+                    [PLANEJADO] => 1,478,448.56
+                    [FAT_PROJETADO] => 14,102,742.48
+                    [PCT_PROJETADO] => 107.2
+                    [CARTEIRA] => 12,444,975.10
+                    [META_ESTOQUE] => 9,816,215.00
+                    [ESTOQUE_ATUAL] => 12,583,385.52
+                    [PCT_ESTOQUE] => 128.2
+                    [ORDEM] => 1
+                )
+
+            [2] => Array
+                (
+                    [EMPR_ID] => 3
+                    [META_FATURAMENTO] => 12,067,000.00
+                    [FATURAMENTO] => 10,048,314.16
+                    [PCT_ATINGIDO] => 83.3
+                    [PLANEJADO] => 1,201,230.96
+                    [FAT_PROJETADO] => 11,249,545.12
+                    [PCT_PROJETADO] => 93.2
+                    [CARTEIRA] => 25,167,476.69
+                    [META_ESTOQUE] => 10,173,612.00
+                    [ESTOQUE_ATUAL] => 6,068,551.89
+                    [PCT_ESTOQUE] => 59.6
+                    [ORDEM] => 1
+                )
+
+            [3] => Array
+                (
+                    [EMPR_ID] => 4
+                    [META_FATURAMENTO] => 12,150,000.00
+                    [FATURAMENTO] => 6,302,969.14
+                    [PCT_ATINGIDO] => 51.9
+                    [PLANEJADO] => 1,296,862.93
+                    [FAT_PROJETADO] => 7,599,832.07
+                    [PCT_PROJETADO] => 62.6
+                    [CARTEIRA] => 20,869,224.69
+                    [META_ESTOQUE] => 12,034,750.00
+                    [ESTOQUE_ATUAL] => 11,274,182.42
+                    [PCT_ESTOQUE] => 93.7
+                    [ORDEM] => 1
+                )
+
+            [4] => Array
+                (
+                    [EMPR_ID] => 5
+                    [META_FATURAMENTO] => 11,640,000.00
+                    [FATURAMENTO] => 10,757,400.47
+                    [PCT_ATINGIDO] => 92.4
+                    [PLANEJADO] => 1,378,819.30
+                    [FAT_PROJETADO] => 12,136,219.77
+                    [PCT_PROJETADO] => 104.3
+                    [CARTEIRA] => 8,529,095.43
+                    [META_ESTOQUE] => 10,103,600.00
+                    [ESTOQUE_ATUAL] => 8,036,028.68
+                    [PCT_ESTOQUE] => 79.5
+                    [ORDEM] => 1
+                )
+
+            [5] => Array
+                (
+                    [EMPR_ID] => 6
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 0.00
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 0.00
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 0.00
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 0.00
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [6] => Array
+                (
+                    [EMPR_ID] => 7
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 61,307.72
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 0.00
+                    [FAT_PROJETADO] => 61,307.72
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 2,980.93
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 94,216.89
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [7] => Array
+                (
+                    [EMPR_ID] => 8
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 0.00
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 0.00
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 0.00
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 0.00
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [8] => Array
+                (
+                    [EMPR_ID] => 9
+                    [META_FATURAMENTO] => 1,316,000.00
+                    [FATURAMENTO] => 1,180,724.15
+                    [PCT_ATINGIDO] => 89.7
+                    [PLANEJADO] => 200,841.09
+                    [FAT_PROJETADO] => 1,381,565.24
+                    [PCT_PROJETADO] => 105.0
+                    [CARTEIRA] => 812,344.73
+                    [META_ESTOQUE] => 614,133.00
+                    [ESTOQUE_ATUAL] => 537,552.69
+                    [PCT_ESTOQUE] => 87.5
+                    [ORDEM] => 1
+                )
+
+            [9] => Array
+                (
+                    [EMPR_ID] => 10
+                    [META_FATURAMENTO] => 9,470,000.00
+                    [FATURAMENTO] => 7,694,212.33
+                    [PCT_ATINGIDO] => 81.2
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 7,694,212.33
+                    [PCT_PROJETADO] => 81.2
+                    [CARTEIRA] => 2,121,950.97
+                    [META_ESTOQUE] => 4,915,517.00
+                    [ESTOQUE_ATUAL] => 4,935,514.43
+                    [PCT_ESTOQUE] => 100.4
+                    [ORDEM] => 1
+                )
+
+            [10] => Array
+                (
+                    [EMPR_ID] => 11
+                    [META_FATURAMENTO] => 720,000.00
+                    [FATURAMENTO] => 1,564,523.65
+                    [PCT_ATINGIDO] => 217.3
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 1,564,523.65
+                    [PCT_PROJETADO] => 217.3
+                    [CARTEIRA] => 110,698.12
+                    [META_ESTOQUE] => 566,400.00
+                    [ESTOQUE_ATUAL] => 810,633.29
+                    [PCT_ESTOQUE] => 143.1
+                    [ORDEM] => 1
+                )
+
+            [11] => Array
+                (
+                    [EMPR_ID] => 13
+                    [META_FATURAMENTO] => 7,997,000.00
+                    [FATURAMENTO] => 6,744,325.34
+                    [PCT_ATINGIDO] => 84.3
+                    [PLANEJADO] => 764,731.46
+                    [FAT_PROJETADO] => 7,509,056.80
+                    [PCT_PROJETADO] => 93.9
+                    [CARTEIRA] => 13,723,489.22
+                    [META_ESTOQUE] => 5,540,232.00
+                    [ESTOQUE_ATUAL] => 3,370,286.10
+                    [PCT_ESTOQUE] => 60.8
+                    [ORDEM] => 1
+                )
+
+            [12] => Array
+                (
+                    [EMPR_ID] => 14
+                    [META_FATURAMENTO] => 11,640,000.00
+                    [FATURAMENTO] => 9,038,549.56
+                    [PCT_ATINGIDO] => 77.7
+                    [PLANEJADO] => 2,045,526.26
+                    [FAT_PROJETADO] => 11,084,075.82
+                    [PCT_PROJETADO] => 95.2
+                    [CARTEIRA] => 13,764,775.49
+                    [META_ESTOQUE] => 11,839,200.00
+                    [ESTOQUE_ATUAL] => 9,002,632.76
+                    [PCT_ESTOQUE] => 76.0
+                    [ORDEM] => 1
+                )
+
+            [13] => Array
+                (
+                    [EMPR_ID] => 15
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 1,959,408.72
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 671,523.00
+                    [FAT_PROJETADO] => 2,630,931.72
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 15,542,161.51
+                    [META_ESTOQUE] => 10,424,750.00
+                    [ESTOQUE_ATUAL] => 7,000,805.06
+                    [PCT_ESTOQUE] => 67.2
+                    [ORDEM] => 1
+                )
+
+            [14] => Array
+                (
+                    [EMPR_ID] => TOTAL
+                    [META_FATURAMENTO] => 107,475,000.00
+                    [FATURAMENTO] => 95,692,722.37
+                    [PCT_ATINGIDO] => 89.0
+                    [PLANEJADO] => 11,655,685.24
+                    [FAT_PROJETADO] => 107,348,407.61
+                    [PCT_PROJETADO] => 99.9
+                    [CARTEIRA] => 193,600,827.12
+                    [META_ESTOQUE] => 99,415,409.00
+                    [ESTOQUE_ATUAL] => 81,660,713.72
+                    [PCT_ESTOQUE] => 82.1
+                    [ORDEM] => 2
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:13:15
+    [sql] => SELECT ROUND( SUM( DECODE (tpnf.receita ,0,0, 1, focco3i.FOCCO3I_UTIL.COTACAO ( focco3i.BR_MAN_CONVERSAO_UNIDADES.CALCULARCONVERSAO ( pdv.empr_id, itcm.id, itpdv.tmasc_item_id, itestq.unid_med_id, itpdv.unid_med_id, mov.qtde_uep / NVL(focco3i.DB_COM_PROMESSA_ENTREGA.BUSCA_CONF_UEP(itpla.id,itpdv.tmasc_item_id), NVL(itpla.uep,1)), NULL, 'PDV') * DECODE ('1', 1, itpdv.vlr_liq_ipi + NVL(itpdv.vlr_acres_pdv,0) - NVL(itpdv.vlr_desc_pdv,0), 0), pdv.moe_id, NULL, DECODE ( TRUNC (SYSDATE), 'EMIS', pdv.dt_emis, 'BASE', pdv.dt_base, 'ENTR_CLI', LEAST (NVL (itpdv.dt_entrega_cli,itpdv.dt_entrega), TRUNC (SYSDATE)), TRUNC (SYSDATE))))), 2) Pedidos_planejado FROM tpedidos_venda pdv, titens_pdv itpdv, ttipos_nf tpnf, ttanques, tocupacao_tanque, tmov_tanques mov, titens_comercial itcm, titens_estoque itestq, titens_empr itempr, titens_planejamento itpla, titens it, tmasc_item masc WHERE pdv.id = itpdv.pdv_id AND pdv.sit_pdv = 'LIB' AND pdv.pos_pdv = 'PE' AND pdv.tipo = 'PDV' AND itpdv.id = mov.itpdv_id AND mov.ocuptan_id = tocupacao_tanque.ID AND tocupacao_tanque.TANQUE_ID = ttanques.id AND (TOCUPACAO_TANQUE.DATA BETWEEN TRUNC(SYSDATE, 'YEAR') AND LAST_DAY(SYSDATE)) AND itempr.id = itcm.itempr_id AND itestq.itempr_id = itempr.id AND itpla.itempr_id = itestq.itempr_id AND itpdv.tpnf_id = tpnf.id AND tocupacao_tanque.EMPR_ID IN (1,2,3,4,5,7,9,10,11,13,14,15,16) AND itpdv.qtde_sldo > 0 AND itpdv.itcm_id = itcm.id and itempr.item_id = it.id and mov.TMASC_ITEM_ID (+) = masc.id
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [PEDIDOS_PLANEJADO] => 11655685.25
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:13:16
+    [sql] => SELECT sum (TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE) Pedidos_liberados, SUM(CASE WHEN PDV_CARGA IS NOT NULL THEN TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE ELSE 0 END) AS Pedido_em_carga, sum (TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE) - SUM(CASE WHEN PDV_CARGA IS NOT NULL THEN TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE ELSE 0 END) Pedidos_sem_carga FROM TAB_PEDIDOS_RESUMO TAB_PEDIDOS_RESUMO where TAB_PEDIDOS_RESUMO.empr_id in (1,2,3,4,5,7,9,10,11,13,14,15)
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [PEDIDOS_LIBERADOS] => 193600827.116535333333333333333333333333
+                    [PEDIDO_EM_CARGA] => 61969202.03653533333333333333333333333335
+                    [PEDIDOS_SEM_CARGA] => 131631625.08
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:13:25
+    [sql] => SELECT * FROM ( SELECT TO_CHAR(V.EMPR_ID) AS EMPR_ID, TO_CHAR(V.META, 'FM999G999G999G990D00') AS META_FATURAMENTO, TO_CHAR(V.FATURAMENTO_LIQUIDO, 'FM999G999G999G990D00') AS FATURAMENTO, TO_CHAR(ROUND(V.FATURAMENTO_LIQUIDO / NULLIF(V.META, 0) * 100, 1), 'FM990D0') AS PCT_ATINGIDO, TO_CHAR(V.PEDIDOS_PLANEJADO, 'FM999G999G999G990D00') AS PLANEJADO, TO_CHAR( NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0),'FM999G999G999G990D00') AS FAT_PROJETADO, TO_CHAR(ROUND((NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)) / NULLIF(V.META, 0) * 100, 1), 'FM990D0') AS PCT_PROJETADO, TO_CHAR(V.PEDIDOS_LIBERADOS, 'FM999G999G999G990D00') AS CARTEIRA, TO_CHAR(V.META_ESTOQUE, 'FM999G999G999G990D00') AS META_ESTOQUE, TO_CHAR(NVL(E.ESTOQUE_ATUAL, 0), 'FM999G999G999G990D00') AS ESTOQUE_ATUAL, TO_CHAR(ROUND(NVL(E.ESTOQUE_ATUAL, 0) / NULLIF(V.META_ESTOQUE, 0) * 100, 1), 'FM990D0') AS PCT_ESTOQUE, 1 AS ORDEM FROM VW_META_FATURAMENTO_PEDIDOS V LEFT JOIN ( SELECT COD_EMP, SUM(ESTOQUE_PRINCIPAL) AS ESTOQUE_ATUAL FROM ESTOQUE_EMPRESA_HORA GROUP BY COD_EMP ) E ON E.COD_EMP = V.EMPR_ID UNION ALL SELECT 'TOTAL', TO_CHAR(SUM(V.META), 'FM999G999G999G990D00'), TO_CHAR(SUM(V.FATURAMENTO_LIQUIDO), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(V.FATURAMENTO_LIQUIDO) / NULLIF(SUM(V.META), 0) * 100, 1), 'FM990D0'), TO_CHAR(SUM(V.PEDIDOS_PLANEJADO), 'FM999G999G999G990D00'), TO_CHAR(SUM(NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)) / NULLIF(SUM(V.META), 0) * 100, 1), 'FM990D0'), TO_CHAR(SUM(V.PEDIDOS_LIBERADOS), 'FM999G999G999G990D00'), TO_CHAR(SUM(V.META_ESTOQUE), 'FM999G999G999G990D00'), TO_CHAR(SUM(NVL(E.ESTOQUE_ATUAL, 0)), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(NVL(E.ESTOQUE_ATUAL, 0)) / NULLIF(SUM(V.META_ESTOQUE), 0) * 100, 1), 'FM990D0'), 2 FROM VW_META_FATURAMENTO_PEDIDOS V LEFT JOIN ( SELECT COD_EMP, SUM(ESTOQUE_PRINCIPAL) AS ESTOQUE_ATUAL FROM ESTOQUE_EMPRESA_HORA GROUP BY COD_EMP ) E ON E.COD_EMP = V.EMPR_ID ) ORDER BY ORDEM, CASE WHEN EMPR_ID = 'TOTAL' THEN 999999 ELSE TO_NUMBER(EMPR_ID) END
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [EMPR_ID] => 1
+                    [META_FATURAMENTO] => 27,316,000.00
+                    [FATURAMENTO] => 27,716,693.21
+                    [PCT_ATINGIDO] => 101.5
+                    [PLANEJADO] => 2,617,701.68
+                    [FAT_PROJETADO] => 30,334,394.89
+                    [PCT_PROJETADO] => 111.0
+                    [CARTEIRA] => 80,511,654.24
+                    [META_ESTOQUE] => 23,387,000.00
+                    [ESTOQUE_ATUAL] => 17,946,923.98
+                    [PCT_ESTOQUE] => 76.7
+                    [ORDEM] => 1
+                )
+
+            [1] => Array
+                (
+                    [EMPR_ID] => 2
+                    [META_FATURAMENTO] => 13,159,000.00
+                    [FATURAMENTO] => 12,624,293.92
+                    [PCT_ATINGIDO] => 95.9
+                    [PLANEJADO] => 1,478,448.56
+                    [FAT_PROJETADO] => 14,102,742.48
+                    [PCT_PROJETADO] => 107.2
+                    [CARTEIRA] => 12,444,975.10
+                    [META_ESTOQUE] => 9,816,215.00
+                    [ESTOQUE_ATUAL] => 12,583,385.52
+                    [PCT_ESTOQUE] => 128.2
+                    [ORDEM] => 1
+                )
+
+            [2] => Array
+                (
+                    [EMPR_ID] => 3
+                    [META_FATURAMENTO] => 12,067,000.00
+                    [FATURAMENTO] => 10,048,314.16
+                    [PCT_ATINGIDO] => 83.3
+                    [PLANEJADO] => 1,201,230.96
+                    [FAT_PROJETADO] => 11,249,545.12
+                    [PCT_PROJETADO] => 93.2
+                    [CARTEIRA] => 25,167,476.69
+                    [META_ESTOQUE] => 10,173,612.00
+                    [ESTOQUE_ATUAL] => 6,068,551.89
+                    [PCT_ESTOQUE] => 59.6
+                    [ORDEM] => 1
+                )
+
+            [3] => Array
+                (
+                    [EMPR_ID] => 4
+                    [META_FATURAMENTO] => 12,150,000.00
+                    [FATURAMENTO] => 6,302,969.14
+                    [PCT_ATINGIDO] => 51.9
+                    [PLANEJADO] => 1,296,862.93
+                    [FAT_PROJETADO] => 7,599,832.07
+                    [PCT_PROJETADO] => 62.6
+                    [CARTEIRA] => 20,869,224.69
+                    [META_ESTOQUE] => 12,034,750.00
+                    [ESTOQUE_ATUAL] => 11,274,182.42
+                    [PCT_ESTOQUE] => 93.7
+                    [ORDEM] => 1
+                )
+
+            [4] => Array
+                (
+                    [EMPR_ID] => 5
+                    [META_FATURAMENTO] => 11,640,000.00
+                    [FATURAMENTO] => 10,757,400.47
+                    [PCT_ATINGIDO] => 92.4
+                    [PLANEJADO] => 1,378,819.30
+                    [FAT_PROJETADO] => 12,136,219.77
+                    [PCT_PROJETADO] => 104.3
+                    [CARTEIRA] => 8,529,095.43
+                    [META_ESTOQUE] => 10,103,600.00
+                    [ESTOQUE_ATUAL] => 8,036,028.68
+                    [PCT_ESTOQUE] => 79.5
+                    [ORDEM] => 1
+                )
+
+            [5] => Array
+                (
+                    [EMPR_ID] => 6
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 0.00
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 0.00
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 0.00
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 0.00
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [6] => Array
+                (
+                    [EMPR_ID] => 7
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 61,307.72
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 0.00
+                    [FAT_PROJETADO] => 61,307.72
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 2,980.93
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 94,216.89
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [7] => Array
+                (
+                    [EMPR_ID] => 8
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 0.00
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 0.00
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 0.00
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 0.00
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [8] => Array
+                (
+                    [EMPR_ID] => 9
+                    [META_FATURAMENTO] => 1,316,000.00
+                    [FATURAMENTO] => 1,180,724.15
+                    [PCT_ATINGIDO] => 89.7
+                    [PLANEJADO] => 200,841.09
+                    [FAT_PROJETADO] => 1,381,565.24
+                    [PCT_PROJETADO] => 105.0
+                    [CARTEIRA] => 812,344.73
+                    [META_ESTOQUE] => 614,133.00
+                    [ESTOQUE_ATUAL] => 537,552.69
+                    [PCT_ESTOQUE] => 87.5
+                    [ORDEM] => 1
+                )
+
+            [9] => Array
+                (
+                    [EMPR_ID] => 10
+                    [META_FATURAMENTO] => 9,470,000.00
+                    [FATURAMENTO] => 7,694,212.33
+                    [PCT_ATINGIDO] => 81.2
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 7,694,212.33
+                    [PCT_PROJETADO] => 81.2
+                    [CARTEIRA] => 2,121,950.97
+                    [META_ESTOQUE] => 4,915,517.00
+                    [ESTOQUE_ATUAL] => 4,935,514.43
+                    [PCT_ESTOQUE] => 100.4
+                    [ORDEM] => 1
+                )
+
+            [10] => Array
+                (
+                    [EMPR_ID] => 11
+                    [META_FATURAMENTO] => 720,000.00
+                    [FATURAMENTO] => 1,564,523.65
+                    [PCT_ATINGIDO] => 217.3
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 1,564,523.65
+                    [PCT_PROJETADO] => 217.3
+                    [CARTEIRA] => 110,698.12
+                    [META_ESTOQUE] => 566,400.00
+                    [ESTOQUE_ATUAL] => 810,633.29
+                    [PCT_ESTOQUE] => 143.1
+                    [ORDEM] => 1
+                )
+
+            [11] => Array
+                (
+                    [EMPR_ID] => 13
+                    [META_FATURAMENTO] => 7,997,000.00
+                    [FATURAMENTO] => 6,744,325.34
+                    [PCT_ATINGIDO] => 84.3
+                    [PLANEJADO] => 764,731.46
+                    [FAT_PROJETADO] => 7,509,056.80
+                    [PCT_PROJETADO] => 93.9
+                    [CARTEIRA] => 13,723,489.22
+                    [META_ESTOQUE] => 5,540,232.00
+                    [ESTOQUE_ATUAL] => 3,370,286.10
+                    [PCT_ESTOQUE] => 60.8
+                    [ORDEM] => 1
+                )
+
+            [12] => Array
+                (
+                    [EMPR_ID] => 14
+                    [META_FATURAMENTO] => 11,640,000.00
+                    [FATURAMENTO] => 9,038,549.56
+                    [PCT_ATINGIDO] => 77.7
+                    [PLANEJADO] => 2,045,526.26
+                    [FAT_PROJETADO] => 11,084,075.82
+                    [PCT_PROJETADO] => 95.2
+                    [CARTEIRA] => 13,764,775.49
+                    [META_ESTOQUE] => 11,839,200.00
+                    [ESTOQUE_ATUAL] => 9,002,632.76
+                    [PCT_ESTOQUE] => 76.0
+                    [ORDEM] => 1
+                )
+
+            [13] => Array
+                (
+                    [EMPR_ID] => 15
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 1,959,408.72
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 671,523.00
+                    [FAT_PROJETADO] => 2,630,931.72
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 15,542,161.51
+                    [META_ESTOQUE] => 10,424,750.00
+                    [ESTOQUE_ATUAL] => 7,000,805.06
+                    [PCT_ESTOQUE] => 67.2
+                    [ORDEM] => 1
+                )
+
+            [14] => Array
+                (
+                    [EMPR_ID] => TOTAL
+                    [META_FATURAMENTO] => 107,475,000.00
+                    [FATURAMENTO] => 95,692,722.37
+                    [PCT_ATINGIDO] => 89.0
+                    [PLANEJADO] => 11,655,685.24
+                    [FAT_PROJETADO] => 107,348,407.61
+                    [PCT_PROJETADO] => 99.9
+                    [CARTEIRA] => 193,600,827.12
+                    [META_ESTOQUE] => 99,415,409.00
+                    [ESTOQUE_ATUAL] => 81,660,713.72
+                    [PCT_ESTOQUE] => 82.1
+                    [ORDEM] => 2
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:13:31
+    [sql] => SELECT TRUNC(SYSDATE) Data_Atual,
+       CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END Numero_Filial,
+       TO_CHAR(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) ELSE (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) END),'FM999G999G990D00') Faturamento,
+       TO_CHAR(sum(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END),'FM999G999G990D00') Devolucoes,
+       TO_CHAR(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)+NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)+NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END),'FM999G999G990D00') Faturamento_Liquido,
+       TO_CHAR(MAX(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN TSADIG_VALOR_X_CUSTO.VLR_FATURADO ELSE TSADIG_VALOR_X_CUSTO.VLR_FATURADO END),'FM999G999G990D00') Valor_da_Meta,
+       TO_CHAR(SUM(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) ELSE (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Faturamento,
+       TO_CHAR(SUM(sum(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Devolucoes,
+       TO_CHAR(SUM(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL((VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA+VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA),0) ELSE NVL((VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA+VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA),0) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Faturamento_Li,
+       TO_CHAR(sum(MAX(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN TSADIG_VALOR_X_CUSTO.VLR_FATURADO ELSE TSADIG_VALOR_X_CUSTO.VLR_FATURADO END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Meta
+  FROM VGAZIN_FAT_COM_DEV_IMP_NW VGAZIN_FAT_COM_DEV_IMP_NW,
+       TSADIG_VALOR_X_CUSTO TSADIG_VALOR_X_CUSTO
+ WHERE (VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA = 0 OR TIPO_NOTA_ENTRADA = 5)
+   AND (VGAZIN_FAT_COM_DEV_IMP_NW.NUM_PED_ORIGEM NOT like '28411905%' or VGAZIN_FAT_COM_DEV_IMP_NW.NUM_PED_ORIGEM is null)
+   AND (VGAZIN_FAT_COM_DEV_IMP_NW.COD_GRUP_IPI = 1 OR VGAZIN_FAT_COM_DEV_IMP_NW.BI_RECEITA_OP = 'SIM')
+   AND TO_CHAR(VGAZIN_FAT_COM_DEV_IMP_NW.DT_NOTA,'MM/RRRR')=TO_CHAR(SYSDATE,'MM/RRRR')
+   AND TSADIG_VALOR_X_CUSTO.MES_ANO(+) = TRUNC(VGAZIN_FAT_COM_DEV_IMP_NW.DT_NOTA,'MONTH')
+   AND TSADIG_VALOR_X_CUSTO.EMPR_ID(+)=VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA
+GROUP BY TRUNC(SYSDATE),
+         CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END
+ORDER BY CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END ASC
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 1
+                    [FATURAMENTO] => 28,247,057.60
+                    [DEVOLUCOES] => -530,364.39
+                    [FATURAMENTO_LIQUIDO] => 27,716,693.21
+                    [VALOR_DA_META] => 27,316,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [1] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 2
+                    [FATURAMENTO] => 13,077,471.36
+                    [DEVOLUCOES] => -453,177.44
+                    [FATURAMENTO_LIQUIDO] => 12,624,293.92
+                    [VALOR_DA_META] => 13,159,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [2] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 3
+                    [FATURAMENTO] => 10,222,740.37
+                    [DEVOLUCOES] => -174,426.21
+                    [FATURAMENTO_LIQUIDO] => 10,048,314.16
+                    [VALOR_DA_META] => 12,067,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [3] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 4
+                    [FATURAMENTO] => 6,491,929.39
+                    [DEVOLUCOES] => -188,960.25
+                    [FATURAMENTO_LIQUIDO] => 6,302,969.14
+                    [VALOR_DA_META] => 12,150,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [4] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 5
+                    [FATURAMENTO] => 11,174,113.36
+                    [DEVOLUCOES] => -416,712.89
+                    [FATURAMENTO_LIQUIDO] => 10,757,400.47
+                    [VALOR_DA_META] => 11,640,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [5] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 7
+                    [FATURAMENTO] => 61,307.72
+                    [DEVOLUCOES] => 0.00
+                    [FATURAMENTO_LIQUIDO] => 61,307.72
+                    [VALOR_DA_META] => 0.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [6] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 9
+                    [FATURAMENTO] => 1,277,006.04
+                    [DEVOLUCOES] => -96,281.89
+                    [FATURAMENTO_LIQUIDO] => 1,180,724.15
+                    [VALOR_DA_META] => 1,316,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [7] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 10
+                    [FATURAMENTO] => 7,742,066.23
+                    [DEVOLUCOES] => -47,853.90
+                    [FATURAMENTO_LIQUIDO] => 7,694,212.33
+                    [VALOR_DA_META] => 9,470,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [8] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 11
+                    [FATURAMENTO] => 1,575,780.83
+                    [DEVOLUCOES] => -11,257.18
+                    [FATURAMENTO_LIQUIDO] => 1,564,523.65
+                    [VALOR_DA_META] => 720,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [9] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 13
+                    [FATURAMENTO] => 7,323,650.00
+                    [DEVOLUCOES] => -579,324.66
+                    [FATURAMENTO_LIQUIDO] => 6,744,325.34
+                    [VALOR_DA_META] => 7,997,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [10] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 14
+                    [FATURAMENTO] => 9,154,859.57
+                    [DEVOLUCOES] => -116,310.01
+                    [FATURAMENTO_LIQUIDO] => 9,038,549.56
+                    [VALOR_DA_META] => 11,640,000.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [11] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 15
+                    [FATURAMENTO] => 1,970,875.72
+                    [DEVOLUCOES] => -11,467.00
+                    [FATURAMENTO_LIQUIDO] => 1,959,408.72
+                    [VALOR_DA_META] => 0.00
+                    [TOTAL_FATURAMENTO] => 98,318,858.19
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,692,722.37
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:13:33
+    [sql] => SELECT ROUND( SUM( DECODE (tpnf.receita ,0,0, 1, focco3i.FOCCO3I_UTIL.COTACAO ( focco3i.BR_MAN_CONVERSAO_UNIDADES.CALCULARCONVERSAO ( pdv.empr_id, itcm.id, itpdv.tmasc_item_id, itestq.unid_med_id, itpdv.unid_med_id, mov.qtde_uep / NVL(focco3i.DB_COM_PROMESSA_ENTREGA.BUSCA_CONF_UEP(itpla.id,itpdv.tmasc_item_id), NVL(itpla.uep,1)), NULL, 'PDV') * DECODE ('1', 1, itpdv.vlr_liq_ipi + NVL(itpdv.vlr_acres_pdv,0) - NVL(itpdv.vlr_desc_pdv,0), 0), pdv.moe_id, NULL, DECODE ( TRUNC (SYSDATE), 'EMIS', pdv.dt_emis, 'BASE', pdv.dt_base, 'ENTR_CLI', LEAST (NVL (itpdv.dt_entrega_cli,itpdv.dt_entrega), TRUNC (SYSDATE)), TRUNC (SYSDATE))))), 2) Pedidos_planejado FROM tpedidos_venda pdv, titens_pdv itpdv, ttipos_nf tpnf, ttanques, tocupacao_tanque, tmov_tanques mov, titens_comercial itcm, titens_estoque itestq, titens_empr itempr, titens_planejamento itpla, titens it, tmasc_item masc WHERE pdv.id = itpdv.pdv_id AND pdv.sit_pdv = 'LIB' AND pdv.pos_pdv = 'PE' AND pdv.tipo = 'PDV' AND itpdv.id = mov.itpdv_id AND mov.ocuptan_id = tocupacao_tanque.ID AND tocupacao_tanque.TANQUE_ID = ttanques.id AND (TOCUPACAO_TANQUE.DATA BETWEEN TRUNC(SYSDATE, 'YEAR') AND LAST_DAY(SYSDATE)) AND itempr.id = itcm.itempr_id AND itestq.itempr_id = itempr.id AND itpla.itempr_id = itestq.itempr_id AND itpdv.tpnf_id = tpnf.id AND tocupacao_tanque.EMPR_ID IN (1,2,3,4,5,7,9,10,11,13,14,15,16) AND itpdv.qtde_sldo > 0 AND itpdv.itcm_id = itcm.id and itempr.item_id = it.id and mov.TMASC_ITEM_ID (+) = masc.id
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [PEDIDOS_PLANEJADO] => 11655685.25
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:18:17
+    [sql] => SELECT sum (TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE) Pedidos_liberados, SUM(CASE WHEN PDV_CARGA IS NOT NULL THEN TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE ELSE 0 END) AS Pedido_em_carga, sum (TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE) - SUM(CASE WHEN PDV_CARGA IS NOT NULL THEN TAB_PEDIDOS_RESUMO.PDV_VALOR_PENDENTE ELSE 0 END) Pedidos_sem_carga FROM TAB_PEDIDOS_RESUMO TAB_PEDIDOS_RESUMO where TAB_PEDIDOS_RESUMO.empr_id in (1,2,3,4,5,7,9,10,11,13,14,15)
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [PEDIDOS_LIBERADOS] => 193600827.116535333333333333333333333333
+                    [PEDIDO_EM_CARGA] => 61969202.03653533333333333333333333333335
+                    [PEDIDOS_SEM_CARGA] => 131631625.08
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:18:26
+    [sql] => SELECT * FROM ( SELECT TO_CHAR(V.EMPR_ID) AS EMPR_ID, TO_CHAR(V.META, 'FM999G999G999G990D00') AS META_FATURAMENTO, TO_CHAR(V.FATURAMENTO_LIQUIDO, 'FM999G999G999G990D00') AS FATURAMENTO, TO_CHAR(ROUND(V.FATURAMENTO_LIQUIDO / NULLIF(V.META, 0) * 100, 1), 'FM990D0') AS PCT_ATINGIDO, TO_CHAR(V.PEDIDOS_PLANEJADO, 'FM999G999G999G990D00') AS PLANEJADO, TO_CHAR( NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0),'FM999G999G999G990D00') AS FAT_PROJETADO, TO_CHAR(ROUND((NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)) / NULLIF(V.META, 0) * 100, 1), 'FM990D0') AS PCT_PROJETADO, TO_CHAR(V.PEDIDOS_LIBERADOS, 'FM999G999G999G990D00') AS CARTEIRA, TO_CHAR(V.META_ESTOQUE, 'FM999G999G999G990D00') AS META_ESTOQUE, TO_CHAR(NVL(E.ESTOQUE_ATUAL, 0), 'FM999G999G999G990D00') AS ESTOQUE_ATUAL, TO_CHAR(ROUND(NVL(E.ESTOQUE_ATUAL, 0) / NULLIF(V.META_ESTOQUE, 0) * 100, 1), 'FM990D0') AS PCT_ESTOQUE, 1 AS ORDEM FROM VW_META_FATURAMENTO_PEDIDOS V LEFT JOIN ( SELECT COD_EMP, SUM(ESTOQUE_PRINCIPAL) AS ESTOQUE_ATUAL FROM ESTOQUE_EMPRESA_HORA GROUP BY COD_EMP ) E ON E.COD_EMP = V.EMPR_ID UNION ALL SELECT 'TOTAL', TO_CHAR(SUM(V.META), 'FM999G999G999G990D00'), TO_CHAR(SUM(V.FATURAMENTO_LIQUIDO), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(V.FATURAMENTO_LIQUIDO) / NULLIF(SUM(V.META), 0) * 100, 1), 'FM990D0'), TO_CHAR(SUM(V.PEDIDOS_PLANEJADO), 'FM999G999G999G990D00'), TO_CHAR(SUM(NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(NVL(V.FATURAMENTO_LIQUIDO, 0) + NVL(V.PEDIDOS_PLANEJADO, 0)) / NULLIF(SUM(V.META), 0) * 100, 1), 'FM990D0'), TO_CHAR(SUM(V.PEDIDOS_LIBERADOS), 'FM999G999G999G990D00'), TO_CHAR(SUM(V.META_ESTOQUE), 'FM999G999G999G990D00'), TO_CHAR(SUM(NVL(E.ESTOQUE_ATUAL, 0)), 'FM999G999G999G990D00'), TO_CHAR(ROUND(SUM(NVL(E.ESTOQUE_ATUAL, 0)) / NULLIF(SUM(V.META_ESTOQUE), 0) * 100, 1), 'FM990D0'), 2 FROM VW_META_FATURAMENTO_PEDIDOS V LEFT JOIN ( SELECT COD_EMP, SUM(ESTOQUE_PRINCIPAL) AS ESTOQUE_ATUAL FROM ESTOQUE_EMPRESA_HORA GROUP BY COD_EMP ) E ON E.COD_EMP = V.EMPR_ID ) ORDER BY ORDEM, CASE WHEN EMPR_ID = 'TOTAL' THEN 999999 ELSE TO_NUMBER(EMPR_ID) END
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [EMPR_ID] => 1
+                    [META_FATURAMENTO] => 27,316,000.00
+                    [FATURAMENTO] => 27,716,693.21
+                    [PCT_ATINGIDO] => 101.5
+                    [PLANEJADO] => 2,617,701.68
+                    [FAT_PROJETADO] => 30,334,394.89
+                    [PCT_PROJETADO] => 111.0
+                    [CARTEIRA] => 80,511,654.24
+                    [META_ESTOQUE] => 23,387,000.00
+                    [ESTOQUE_ATUAL] => 17,946,923.98
+                    [PCT_ESTOQUE] => 76.7
+                    [ORDEM] => 1
+                )
+
+            [1] => Array
+                (
+                    [EMPR_ID] => 2
+                    [META_FATURAMENTO] => 13,159,000.00
+                    [FATURAMENTO] => 12,624,293.92
+                    [PCT_ATINGIDO] => 95.9
+                    [PLANEJADO] => 1,478,448.56
+                    [FAT_PROJETADO] => 14,102,742.48
+                    [PCT_PROJETADO] => 107.2
+                    [CARTEIRA] => 12,444,975.10
+                    [META_ESTOQUE] => 9,816,215.00
+                    [ESTOQUE_ATUAL] => 12,583,385.52
+                    [PCT_ESTOQUE] => 128.2
+                    [ORDEM] => 1
+                )
+
+            [2] => Array
+                (
+                    [EMPR_ID] => 3
+                    [META_FATURAMENTO] => 12,067,000.00
+                    [FATURAMENTO] => 10,048,314.16
+                    [PCT_ATINGIDO] => 83.3
+                    [PLANEJADO] => 1,201,230.96
+                    [FAT_PROJETADO] => 11,249,545.12
+                    [PCT_PROJETADO] => 93.2
+                    [CARTEIRA] => 25,167,476.69
+                    [META_ESTOQUE] => 10,173,612.00
+                    [ESTOQUE_ATUAL] => 6,068,551.89
+                    [PCT_ESTOQUE] => 59.6
+                    [ORDEM] => 1
+                )
+
+            [3] => Array
+                (
+                    [EMPR_ID] => 4
+                    [META_FATURAMENTO] => 12,150,000.00
+                    [FATURAMENTO] => 6,302,969.14
+                    [PCT_ATINGIDO] => 51.9
+                    [PLANEJADO] => 1,296,862.93
+                    [FAT_PROJETADO] => 7,599,832.07
+                    [PCT_PROJETADO] => 62.6
+                    [CARTEIRA] => 20,869,224.69
+                    [META_ESTOQUE] => 12,034,750.00
+                    [ESTOQUE_ATUAL] => 11,274,182.42
+                    [PCT_ESTOQUE] => 93.7
+                    [ORDEM] => 1
+                )
+
+            [4] => Array
+                (
+                    [EMPR_ID] => 5
+                    [META_FATURAMENTO] => 11,640,000.00
+                    [FATURAMENTO] => 10,757,400.47
+                    [PCT_ATINGIDO] => 92.4
+                    [PLANEJADO] => 1,378,819.30
+                    [FAT_PROJETADO] => 12,136,219.77
+                    [PCT_PROJETADO] => 104.3
+                    [CARTEIRA] => 8,529,095.43
+                    [META_ESTOQUE] => 10,103,600.00
+                    [ESTOQUE_ATUAL] => 8,036,028.68
+                    [PCT_ESTOQUE] => 79.5
+                    [ORDEM] => 1
+                )
+
+            [5] => Array
+                (
+                    [EMPR_ID] => 6
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 0.00
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 0.00
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 0.00
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 0.00
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [6] => Array
+                (
+                    [EMPR_ID] => 7
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 61,307.72
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 0.00
+                    [FAT_PROJETADO] => 61,307.72
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 2,980.93
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 94,216.89
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [7] => Array
+                (
+                    [EMPR_ID] => 8
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 0.00
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 0.00
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 0.00
+                    [META_ESTOQUE] => 
+                    [ESTOQUE_ATUAL] => 0.00
+                    [PCT_ESTOQUE] => 
+                    [ORDEM] => 1
+                )
+
+            [8] => Array
+                (
+                    [EMPR_ID] => 9
+                    [META_FATURAMENTO] => 1,316,000.00
+                    [FATURAMENTO] => 1,180,724.15
+                    [PCT_ATINGIDO] => 89.7
+                    [PLANEJADO] => 200,841.09
+                    [FAT_PROJETADO] => 1,381,565.24
+                    [PCT_PROJETADO] => 105.0
+                    [CARTEIRA] => 812,344.73
+                    [META_ESTOQUE] => 614,133.00
+                    [ESTOQUE_ATUAL] => 537,552.69
+                    [PCT_ESTOQUE] => 87.5
+                    [ORDEM] => 1
+                )
+
+            [9] => Array
+                (
+                    [EMPR_ID] => 10
+                    [META_FATURAMENTO] => 9,470,000.00
+                    [FATURAMENTO] => 7,694,212.33
+                    [PCT_ATINGIDO] => 81.2
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 7,694,212.33
+                    [PCT_PROJETADO] => 81.2
+                    [CARTEIRA] => 2,121,950.97
+                    [META_ESTOQUE] => 4,915,517.00
+                    [ESTOQUE_ATUAL] => 4,935,514.43
+                    [PCT_ESTOQUE] => 100.4
+                    [ORDEM] => 1
+                )
+
+            [10] => Array
+                (
+                    [EMPR_ID] => 11
+                    [META_FATURAMENTO] => 720,000.00
+                    [FATURAMENTO] => 1,564,523.65
+                    [PCT_ATINGIDO] => 217.3
+                    [PLANEJADO] => 
+                    [FAT_PROJETADO] => 1,564,523.65
+                    [PCT_PROJETADO] => 217.3
+                    [CARTEIRA] => 110,698.12
+                    [META_ESTOQUE] => 566,400.00
+                    [ESTOQUE_ATUAL] => 810,633.29
+                    [PCT_ESTOQUE] => 143.1
+                    [ORDEM] => 1
+                )
+
+            [11] => Array
+                (
+                    [EMPR_ID] => 13
+                    [META_FATURAMENTO] => 7,997,000.00
+                    [FATURAMENTO] => 6,794,347.94
+                    [PCT_ATINGIDO] => 85.0
+                    [PLANEJADO] => 714,708.86
+                    [FAT_PROJETADO] => 7,509,056.80
+                    [PCT_PROJETADO] => 93.9
+                    [CARTEIRA] => 13,723,489.22
+                    [META_ESTOQUE] => 5,540,232.00
+                    [ESTOQUE_ATUAL] => 3,370,286.10
+                    [PCT_ESTOQUE] => 60.8
+                    [ORDEM] => 1
+                )
+
+            [12] => Array
+                (
+                    [EMPR_ID] => 14
+                    [META_FATURAMENTO] => 11,640,000.00
+                    [FATURAMENTO] => 9,038,549.56
+                    [PCT_ATINGIDO] => 77.7
+                    [PLANEJADO] => 2,045,526.26
+                    [FAT_PROJETADO] => 11,084,075.82
+                    [PCT_PROJETADO] => 95.2
+                    [CARTEIRA] => 13,764,775.49
+                    [META_ESTOQUE] => 11,839,200.00
+                    [ESTOQUE_ATUAL] => 9,002,632.76
+                    [PCT_ESTOQUE] => 76.0
+                    [ORDEM] => 1
+                )
+
+            [13] => Array
+                (
+                    [EMPR_ID] => 15
+                    [META_FATURAMENTO] => 
+                    [FATURAMENTO] => 1,959,408.72
+                    [PCT_ATINGIDO] => 
+                    [PLANEJADO] => 671,523.00
+                    [FAT_PROJETADO] => 2,630,931.72
+                    [PCT_PROJETADO] => 
+                    [CARTEIRA] => 15,542,161.51
+                    [META_ESTOQUE] => 10,424,750.00
+                    [ESTOQUE_ATUAL] => 7,000,805.06
+                    [PCT_ESTOQUE] => 67.2
+                    [ORDEM] => 1
+                )
+
+            [14] => Array
+                (
+                    [EMPR_ID] => TOTAL
+                    [META_FATURAMENTO] => 107,475,000.00
+                    [FATURAMENTO] => 95,742,744.97
+                    [PCT_ATINGIDO] => 89.1
+                    [PLANEJADO] => 11,605,662.64
+                    [FAT_PROJETADO] => 107,348,407.61
+                    [PCT_PROJETADO] => 99.9
+                    [CARTEIRA] => 193,600,827.12
+                    [META_ESTOQUE] => 99,415,409.00
+                    [ESTOQUE_ATUAL] => 81,660,713.72
+                    [PCT_ESTOQUE] => 82.1
+                    [ORDEM] => 2
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:18:32
+    [sql] => SELECT TRUNC(SYSDATE) Data_Atual,
+       CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END Numero_Filial,
+       TO_CHAR(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) ELSE (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) END),'FM999G999G990D00') Faturamento,
+       TO_CHAR(sum(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END),'FM999G999G990D00') Devolucoes,
+       TO_CHAR(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)+NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)+NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END),'FM999G999G990D00') Faturamento_Liquido,
+       TO_CHAR(MAX(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN TSADIG_VALOR_X_CUSTO.VLR_FATURADO ELSE TSADIG_VALOR_X_CUSTO.VLR_FATURADO END),'FM999G999G990D00') Valor_da_Meta,
+       TO_CHAR(SUM(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) ELSE (NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA,0)) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Faturamento,
+       TO_CHAR(SUM(sum(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) ELSE NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA,0)-NVL(VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA,0) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Devolucoes,
+       TO_CHAR(SUM(SUM(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN NVL((VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA+VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA),0) ELSE NVL((VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_SAIDA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_SAIDA+VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA-VGAZIN_FAT_COM_DEV_IMP_NW.VLR_ICMS_ST_ENTRADA),0) END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Faturamento_Li,
+       TO_CHAR(sum(MAX(CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN TSADIG_VALOR_X_CUSTO.VLR_FATURADO ELSE TSADIG_VALOR_X_CUSTO.VLR_FATURADO END)) OVER (PARTITION BY NULL),'FM999G999G990D00') Total_Meta
+  FROM VGAZIN_FAT_COM_DEV_IMP_NW VGAZIN_FAT_COM_DEV_IMP_NW,
+       TSADIG_VALOR_X_CUSTO TSADIG_VALOR_X_CUSTO
+ WHERE (VGAZIN_FAT_COM_DEV_IMP_NW.VLR_CONTAB_ENTRADA = 0 OR TIPO_NOTA_ENTRADA = 5)
+   AND (VGAZIN_FAT_COM_DEV_IMP_NW.NUM_PED_ORIGEM NOT like '28411905%' or VGAZIN_FAT_COM_DEV_IMP_NW.NUM_PED_ORIGEM is null)
+   AND (VGAZIN_FAT_COM_DEV_IMP_NW.COD_GRUP_IPI = 1 OR VGAZIN_FAT_COM_DEV_IMP_NW.BI_RECEITA_OP = 'SIM')
+   AND TO_CHAR(VGAZIN_FAT_COM_DEV_IMP_NW.DT_NOTA,'MM/RRRR')=TO_CHAR(SYSDATE,'MM/RRRR')
+   AND TSADIG_VALOR_X_CUSTO.MES_ANO(+) = TRUNC(VGAZIN_FAT_COM_DEV_IMP_NW.DT_NOTA,'MONTH')
+   AND TSADIG_VALOR_X_CUSTO.EMPR_ID(+)=VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA
+GROUP BY TRUNC(SYSDATE),
+         CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END
+ORDER BY CASE WHEN VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA IN (5,6) THEN 5 ELSE VGAZIN_FAT_COM_DEV_IMP_NW.EMPRESA END ASC
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 1
+                    [FATURAMENTO] => 28,247,057.60
+                    [DEVOLUCOES] => -530,364.39
+                    [FATURAMENTO_LIQUIDO] => 27,716,693.21
+                    [VALOR_DA_META] => 27,316,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [1] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 2
+                    [FATURAMENTO] => 13,077,471.36
+                    [DEVOLUCOES] => -453,177.44
+                    [FATURAMENTO_LIQUIDO] => 12,624,293.92
+                    [VALOR_DA_META] => 13,159,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [2] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 3
+                    [FATURAMENTO] => 10,222,740.37
+                    [DEVOLUCOES] => -174,426.21
+                    [FATURAMENTO_LIQUIDO] => 10,048,314.16
+                    [VALOR_DA_META] => 12,067,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [3] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 4
+                    [FATURAMENTO] => 6,491,929.39
+                    [DEVOLUCOES] => -188,960.25
+                    [FATURAMENTO_LIQUIDO] => 6,302,969.14
+                    [VALOR_DA_META] => 12,150,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [4] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 5
+                    [FATURAMENTO] => 11,174,113.36
+                    [DEVOLUCOES] => -416,712.89
+                    [FATURAMENTO_LIQUIDO] => 10,757,400.47
+                    [VALOR_DA_META] => 11,640,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [5] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 7
+                    [FATURAMENTO] => 61,307.72
+                    [DEVOLUCOES] => 0.00
+                    [FATURAMENTO_LIQUIDO] => 61,307.72
+                    [VALOR_DA_META] => 0.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [6] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 9
+                    [FATURAMENTO] => 1,277,006.04
+                    [DEVOLUCOES] => -96,281.89
+                    [FATURAMENTO_LIQUIDO] => 1,180,724.15
+                    [VALOR_DA_META] => 1,316,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [7] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 10
+                    [FATURAMENTO] => 7,742,066.23
+                    [DEVOLUCOES] => -47,853.90
+                    [FATURAMENTO_LIQUIDO] => 7,694,212.33
+                    [VALOR_DA_META] => 9,470,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [8] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 11
+                    [FATURAMENTO] => 1,575,780.83
+                    [DEVOLUCOES] => -11,257.18
+                    [FATURAMENTO_LIQUIDO] => 1,564,523.65
+                    [VALOR_DA_META] => 720,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [9] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 13
+                    [FATURAMENTO] => 7,373,672.60
+                    [DEVOLUCOES] => -579,324.66
+                    [FATURAMENTO_LIQUIDO] => 6,794,347.94
+                    [VALOR_DA_META] => 7,997,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [10] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 14
+                    [FATURAMENTO] => 9,154,859.57
+                    [DEVOLUCOES] => -116,310.01
+                    [FATURAMENTO_LIQUIDO] => 9,038,549.56
+                    [VALOR_DA_META] => 11,640,000.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+            [11] => Array
+                (
+                    [DATA_ATUAL] => 31-MAR-26
+                    [NUMERO_FILIAL] => 15
+                    [FATURAMENTO] => 1,970,875.72
+                    [DEVOLUCOES] => -11,467.00
+                    [FATURAMENTO_LIQUIDO] => 1,959,408.72
+                    [VALOR_DA_META] => 0.00
+                    [TOTAL_FATURAMENTO] => 98,368,880.79
+                    [TOTAL_DEVOLUCOES] => -2,626,135.82
+                    [TOTAL_FATURAMENTO_LI] => 95,742,744.97
+                    [TOTAL_META] => 107,475,000.00
+                )
+
+        )
+
+)
+Array
+(
+    [data] => 2026-03-31 08:18:34
+    [sql] => SELECT ROUND( SUM( DECODE (tpnf.receita ,0,0, 1, focco3i.FOCCO3I_UTIL.COTACAO ( focco3i.BR_MAN_CONVERSAO_UNIDADES.CALCULARCONVERSAO ( pdv.empr_id, itcm.id, itpdv.tmasc_item_id, itestq.unid_med_id, itpdv.unid_med_id, mov.qtde_uep / NVL(focco3i.DB_COM_PROMESSA_ENTREGA.BUSCA_CONF_UEP(itpla.id,itpdv.tmasc_item_id), NVL(itpla.uep,1)), NULL, 'PDV') * DECODE ('1', 1, itpdv.vlr_liq_ipi + NVL(itpdv.vlr_acres_pdv,0) - NVL(itpdv.vlr_desc_pdv,0), 0), pdv.moe_id, NULL, DECODE ( TRUNC (SYSDATE), 'EMIS', pdv.dt_emis, 'BASE', pdv.dt_base, 'ENTR_CLI', LEAST (NVL (itpdv.dt_entrega_cli,itpdv.dt_entrega), TRUNC (SYSDATE)), TRUNC (SYSDATE))))), 2) Pedidos_planejado FROM tpedidos_venda pdv, titens_pdv itpdv, ttipos_nf tpnf, ttanques, tocupacao_tanque, tmov_tanques mov, titens_comercial itcm, titens_estoque itestq, titens_empr itempr, titens_planejamento itpla, titens it, tmasc_item masc WHERE pdv.id = itpdv.pdv_id AND pdv.sit_pdv = 'LIB' AND pdv.pos_pdv = 'PE' AND pdv.tipo = 'PDV' AND itpdv.id = mov.itpdv_id AND mov.ocuptan_id = tocupacao_tanque.ID AND tocupacao_tanque.TANQUE_ID = ttanques.id AND (TOCUPACAO_TANQUE.DATA BETWEEN TRUNC(SYSDATE, 'YEAR') AND LAST_DAY(SYSDATE)) AND itempr.id = itcm.itempr_id AND itestq.itempr_id = itempr.id AND itpla.itempr_id = itestq.itempr_id AND itpdv.tpnf_id = tpnf.id AND tocupacao_tanque.EMPR_ID IN (1,2,3,4,5,7,9,10,11,13,14,15,16) AND itpdv.qtde_sldo > 0 AND itpdv.itcm_id = itcm.id and itempr.item_id = it.id and mov.TMASC_ITEM_ID (+) = masc.id
+    [params] => Array
+        (
+        )
+
+    [res] => Array
+        (
+            [0] => Array
+                (
+                    [PEDIDOS_PLANEJADO] => 11605662.65
+                )
+
+        )
+
+)
