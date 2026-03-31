@@ -391,7 +391,7 @@ function atualizarTabelaFatMeta(dados) {
     // Linha de total
     const percTotalAtingido = totalMeta > 0 ? (totalFatLiq / totalMeta) * 100 : 0;
     const totalRow = document.createElement('tr');
-    totalRow.className = 'row-total-fat-meta';
+    totalRow.className = 'row-total';
     totalRow.innerHTML = `
         <td>TOTAL</td>
         <td>R$ ${formatarNumero(totalFatLiq)}</td>

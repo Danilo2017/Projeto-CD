@@ -42,6 +42,9 @@
         <a href="<?= $base ?>faturamento-dashboard" class="ds-hdr-btn ds-hdr-btn-info <?= (isset($pageActive) && $pageActive === 'faturamento-dashboard') ? 'active' : '' ?>">
             <i class="bi bi-cash-stack"></i> Faturamento
         </a>
+        <a href="<?= $base ?>meta-empresa" class="ds-hdr-btn ds-hdr-btn-info <?= (isset($pageActive) && $pageActive === 'meta-empresa') ? 'active' : '' ?>">
+            <i class="bi bi-bullseye"></i> Metas
+        </a>
         <?php endif; ?>
 
         <?php if($is_admin): ?>

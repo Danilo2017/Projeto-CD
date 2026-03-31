@@ -97,16 +97,11 @@ class CDCalendarioHandler
      * Gerar recibo de descarga
      * 
      * @param array $dados Dados do recibo
-     * @return array Resultado com dados do recibo gerado
+     * @return array Dados do recibo gerado (id e numero_recibo)
      */
     public static function gerarRecibo(array $dados): array
     {
-        $resultado = ReciboDescarga::inserir($dados);
-
-        return [
-            'data' => $resultado,
-            'message' => 'Recibo gerado com sucesso!'
-        ];
+        return ReciboDescarga::inserir($dados);
     }
 
     /**

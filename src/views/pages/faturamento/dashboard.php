@@ -140,7 +140,7 @@ if (!$acessoFaturamento) {
         <!-- FAT LIQ X META -->
         <div class="faturamento-table-section">
             <div class="faturamento-iframe-header">FAT LIQ X META</div>
-            <table class="faturamento-data-table fat-meta">
+            <table class="faturamento-tabela-painel fat-meta">
                 <thead>
                     <tr>
                         <th>Local</th>

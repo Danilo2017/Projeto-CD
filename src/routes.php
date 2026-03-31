@@ -162,6 +162,17 @@ $router->get('/faturamento-api-painel', 'Faturamento\\FaturamentoDashboardContro
 $router->get('/faturamento-api-pedidos', 'Faturamento\\FaturamentoDashboardController@getPedidos', true);
 $router->get('/faturamento-api-pedidos-planejado', 'Faturamento\\FaturamentoDashboardController@getPedidosPlanejado', true);
 
+// ========== Gestão de Metas por Empresa ==========
+// Página de Gestão de Metas
+$router->get('/meta-empresa', 'Faturamento\\MetaEmpresaController@index', true);
+
+// APIs de Meta Empresa
+$router->get('/meta-empresa-api-listar', 'Faturamento\\MetaEmpresaController@listar', true);
+$router->get('/meta-empresa-api-buscar', 'Faturamento\\MetaEmpresaController@buscar', true);
+$router->get('/meta-empresa-api-empresas', 'Faturamento\\MetaEmpresaController@empresas', true);
+$router->post('/meta-empresa-api-salvar', 'Faturamento\\MetaEmpresaController@salvar', true);
+$router->delete('/meta-empresa-api-excluir', 'Faturamento\\MetaEmpresaController@excluir', true);
+
 // ========== Admin - Gerenciamento de SQLs ==========
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);
 $router->get('/admin-api-sqls', 'AdminSqlsController@listar', true);
