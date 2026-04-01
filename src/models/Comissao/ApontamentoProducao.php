@@ -767,6 +767,107 @@ class ApontamentoProducao
         
         return $pontosPorFunc;
     }
+
+    /**
+     * Buscar pontos totais de um ou mais centros de trabalho por dia
+     * Usado para calcular comissão de funcionários APOIO (que ganham sobre o total do centro)
+     * 
+     * @param string $dataInicio (YYYY-MM-DD)
+     * @param string $dataFim (YYYY-MM-DD)
+     * @param array $centroIds Array de IDs de centros
+     * @param int $emprId
+     * @return array Indexado por centro_id => [data => total_pontos]
+     */
+    public static function pontosTotaisCentroPorDia(string $dataInicio, string $dataFim, array $centroIds, int $emprId): array
+    {
+        if (empty($centroIds)) {
+            return [];
+        }
+
+        $inCentros = implode(',', array_map('intval', $centroIds));
+        
+        $sql = "SELECT
+                    TORDENS_ROT.CENTR_TRAB_ID,
+                    TO_CHAR(TORDENS_MOVTO.DT_APONT, 'YYYY-MM-DD') AS DATA_APONTAMENTO,
+                    TITENS.ID AS ITEM_ID,
+                    TITENS_EMPR.ID AS ITEMPR_ID,
+                    TMASC_ITEM.ID AS MASCARA_ID,
+                    SUM(TORDENS_MOVTO.QUANTIDADE) AS TOTAL_QUANTIDADE,
+                    COUNT(*) AS QTD_APONTAMENTOS
+                FROM FOCCO3I.TORDENS
+                INNER JOIN FOCCO3I.TORDENS_ROT ON TORDENS.ID = TORDENS_ROT.ORDEM_ID
+                INNER JOIN FOCCO3I.TORDENS_MOVTO ON TORDENS_ROT.ID = TORDENS_MOVTO.TORDEN_ROT_ID
+                INNER JOIN FOCCO3I.TITENS_PLANEJAMENTO TP ON TP.ID = TORDENS.ITPL_ID
+                INNER JOIN FOCCO3I.TITENS_EMPR ON TITENS_EMPR.ID = TP.ITEMPR_ID
+                INNER JOIN FOCCO3I.TITENS ON TITENS.ID = TITENS_EMPR.ITEM_ID
+                LEFT JOIN FOCCO3I.TMASC_ITEM ON TMASC_ITEM.ID = TORDENS.TMASC_ITEM_ID
+                WHERE TORDENS_MOVTO.DT_APONT BETWEEN TO_DATE(:data_inicio, 'YYYY-MM-DD') AND TO_DATE(:data_fim, 'YYYY-MM-DD') + 0.99999
+                AND TORDENS_ROT.CENTR_TRAB_ID IN ({$inCentros})
+                AND TORDENS.EMPR_ID = :empr_id
+                AND TORDENS_ROT.APONTAMENTO = 1
+                AND TORDENS_ROT.OBRIGATORIO = 1
+                GROUP BY TORDENS_ROT.CENTR_TRAB_ID, TO_CHAR(TORDENS_MOVTO.DT_APONT, 'YYYY-MM-DD'), 
+                         TITENS.ID, TITENS_EMPR.ID, TMASC_ITEM.ID";
+        
+        $params = [
+            'data_inicio' => "'" . str_replace("'", "''", $dataInicio) . "'",
+            'data_fim' => "'" . str_replace("'", "''", $dataFim) . "'",
+            'empr_id' => intval($emprId)
+        ];
+
+        $result = \core\Database::switchParams('focco', $params, null, true, false, null, $sql);
+        $dadosBrutos = $result['retorno'] ?? [];
+        
+        // Carregar cache de pontuação
+        self::carregarCachePontuacao();
+        
+        // Agregar por centro/dia usando cache de pontuação
+        $pontosPorCentroDia = [];
+        foreach ($centroIds as $centroId) {
+            $pontosPorCentroDia[$centroId] = [];
+        }
+        
+        // Estrutura temporária para agregação
+        $agregacao = [];
+        
+        foreach ($dadosBrutos as $row) {
+            $centroId = (int)$row['CENTR_TRAB_ID'];
+            $data = $row['DATA_APONTAMENTO'];
+            $key = $centroId . '_' . $data;
+            
+            // Buscar pontuação do cache
+            $pontuacao = self::buscarPontuacaoCache(
+                (int)$row['ITEM_ID'],
+                $row['ITEMPR_ID'] ? (int)$row['ITEMPR_ID'] : null,
+                $row['MASCARA_ID'] ? (int)$row['MASCARA_ID'] : null,
+                $centroId,
+                $emprId
+            );
+            
+            $pontosUp = $pontuacao ? floatval($pontuacao['PONTOS_UP'] ?? 0) : 0;
+            $quantidade = floatval($row['TOTAL_QUANTIDADE'] ?? 0);
+            $pontosItem = $quantidade * $pontosUp;
+            
+            if (!isset($agregacao[$key])) {
+                $agregacao[$key] = [
+                    'centro_id' => $centroId,
+                    'data' => $data,
+                    'total_pontos' => 0
+                ];
+            }
+            
+            $agregacao[$key]['total_pontos'] += $pontosItem;
+        }
+        
+        // Reorganizar por centro
+        foreach ($agregacao as $item) {
+            $centroId = $item['centro_id'];
+            $data = $item['data'];
+            $pontosPorCentroDia[$centroId][$data] = round($item['total_pontos'], 2);
+        }
+        
+        return $pontosPorCentroDia;
+    }
 }
 
 

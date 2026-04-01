@@ -9,6 +9,7 @@ use src\models\Comissao\ApontamentoProducao;
 use src\models\Comissao\Retrabalho;
 use src\models\Comissao\RegraFuncionario;
 use src\models\Comissao\FaixaComissao;
+use src\models\Comissao\VinculoData;
 
 /**
  * Model para Cálculo e Gestão de Comissões
@@ -842,7 +843,35 @@ class Comissao
         $apontamentoModel = new ApontamentoProducao();
         $resumoFuncionarios = $apontamentoModel->resumoPorFuncionario($periodoIni, $periodoFim, $emprId, $centroTrabId);
         
-        if (empty($resumoFuncionarios)) {
+        // =============================================
+        // PASSO 1.1: Buscar funcionários com datas de apoio no período (podem não ter apontamentos)
+        // =============================================
+        $funcComApoio = VinculoData::buscarFuncionariosComApoioPeriodo($emprId, $periodoIni, $periodoFim, $centroTrabId);
+        $datasApoioTodas = VinculoData::buscarTodasDatasApoioPeriodo($emprId, $periodoIni, $periodoFim, $centroTrabId);
+        
+        // Mesclar funcionários de apontamentos com funcionários que só têm apoio
+        $funcIdsApontamentos = array_map(fn($f) => (int)$f['FUNC_ID'], $resumoFuncionarios);
+        $funcIdsApoio = array_map(fn($f) => (int)$f['FUNC_ID'], $funcComApoio);
+        
+        // Indexar resumo por funcionário para acesso rápido
+        $dadosFuncionarios = [];
+        foreach ($resumoFuncionarios as $func) {
+            $dadosFuncionarios[(int)$func['FUNC_ID']] = $func;
+        }
+        
+        // Adicionar funcionários com apoio que não têm apontamentos
+        foreach ($funcComApoio as $func) {
+            $fId = (int)$func['FUNC_ID'];
+            if (!isset($dadosFuncionarios[$fId])) {
+                $dadosFuncionarios[$fId] = $func;
+                $dadosFuncionarios[$fId]['TOTAL_PONTOS'] = 0; // Não tem apontamentos individuais
+            }
+        }
+        
+        // Lista final de IDs para processar
+        $funcIds = array_keys($dadosFuncionarios);
+        
+        if (empty($funcIds)) {
             return [
                 'success' => true,
                 'periodo_ini' => $periodoIni,
@@ -861,15 +890,6 @@ class Comissao
             ];
         }
         
-        // Extrair IDs dos funcionários
-        $funcIds = array_map(fn($f) => (int)$f['FUNC_ID'], $resumoFuncionarios);
-        
-        // Indexar resumo por funcionário para acesso rápido
-        $dadosFuncionarios = [];
-        foreach ($resumoFuncionarios as $func) {
-            $dadosFuncionarios[(int)$func['FUNC_ID']] = $func;
-        }
-        
         // Buscar TIPO_VINCULO direto da tabela de vínculos (garante valor correto)
         $inIds = implode(',', array_map('intval', $funcIds));
         $params = ['func_ids' => $inIds];
@@ -879,6 +899,15 @@ class Comissao
             $fId = (int)$rowVinc['ID_FUNCIONARIO'];
             if (isset($dadosFuncionarios[$fId])) {
                 $dadosFuncionarios[$fId]['TIPO_VINCULO'] = $rowVinc['TIPO_VINCULO'] ?? 'N';
+            }
+        }
+        
+        // =============================================
+        // PASSO 1.5: Marcar DATAS DE APOIO para cada funcionário
+        // =============================================
+        foreach ($datasApoioTodas as $fId => $datas) {
+            if (isset($dadosFuncionarios[$fId]) && !empty($datas)) {
+                $dadosFuncionarios[$fId]['DATAS_APOIO'] = $datas;
             }
         }
         
@@ -894,6 +923,33 @@ class Comissao
         $pontosPorDiaFunc = $apontamentoModel->pontosPorDiaBatch($periodoIni, $periodoFim, $funcIds, $emprId, $centroTrabId);
         
         // =============================================
+        // PASSO 3.5: Buscar pontos totais do centro para funcionários com datas de apoio
+        // =============================================
+        $pontosTotaisCentro = [];
+        // Identificar todos os centros de trabalho que precisamos
+        $centrosNecessarios = [];
+        foreach ($datasApoioTodas as $fId => $datas) {
+            foreach ($datas as $data => $centroId) {
+                $centrosNecessarios[(int)$centroId] = true;
+            }
+        }
+        // Também adicionar o centro principal para cálculos
+        foreach ($dadosFuncionarios as $fId => $dadosFunc) {
+            if (!empty($dadosFunc['CENTRO_TRAB_ID'])) {
+                $centrosNecessarios[(int)$dadosFunc['CENTRO_TRAB_ID']] = true;
+            }
+        }
+            
+        if (!empty($centrosNecessarios)) {
+            $pontosTotaisCentro = $apontamentoModel->pontosTotaisCentroPorDia(
+                $periodoIni, 
+                $periodoFim, 
+                array_keys($centrosNecessarios), 
+                $emprId
+            );
+        }
+        
+        // =============================================
         // PASSO 4: Buscar TODOS os retrabalhos em uma única query (1 query)
         // =============================================
         $retrabalhoModel = new Retrabalho();
@@ -906,7 +962,9 @@ class Comissao
         }
         foreach ($retrabalhosBrutos as $ret) {
             $funcId = (int)$ret['ID_FUNCIONARIO'];
-            $retrabalhosPorFunc[$funcId][] = $ret;
+            if (isset($retrabalhosPorFunc[$funcId])) {
+                $retrabalhosPorFunc[$funcId][] = $ret;
+            }
         }
         
         // =============================================
@@ -923,6 +981,7 @@ class Comissao
         
         // =============================================
         // PASSO 7: Processar cada funcionário EM MEMÓRIA (sem queries)
+        // CÁLCULO SEPARADO: dias normais vs dias de apoio
         // =============================================
         $resultados = [];
         $totalGeral = 0;
@@ -936,6 +995,7 @@ class Comissao
             $pontosDiarios = $pontosPorDiaFunc[$funcId] ?? [];
             $retrabalhos = $retrabalhosPorFunc[$funcId] ?? [];
             $regraEspecifica = $regrasPorFunc[$funcId] ?? null;
+            $datasApoio = $dadosFunc['DATAS_APOIO'] ?? [];
             
             // Mapear faltas por data
             $faltasPorData = [];
@@ -944,40 +1004,91 @@ class Comissao
                 $faltasPorData[$dataFalta] = $falta['TIPO_FALTA'] ?? 'I';
             }
             
-            // Calcular pontos com desconto de falta
+            // =============================================
+            // SEPARAR CÁLCULO: DIAS NORMAIS vs DIAS DE APOIO
+            // =============================================
             $totalPontosBruto = 0;
-            $totalPontosAposFalta = 0;
+            $pontosNormais = 0;  // Pontos de dias NORMAIS
+            $pontosApoio = 0;   // Pontos de dias de APOIO (do centro)
             $diasTrabalhados = 0;
+            $diasNormais = 0;
+            $diasApoioUsados = 0;
+            $centroIdFuncionario = (int)($dadosFunc['CENTRO_TRAB_ID'] ?? 0);
+            $datasProcessadas = []; // Para evitar duplicidade
             
+            // Processar dias com apontamentos individuais
             foreach ($pontosDiarios as $dia) {
                 $dataApt = $dia['DATA_APONTAMENTO'];
                 $pontos = floatval($dia['TOTAL_PONTOS']);
-                $totalPontosBruto += $pontos;
                 
-                if (isset($faltasPorData[$dataApt])) {
-                    $tipoFalta = $faltasPorData[$dataApt];
-                    if ($tipoFalta === 'I') {
-                        // Falta integral: zera os pontos
-                        continue;
+                // Verificar se é dia de apoio para este funcionário
+                $isDiaApoio = isset($datasApoio[$dataApt]);
+                
+                if ($isDiaApoio) {
+                    // Dia de APOIO: usa pontos do centro
+                    $centroApoioId = (int)$datasApoio[$dataApt];
+                    if (isset($pontosTotaisCentro[$centroApoioId][$dataApt])) {
+                        $pontosApoioDia = floatval($pontosTotaisCentro[$centroApoioId][$dataApt]);
+                        $pontosApoio += $pontosApoioDia;
+                        $totalPontosBruto += $pontosApoioDia;
+                    }
+                    $diasApoioUsados++;
+                    $diasTrabalhados++;
+                    $datasProcessadas[$dataApt] = true;
+                } else {
+                    // Dia NORMAL: usa pontos individuais com desconto de falta
+                    $totalPontosBruto += $pontos;
+                    
+                    if (isset($faltasPorData[$dataApt])) {
+                        $tipoFalta = $faltasPorData[$dataApt];
+                        if ($tipoFalta === 'I') {
+                            // Falta integral: não soma pontos normais
+                            continue;
+                        } else {
+                            // Falta parcial: 50%
+                            $pontosNormais += $pontos * 0.5;
+                            $diasNormais++;
+                            $diasTrabalhados++;
+                        }
                     } else {
-                        // Falta parcial: 50%
-                        $totalPontosAposFalta += $pontos * 0.5;
+                        $pontosNormais += $pontos;
+                        $diasNormais++;
                         $diasTrabalhados++;
                     }
-                } else {
-                    $totalPontosAposFalta += $pontos;
+                    $datasProcessadas[$dataApt] = true;
+                }
+            }
+            
+            // Processar dias de apoio que NÃO têm apontamentos individuais
+            // (funcionário pode ter trabalhado como apoio sem ter recurso individual)
+            foreach ($datasApoio as $dataApoio => $centroApoioId) {
+                if (isset($datasProcessadas[$dataApoio])) {
+                    continue; // Já processado acima
+                }
+                
+                // Buscar pontos do centro para este dia
+                if (isset($pontosTotaisCentro[$centroApoioId][$dataApoio])) {
+                    $pontosApoioDia = floatval($pontosTotaisCentro[$centroApoioId][$dataApoio]);
+                    $pontosApoio += $pontosApoioDia;
+                    $totalPontosBruto += $pontosApoioDia;
+                    $diasApoioUsados++;
                     $diasTrabalhados++;
                 }
             }
             
-            // Calcular comissão
+            // =============================================
+            // CALCULAR COMISSÃO SEPARADAMENTE: NORMAL + APOIO
+            // =============================================
             $valorComissaoBruto = 0;
             $usaRegraEspecifica = false;
             $faixaAplicada = null;
+            $faixaApoioAplicada = null;
             $regraAplicadaInfo = null;
+            $tipoVinculoFunc = $dadosFunc['TIPO_VINCULO'] ?? 'N';
             
             if ($regraEspecifica) {
-                // Usar regra específica
+                // Usar regra específica (aplica sobre total de pontos)
+                $totalPontosAposFalta = $pontosNormais + $pontosApoio;
                 $usaRegraEspecifica = true;
                 $regraAplicadaInfo = [
                     'id' => $regraEspecifica['ID_REGRA'],
@@ -988,26 +1099,62 @@ class Comissao
                 ];
                 $valorComissaoBruto = $regraModel->calcularComissao($totalPontosAposFalta, $regraEspecifica);
             } else {
-                // Buscar faixa aplicável
-                $faixa = $this->buscarFaixaAplicavelEmMemoria($faixas, $totalPontosAposFalta);
+                // Calcular separadamente para dias normais e dias de apoio
+                $valorComissaoNormal = 0;
+                $valorComissaoApoio = 0;
                 
-                if ($faixa) {
-                    $faixaAplicada = [
-                        'id' => $faixa['ID_FAIXA'],
-                        'descricao' => $faixa['DESCRICAO'],
-                        'tipo' => $faixa['TIPO'],
-                        'valor' => $faixa['VALOR_COMISSAO']
-                    ];
-                    
-                    if ($faixa['TIPO'] == FaixaComissao::TIPO_PERCENTUAL) {
-                        $valorComissaoBruto = $totalPontosAposFalta * ($faixa['VALOR_COMISSAO'] / 100);
-                    } elseif ($faixa['TIPO'] == FaixaComissao::TIPO_QUANTIDADE) {
-                        $valorComissaoBruto = $totalPontosAposFalta * floatval($faixa['VALOR_COMISSAO']);
-                    } else {
-                        $valorComissaoBruto = floatval($faixa['VALOR_COMISSAO']);
+                // Comissão de dias normais (faixa NORMAL)
+                if ($pontosNormais > 0) {
+                    $faixaNormal = $this->buscarFaixaAplicavelEmMemoria($faixas, $pontosNormais, 'N');
+                    if ($faixaNormal) {
+                        $faixaAplicada = [
+                            'id' => $faixaNormal['ID_FAIXA'],
+                            'descricao' => $faixaNormal['DESCRICAO'],
+                            'tipo' => $faixaNormal['TIPO'],
+                            'valor' => $faixaNormal['VALOR_COMISSAO']
+                        ];
+                        
+                        if ($faixaNormal['TIPO'] == FaixaComissao::TIPO_PERCENTUAL) {
+                            $valorComissaoNormal = $pontosNormais * ($faixaNormal['VALOR_COMISSAO'] / 100);
+                        } elseif ($faixaNormal['TIPO'] == FaixaComissao::TIPO_QUANTIDADE) {
+                            $valorComissaoNormal = $pontosNormais * floatval($faixaNormal['VALOR_COMISSAO']);
+                        } else {
+                            $valorComissaoNormal = floatval($faixaNormal['VALOR_COMISSAO']);
+                        }
                     }
                 }
+                
+                // Comissão de dias de apoio (faixa APOIO)
+                if ($pontosApoio > 0) {
+                    $faixaApoio = $this->buscarFaixaAplicavelEmMemoria($faixas, $pontosApoio, 'A');
+                    if ($faixaApoio) {
+                        $faixaApoioAplicada = [
+                            'id' => $faixaApoio['ID_FAIXA'],
+                            'descricao' => $faixaApoio['DESCRICAO'],
+                            'tipo' => $faixaApoio['TIPO'],
+                            'valor' => $faixaApoio['VALOR_COMISSAO']
+                        ];
+                        
+                        if ($faixaApoio['TIPO'] == FaixaComissao::TIPO_PERCENTUAL) {
+                            $valorComissaoApoio = $pontosApoio * ($faixaApoio['VALOR_COMISSAO'] / 100);
+                        } elseif ($faixaApoio['TIPO'] == FaixaComissao::TIPO_QUANTIDADE) {
+                            $valorComissaoApoio = $pontosApoio * floatval($faixaApoio['VALOR_COMISSAO']);
+                        } else {
+                            $valorComissaoApoio = floatval($faixaApoio['VALOR_COMISSAO']);
+                        }
+                        
+                        // Se não tem faixa normal, usar faixa apoio como principal para exibição
+                        if (!$faixaAplicada) {
+                            $faixaAplicada = $faixaApoioAplicada;
+                        }
+                    }
+                }
+                
+                $valorComissaoBruto = $valorComissaoNormal + $valorComissaoApoio;
             }
+            
+            // Total de pontos para exibição
+            $totalPontosAposFalta = $pontosNormais + $pontosApoio;
             
             // Calcular desconto de retrabalho
             $descontoRetrabalho = 0;
@@ -1027,6 +1174,13 @@ class Comissao
             
             $valorComissaoFinal = max(0, $valorComissaoBruto - $descontoRetrabalho);
             
+            // Determinar tipo efetivo do vínculo para exibição
+            // Se tem dias de apoio e não tem dias normais, considera como apoio
+            $tipoVinculoEfetivo = $tipoVinculoFunc;
+            if ($diasApoioUsados > 0 && $diasNormais === 0) {
+                $tipoVinculoEfetivo = 'A';
+            }
+            
             // Montar resultado do funcionário
             $resultado = [
                 'func_id' => $funcId,
@@ -1035,18 +1189,23 @@ class Comissao
                 'centro_trab_id' => $dadosFunc['CENTRO_TRAB_ID'] ?? null,
                 'cod_centro' => $dadosFunc['COD_CENTRO'] ?? null,
                 'desc_centro' => $dadosFunc['DESC_CENTRO'] ?? null,
-                'tipo_vinculo' => $dadosFunc['TIPO_VINCULO'] ?? 'N',
+                'tipo_vinculo' => $tipoVinculoEfetivo,
                 'periodo_ini' => $periodoIni,
                 'periodo_fim' => $periodoFim,
                 'dias_trabalhados' => $diasTrabalhados,
+                'dias_normais' => $diasNormais,
+                'dias_apoio' => $diasApoioUsados,
                 'dias_com_falta' => count($faltas),
                 'total_pontos_bruto' => round($totalPontosBruto, 2),
                 'total_pontos_apos_falta' => round($totalPontosAposFalta, 2),
+                'pontos_normais' => round($pontosNormais, 2),
+                'pontos_apoio' => round($pontosApoio, 2),
                 'total_retrabalho' => round($totalPontosRetrabalho, 2),
                 'desconto_retrabalho' => round($descontoRetrabalho, 2),
                 'usa_regra_especifica' => $usaRegraEspecifica,
                 'regra_aplicada' => $regraAplicadaInfo,
                 'faixa_aplicada' => $faixaAplicada,
+                'faixa_apoio_aplicada' => $faixaApoioAplicada ?? null,
                 'valor_comissao_bruto' => round($valorComissaoBruto, 2),
                 'valor_comissao_final' => round($valorComissaoFinal, 2)
             ];
@@ -1083,11 +1242,32 @@ class Comissao
      * Buscar faixa aplicável em memória (sem query)
      * @param array $faixas Lista de faixas já carregadas
      * @param float $pontos Total de pontos
+     * @param string $tipoFuncionario Tipo do funcionário: N=Normal, A=Apoio (para filtrar faixas)
      * @return array|null
      */
-    private function buscarFaixaAplicavelEmMemoria(array $faixas, float $pontos): ?array
+    private function buscarFaixaAplicavelEmMemoria(array $faixas, float $pontos, string $tipoFuncionario = 'N'): ?array
     {
-        foreach ($faixas as $faixa) {
+        // Filtrar faixas pelo tipo de funcionário
+        // N (Normal) -> faixas com TIPO_FUNCIONARIO IN ('N', 'T')
+        // A (Apoio) -> faixas com TIPO_FUNCIONARIO IN ('A', 'T')
+        $faixasFiltradas = array_filter($faixas, function($faixa) use ($tipoFuncionario) {
+            $tipoFaixa = $faixa['TIPO_FUNCIONARIO'] ?? 'T';
+            if ($tipoFuncionario === 'N') {
+                return in_array($tipoFaixa, ['N', 'T']);
+            } elseif ($tipoFuncionario === 'A') {
+                return in_array($tipoFaixa, ['A', 'T']);
+            }
+            return true; // Se tipo desconhecido, aceita qualquer faixa
+        });
+        
+        // Ordenar para priorizar faixas específicas (N ou A) sobre genéricas (T)
+        usort($faixasFiltradas, function($a, $b) {
+            $prioA = ($a['TIPO_FUNCIONARIO'] ?? 'T') === 'T' ? 1 : 0;
+            $prioB = ($b['TIPO_FUNCIONARIO'] ?? 'T') === 'T' ? 1 : 0;
+            return $prioA - $prioB;
+        });
+        
+        foreach ($faixasFiltradas as $faixa) {
             $min = floatval($faixa['PONTO_INICIAL'] ?? 0);
             $max = floatval($faixa['PONTO_FINAL'] ?? PHP_FLOAT_MAX);
             

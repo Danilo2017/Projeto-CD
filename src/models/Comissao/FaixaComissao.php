@@ -46,8 +46,12 @@ class FaixaComissao
 
     /**
      * Buscar faixa aplicável para determinada pontuação
+     * @param float $pontuacao Pontuação a ser verificada
+     * @param int|null $centroTrabId ID do centro de trabalho (opcional)
+     * @param string|null $dataReferencia Data de referência (opcional, default = hoje)
+     * @param string|null $tipoFuncionario Tipo do funcionário: N=Normal, A=Apoio (opcional, default = busca qualquer)
      */
-    public static function buscarFaixaAplicavel($pontuacao, $centroTrabId = null, $dataReferencia = null)
+    public static function buscarFaixaAplicavel($pontuacao, $centroTrabId = null, $dataReferencia = null, $tipoFuncionario = null)
     {
         $dataRef = $dataReferencia ?? date('Y-m-d');
 
@@ -59,6 +63,15 @@ class FaixaComissao
         $params['filtro_centro'] = $centroTrabId
             ? "AND (FC.CENTRO_TRAB_ID = " . intval($centroTrabId) . " OR FC.CENTRO_TRAB_ID IS NULL)"
             : "AND FC.CENTRO_TRAB_ID IS NULL";
+        
+        // Filtro por tipo de funcionário: N=Normal busca faixas N ou T, A=Apoio busca faixas A ou T
+        if ($tipoFuncionario === 'N') {
+            $params['filtro_tipo_func'] = "AND FC.TIPO_FUNCIONARIO IN ('N', 'T')";
+        } elseif ($tipoFuncionario === 'A') {
+            $params['filtro_tipo_func'] = "AND FC.TIPO_FUNCIONARIO IN ('A', 'T')";
+        } else {
+            $params['filtro_tipo_func'] = '--'; // Sem filtro, busca qualquer tipo
+        }
 
         $result = Database::switchParams('focco', $params, 'comissao.faixa.buscarAplicavel', true);
         if ($result['error']) {
@@ -77,11 +90,14 @@ class FaixaComissao
         $pontoFinal = $dados['ponto_final'] ?? null;
         $dtVigenciaIni = $dados['dt_vigencia_ini'];
         $dtVigenciaFim = $dados['dt_vigencia_fim'] ?? null;
+        $tipoFuncionario = $dados['tipo_funcionario'] ?? 'T';
 
         $params = [];
         $params['filtro_centro'] = $centroTrabId
             ? "AND FC.CENTRO_TRAB_ID = " . intval($centroTrabId)
             : "AND FC.CENTRO_TRAB_ID IS NULL";
+        $params['tipo_funcionario'] = "'" . str_replace("'", "''", $tipoFuncionario) . "'";
+        $params['tipo_funcionario2'] = "'" . str_replace("'", "''", $tipoFuncionario) . "'";
         $params['ponto_inicial'] = floatval($pontoInicial);
         $params['ponto_final'] = $pontoFinal !== null ? floatval($pontoFinal) : 'NULL';
         $params['ponto_final2'] = $pontoFinal !== null ? floatval($pontoFinal) : 'NULL';
@@ -121,6 +137,8 @@ class FaixaComissao
         $dtVigenciaFim = $dados['dt_vigencia_fim'] ?? null;
         $idUsuario = $dados['id_usuario'] ?? null;
 
+        $tipoFuncionario = $dados['tipo_funcionario'] ?? 'T';
+
         $params = [];
         $params['id_faixa'] = intval($novoId);
         $params['descricao'] = "'" . str_replace("'", "''", $dados['descricao']) . "'";
@@ -132,6 +150,7 @@ class FaixaComissao
         $params['dt_vigencia_ini'] = "'" . str_replace("'", "''", $dados['dt_vigencia_ini']) . "'";
         $params['dt_vigencia_fim'] = $dtVigenciaFim !== null ? "'" . str_replace("'", "''", $dtVigenciaFim) . "'" : 'NULL';
         $params['id_usuario'] = $idUsuario !== null ? intval($idUsuario) : 'NULL';
+        $params['tipo_funcionario'] = "'" . str_replace("'", "''", $tipoFuncionario) . "'";
 
         $result = Database::switchParams('focco', $params, 'comissao.faixa.inserir', true);
         if ($result['error']) {
@@ -149,6 +168,7 @@ class FaixaComissao
         $centroTrabId = $dados['centro_trab_id'] ?? null;
         $dtVigenciaFim = $dados['dt_vigencia_fim'] ?? null;
         $idUsuario = $dados['id_usuario'] ?? null;
+        $tipoFuncionario = $dados['tipo_funcionario'] ?? 'T';
 
         $params = [];
         $params['descricao'] = "'" . str_replace("'", "''", $dados['descricao']) . "'";
@@ -160,6 +180,7 @@ class FaixaComissao
         $params['dt_vigencia_ini'] = "'" . str_replace("'", "''", $dados['dt_vigencia_ini']) . "'";
         $params['dt_vigencia_fim'] = $dtVigenciaFim !== null ? "'" . str_replace("'", "''", $dtVigenciaFim) . "'" : 'NULL';
         $params['id_usuario'] = $idUsuario !== null ? intval($idUsuario) : 'NULL';
+        $params['tipo_funcionario'] = "'" . str_replace("'", "''", $tipoFuncionario) . "'";
         $params['id'] = intval($id);
 
         $result = Database::switchParams('focco', $params, 'comissao.faixa.atualizar', true);
