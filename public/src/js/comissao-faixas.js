@@ -103,6 +103,18 @@ function renderizarTabela(dados) {
         const tipoClass = item.TIPO === 'P' ? 'tipo-percentual' : 'tipo-quantidade';
         const tipoTexto = item.TIPO === 'P' ? 'Percentual' : 'Quantidade';
         
+        // Tipo de funcionário que a faixa atende
+        const tipoFunc = item.TIPO_FUNCIONARIO || 'T';
+        let tipoFuncTexto = 'Todos';
+        let tipoFuncClass = 'bg-secondary';
+        if (tipoFunc === 'N') {
+            tipoFuncTexto = 'Normal';
+            tipoFuncClass = 'bg-primary';
+        } else if (tipoFunc === 'A') {
+            tipoFuncTexto = 'Apoio';
+            tipoFuncClass = 'bg-info';
+        }
+        
         let valorFormatado = '';
         if (item.TIPO === 'P') {
             valorFormatado = formatarNumero(item.VALOR_COMISSAO, 2) + '%';
@@ -119,6 +131,7 @@ function renderizarTabela(dados) {
                 <td>${item.COD_EMPRESA || '-'}</td>
                 <td>${item.DESCRICAO}</td>
                 <td><span class="tipo-badge ${tipoClass}">${tipoTexto}</span></td>
+                <td><span class="badge ${tipoFuncClass}">${tipoFuncTexto}</span></td>
                 <td class="text-end">${formatarNumero(item.PONTO_INICIAL, 2)}</td>
                 <td class="text-end">${pontoFinal}</td>
                 <td class="text-end"><strong>${valorFormatado}</strong></td>
@@ -196,6 +209,9 @@ function novaFaixa() {
     // Definir data de vigência como hoje
     document.getElementById('dtVigenciaIni').value = new Date().toISOString().split('T')[0];
     
+    // Definir tipo de funcionário como Todos por padrão
+    document.getElementById('tipoFuncionario').value = 'T';
+    
     // Resetar label do valor
     atualizarLabelValor();
 }
@@ -233,6 +249,7 @@ function editarFaixa(id) {
                 document.getElementById('faixaId').value = item.ID_FAIXA;
                 document.getElementById('descricao').value = item.DESCRICAO;
                 document.getElementById('tipoFaixa').value = item.TIPO;
+                document.getElementById('tipoFuncionario').value = item.TIPO_FUNCIONARIO || 'T';
                 document.getElementById('pontoInicial').value = item.PONTO_INICIAL;
                 document.getElementById('pontoFinal').value = item.PONTO_FINAL || '';
                 document.getElementById('valorComissao').value = item.VALOR_COMISSAO;
@@ -262,6 +279,7 @@ function salvarFaixa() {
     const dados = {
         descricao: document.getElementById('descricao').value,
         tipo: document.getElementById('tipoFaixa').value,
+        tipoFuncionario: document.getElementById('tipoFuncionario').value || 'T',
         pontoInicial: document.getElementById('pontoInicial').value,
         pontoFinal: document.getElementById('pontoFinal').value,
         valorComissao: document.getElementById('valorComissao').value,

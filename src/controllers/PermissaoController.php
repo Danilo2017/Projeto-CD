@@ -128,9 +128,7 @@ class PermissaoController extends ctrl
                 throw new \Exception('Login do usuário é obrigatório');
             }
 
-            if (empty($perfisIds)) {
-                throw new \Exception('Selecione ao menos um perfil');
-            }
+            // Permitir array vazio para remover todos os perfis
             
             PerfilAcesso::definirPerfisUsuario($login, $perfisIds);
             
@@ -162,9 +160,7 @@ class PermissaoController extends ctrl
                 throw new \Exception('Login do usuário é obrigatório');
             }
 
-            if (empty($perfisIds)) {
-                throw new \Exception('Selecione ao menos um perfil');
-            }
+            // Permitir array vazio para remover todos os perfis
             
             PerfilAcesso::definirPerfisUsuario($login, $perfisIds);
             

@@ -199,13 +199,19 @@ function carregarVinculos() {
                 let statusBadge = v.ATIVO === 'S'
                     ? '<span class="badge bg-success">Ativo</span>'
                     : '<span class="badge bg-danger">Inativo</span>';
-                let acoes = '<div class="d-flex gap-1">';
+                let acoes = '<div class="d-flex gap-1 flex-wrap">';
                 acoes += '<button class="btn btn-sm btn-primary" onclick="editarVinculo(' + v.ID_VINCULO + ', ' + v.ID_FUNCIONARIO + ', ' + (v.ID_RECURSO || 'null') + ', ' + v.ID_CENTRO_TRAB + ', \'' + tipoVinculo + '\')" title="Editar"><i class="bi bi-pencil"></i></button>';
                 acoes += '<button class="btn btn-sm btn-danger" onclick="excluirVinculo(' + v.ID_VINCULO + ')" title="Excluir"><i class="bi bi-trash"></i></button>';
                 if (v.ATIVO === 'S') {
                     acoes += '<button class="btn btn-sm btn-warning" onclick="toggleVinculo(' + v.ID_VINCULO + ', \'N\')" title="Inativar"><i class="bi bi-x-circle"></i></button>';
                 } else {
                     acoes += '<button class="btn btn-sm btn-success" onclick="toggleVinculo(' + v.ID_VINCULO + ', \'S\')" title="Ativar"><i class="bi bi-check-circle"></i></button>';
+                }
+                // Botão de dias de apoio apenas para vínculos tipo Normal
+                if (tipoVinculo === 'N') {
+                    let funcNome = funcLabel.replace(/'/g, "\\'");
+                    let centroNome = centroLabel.replace(/'/g, "\\'");
+                    acoes += '<button class="btn btn-sm btn-info" onclick="abrirDiasApoio(' + v.ID_VINCULO + ', \'' + funcNome + '\', \'' + centroNome + '\', ' + v.ID_CENTRO_TRAB + ')" title="Configurar Dias de Apoio"><i class="bi bi-calendar-event"></i></button>';
                 }
                 acoes += '</div>';
                 html += '<tr>';
@@ -294,5 +300,152 @@ function toggleVinculo(id, ativo) {
             }
         },
         error: function() { alert('Erro ao alterar status do vínculo'); }
+    });
+}
+
+// ===================== FUNÇÕES DE DIAS DE APOIO =====================
+
+var centroApoioAtual = null;
+
+function abrirDiasApoio(vinculoId, funcNome, centroNome, idCentroTrab) {
+    $('#diasApoioVinculoId').val(vinculoId);
+    $('#diasApoioFuncNome').text(funcNome);
+    $('#diasApoioCentroNome').text(centroNome);
+    centroApoioAtual = idCentroTrab;
+    
+    // Carregar centros de trabalho no select
+    carregarCentrosParaApoio(idCentroTrab);
+    
+    // Limpar campos de data
+    $('#novaDataApoio').val('');
+    $('#novaDataApoioFim').val('');
+    
+    // Carregar datas já configuradas
+    carregarDiasApoio(vinculoId);
+    
+    // Abrir modal
+    $('#modalDiasApoio').modal('show');
+}
+
+function carregarCentrosParaApoio(idCentroAtual) {
+    $.get('/comissao-api-centros', function(res) {
+        let options = '<option value="">Mesmo centro do vínculo</option>';
+        if (res && res.data) {
+            res.data.forEach(c => {
+                let label = c.COD_CENTRO ? `${c.COD_CENTRO} - ${c.DESCRICAO}` : c.DESCRICAO;
+                let selected = c.ID == idCentroAtual ? 'selected' : '';
+                options += `<option value="${c.ID}" ${selected}>${label}</option>`;
+            });
+        }
+        $('#centroApoioSelect').html(options);
+    });
+}
+
+function carregarDiasApoio(vinculoId) {
+    $.get('/comissao-api-vinculo-datas?vinculo_id=' + vinculoId, function(resp) {
+        console.log('Resposta datas apoio:', resp);
+        let html = '';
+        if (resp.success && resp.data && resp.data.length > 0) {
+            resp.data.forEach(function(d) {
+                // Usar DATA_FORMATADA se disponível, senão formatar DATA
+                let dataFormatada = d.DATA_FORMATADA || formatarData(d.DATA) || '-';
+                let centroApoioNome = d.CENTRO_APOIO_DESCRICAO 
+                    ? (d.CENTRO_APOIO_COD ? d.CENTRO_APOIO_COD + ' - ' : '') + d.CENTRO_APOIO_DESCRICAO 
+                    : 'Mesmo centro do vínculo';
+                html += '<tr>';
+                html += '<td>' + dataFormatada + '</td>';
+                html += '<td>' + centroApoioNome + '</td>';
+                html += '<td><button class="btn btn-sm btn-danger" onclick="removerDataApoio(' + d.ID_VINCULO_DATA + ', ' + vinculoId + ')" title="Remover"><i class="bi bi-trash"></i></button></td>';
+                html += '</tr>';
+            });
+        } else {
+            html = '<tr><td colspan="3" class="text-center text-muted">Nenhuma data configurada</td></tr>';
+        }
+        $('#tabelaDiasApoioBody').html(html);
+    }).fail(function(xhr) {
+        console.error('Erro ao carregar dias de apoio:', xhr.responseText);
+        $('#tabelaDiasApoioBody').html('<tr><td colspan="3" class="text-center text-danger">Erro ao carregar datas</td></tr>');
+    });
+}
+
+function formatarData(dataStr) {
+    if (!dataStr) return '-';
+    // Formatar YYYY-MM-DD para DD/MM/YYYY
+    let partes = dataStr.split('-');
+    if (partes.length === 3) {
+        return partes[2] + '/' + partes[1] + '/' + partes[0];
+    }
+    return dataStr;
+}
+
+function adicionarDataApoio() {
+    const vinculoId = $('#diasApoioVinculoId').val();
+    const dataInicio = $('#novaDataApoio').val();
+    const dataFim = $('#novaDataApoioFim').val();
+    const centroApoioId = $('#centroApoioSelect').val() || centroApoioAtual;
+    
+    if (!dataInicio) {
+        alert('Selecione a data inicial!');
+        return;
+    }
+    
+    // Se dataFim preenchida, enviar range de datas
+    let datas = [];
+    if (dataFim && dataFim >= dataInicio) {
+        let dtAtual = new Date(dataInicio + 'T00:00:00');
+        let dtFim = new Date(dataFim + 'T00:00:00');
+        while (dtAtual <= dtFim) {
+            datas.push(dtAtual.toISOString().split('T')[0]);
+            dtAtual.setDate(dtAtual.getDate() + 1);
+        }
+    } else {
+        datas = [dataInicio];
+    }
+    
+    $.ajax({
+        url: '/comissao-api-vinculo-datas',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            vinculo_id: vinculoId,
+            datas: datas,
+            centro_apoio_id: centroApoioId
+        }),
+        success: function(resp) {
+            if (resp.success) {
+                $('#novaDataApoio').val('');
+                $('#novaDataApoioFim').val('');
+                carregarDiasApoio(vinculoId);
+            } else {
+                alert(resp.error || 'Erro ao adicionar data de apoio!');
+            }
+        },
+        error: function(xhr) {
+            let msg = 'Erro ao adicionar data de apoio!';
+            try {
+                let resp = JSON.parse(xhr.responseText);
+                if (resp.error) msg = resp.error;
+            } catch(e) {}
+            alert(msg);
+        }
+    });
+}
+
+function removerDataApoio(idVinculoData, vinculoId) {
+    if (!confirm('Deseja remover esta data de apoio?')) return;
+    
+    $.ajax({
+        url: '/comissao-api-vinculo-data',
+        method: 'DELETE',
+        contentType: 'application/json',
+        data: JSON.stringify({ id: idVinculoData }),
+        success: function(resp) {
+            if (resp.success) {
+                carregarDiasApoio(vinculoId);
+            } else {
+                alert(resp.error || 'Erro ao remover data');
+            }
+        },
+        error: function() { alert('Erro ao remover data de apoio'); }
     });
 }

@@ -1,5 +1,10 @@
 <?php
-$acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+// Verificar acesso ao módulo faturamento diretamente da sessão
+$userSession = $_SESSION['user'] ?? [];
+$rotasUsuario = $userSession['rotas_permitidas'] ?? [];
+$isAdmin = $userSession['is_admin'] ?? false;
+
+$acessoFaturamento = $isAdmin || in_array('faturamento', $rotasUsuario) || in_array('*', $rotasUsuario);
 if (!$acessoFaturamento) {
     header('Location: ' . $base . 'sem-acesso');
     exit;

@@ -206,29 +206,47 @@ class PerfilAcesso
     {
         $pdo = Database::getInstance('focco');
         
-        // Verificar se já existe (ativo ou inativo)
+        // Verificar se já existe (ativo ou inativo) - pegando todos para tratar duplicados
         $sqlCheck = "SELECT ID_USUARIO_PERFIL, ATIVO 
                      FROM FOCCO3I.TGAZIN_USUARIO_PERFIL 
                      WHERE UPPER(LOGIN_USUARIO) = UPPER(:login) 
-                     AND PERFIL_ID = :perfil_id";
+                     AND PERFIL_ID = :perfil_id
+                     ORDER BY ID_USUARIO_PERFIL DESC";
         $stmtCheck = $pdo->prepare($sqlCheck);
         $stmtCheck->bindParam(':login', $login, PDO::PARAM_STR);
         $stmtCheck->bindParam(':perfil_id', $perfilId, PDO::PARAM_INT);
         $stmtCheck->execute();
-        $existe = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+        $registros = $stmtCheck->fetchAll(PDO::FETCH_ASSOC);
         
-        if ($existe) {
-            if ($existe['ATIVO'] === 'S') {
-                throw new \Exception('Usuário já possui este perfil');
+        if (!empty($registros)) {
+            // Verificar se algum está ativo
+            foreach ($registros as $reg) {
+                if ($reg['ATIVO'] === 'S') {
+                    return $reg['ID_USUARIO_PERFIL'];
+                }
             }
-            // Reativar se estava inativo
+            
+            // Todos estão inativos - reativar o mais recente e deletar os duplicados
+            $primeiroId = $registros[0]['ID_USUARIO_PERFIL'];
+            
+            // Deletar duplicados antigos (manter apenas o mais recente)
+            if (count($registros) > 1) {
+                $idsParaDeletar = [];
+                for ($i = 1; $i < count($registros); $i++) {
+                    $idsParaDeletar[] = $registros[$i]['ID_USUARIO_PERFIL'];
+                }
+                $sqlDeletar = "DELETE FROM FOCCO3I.TGAZIN_USUARIO_PERFIL WHERE ID_USUARIO_PERFIL IN (" . implode(',', $idsParaDeletar) . ")";
+                $pdo->exec($sqlDeletar);
+            }
+            
+            // Reativar o registro mais recente
             $sqlReativar = "UPDATE FOCCO3I.TGAZIN_USUARIO_PERFIL 
                             SET ATIVO = 'S', DT_ALTERACAO = SYSDATE 
                             WHERE ID_USUARIO_PERFIL = :id";
             $stmtReativar = $pdo->prepare($sqlReativar);
-            $stmtReativar->bindParam(':id', $existe['ID_USUARIO_PERFIL'], PDO::PARAM_INT);
+            $stmtReativar->bindParam(':id', $primeiroId, PDO::PARAM_INT);
             $stmtReativar->execute();
-            return $existe['ID_USUARIO_PERFIL'];
+            return $primeiroId;
         }
         
         $sql = "INSERT INTO FOCCO3I.TGAZIN_USUARIO_PERFIL (

@@ -65,6 +65,7 @@ if (!$acessoComissao) {
                     <th>Empresa</th>
                     <th>Descrição</th>
                     <th>Tipo</th>
+                    <th>Aplica-se a</th>
                     <th>Ponto Inicial</th>
                     <th>Ponto Final</th>
                     <th>Valor/Percentual</th>
@@ -95,16 +96,24 @@ if (!$acessoComissao) {
                         <input type="hidden" id="faixaId">
                         
                         <div class="row mb-3">
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                                 <label for="descricao" class="form-label">Descrição *</label>
                                 <input type="text" id="descricao" class="form-control" maxlength="100" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="tipoFaixa" class="form-label">Tipo de Faixa *</label>
                                 <select id="tipoFaixa" class="form-select" required onchange="atualizarLabelValor()">
                                     <option value="">Selecione</option>
                                     <option value="P">Percentual</option>
                                     <option value="Q">Quantidade (Valor Fixo)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="tipoFuncionario" class="form-label">Aplica-se a *</label>
+                                <select id="tipoFuncionario" class="form-select" required>
+                                    <option value="T">Todos</option>
+                                    <option value="N">Normal</option>
+                                    <option value="A">Apoio</option>
                                 </select>
                             </div>
                         </div>

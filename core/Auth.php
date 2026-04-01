@@ -95,9 +95,20 @@ class Auth extends Controller {
         $partes = explode('-', $url);
         $prefixo = $partes[0];
         
+        // Mapeamento de prefixos que pertencem a outro módulo
+        // Ex: 'meta' pertence ao módulo 'faturamento'
+        $mapeamentoModulos = [
+            'meta' => 'faturamento',
+        ];
+        
+        // Se o prefixo tem um mapeamento, usar o módulo mapeado
+        if (isset($mapeamentoModulos[$prefixo])) {
+            return $mapeamentoModulos[$prefixo];
+        }
+        
         // Se o prefixo é igual à URL inteira e não tem hífen, 
         // verificar se é uma rota conhecida de módulo
-        $modulosConhecidos = ['cd', 'comissao', 'permissao'];
+        $modulosConhecidos = ['cd', 'comissao', 'permissao', 'faturamento', 'admin'];
         
         if (in_array($prefixo, $modulosConhecidos)) {
             return $prefixo;

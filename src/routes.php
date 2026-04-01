@@ -62,6 +62,12 @@ $router->put('/comissao-api-vinculo', 'Comissao\\ComissaoCadastroController@atua
 $router->delete('/comissao-api-vinculo', 'Comissao\\ComissaoCadastroController@excluirVinculo', true);
 $router->patch('/comissao-api-vinculo-status', 'Comissao\\ComissaoCadastroController@alterarStatusVinculo', true);
 
+// APIs de Datas de Apoio - Funcionário NORMAL que atua como APOIO em dias específicos
+$router->get('/comissao-api-vinculo-datas', 'Comissao\\ComissaoCadastroController@listarDatasApoio', true);
+$router->post('/comissao-api-vinculo-datas', 'Comissao\\ComissaoCadastroController@salvarDatasApoio', true);
+$router->post('/comissao-api-vinculo-data', 'Comissao\\ComissaoCadastroController@adicionarDataApoio', true);
+$router->delete('/comissao-api-vinculo-data', 'Comissao\\ComissaoCadastroController@removerDataApoio', true);
+
 // APIs de Cadastro - Pontuação
 $router->get('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@listarPontuacoes', true);
 $router->post('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@salvarPontuacao', true);

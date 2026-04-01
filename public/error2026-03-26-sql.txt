@@ -1,7 +1,0 @@
-Array
-(
-    [data] => 2026-03-26 11:44:09
-    [msg] => SQLSTATE[HY000]: General error: 2289 OCIStmtExecute: ORA-02289: sequence does not exist
- (/usr/src/php/ext/pdo_oci/oci_statement.c:153)
-    [sql] => SELECT FOCCO3I.SEQ_TGAZIN_REGRA_FUNC.NEXTVAL AS ID FROM DUAL
-)

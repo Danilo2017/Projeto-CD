@@ -256,33 +256,32 @@ class ComissaoCadastroHandler
             foreach ($linhasValidas as $lv) {
                 $chave = $lv['item']['ITEM_ID'] . '|' . ($lv['mascaraId'] ?? 'NULL') . '|' . ($lv['centroTrabId'] ?? 'NULL');
                 
-                if (isset($mapaDuplicatas[$chave])) {
-                    // UPDATE
-                    $stmtUpdate->execute([
-                        ':pontos_up' => $lv['pontosUp'],
-                        ':dt_ini' => $lv['dtIniFormatada'],
-                        ':dt_fim' => $lv['dtFimFormatada'],
-                        ':id_usuario' => $idUsuario,
-                        ':id_pontuacao' => $mapaDuplicatas[$chave],
-                    ]);
+                if (isset($mapaDuplicatas[$chave]) && $mapaDuplicatas[$chave] !== 'new') {
+                    // UPDATE - apenas se já existia no banco (não é 'new' do mesmo CSV)
+                    $stmtUpdate->bindValue(':pontos_up', $lv['pontosUp']);
+                    $stmtUpdate->bindValue(':dt_ini', $lv['dtIniFormatada']);
+                    $stmtUpdate->bindValue(':dt_fim', $lv['dtFimFormatada']);
+                    $stmtUpdate->bindValue(':id_usuario', $idUsuario, $idUsuario === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+                    $stmtUpdate->bindValue(':id_pontuacao', $mapaDuplicatas[$chave], \PDO::PARAM_INT);
+                    $stmtUpdate->execute();
                     $atualizados++;
-                } else {
-                    // INSERT
-                    $stmtInsert->execute([
-                        ':empr_id' => $emprId,
-                        ':item_id' => $lv['item']['ITEM_ID'],
-                        ':itempr_id' => $lv['item']['ITEMPR_ID'],
-                        ':mascara_id' => $lv['mascaraId'],
-                        ':centro_trab_id' => $lv['centroTrabId'],
-                        ':pontos_up' => $lv['pontosUp'],
-                        ':dt_ini' => $lv['dtIniFormatada'],
-                        ':dt_fim' => $lv['dtFimFormatada'],
-                        ':id_usuario' => $idUsuario,
-                    ]);
+                } elseif (!isset($mapaDuplicatas[$chave])) {
+                    // INSERT - tratar NULLs explicitamente para evitar ORA-01722
+                    $stmtInsert->bindValue(':empr_id', $emprId, \PDO::PARAM_INT);
+                    $stmtInsert->bindValue(':item_id', $lv['item']['ITEM_ID'], \PDO::PARAM_INT);
+                    $stmtInsert->bindValue(':itempr_id', $lv['item']['ITEMPR_ID'], $lv['item']['ITEMPR_ID'] === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+                    $stmtInsert->bindValue(':mascara_id', $lv['mascaraId'], $lv['mascaraId'] === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+                    $stmtInsert->bindValue(':centro_trab_id', $lv['centroTrabId'], $lv['centroTrabId'] === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+                    $stmtInsert->bindValue(':pontos_up', $lv['pontosUp']);
+                    $stmtInsert->bindValue(':dt_ini', $lv['dtIniFormatada']);
+                    $stmtInsert->bindValue(':dt_fim', $lv['dtFimFormatada']);
+                    $stmtInsert->bindValue(':id_usuario', $idUsuario, $idUsuario === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+                    $stmtInsert->execute();
                     $importados++;
                     // Registrar no mapa para evitar duplicatas em linhas subsequentes do mesmo CSV
                     $mapaDuplicatas[$chave] = 'new';
                 }
+                // Se mapaDuplicatas[$chave] === 'new', ignora linha duplicada do mesmo CSV
             }
             $pdo->commit();
         } catch (\Exception $e) {
@@ -939,6 +938,7 @@ class ComissaoCadastroHandler
         $dados['centro_trab_id'] = $dados['centro_trab_id'] ?? $dados['centroTrabId'] ?? null;
         $dados['dt_vigencia_ini'] = $dados['dt_vigencia_ini'] ?? $dados['dtVigenciaIni'] ?? null;
         $dados['dt_vigencia_fim'] = $dados['dt_vigencia_fim'] ?? $dados['dtVigenciaFim'] ?? null;
+        $dados['tipo_funcionario'] = $dados['tipo_funcionario'] ?? $dados['tipoFuncionario'] ?? 'T';
         
         $dados['ponto_final'] = $dados['ponto_final'] ?: null;
         $dados['centro_trab_id'] = $dados['centro_trab_id'] ?: null;

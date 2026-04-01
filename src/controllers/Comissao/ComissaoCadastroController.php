@@ -403,6 +403,7 @@ class ComissaoCadastroController extends ctrl
             $dados['centro_trab_id'] = $dados['centro_trab_id'] ?? $dados['centroTrabId'] ?? null;
             $dados['dt_vigencia_ini'] = $dados['dt_vigencia_ini'] ?? $dados['dtVigenciaIni'] ?? null;
             $dados['dt_vigencia_fim'] = $dados['dt_vigencia_fim'] ?? $dados['dtVigenciaFim'] ?? null;
+            $dados['tipo_funcionario'] = $dados['tipo_funcionario'] ?? $dados['tipoFuncionario'] ?? 'T';
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
             self::verificarCamposVazios($dados, [
@@ -469,6 +470,7 @@ class ComissaoCadastroController extends ctrl
             $dados['centro_trab_id'] = $dados['centro_trab_id'] ?? $dados['centroTrabId'] ?? null;
             $dados['dt_vigencia_ini'] = $dados['dt_vigencia_ini'] ?? $dados['dtVigenciaIni'] ?? null;
             $dados['dt_vigencia_fim'] = $dados['dt_vigencia_fim'] ?? $dados['dtVigenciaFim'] ?? null;
+            $dados['tipo_funcionario'] = $dados['tipo_funcionario'] ?? $dados['tipoFuncionario'] ?? 'T';
             $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
             
             self::verificarCamposVazios($dados, [
@@ -1496,11 +1498,134 @@ class ComissaoCadastroController extends ctrl
             self::response(['success' => false, 'message' => $e->getMessage()], 400);
         }
     }
+
+    // ==================== DATAS DE APOIO ====================
+
+    /**
+     * Listar datas de apoio de um vínculo (API)
+     */
+    public function listarDatasApoio()
+    {
+        try {
+            $idVinculo = $_GET['vinculo_id'] ?? $_GET['id_vinculo'] ?? null;
+            
+            if (!$idVinculo) {
+                throw new \Exception('ID do vínculo é obrigatório');
+            }
+
+            $datas = \src\models\Comissao\VinculoData::listarPorVinculo((int)$idVinculo);
+
+            self::response([
+                'success' => true,
+                'data' => $datas,
+                'total' => count($datas)
+            ], 200);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Salvar datas de apoio de um vínculo (API)
+     * Recebe array de datas no formato ['YYYY-MM-DD', ...]
+     */
+    public function salvarDatasApoio()
+    {
+        try {
+            $dados = Request::getJsonBody();
+            
+            $idVinculo = $dados['vinculo_id'] ?? $dados['id_vinculo'] ?? null;
+            $datas = $dados['datas'] ?? [];
+            $idCentroApoio = $dados['centro_apoio_id'] ?? $dados['id_centro_apoio'] ?? null;
+            
+            if (!$idVinculo) {
+                throw new \Exception('ID do vínculo é obrigatório');
+            }
+
+            // Se recebeu array de datas, insere múltiplas
+            $count = \src\models\Comissao\VinculoData::inserirMultiplas(
+                (int)$idVinculo, 
+                $datas, 
+                $idCentroApoio ? (int)$idCentroApoio : null
+            );
+
+            self::response([
+                'success' => true,
+                'message' => 'Datas de apoio salvas com sucesso',
+                'total' => $count
+            ], 200);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Adicionar uma data de apoio (API)
+     */
+    public function adicionarDataApoio()
+    {
+        try {
+            $dados = Request::getJsonBody();
+            
+            $idVinculo = $dados['vinculo_id'] ?? $dados['id_vinculo'] ?? null;
+            $data = $dados['data'] ?? null;
+            $idCentroApoio = $dados['centro_apoio_id'] ?? $dados['id_centro_apoio'] ?? null;
+            
+            if (!$idVinculo || !$data) {
+                throw new \Exception('ID do vínculo e data são obrigatórios');
+            }
+
+            // Verificar se já existe
+            if (\src\models\Comissao\VinculoData::existeData((int)$idVinculo, $data)) {
+                throw new \Exception('Esta data já está cadastrada como dia de apoio');
+            }
+
+            $sucesso = \src\models\Comissao\VinculoData::inserir(
+                (int)$idVinculo, 
+                $data, 
+                $idCentroApoio ? (int)$idCentroApoio : null
+            );
+
+            if (!$sucesso) {
+                throw new \Exception('Erro ao adicionar data de apoio');
+            }
+
+            self::response([
+                'success' => true,
+                'message' => 'Data de apoio adicionada com sucesso'
+            ], 201);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Remover uma data de apoio (API)
+     */
+    public function removerDataApoio()
+    {
+        try {
+            // Aceita tanto via query string quanto via JSON body
+            $dados = Request::getJsonBody();
+            
+            $id = $dados['id'] ?? $_GET['id'] ?? null;
+            
+            if (!$id) {
+                throw new \Exception('ID da data de apoio é obrigatório');
+            }
+
+            $sucesso = \src\models\Comissao\VinculoData::excluir((int)$id);
+
+            if (!$sucesso) {
+                throw new \Exception('Erro ao remover data de apoio');
+            }
+
+            self::response([
+                'success' => true,
+                'message' => 'Data de apoio removida com sucesso'
+            ], 200);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
 }
-
-
-
-
-
-
-
