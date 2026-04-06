@@ -13,6 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Carregar dados iniciais
     carregarPontuacoes();
     
+    // Filtrar ao pressionar Enter no campo de busca
+    document.getElementById('filtroItem')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            carregarPontuacoes();
+        }
+    });
+    
     // Reinicializar Select2 quando modal abrir
     $('#modalPontuacao').on('shown.bs.modal', function() {
         if (select2Produto) {
@@ -237,7 +245,8 @@ function carregarProdutos() {
 function carregarPontuacoes() {
     const filtros = {
         centroTrabId: document.getElementById('filtroCentro')?.value || '',
-        incluirInativas: document.getElementById('incluirInativas')?.checked || false
+        incluirInativas: document.getElementById('incluirInativas')?.checked || false,
+        busca: document.getElementById('filtroItem')?.value?.trim() || ''
     };
     
     const params = new URLSearchParams();
@@ -381,7 +390,7 @@ function initDataTable() {
             }
         },
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[0, 'desc']],
         columnDefs: [
             { orderable: false, targets: [9] } // Coluna de ações (10ª coluna, index 9)

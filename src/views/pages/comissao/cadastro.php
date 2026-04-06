@@ -63,17 +63,18 @@ if (!$acessoComissao) {
                 </div>
             </div>
         </a>
-        <a href="<?= $base ?>comissao-retrabalho" class="ds-card" style="text-decoration: none; cursor: pointer;">
+        <!-- RETRABALHO INATIVO - botão visível mas desabilitado -->
+        <div class="ds-card" style="text-decoration: none; cursor: not-allowed; opacity: 0.5; pointer-events: none;">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div class="comissao-metric-icon" style="background: var(--ds-danger-light); color: var(--ds-danger);">
                     <i class="bi bi-arrow-repeat"></i>
                 </div>
                 <div>
-                    <div class="ds-card-label">RETRABALHO</div>
+                    <div class="ds-card-label">RETRABALHO <span class="badge bg-secondary" style="font-size: 0.6rem;">INATIVO</span></div>
                     <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Controle de retrabalho com impacto</div>
                 </div>
             </div>
-        </a>
+        </div>
         <a href="<?= $base ?>comissao-vinculo-apontamento" class="ds-card" style="text-decoration: none; cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div class="comissao-metric-icon" style="background: #f0ebfe; color: #6f42c1;">

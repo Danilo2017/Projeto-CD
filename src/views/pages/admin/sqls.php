@@ -72,7 +72,23 @@ if (empty($is_admin)) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="validarSql()"><i class="bi bi-check-circle"></i> Validar</button>
                 <button type="button" class="btn btn-primary" id="btnSalvarSql" onclick="salvarSql()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Histórico -->
+<div class="modal fade" id="modalHistorico" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clock-history"></i> Histórico de Alterações</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="historicoConteudo">Carregando...</div>
             </div>
         </div>
     </div>
@@ -100,8 +116,9 @@ function carregarSqls() {
                     <td><code>${row.IDSQL}</code></td>
                     <td><small class="text-muted font-monospace">${previa}...</small></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editarSql('${row.IDSQL}')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="excluirSql('${row.IDSQL}')"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editarSql('${row.IDSQL}')" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-info me-1" onclick="verHistorico('${row.IDSQL}')" title="Histórico"><i class="bi bi-clock-history"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirSql('${row.IDSQL}')" title="Excluir"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>`;
             }).join('');
@@ -194,6 +211,71 @@ function excluirSql(idsql) {
 document.getElementById('filtroBusca').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') carregarSqls();
 });
+
+function validarSql() {
+    const sql = document.getElementById('inputSql').value.trim();
+    if (!sql) {
+        alert('Digite um SQL para validar');
+        return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Validando...';
+
+    fetch(window.location.origin + '/admin-api-sql-validar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql })
+    })
+    .then(r => r.json())
+    .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Validar';
+        if (res.success && res.valido) {
+            alert('✅ SQL válido! Sintaxe correta.');
+        } else {
+            alert('❌ SQL inválido:\n' + (res.erro || 'Erro desconhecido'));
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Validar';
+        alert('Erro ao validar: ' + err.message);
+    });
+}
+
+function verHistorico(idsql) {
+    const modal = new bootstrap.Modal(document.getElementById('modalHistorico'));
+    modal.show();
+    document.getElementById('historicoConteudo').innerHTML = '<div class="text-center"><div class="spinner-border"></div><p>Carregando histórico de <code>' + idsql + '</code>...</p></div>';
+
+    fetch(`${window.location.origin}/admin-api-sql-historico?idsql=${encodeURIComponent(idsql)}`)
+        .then(r => r.json())
+        .then(res => {
+            if (!res.success || !res.data.length) {
+                document.getElementById('historicoConteudo').innerHTML = '<p class="text-muted text-center">Nenhum histórico encontrado para este SQL.</p>';
+                return;
+            }
+            const html = res.data.map(h => `
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span><strong>${h.ACAO}</strong> por <code>${h.USUARIO || 'sistema'}</code></span>
+                        <small class="text-muted">${h.DATA_ALTERACAO}</small>
+                    </div>
+                    <div class="card-body">
+                        ${h.OBSERVACAO ? '<p><em>' + h.OBSERVACAO + '</em></p>' : ''}
+                        ${h.SQL_ANTERIOR ? '<details><summary>SQL Anterior</summary><pre class="bg-light p-2 mt-2" style="max-height:200px;overflow:auto;">' + h.SQL_ANTERIOR.replace(/</g,'&lt;') + '</pre></details>' : ''}
+                        ${h.SQL_NOVO ? '<details><summary>SQL Novo</summary><pre class="bg-light p-2 mt-2" style="max-height:200px;overflow:auto;">' + h.SQL_NOVO.replace(/</g,'&lt;') + '</pre></details>' : ''}
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('historicoConteudo').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('historicoConteudo').innerHTML = '<p class="text-danger">Erro ao carregar histórico: ' + err.message + '</p>';
+        });
+}
 </script>
 
 <?= $render('footer') ?>

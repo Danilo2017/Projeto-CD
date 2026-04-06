@@ -67,13 +67,29 @@ function carregarCentrosTrabalho() {
         .then(data => {
             if (data.success) {
                 const select = document.getElementById('filtroCentro');
-                select.innerHTML = '<option value="">Selecione um centro de trabalho</option>';
+                select.innerHTML = '<option value="">Digite código ou nome...</option>';
                 data.data.forEach(centro => {
                     select.innerHTML += `<option value="${centro.ID}">${centro.COD_CENTRO} - ${centro.DESCRICAO}</option>`;
                 });
+                inicializarSelect2Centro();
             }
         })
         .catch(error => console.error('Erro ao carregar centros:', error));
+}
+
+/**
+ * Inicializa Select2 para Centro de Trabalho
+ */
+function inicializarSelect2Centro() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#filtroCentro').select2({
+            theme: 'bootstrap-5',
+            language: 'pt-BR',
+            placeholder: 'Digite código ou nome...',
+            allowClear: true,
+            width: '100%'
+        });
+    }
 }
 
 /**

@@ -1,74 +1,137 @@
 // JS para tela de vínculo centro/recurso/funcionário
+
+// Caches para Select2
+let funcionariosCache = [];
+let recursosCache = [];
+let centrosCache = [];
+
 $(document).ready(function() {
     carregarFuncionarios();
     carregarRecursos();
     carregarCentros();
     carregarVinculos();
+    
+    // Inicializar Select2 do modal quando abrir
+    $('#modalVinculo').on('shown.bs.modal', function() {
+        inicializarSelect2Modal();
+    });
 });
+
+function inicializarSelect2Filtros() {
+    // Select2 para filtro de funcionário
+    if ($('#filtroFuncionario').data('select2')) {
+        $('#filtroFuncionario').select2('destroy');
+    }
+    $('#filtroFuncionario').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite para buscar...',
+        allowClear: true,
+        data: [{id: '', text: 'Todos'}].concat(funcionariosCache.map(f => ({
+            id: f.ID,
+            text: (f.COD_FUNC ? f.COD_FUNC + ' - ' : '') + f.NOME
+        })))
+    });
+    
+    // Select2 para filtro de recurso
+    if ($('#filtroRecurso').data('select2')) {
+        $('#filtroRecurso').select2('destroy');
+    }
+    $('#filtroRecurso').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite para buscar...',
+        allowClear: true,
+        data: [{id: '', text: 'Todos'}].concat(recursosCache.map(r => ({
+            id: r.ID,
+            text: (r.COD_MAQUINA ? r.COD_MAQUINA + ' - ' : '') + r.DESCRICAO
+        })))
+    });
+    
+    // Select2 para filtro de centro
+    if ($('#filtroCentro').data('select2')) {
+        $('#filtroCentro').select2('destroy');
+    }
+    $('#filtroCentro').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite para buscar...',
+        allowClear: true,
+        data: [{id: '', text: 'Todos'}].concat(centrosCache.map(c => ({
+            id: c.ID,
+            text: (c.COD_CENTRO ? c.COD_CENTRO + ' - ' : '') + c.DESCRICAO
+        })))
+    });
+}
+
+function inicializarSelect2Modal() {
+    // Select2 para funcionário no modal
+    if ($('#funcionario_id').data('select2')) {
+        $('#funcionario_id').select2('destroy');
+    }
+    $('#funcionario_id').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou nome...',
+        allowClear: true,
+        dropdownParent: $('#modalVinculo'),
+        data: [{id: '', text: 'Selecione'}].concat(funcionariosCache.map(f => ({
+            id: f.ID,
+            text: (f.COD_FUNC ? f.COD_FUNC + ' - ' : '') + f.NOME
+        })))
+    });
+    
+    // Select2 para recurso no modal
+    if ($('#recurso_id').data('select2')) {
+        $('#recurso_id').select2('destroy');
+    }
+    $('#recurso_id').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou descrição...',
+        allowClear: true,
+        dropdownParent: $('#modalVinculo'),
+        data: [{id: '', text: 'Selecione'}].concat(recursosCache.map(r => ({
+            id: r.ID,
+            text: (r.COD_MAQUINA ? r.COD_MAQUINA + ' - ' : '') + r.DESCRICAO
+        })))
+    });
+    
+    // Select2 para centro no modal
+    if ($('#centro_id').data('select2')) {
+        $('#centro_id').select2('destroy');
+    }
+    $('#centro_id').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou descrição...',
+        allowClear: true,
+        dropdownParent: $('#modalVinculo'),
+        data: [{id: '', text: 'Selecione'}].concat(centrosCache.map(c => ({
+            id: c.ID,
+            text: (c.COD_CENTRO ? c.COD_CENTRO + ' - ' : '') + c.DESCRICAO
+        })))
+    });
+}
 
 function carregarFuncionarios() {
     $.get('/comissao-api-funcionarios', function(res) {
-        let options = '<option value="">Selecione</option>';
-        if (res && res.data) {
-            res.data.forEach(f => {
-                let label = f.COD_FUNC ? `${f.COD_FUNC} - ${f.NOME}` : f.NOME;
-                options += `<option value="${f.ID}">${label}</option>`;
-            });
-        }
-        $('#funcionario_id').html(options);
+        funcionariosCache = res.data || [];
+        inicializarSelect2Filtros();
     });
-    // Ativa select2 para busca dinâmica no filtro
-    if ($.fn.select2) {
-        $('#filtroFuncionario').select2({
-            placeholder: 'Digite para buscar',
-            minimumInputLength: 2,
-            ajax: {
-                url: '/comissao-api-funcionarios',
-                dataType: 'json',
-                delay: 250,
-                data: function(params) {
-                    return { busca: params.term };
-                },
-                processResults: function (data) {
-                    return {
-                        results: (data.data || []).map(f => ({
-                            id: f.ID,
-                            text: (f.COD_FUNC ? `${f.COD_FUNC} - ` : '') + f.NOME
-                        }))
-                    };
-                },
-                cache: true
-            },
-            allowClear: true
-        });
-    }
 }
 
 function carregarRecursos() {
     $.get('/comissao-api-recursos', function(res) {
-        let options = '<option value="">Selecione</option>';
-        if (res && res.data) {
-            res.data.forEach(r => {
-                let label = r.COD_MAQUINA ? `${r.COD_MAQUINA} - ${r.DESCRICAO}` : r.DESCRICAO;
-                options += `<option value="${r.ID}">${label}</option>`;
-            });
-        }
-        $('#recurso_id').html(options);
-        $('#filtroRecurso').html('<option value="">Todos</option>' + options);
+        recursosCache = res.data || [];
+        inicializarSelect2Filtros();
     });
 }
 
 function carregarCentros() {
     $.get('/comissao-api-centros', function(res) {
-        let options = '<option value="">Selecione</option>';
-        if (res && res.data) {
-            res.data.forEach(c => {
-                let label = c.COD_CENTRO ? `${c.COD_CENTRO} - ${c.DESCRICAO}` : c.DESCRICAO;
-                options += `<option value="${c.ID}">${label}</option>`;
-            });
-        }
-        $('#centro_id').html(options);
-        $('#filtroCentro').html('<option value="">Todos</option>' + options);
+        centrosCache = res.data || [];
+        inicializarSelect2Filtros();
     });
 }
 
@@ -78,6 +141,17 @@ function novoVinculo() {
     $('#tipo_vinculo').val('N');
     toggleRecursoObrigatorio();
     $('#modalVinculoTitulo').html('<i class="bi bi-link-45deg"></i> Novo Vínculo');
+    
+    // Limpar Select2 do modal
+    if ($('#funcionario_id').data('select2')) {
+        $('#funcionario_id').val('').trigger('change');
+    }
+    if ($('#recurso_id').data('select2')) {
+        $('#recurso_id').val('').trigger('change');
+    }
+    if ($('#centro_id').data('select2')) {
+        $('#centro_id').val('').trigger('change');
+    }
 }
 
 // Alterna obrigatoriedade do recurso com base no tipo de vínculo
@@ -97,6 +171,13 @@ function toggleRecursoObrigatorio() {
 }
 
 function salvarVinculo() {
+    const btnSalvar = $('#btnSalvarVinculo');
+    
+    // Se já está salvando, não faz nada
+    if (btnSalvar.prop('disabled')) {
+        return;
+    }
+    
     const vinculoId = $('#vinculoId').val();
     const funcionario_id = $('#funcionario_id').val();
     const recurso_id = $('#recurso_id').val();
@@ -112,6 +193,10 @@ function salvarVinculo() {
         alert('Recurso é obrigatório para vínculo Normal!');
         return;
     }
+    
+    // Desabilitar botão e mostrar loading
+    btnSalvar.prop('disabled', true);
+    btnSalvar.html('<span class="spinner-border spinner-border-sm me-1"></span> Salvando...');
     
     const isEdit = vinculoId && vinculoId !== '';
     const payload = { funcionario_id, recurso_id: recurso_id || null, centro_id, tipo_vinculo };
@@ -137,19 +222,36 @@ function salvarVinculo() {
                 if (resp.error) msg = resp.error;
             } catch(e) {}
             alert(msg);
+        },
+        complete: function() {
+            // Reabilitar botão
+            btnSalvar.prop('disabled', false);
+            btnSalvar.html('<i class="bi bi-check-lg"></i> Salvar');
         }
     });
 }
 
 function editarVinculo(id, funcionarioId, recursoId, centroId, tipoVinculo) {
     $('#vinculoId').val(id);
-    $('#funcionario_id').val(funcionarioId);
-    $('#recurso_id').val(recursoId);
-    $('#centro_id').val(centroId);
     $('#tipo_vinculo').val(tipoVinculo || 'N');
     toggleRecursoObrigatorio();
     $('#modalVinculoTitulo').html('<i class="bi bi-pencil"></i> Editar Vínculo');
+    
+    // Abrir modal e depois setar valores do Select2
     $('#modalVinculo').modal('show');
+    
+    // Aguardar modal abrir para setar valores do Select2
+    setTimeout(function() {
+        if ($('#funcionario_id').data('select2')) {
+            $('#funcionario_id').val(funcionarioId).trigger('change');
+        }
+        if ($('#recurso_id').data('select2')) {
+            $('#recurso_id').val(recursoId).trigger('change');
+        }
+        if ($('#centro_id').data('select2')) {
+            $('#centro_id').val(centroId).trigger('change');
+        }
+    }, 300);
 }
 
 function excluirVinculo(id) {
@@ -246,7 +348,7 @@ function carregarVinculos() {
                 }
             },
             lengthChange: false,
-            pageLength: 10,
+            pageLength: 20,
             order: [[0, 'desc']]
         });
     }).fail(function(xhr) {
@@ -277,7 +379,7 @@ function carregarVinculos() {
                 }
             },
             lengthChange: false,
-            pageLength: 10,
+            pageLength: 20,
             order: [[0, 'desc']]
         });
         alert(errMsg);
@@ -352,19 +454,21 @@ function carregarDiasApoio(vinculoId) {
                 let centroApoioNome = d.CENTRO_APOIO_DESCRICAO 
                     ? (d.CENTRO_APOIO_COD ? d.CENTRO_APOIO_COD + ' - ' : '') + d.CENTRO_APOIO_DESCRICAO 
                     : 'Mesmo centro do vínculo';
+                let tipoCalculo = d.TIPO_CALCULO === 'M' ? '<span class="badge bg-info">Média</span>' : '<span class="badge bg-primary">Total</span>';
                 html += '<tr>';
                 html += '<td>' + dataFormatada + '</td>';
                 html += '<td>' + centroApoioNome + '</td>';
+                html += '<td>' + tipoCalculo + '</td>';
                 html += '<td><button class="btn btn-sm btn-danger" onclick="removerDataApoio(' + d.ID_VINCULO_DATA + ', ' + vinculoId + ')" title="Remover"><i class="bi bi-trash"></i></button></td>';
                 html += '</tr>';
             });
         } else {
-            html = '<tr><td colspan="3" class="text-center text-muted">Nenhuma data configurada</td></tr>';
+            html = '<tr><td colspan="4" class="text-center text-muted">Nenhuma data configurada</td></tr>';
         }
         $('#tabelaDiasApoioBody').html(html);
     }).fail(function(xhr) {
         console.error('Erro ao carregar dias de apoio:', xhr.responseText);
-        $('#tabelaDiasApoioBody').html('<tr><td colspan="3" class="text-center text-danger">Erro ao carregar datas</td></tr>');
+        $('#tabelaDiasApoioBody').html('<tr><td colspan="4" class="text-center text-danger">Erro ao carregar datas</td></tr>');
     });
 }
 
@@ -383,6 +487,7 @@ function adicionarDataApoio() {
     const dataInicio = $('#novaDataApoio').val();
     const dataFim = $('#novaDataApoioFim').val();
     const centroApoioId = $('#centroApoioSelect').val() || centroApoioAtual;
+    const tipoCalculo = $('#tipoCalculoApoio').val() || 'M';
     
     if (!dataInicio) {
         alert('Selecione a data inicial!');
@@ -409,7 +514,8 @@ function adicionarDataApoio() {
         data: JSON.stringify({
             vinculo_id: vinculoId,
             datas: datas,
-            centro_apoio_id: centroApoioId
+            centro_apoio_id: centroApoioId,
+            tipo_calculo: tipoCalculo
         }),
         success: function(resp) {
             if (resp.success) {

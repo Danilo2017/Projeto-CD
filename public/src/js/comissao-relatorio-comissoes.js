@@ -82,9 +82,42 @@ function carregarCentrosTrabalho() {
                 data.data.forEach(centro => {
                     select.innerHTML += `<option value="${centro.ID}">${centro.COD_CENTRO} - ${centro.DESCRICAO}</option>`;
                 });
+                // Inicializar Select2 após carregar dados
+                inicializarSelect2Centro();
+                inicializarSelect2Status();
             }
         })
         .catch(error => console.error('Erro ao carregar centros:', error));
+}
+
+/**
+ * Inicializa Select2 para Centro de Trabalho
+ */
+function inicializarSelect2Centro() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#filtroCentro').select2({
+            theme: 'bootstrap-5',
+            language: 'pt-BR',
+            placeholder: 'Digite código ou nome...',
+            allowClear: true,
+            width: '100%'
+        });
+    }
+}
+
+/**
+ * Inicializa Select2 para Status
+ */
+function inicializarSelect2Status() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#filtroStatus').select2({
+            theme: 'bootstrap-5',
+            language: 'pt-BR',
+            placeholder: 'Selecione...',
+            allowClear: true,
+            width: '100%'
+        });
+    }
 }
 
 /**
@@ -215,6 +248,17 @@ function renderizarTabelaComissoes(dados) {
         const faltaBadge = temFalta 
             ? `<span class="badge bg-warning text-dark ms-1" title="${diasComFalta} dia(s) com falta">⚠️ ${diasComFalta} falta(s)</span>` 
             : '';
+        
+        // Verificar se tem dias de apoio
+        const temApoio = item.TEM_APOIO || false;
+        const diasApoio = item.DIAS_APOIO || 0;
+        const pontosApoio = item.PONTOS_APOIO || 0;
+        const tipoCalculoApoio = item.TIPO_CALCULO_APOIO || 'T';
+        const labelApoio = tipoCalculoApoio === 'M' ? 'MÉDIA' : 'TOTAL';
+        const apoioBadge = temApoio 
+            ? `<span class="badge bg-info text-white ms-1" title="Pontos (${labelApoio}): ${formatarNumero(pontosApoio, 2)} (${diasApoio} dia(s))">📊 ${labelApoio}</span>` 
+            : '';
+        
         const rowClass = temFalta ? 'table-warning' : '';
         
         totalPontos += parseFloat(item.TOTAL_PONTOS || 0);
@@ -230,7 +274,7 @@ function renderizarTabelaComissoes(dados) {
                 <td>${item.PERIODO}</td>
                 <td>${item.CODIGO_FUNC}</td>
                 <td>
-                    <strong>${item.NOME_FUNC}</strong>${faltaBadge}
+                    <strong>${item.NOME_FUNC}</strong>${faltaBadge}${apoioBadge}
                 </td>
                 <td>${item.CENTRO_TRABALHO || '-'}</td>
                 <td class="text-end">${formatarNumero(item.TOTAL_PONTOS, 2)}</td>
@@ -288,7 +332,7 @@ function initDataTable() {
             }
         },
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[7, 'desc']],
         columnDefs: [
             { orderable: false, targets: [0, 9] }

@@ -26,16 +26,25 @@ class ComissaoCadastroHandler
     /**
      * Listar pontuações cadastradas
      */
-    public static function listarPontuacoes(?int $emprId, bool $incluirInativas = false): array
+    public static function listarPontuacoes(?int $emprId, bool $incluirInativas = false, ?string $busca = null): array
     {
         $pontuacoes = PontuacaoProduto::listarTodas($emprId);
         
         if (!$incluirInativas) {
             $pontuacoes = array_filter($pontuacoes, fn($p) => $p['ATIVO'] === 'S');
-            $pontuacoes = array_values($pontuacoes);
         }
         
-        return $pontuacoes;
+        // Filtrar por código ou descrição do produto
+        if ($busca !== null && $busca !== '') {
+            $buscaUpper = strtoupper($busca);
+            $pontuacoes = array_filter($pontuacoes, function($p) use ($buscaUpper) {
+                $codItem = strtoupper($p['COD_ITEM'] ?? '');
+                $descricao = strtoupper($p['DESCRICAO'] ?? '');
+                return strpos($codItem, $buscaUpper) !== false || strpos($descricao, $buscaUpper) !== false;
+            });
+        }
+        
+        return array_values($pontuacoes);
     }
 
     /**

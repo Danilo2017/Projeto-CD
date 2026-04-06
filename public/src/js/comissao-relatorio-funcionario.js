@@ -5,13 +5,15 @@
 let chartEvolucao = null;
 let dataTableDiario = null;
 let dataTableApontamentos = null;
+let dataTableApontamentosCentro = null;
 let dataTableComissoes = null;
 
 // Dados globais para o comprovante
 let dadosRelatorio = {
     funcionario: null,
     resumo: null,
-    diario: []
+    diario: [],
+    apontamentosCentro: []
 };
 
 /**
@@ -89,9 +91,26 @@ function carregarFuncionarios() {
                 data.data.forEach(func => {
                     select.innerHTML += `<option value="${func.ID}">${func.COD_FUNC} - ${func.NOME}</option>`;
                 });
+                // Inicializar Select2 após carregar dados
+                inicializarSelect2Funcionario();
             }
         })
         .catch(error => console.error('Erro ao carregar funcionários:', error));
+}
+
+/**
+ * Inicializa Select2 para o campo de funcionário
+ */
+function inicializarSelect2Funcionario() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#filtroFuncionario').select2({
+            theme: 'bootstrap-5',
+            language: 'pt-BR',
+            placeholder: 'Digite código ou nome do funcionário...',
+            allowClear: true,
+            width: '100%'
+        });
+    }
 }
 
 /**
@@ -130,12 +149,14 @@ function carregarRelatorio() {
                 dadosRelatorio.funcionario = data.funcionario;
                 dadosRelatorio.resumo = data.resumo;
                 dadosRelatorio.diario = data.diario;
+                dadosRelatorio.apontamentosCentro = data.apontamentosCentro || [];
                 
                 mostrarSections();
                 renderizarFuncionario(data.funcionario);
                 renderizarResumo(data.resumo);
                 renderizarTabelaDiario(data.diario);
                 renderizarTabelaApontamentos(data.apontamentos);
+                renderizarTabelaApontamentosCentro(data.apontamentosCentro);
                 renderizarTabelaComissoes(data.comissoes);
                 
                 // Mostrar botão de comprovante
@@ -312,6 +333,60 @@ function renderizarTabelaApontamentos(dados) {
 }
 
 /**
+ * Renderiza tabela de apontamentos do centro (sem vínculo direto)
+ * Exibido quando o funcionário tem dias de apoio/média
+ */
+function renderizarTabelaApontamentosCentro(dados) {
+    const tbody = document.getElementById('tabelaApontamentosCentroBody');
+    const section = document.getElementById('sectionApontamentosCentro');
+    
+    if (!dados || dados.length === 0) {
+        if (section) section.style.display = 'none';
+        return;
+    }
+    
+    // Mostrar seção apenas se houver dados
+    if (section) section.style.display = 'block';
+    
+    let html = '';
+    dados.forEach(item => {
+        const data = item.DATA_APONTAMENTO || '-';
+        const codigo = item.COD_ITEM || '-';
+        const descricao = item.DESC_ITEM || '-';
+        const recurso = item.RECURSO || 'CENTRO';
+        const quantidade = item.TOTAL_QUANTIDADE || 0;
+        const pontos = item.TOTAL_PONTOS || 0;
+        
+        html += `
+            <tr>
+                <td>${formatarData(data)}</td>
+                <td>${codigo}</td>
+                <td>${descricao}</td>
+                <td><span class="badge bg-info">${recurso}</span></td>
+                <td class="text-center">${formatarNumero(quantidade)}</td>
+                <td class="text-end"><strong>${formatarNumero(pontos, 4)}</strong></td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    initDataTableApontamentosCentro();
+}
+
+/**
+ * Inicializa DataTable de apontamentos do centro
+ */
+function initDataTableApontamentosCentro() {
+    if (dataTableApontamentosCentro) dataTableApontamentosCentro.destroy();
+    dataTableApontamentosCentro = $('#tabelaApontamentosCentro').DataTable({
+        language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por página", info: "Mostrando _START_ até _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 até 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado disponível na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Próximo", last: "Último" } },
+        lengthChange: false,
+        pageLength: 20,
+        order: [[0, 'desc']]
+    });
+}
+
+/**
  * Renderiza tabela de comissões
  */
 function renderizarTabelaComissoes(dados) {
@@ -351,7 +426,7 @@ function initDataTableDiario() {
     dataTableDiario = $('#tabelaDiario').DataTable({
         language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por p\u00e1gina", info: "Mostrando _START_ at\u00e9 _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 at\u00e9 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado dispon\u00edvel na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Pr\u00f3ximo", last: "\u00daltimo" } },
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[0, 'desc']]
     });
 }
@@ -361,7 +436,7 @@ function initDataTableApontamentos() {
     dataTableApontamentos = $('#tabelaApontamentos').DataTable({
         language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por p\u00e1gina", info: "Mostrando _START_ at\u00e9 _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 at\u00e9 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado dispon\u00edvel na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Pr\u00f3ximo", last: "\u00daltimo" } },
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[0, 'desc'], [1, 'desc']]
     });
 }
@@ -371,7 +446,7 @@ function initDataTableComissoes() {
     dataTableComissoes = $('#tabelaComissoes').DataTable({
         language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por p\u00e1gina", info: "Mostrando _START_ at\u00e9 _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 at\u00e9 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado dispon\u00edvel na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Pr\u00f3ximo", last: "\u00daltimo" } },
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[0, 'desc']]
     });
 }

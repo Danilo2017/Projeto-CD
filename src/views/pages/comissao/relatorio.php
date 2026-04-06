@@ -15,7 +15,7 @@ if (!$acessoComissao) {
 ]) ?>
 
 <div class="comissao-dashboard-container">
-    <div class="ds-cards-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="ds-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
         <a href="<?= $base ?>comissao-relatorio-diario" class="ds-card" style="text-decoration: none; cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div class="comissao-metric-icon">
@@ -57,6 +57,28 @@ if (!$acessoComissao) {
                 <div>
                     <div class="ds-card-label">POR CENTRO DE TRABALHO</div>
                     <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Comissões e comprovantes</div>
+                </div>
+            </div>
+        </a>
+        <a href="<?= $base ?>comissao-relatorio-faltas" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: #f8d7da; color: #721c24;">
+                    <i class="bi bi-calendar-x"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">FALTAS POR FUNCIONÁRIO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Histórico de ausências</div>
+                </div>
+            </div>
+        </a>
+        <a href="<?= $base ?>comissao-extrato-analitico" class="ds-card" style="text-decoration: none; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="comissao-metric-icon" style="background: #e2e3e5; color: #383d41;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div>
+                    <div class="ds-card-label">EXTRATO ANALÍTICO</div>
+                    <div style="font-size: 0.85rem; color: var(--ds-text-secondary);">Dia a dia por funcionário</div>
                 </div>
             </div>
         </a>

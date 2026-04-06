@@ -199,8 +199,7 @@ class ComissaoRelatorioHandler
     public static function getComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?string $status = null): array
     {
         // OTIMIZADO: Usa versão batch que faz ~6 queries ao invés de N*5 queries
-        $comissaoModel = new Comissao();
-        $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
+        $resultado = Comissao::calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         $funcionarios = $resultado['funcionarios'] ?? [];
         $periodoFormatado = date('d/m/Y', strtotime($dataInicio)) . ' a ' . date('d/m/Y', strtotime($dataFim));
@@ -208,6 +207,12 @@ class ComissaoRelatorioHandler
         $comissoes = [];
         foreach ($funcionarios as $func) {
             $faixaDesc = self::formatarDescricaoFaixa($func);
+            
+            // Determinar se é apoio e tipo de cálculo
+            $diasApoio = $func['dias_apoio'] ?? 0;
+            $diasNormais = $func['dias_normais'] ?? 0;
+            $isApoio = $diasApoio > 0;
+            $tipoCalculoApoio = $func['tipo_calculo_apoio'] ?? null; // T=Total, M=Média
             
             $comissoes[] = [
                 'FUNC_ID' => $func['func_id'] ?? null,
@@ -218,12 +223,18 @@ class ComissaoRelatorioHandler
                 'CENTRO_TRAB_ID' => $func['centro_trab_id'] ?? null,
                 'CENTRO_TRABALHO' => $func['cod_centro'] ? ($func['cod_centro'] . ' - ' . $func['desc_centro']) : 'SEM CENTRO',
                 'TOTAL_PONTOS' => $func['total_pontos_apos_falta'] ?? $func['total_pontos_bruto'] ?? 0,
+                'PONTOS_NORMAIS' => $func['pontos_normais'] ?? 0,
+                'PONTOS_APOIO' => $func['pontos_apoio'] ?? 0,
                 'VALOR_COMISSAO' => $func['valor_comissao_final'] ?? 0,
                 'FAIXA_ID' => $func['faixa_aplicada']['id'] ?? null,
                 'FAIXA_DESCRICAO' => $faixaDesc,
                 'DIAS_TRABALHADOS' => $func['dias_trabalhados'] ?? 0,
+                'DIAS_NORMAIS' => $diasNormais,
+                'DIAS_APOIO' => $diasApoio,
                 'DIAS_COM_FALTA' => $func['dias_com_falta'] ?? 0,
                 'TEM_FALTA' => ($func['dias_com_falta'] ?? 0) > 0,
+                'TEM_APOIO' => $isApoio,
+                'TIPO_CALCULO_APOIO' => $tipoCalculoApoio, // T=Total, M=Média
                 'USA_REGRA_ESPECIFICA' => $func['usa_regra_especifica'] ?? false,
                 'STATUS' => 'P'
             ];
@@ -291,8 +302,7 @@ class ComissaoRelatorioHandler
     public static function processarComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?int $usuId = null): array
     {
         // Usa versão batch otimizada (~6 queries ao invés de N*3)
-        $comissaoModel = new Comissao();
-        $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
+        $resultado = Comissao::calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         $funcionarios = $resultado['funcionarios'] ?? [];
         $processadas = 0;
@@ -308,7 +318,7 @@ class ComissaoRelatorioHandler
                 'id_usuario' => $usuId
             ];
             
-            if ($comissaoModel->salvarCalculo($dadosCalc)) {
+            if (Comissao::salvarCalculo($dadosCalc)) {
                 $processadas++;
             }
         }
@@ -332,8 +342,7 @@ class ComissaoRelatorioHandler
     public static function processarComissoesCompleto(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null, ?int $usuId = null): array
     {
         // OTIMIZADO: Usa versão batch que faz ~6 queries ao invés de N*5 queries
-        $comissaoModel = new Comissao();
-        $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
+        $resultado = Comissao::calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         $funcionarios = $resultado['funcionarios'] ?? [];
         $processadas = 0;
@@ -369,7 +378,7 @@ class ComissaoRelatorioHandler
                 'id_usuario' => $usuId
             ];
             
-            if ($comissaoModel->salvarCalculo($dadosCalc)) {
+            if (Comissao::salvarCalculo($dadosCalc)) {
                 $processadas++;
             }
         }
@@ -391,13 +400,12 @@ class ComissaoRelatorioHandler
     public static function aprovarComissoes(array $comissoes, int $usuId): array
     {
         $aprovadas = 0;
-        $comissaoModel = new Comissao();
 
         foreach ($comissoes as $comissao) {
             $idComissao = $comissao['ID_COMISSAO'] ?? $comissao['id_comissao'] ?? null;
             
             if ($idComissao) {
-                if ($comissaoModel->aprovar($idComissao, $usuId)) {
+                if (Comissao::aprovar($idComissao, $usuId)) {
                     $aprovadas++;
                 }
             } else {
@@ -412,10 +420,10 @@ class ComissaoRelatorioHandler
                     'id_usuario' => $usuId
                 ];
                 
-                $novoId = $comissaoModel->salvarCalculo($dadosCalc);
+                $novoId = Comissao::salvarCalculo($dadosCalc);
                 if ($novoId) {
                     // Aprovar a comissão recém-criada
-                    $comissaoModel->aprovar($novoId, $usuId);
+                    Comissao::aprovar($novoId, $usuId);
                     $aprovadas++;
                 }
             }
@@ -437,13 +445,12 @@ class ComissaoRelatorioHandler
     public static function cancelarComissoes(array $comissoes, int $usuId, ?string $motivo = null): array
     {
         $canceladas = 0;
-        $comissaoModel = new Comissao();
 
         foreach ($comissoes as $comissao) {
             $idComissao = $comissao['ID_COMISSAO'] ?? $comissao['id_comissao'] ?? null;
             
             if ($idComissao) {
-                if ($comissaoModel->cancelar($idComissao, $usuId, $motivo)) {
+                if (Comissao::cancelar($idComissao, $usuId, $motivo)) {
                     $canceladas++;
                 }
             }
@@ -485,72 +492,216 @@ class ComissaoRelatorioHandler
         
         // Usar a empresa do vínculo para buscar apontamentos (se existir vínculo)
         $emprIdApontamentos = $vinculo ? $vinculo['ID_EMPR'] : $emprId;
-
-        // Buscar pontos por dia (apontamentos individuais)
-        $diario = ApontamentoProducao::pontosPorDiaFuncionario($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
-
-        // =============================================
-        // BUSCAR DIAS DE APOIO E INCLUIR NO DIÁRIO
-        // =============================================
-        $datasApoio = VinculoData::buscarDatasApoioBatch([$funcionarioId], $emprIdApontamentos, $dataInicio, $dataFim);
-        $datasApoioFunc = $datasApoio[$funcionarioId] ?? [];
         
-        if (!empty($datasApoioFunc)) {
-            // Buscar pontos totais do centro para os dias de apoio
-            $centrosApoio = array_unique(array_values($datasApoioFunc));
-            $pontosCentro = ApontamentoProducao::pontosTotaisCentroPorDia($dataInicio, $dataFim, $centrosApoio, $emprIdApontamentos);
+        // =============================================
+        // VERIFICAR SE FUNCIONÁRIO É DO TIPO APOIO PERMANENTE
+        // É APOIO se:
+        // 1. TIPO_VINCULO = 'A' (explicitamente marcado), OU
+        // 2. ID_RECURSO IS NULL (vinculado ao centro SEM máquina específica)
+        // =============================================
+        $tipoVinculoExplicito = ($vinculo['TIPO_VINCULO'] ?? 'N') === 'A';
+        $semMaquina = $vinculo && empty($vinculo['ID_RECURSO']);
+        $isApoioPermanente = $vinculo && ($tipoVinculoExplicito || $semMaquina);
+        
+        // Para funcionário de apoio permanente, verificar se tem configuração de tipo de cálculo nas datas
+        $tipoCalculoVinculo = 'T'; // Padrão: Total
+        if ($isApoioPermanente) {
+            // Buscar datas de apoio para ver o tipo de cálculo configurado
+            $datasApoioCheck = VinculoData::buscarDatasApoioBatch([$funcionarioId], $emprIdApontamentos, $dataInicio, $dataFim);
+            $datasApoioFuncCheck = $datasApoioCheck[$funcionarioId] ?? [];
             
-            // Mapear datas que já existem no diário
-            $datasNoDiario = [];
-            foreach ($diario as $dia) {
-                $dataStr = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
-                if ($dataStr) {
-                    $datasNoDiario[$dataStr] = true;
+            // Se tiver alguma data configurada, usar o tipo de cálculo dela
+            if (!empty($datasApoioFuncCheck)) {
+                $primeiraData = reset($datasApoioFuncCheck);
+                if (is_array($primeiraData)) {
+                    $tipoCalculoVinculo = $primeiraData['tipo_calculo'] ?? 'T';
                 }
             }
+        }
+        
+        $diario = [];
+        
+        // =============================================
+        // BUSCAR FALTAS ANTES DE MONTAR O DIÁRIO
+        // Para não incluir dias com falta integral no apoio
+        // =============================================
+        $faltasAntecipadas = FaltaFuncionario::verificarFaltasPeriodo($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos);
+        $diasComFaltaAntecipada = self::mapearDiasComFalta($faltasAntecipadas);
+        
+        if ($isApoioPermanente && $centroTrabId) {
+            // FUNCIONÁRIO DE APOIO: Buscar pontos TOTAIS do centro
+            $pontosCentro = ApontamentoProducao::pontosTotaisCentroPorDia($dataInicio, $dataFim, [$centroTrabId], $emprIdApontamentos);
+            $pontosCentroDia = $pontosCentro[$centroTrabId] ?? [];
             
-            // Processar dias de apoio
-            foreach ($datasApoioFunc as $dataApoio => $centroApoioId) {
-                $pontosDia = $pontosCentro[$centroApoioId][$dataApoio] ?? 0;
-                
-                if (isset($datasNoDiario[$dataApoio])) {
-                    // Dia já existe - atualizar para usar pontos do centro e marcar como apoio
-                    foreach ($diario as &$dia) {
-                        $dataStr = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
-                        if ($dataStr === $dataApoio) {
-                            $dia['TOTAL_PONTOS'] = $pontosDia;
-                            $dia['IS_APOIO'] = true;
-                            $dia['TIPO_DIA'] = 'APOIO';
-                            $dia['CENTRO_APOIO_ID'] = $centroApoioId;
-                            $dia['CENTRO_TRABALHO'] = 'APOIO';
-                            $dia['RECURSO'] = 'APOIO';
-                            break;
-                        }
-                    }
-                    unset($dia);
-                } else {
-                    // Dia não existe - adicionar como novo registro de apoio
+            // Buscar quantidade de recursos para cálculo de média (se necessário)
+            $recursosCentro = [];
+            if ($tipoCalculoVinculo === 'M') {
+                $recursosCentro = ApontamentoProducao::contarRecursosPorCentroDia($dataInicio, $dataFim, [$centroTrabId], $emprIdApontamentos);
+            }
+            
+            // Montar diário com pontos do centro
+            foreach ($pontosCentroDia as $data => $pontosTotais) {
+                // VERIFICAR FALTA: Se tem falta INTEGRAL, não incluir o dia
+                if (isset($diasComFaltaAntecipada[$data]) && $diasComFaltaAntecipada[$data]['tipo'] === 'I') {
+                    // Falta integral - não incluir este dia (zera pontos)
                     $diario[] = [
-                        'DATA_APONTAMENTO' => $dataApoio,
-                        'DATA' => $dataApoio,
-                        'TOTAL_PONTOS' => $pontosDia,
+                        'DATA_APONTAMENTO' => $data,
+                        'DATA' => $data,
+                        'TOTAL_PONTOS' => 0,
+                        'TOTAL_PONTOS_ORIGINAL' => $pontosTotais,
                         'QTD_APONTAMENTOS' => 0,
                         'IS_APOIO' => true,
                         'TIPO_DIA' => 'APOIO',
-                        'CENTRO_APOIO_ID' => $centroApoioId,
-                        'CENTRO_TRABALHO' => 'APOIO',
-                        'RECURSO' => 'APOIO'
+                        'TIPO_CALCULO_APOIO' => 'TOTAL',
+                        'CENTRO_APOIO_ID' => $centroTrabId,
+                        'CENTRO_TRABALHO' => 'FALTA',
+                        'RECURSO' => 'FALTA INTEGRAL',
+                        'TEM_FALTA' => true,
+                        'TIPO_FALTA' => 'I',
+                        'MOTIVO_FALTA' => $diasComFaltaAntecipada[$data]['motivo'] ?? '-'
                     ];
+                    continue;
                 }
+                
+                $pontosDia = $pontosTotais;
+                $tipoCalculoLabel = 'TOTAL';
+                
+                // Se tipo de cálculo for MÉDIA (M), divide pelos recursos
+                if ($tipoCalculoVinculo === 'M') {
+                    $qtdRecursos = $recursosCentro[$centroTrabId][$data] ?? 1;
+                    $qtdRecursos = max($qtdRecursos, 1);
+                    $pontosDia = round($pontosTotais / $qtdRecursos, 2);
+                    $tipoCalculoLabel = 'MÉDIA';
+                }
+                
+                // VERIFICAR FALTA PARCIAL: Desconta 50%
+                $temFaltaParcial = isset($diasComFaltaAntecipada[$data]) && $diasComFaltaAntecipada[$data]['tipo'] !== 'I';
+                if ($temFaltaParcial) {
+                    $pontosDia = $pontosDia * 0.5;
+                }
+                
+                $diario[] = [
+                    'DATA_APONTAMENTO' => $data,
+                    'DATA' => $data,
+                    'TOTAL_PONTOS' => $pontosDia,
+                    'TOTAL_PONTOS_ORIGINAL' => $pontosTotais,
+                    'QTD_APONTAMENTOS' => 0,
+                    'IS_APOIO' => true,
+                    'TIPO_DIA' => 'APOIO',
+                    'TIPO_CALCULO_APOIO' => $tipoCalculoLabel,
+                    'CENTRO_APOIO_ID' => $centroTrabId,
+                    'CENTRO_TRABALHO' => $tipoCalculoLabel,
+                    'RECURSO' => 'APOIO - ' . $tipoCalculoLabel,
+                    'TEM_FALTA' => $temFaltaParcial,
+                    'TIPO_FALTA' => $temFaltaParcial ? $diasComFaltaAntecipada[$data]['tipo'] : null,
+                    'MOTIVO_FALTA' => $temFaltaParcial ? ($diasComFaltaAntecipada[$data]['motivo'] ?? null) : null
+                ];
             }
             
-            // Reordenar por data (mais recente primeiro)
+            // Ordenar por data (mais recente primeiro)
             usort($diario, function($a, $b) {
-                $dataA = $a['DATA_APONTAMENTO'] ?? $a['DATA'] ?? '';
-                $dataB = $b['DATA_APONTAMENTO'] ?? $b['DATA'] ?? '';
-                return strcmp($dataB, $dataA);
+                return strcmp($b['DATA_APONTAMENTO'], $a['DATA_APONTAMENTO']);
             });
+        } else {
+            // FUNCIONÁRIO NORMAL: Buscar pontos por dia (apontamentos individuais)
+            $diario = ApontamentoProducao::pontosPorDiaFuncionario($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
         }
+
+        // =============================================
+        // BUSCAR DIAS DE APOIO ESPECÍFICOS (para funcionários normais com dias de apoio pontuais)
+        // =============================================
+        if (!$isApoioPermanente) {
+            $datasApoio = VinculoData::buscarDatasApoioBatch([$funcionarioId], $emprIdApontamentos, $dataInicio, $dataFim);
+            $datasApoioFunc = $datasApoio[$funcionarioId] ?? [];
+            
+            if (!empty($datasApoioFunc)) {
+                // Extrair centros únicos dos dias de apoio (agora retorna objeto com centro e tipo_calculo)
+                $centrosApoio = [];
+                foreach ($datasApoioFunc as $dataApoio => $dadosApoio) {
+                    // Compatibilidade: se for valor simples (legado), converter para array
+                    if (!is_array($dadosApoio)) {
+                        $datasApoioFunc[$dataApoio] = ['centro' => $dadosApoio, 'tipo_calculo' => 'T'];
+                        $centrosApoio[] = $dadosApoio;
+                    } else {
+                        $centrosApoio[] = $dadosApoio['centro'];
+                    }
+                }
+                $centrosApoio = array_unique($centrosApoio);
+                
+                // Buscar pontos totais do centro para os dias de apoio
+                $pontosCentro = ApontamentoProducao::pontosTotaisCentroPorDia($dataInicio, $dataFim, $centrosApoio, $emprIdApontamentos);
+                
+                // Buscar quantidade de recursos por centro/dia (para cálculo de média)
+                $recursosCentro = ApontamentoProducao::contarRecursosPorCentroDia($dataInicio, $dataFim, $centrosApoio, $emprIdApontamentos);
+                
+                // Mapear datas que já existem no diário
+                $datasNoDiario = [];
+                foreach ($diario as $dia) {
+                    $dataStr = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
+                    if ($dataStr) {
+                        $datasNoDiario[$dataStr] = true;
+                    }
+                }
+                
+                // Processar dias de apoio
+                foreach ($datasApoioFunc as $dataApoio => $dadosApoio) {
+                    $centroApoioId = $dadosApoio['centro'];
+                    $tipoCalculo = $dadosApoio['tipo_calculo'] ?? 'T';
+                    
+                    $pontosTotaisDia = $pontosCentro[$centroApoioId][$dataApoio] ?? 0;
+                    
+                    // Se tipo de cálculo for MÉDIA (M), divide pelos recursos que produziram no dia
+                    if ($tipoCalculo === 'M') {
+                        $qtdRecursos = $recursosCentro[$centroApoioId][$dataApoio] ?? 1;
+                        $qtdRecursos = max($qtdRecursos, 1); // Evita divisão por zero
+                        $pontosDia = round($pontosTotaisDia / $qtdRecursos, 2);
+                        $tipoCalculoLabel = 'MÉDIA';
+                    } else {
+                        $pontosDia = $pontosTotaisDia;
+                        $tipoCalculoLabel = 'TOTAL';
+                    }
+                    
+                    if (isset($datasNoDiario[$dataApoio])) {
+                        // Dia já existe - atualizar para usar pontos do centro e marcar como apoio
+                        foreach ($diario as &$dia) {
+                            $dataStr = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
+                            if ($dataStr === $dataApoio) {
+                                $dia['TOTAL_PONTOS'] = $pontosDia;
+                                $dia['IS_APOIO'] = true;
+                                $dia['TIPO_DIA'] = 'APOIO';
+                                $dia['TIPO_CALCULO_APOIO'] = $tipoCalculoLabel;
+                                $dia['CENTRO_APOIO_ID'] = $centroApoioId;
+                                $dia['CENTRO_TRABALHO'] = $tipoCalculoLabel;
+                                $dia['RECURSO'] = $tipoCalculoLabel;
+                                break;
+                            }
+                        }
+                        unset($dia);
+                    } else {
+                        // Dia não existe - adicionar como novo registro de apoio
+                        $diario[] = [
+                            'DATA_APONTAMENTO' => $dataApoio,
+                            'DATA' => $dataApoio,
+                            'TOTAL_PONTOS' => $pontosDia,
+                            'QTD_APONTAMENTOS' => 0,
+                            'IS_APOIO' => true,
+                            'TIPO_DIA' => 'APOIO',
+                            'TIPO_CALCULO_APOIO' => $tipoCalculoLabel,
+                            'CENTRO_APOIO_ID' => $centroApoioId,
+                            'CENTRO_TRABALHO' => $tipoCalculoLabel,
+                            'RECURSO' => $tipoCalculoLabel
+                        ];
+                    }
+                }
+                
+                // Reordenar por data (mais recente primeiro)
+                usort($diario, function($a, $b) {
+                    $dataA = $a['DATA_APONTAMENTO'] ?? $a['DATA'] ?? '';
+                    $dataB = $b['DATA_APONTAMENTO'] ?? $b['DATA'] ?? '';
+                    return strcmp($dataB, $dataA);
+                });
+            }
+        } // Fim do if (!$isApoioPermanente)
         
         // Marcar dias normais (que não são apoio)
         foreach ($diario as &$dia) {
@@ -561,8 +712,86 @@ class ComissaoRelatorioHandler
         }
         unset($dia);
 
-        // Buscar apontamentos detalhados
+        // Buscar apontamentos detalhados (vinculados ao funcionário)
         $apontamentos = ApontamentoProducao::listarApontamentosVinculados($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
+        
+        // Marcar apontamentos como vinculados ao funcionário
+        foreach ($apontamentos as &$apt) {
+            $apt['ORIGEM'] = 'FUNCIONARIO';
+            $apt['SEM_VINCULO'] = false;
+        }
+        unset($apt);
+
+        // =============================================
+        // BUSCAR APONTAMENTOS DO CENTRO PARA DIAS DE APOIO
+        // Para mostrar o que foi produzido no centro mesmo sem vínculo direto
+        // =============================================
+        $diasApoioArray = [];
+        $centrosApoio = [];
+        foreach ($diario as $dia) {
+            if (($dia['IS_APOIO'] ?? false) === true) {
+                $dataApoio = $dia['DATA_APONTAMENTO'] ?? $dia['DATA'] ?? null;
+                $centroApoioId = $dia['CENTRO_APOIO_ID'] ?? $centroTrabId ?? null;
+                if ($dataApoio && $centroApoioId) {
+                    $diasApoioArray[] = $dataApoio;
+                    $centrosApoio[$dataApoio] = $centroApoioId;
+                }
+            }
+        }
+        
+        // Se existem dias de apoio, buscar apontamentos do centro
+        $apontamentosCentro = [];
+        if (!empty($diasApoioArray)) {
+            // Buscar apontamentos do centro para cada dia de apoio
+            foreach ($diasApoioArray as $dataApoio) {
+                $centroId = $centrosApoio[$dataApoio] ?? $centroTrabId;
+                if ($centroId) {
+                    $aptsDia = ApontamentoProducao::produtividadeDiaria($dataApoio, $emprIdApontamentos, null, $centroId, null);
+                    
+                    if (!empty($aptsDia)) {
+                        // Agrupar por item
+                        $agrupadoDia = [];
+                        foreach ($aptsDia as $apt) {
+                            $itemId = $apt['ID_ITEM'] ?? 0;
+                            $mascaraId = $apt['ID_MASCARA'] ?? 0;
+                            $key = $itemId . '_' . $mascaraId;
+                            
+                            if (!isset($agrupadoDia[$key])) {
+                                $agrupadoDia[$key] = [
+                                    'ID_ITEM' => $itemId,
+                                    'COD_ITEM' => $apt['COD_ITEM'] ?? '-',
+                                    'DESC_ITEM' => $apt['DESC_ITEM'] ?? '-',
+                                    'ID_MASCARA' => $mascaraId ?: null,
+                                    'CENTRO_TRAB_ID' => $centroId,
+                                    'DESC_CENTRO' => $apt['DESC_CENTRO'] ?? '-',
+                                    'RECURSO' => $apt['RECURSO'] ?? $apt['DESC_MAQUINA'] ?? 'CENTRO',
+                                    'QTD_APONTAMENTOS' => 0,
+                                    'TOTAL_QUANTIDADE' => 0,
+                                    'PONTOS_UP' => floatval($apt['PONTOS_UP'] ?? 0),
+                                    'TOTAL_PONTOS' => 0,
+                                    'TEM_PONTUACAO' => $apt['TEM_PONTUACAO'] ?? 'N',
+                                    'DATA_APONTAMENTO' => $dataApoio,
+                                    'ORIGEM' => 'CENTRO',
+                                    'SEM_VINCULO' => true,
+                                    'TIPO_VINCULO' => 'A'
+                                ];
+                            }
+                            
+                            $agrupadoDia[$key]['QTD_APONTAMENTOS'] += intval($apt['QTD_APONTAMENTOS'] ?? 1);
+                            $agrupadoDia[$key]['TOTAL_QUANTIDADE'] += floatval($apt['QUANTIDADE'] ?? $apt['TOTAL_QUANTIDADE'] ?? 0);
+                        }
+                        
+                        // Calcular pontos totais
+                        foreach ($agrupadoDia as &$item) {
+                            $item['TOTAL_PONTOS'] = round($item['TOTAL_QUANTIDADE'] * $item['PONTOS_UP'], 4);
+                        }
+                        unset($item);
+                        
+                        $apontamentosCentro = array_merge($apontamentosCentro, array_values($agrupadoDia));
+                    }
+                }
+            }
+        }
 
         // Verificar faltas
         $faltas = FaltaFuncionario::verificarFaltasPeriodo($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos);
@@ -581,10 +810,18 @@ class ComissaoRelatorioHandler
             $pontos = floatval($dia['TOTAL_PONTOS'] ?? 0);
             $isApoio = $dia['IS_APOIO'] ?? false;
             
-            // Aplicar desconto de falta (50% se tem falta não justificada)
+            // Verificar se a falta já foi aplicada (para APOIO permanente)
+            $faltaJaAplicada = $dia['TEM_FALTA'] ?? false;
+            
+            // Aplicar desconto de falta
+            // APENAS se a falta ainda não foi aplicada no diário
             $multiplicador = 1.0;
-            if ($dataStr && isset($diasComFalta[$dataStr])) {
-                if ($diasComFalta[$dataStr]['tipo'] !== 'I') {
+            if (!$faltaJaAplicada && $dataStr && isset($diasComFalta[$dataStr])) {
+                if ($diasComFalta[$dataStr]['tipo'] === 'I') {
+                    // Falta integral: zera os pontos
+                    $multiplicador = 0;
+                } else {
+                    // Falta parcial: 50% de desconto
                     $multiplicador = 0.5;
                 }
             }
@@ -604,11 +841,9 @@ class ComissaoRelatorioHandler
         // =============================================
         // CALCULAR COMISSÃO SEPARADAMENTE: NORMAL + APOIO
         // =============================================
-        $comissaoModel = new Comissao();
         
         // Primeiro verificar se tem regra específica
-        $regraModel = new RegraFuncionario();
-        $regraEspecifica = $regraModel->buscarRegraAtiva($funcionarioId, $centroTrabId, $dataFim, $emprIdApontamentos);
+        $regraEspecifica = RegraFuncionario::buscarRegraAtiva($funcionarioId, $centroTrabId, $dataFim, $emprIdApontamentos);
         
         $valorComissaoBruto = 0;
         $faixaAplicada = null;
@@ -624,15 +859,14 @@ class ComissaoRelatorioHandler
                 'valor' => $regraEspecifica['VALOR_COMISSAO'],
                 'valor_fixo' => $regraEspecifica['VALOR_FIXO'] ?? null
             ];
-            $valorComissaoBruto = $regraModel->calcularComissao($totalPontosAposFalta, $regraEspecifica);
+            $valorComissaoBruto = RegraFuncionario::calcularComissao($totalPontosAposFalta, $regraEspecifica);
         } else {
             // Calcular separadamente para dias normais e dias de apoio
-            $faixaModel = new FaixaComissao();
             
             // Comissão de dias normais (faixa NORMAL)
             $valorComissaoNormal = 0;
             if ($pontosNormais > 0) {
-                $faixaNormal = $faixaModel->buscarFaixaAplicavel($pontosNormais, $centroTrabId, $dataFim, 'N');
+                $faixaNormal = FaixaComissao::buscarFaixaAplicavel($pontosNormais, $centroTrabId, $dataFim, 'N');
                 if ($faixaNormal) {
                     $faixaAplicada = [
                         'id' => $faixaNormal['ID_FAIXA'],
@@ -654,7 +888,7 @@ class ComissaoRelatorioHandler
             // Comissão de dias de apoio (faixa APOIO)
             $valorComissaoApoio = 0;
             if ($pontosApoio > 0) {
-                $faixaApoio = $faixaModel->buscarFaixaAplicavel($pontosApoio, $centroTrabId, $dataFim, 'A');
+                $faixaApoio = FaixaComissao::buscarFaixaAplicavel($pontosApoio, $centroTrabId, $dataFim, 'A');
                 if ($faixaApoio) {
                     $faixaApoioAplicada = [
                         'id' => $faixaApoio['ID_FAIXA'],
@@ -682,8 +916,7 @@ class ComissaoRelatorioHandler
         }
         
         // Calcular desconto de retrabalho
-        $retrabalhoModel = new Retrabalho();
-        $retrabalhos = $retrabalhoModel->buscarPorFuncionariosPeriodo(
+        $retrabalhos = Retrabalho::buscarPorFuncionariosPeriodo(
             [$funcionarioId], $dataInicio, $dataFim, $emprIdApontamentos
         );
         
@@ -692,7 +925,7 @@ class ComissaoRelatorioHandler
         foreach ($retrabalhos as $ret) {
             $pontosRet = floatval($ret['QUANTIDADE']) * floatval($ret['PONTOS_UP']);
             $totalPontosRetrabalho += $pontosRet;
-            $impacto = $retrabalhoModel->calcularImpacto(
+            $impacto = Retrabalho::calcularImpacto(
                 $valorComissaoBruto,
                 $pontosRet,
                 $ret['TIPO_IMPACTO'],
@@ -739,6 +972,7 @@ class ComissaoRelatorioHandler
         // Montar resumo
         $resumo = [
             'TOTAL_APONTAMENTOS' => count($apontamentos),
+            'TOTAL_APONTAMENTOS_CENTRO' => count($apontamentosCentro),
             'TOTAL_PONTOS' => $totalPontos,
             'TOTAL_PONTOS_APOS_FALTA' => $totalPontosAposFalta,
             'PONTOS_NORMAIS' => $resultadoComissao['pontos_normais'] ?? $pontosNormais,
@@ -761,13 +995,14 @@ class ComissaoRelatorioHandler
         ];
 
         // Buscar comissões já salvas
-        $comissoesSalvas = $comissaoModel->listarCalculos(null, $dataInicio, $dataFim, $funcionarioId);
+        $comissoesSalvas = Comissao::listarCalculos(null, $dataInicio, $dataFim, $funcionarioId);
 
         return [
             'funcionario' => $funcionario,
             'resumo' => $resumo,
             'diario' => $diario,
             'apontamentos' => $apontamentos,
+            'apontamentosCentro' => $apontamentosCentro,
             'comissoes' => $comissoesSalvas,
             'vinculos' => $vinculos,
             'faltas' => $faltas
@@ -817,8 +1052,7 @@ class ComissaoRelatorioHandler
         }
 
         // Usar cálculo batch otimizado para o centro
-        $comissaoModel = new Comissao();
-        $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
+        $resultado = Comissao::calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         $funcionariosBatch = $resultado['funcionarios'] ?? [];
         
@@ -1095,5 +1329,72 @@ class ComissaoRelatorioHandler
         }
 
         return $diario;
+    }
+
+    /**
+     * Relatório de faltas por funcionário no período
+     */
+    public static function getRelatorioFaltas(string $dataInicio, string $dataFim, int $emprId, ?int $funcionarioId = null, ?string $tipoFalta = null): array
+    {
+        // Buscar faltas com filtros
+        $filtros = [
+            'id_empr' => $emprId,
+            'dt_inicio' => $dataInicio,
+            'dt_fim' => $dataFim
+        ];
+        
+        if ($funcionarioId) {
+            $filtros['id_funcionario'] = $funcionarioId;
+        }
+        
+        $faltas = FaltaFuncionario::listar($filtros);
+        
+        // Filtrar por tipo se especificado
+        if ($tipoFalta) {
+            $faltas = array_filter($faltas, fn($f) => ($f['TIPO_FALTA'] ?? '') === $tipoFalta);
+            $faltas = array_values($faltas);
+        }
+        
+        // Agrupar por funcionário para resumo
+        $funcionariosComFalta = [];
+        $totalIntegral = 0;
+        $totalParcial = 0;
+        
+        foreach ($faltas as $falta) {
+            $funcId = $falta['ID_FUNCIONARIO'] ?? null;
+            if (!isset($funcionariosComFalta[$funcId])) {
+                $funcionariosComFalta[$funcId] = [
+                    'nome' => $falta['NOME_FUNCIONARIO'] ?? $falta['NOME'] ?? '-',
+                    'cod_func' => $falta['COD_FUNC'] ?? '-',
+                    'total_faltas' => 0,
+                    'faltas_integral' => 0,
+                    'faltas_parcial' => 0
+                ];
+            }
+            
+            $funcionariosComFalta[$funcId]['total_faltas']++;
+            
+            if (($falta['TIPO_FALTA'] ?? '') === 'I') {
+                $funcionariosComFalta[$funcId]['faltas_integral']++;
+                $totalIntegral++;
+            } else {
+                $funcionariosComFalta[$funcId]['faltas_parcial']++;
+                $totalParcial++;
+            }
+        }
+        
+        // Ordenar funcionários por total de faltas (decrescente)
+        uasort($funcionariosComFalta, fn($a, $b) => $b['total_faltas'] - $a['total_faltas']);
+        
+        return [
+            'faltas' => $faltas,
+            'resumo' => [
+                'total_faltas' => count($faltas),
+                'total_integral' => $totalIntegral,
+                'total_parcial' => $totalParcial,
+                'total_funcionarios' => count($funcionariosComFalta),
+                'por_funcionario' => array_values($funcionariosComFalta)
+            ]
+        ];
     }
 }

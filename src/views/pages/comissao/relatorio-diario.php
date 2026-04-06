@@ -14,6 +14,10 @@ if (!$acessoComissao) {
     'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="comissao-dashboard-container">
     <!-- Filtros -->
     <!-- Empresa da sessão (hidden) -->
@@ -29,15 +33,15 @@ if (!$acessoComissao) {
                 <label for="filtroDataFim">Data Fim *</label>
                 <input type="date" id="filtroDataFim" class="form-control" required>
             </div>
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 320px;">
                 <label for="filtroCentro">Centro de Trabalho</label>
-                <select id="filtroCentro" class="form-select" onchange="carregarRecursos()">
+                <select id="filtroCentro" class="form-select" style="width: 100%;">
                     <option value="">Todos</option>
                 </select>
             </div>
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 320px;">
                 <label for="filtroRecurso">Recurso</label>
-                <select id="filtroRecurso" class="form-select">
+                <select id="filtroRecurso" class="form-select" style="width: 100%;">
                     <option value="">Todos</option>
                 </select>
             </div>

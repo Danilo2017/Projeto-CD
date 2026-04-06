@@ -14,13 +14,17 @@ if (!$acessoComissao) {
     'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="comissao-dashboard-container" style="max-width: 100%; overflow-x: hidden;">
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row">
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 400px;">
                 <label for="filtroFuncionario">Funcionário *</label>
-                <select id="filtroFuncionario" class="form-select" required>
+                <select id="filtroFuncionario" class="form-select" style="width: 100%;" required>
                     <option value="">Selecione um funcionário</option>
                 </select>
             </div>
@@ -169,6 +173,42 @@ if (!$acessoComissao) {
                 <tbody id="tabelaApontamentosBody">
                     <tr>
                         <td colspan="7" class="text-center">Aguardando dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apontamentos do Centro (sem vínculo direto) - Exibido quando funcionário tem dias de apoio/média -->
+    <div class="dashboard-section" id="sectionApontamentosCentro" style="display: none;">
+        <div class="section-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-building"></i> Apontamentos do Centro (Apoio/Média)</h5>
+            <button class="btn btn-success btn-sm" onclick="exportarTabelaExcel('tabelaApontamentosCentro', 'Apontamentos_Centro')">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </button>
+        </div>
+        <div class="section-body">
+            <div class="alert alert-info mb-3">
+                <i class="bi bi-info-circle"></i>
+                <small>Estes apontamentos são do centro de trabalho e não possuem vínculo direto com o funcionário. 
+                São exibidos para referência quando o funcionário recebe por APOIO ou MÉDIA do centro.</small>
+            </div>
+            <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm" id="tabelaApontamentosCentro" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Recurso</th>
+                        <th class="text-center">Quantidade</th>
+                        <th class="text-end">Pontos</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaApontamentosCentroBody">
+                    <tr>
+                        <td colspan="6" class="text-center">Aguardando dados...</td>
                     </tr>
                 </tbody>
             </table>
@@ -463,3 +503,7 @@ if (!$acessoComissao) {
 <?= $render('footer', [
     'customJS' => ['src/js/comissao-relatorio-funcionario.js']
 ]) ?>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>

@@ -69,6 +69,7 @@ class AdminSqlsController extends ctrl
             $body = Request::getJsonBody();
             $idsql = $body['idsql'] ?? '';
             $sql = $body['sql'] ?? '';
+            $observacao = $body['observacao'] ?? null;
 
             if (empty($idsql) || empty($sql)) {
                 self::response(['success' => false, 'error' => 'idsql e sql são obrigatórios'], 400);
@@ -93,6 +94,10 @@ class AdminSqlsController extends ctrl
                 return;
             }
 
+            // Registrar log (inserção = SQL anterior é NULL)
+            $usuario = $_SESSION['user']['login'] ?? 'SISTEMA';
+            GazinSqls::registrarLog($idsql, 'INSERT', null, $sql, $usuario, $observacao ?? 'Inserção de novo SQL');
+
             self::response(['success' => true, 'message' => 'SQL inserido com sucesso'], 201);
         } catch (\Exception $e) {
             self::response(['success' => false, 'error' => $e->getMessage()], 500);
@@ -105,17 +110,26 @@ class AdminSqlsController extends ctrl
             $body = Request::getJsonBody();
             $idsql = $body['idsql'] ?? '';
             $sql = $body['sql'] ?? '';
+            $observacao = $body['observacao'] ?? null;
 
             if (empty($idsql) || empty($sql)) {
                 self::response(['success' => false, 'error' => 'idsql e sql são obrigatórios'], 400);
                 return;
             }
 
+            // Buscar SQL anterior para log
+            $existente = GazinSqls::buscarPorId($idsql);
+            $sqlAnterior = $existente['SQL'] ?? null;
+
             $ok = GazinSqls::atualizar($idsql, $sql);
             if (!$ok) {
                 self::response(['success' => false, 'error' => 'Erro ao atualizar SQL'], 500);
                 return;
             }
+
+            // Registrar log
+            $usuario = $_SESSION['user']['login'] ?? 'SISTEMA';
+            GazinSqls::registrarLog($idsql, 'UPDATE', $sqlAnterior, $sql, $usuario, $observacao ?? 'Atualização de SQL');
 
             self::response(['success' => true, 'message' => 'SQL atualizado com sucesso'], 200);
         } catch (\Exception $e) {
@@ -128,11 +142,16 @@ class AdminSqlsController extends ctrl
         try {
             $body = Request::getJsonBody();
             $idsql = $body['idsql'] ?? '';
+            $observacao = $body['observacao'] ?? null;
 
             if (empty($idsql)) {
                 self::response(['success' => false, 'error' => 'idsql é obrigatório'], 400);
                 return;
             }
+
+            // Buscar SQL anterior para log
+            $existente = GazinSqls::buscarPorId($idsql);
+            $sqlAnterior = $existente['SQL'] ?? null;
 
             $ok = GazinSqls::excluir($idsql);
             if (!$ok) {
@@ -140,7 +159,60 @@ class AdminSqlsController extends ctrl
                 return;
             }
 
+            // Registrar log (exclusão = SQL novo é vazio)
+            $usuario = $_SESSION['user']['login'] ?? 'SISTEMA';
+            GazinSqls::registrarLog($idsql, 'DELETE', $sqlAnterior, null, $usuario, $observacao ?? 'Exclusão de SQL');
+
             self::response(['success' => true, 'message' => 'SQL excluído com sucesso'], 200);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Validar sintaxe de um SQL (dry-run)
+     */
+    public function validar()
+    {
+        try {
+            $body = Request::getJsonBody();
+            $sql = $body['sql'] ?? '';
+
+            if (empty($sql)) {
+                self::response(['success' => false, 'error' => 'sql é obrigatório'], 400);
+                return;
+            }
+
+            $resultado = GazinSqls::validarSintaxe($sql);
+
+            self::response([
+                'success' => true,
+                'valido' => $resultado['valido'],
+                'erro' => $resultado['erro']
+            ], 200);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Listar histórico de alterações de um SQL
+     */
+    public function historico()
+    {
+        try {
+            $idsql = Request::get('idsql');
+            if (!$idsql) {
+                self::response(['success' => false, 'error' => 'idsql é obrigatório'], 400);
+                return;
+            }
+
+            $historico = GazinSqls::listarHistorico($idsql);
+
+            self::response([
+                'success' => true,
+                'data' => $historico
+            ], 200);
         } catch (\Exception $e) {
             self::response(['success' => false, 'error' => $e->getMessage()], 500);
         }

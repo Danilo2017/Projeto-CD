@@ -14,6 +14,10 @@ if (!$acessoComissao) {
     'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="container-fluid p-2">
     <!-- Filtros Simples -->
     <div class="card mb-3">
@@ -21,8 +25,8 @@ if (!$acessoComissao) {
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label for="filtroCentro" class="form-label">Centro de Trabalho</label>
-                    <select id="filtroCentro" class="form-select">
-                        <option value="">Todos os Centros</option>
+                    <select id="filtroCentro" class="form-select" style="width: 100%;">
+                        <option value="">Selecione o Centro</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -35,7 +39,7 @@ if (!$acessoComissao) {
                 </div>
                 <div class="col-md-3">
                     <label for="filtroRecurso" class="form-label">Recurso para Vínculo em Lote</label>
-                    <select id="filtroRecurso" class="form-select">
+                    <select id="filtroRecurso" class="form-select" style="width: 100%;">
                         <option value="">Selecione o Recurso</option>
                     </select>
                 </div>
@@ -97,6 +101,7 @@ if (!$acessoComissao) {
 <script>
 let apontamentos = [];
 let recursos = [];
+let centros = [];
 let selecionados = [];
 const emprId = '<?= $empresa['id'] ?? '' ?>';
 
@@ -117,26 +122,60 @@ function carregarCentrosTrabalho() {
     fetch(`/comissao-api-centros?empr_id=${emprId}`)
         .then(r => r.json())
         .then(result => {
-            const centros = result.data || result;
-            const select = document.getElementById('filtroCentro');
-            select.innerHTML = '<option value="">Selecione o Centro</option>';
-            centros.forEach(c => {
-                select.innerHTML += `<option value="${c.ID}">${c.COD_CENTRO} - ${c.DESCRICAO}</option>`;
-            });
+            centros = result.data || result || [];
+            inicializarSelect2Centro();
         });
+}
+
+function inicializarSelect2Centro() {
+    if ($('#filtroCentro').data('select2')) {
+        $('#filtroCentro').select2('destroy');
+    }
+    
+    const dados = [{id: '', text: 'Selecione o Centro'}].concat(
+        centros.map(c => ({
+            id: c.ID,
+            text: (c.COD_CENTRO || '') + ' - ' + (c.DESCRICAO || '')
+        }))
+    );
+    
+    $('#filtroCentro').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou nome...',
+        allowClear: true,
+        data: dados
+    });
 }
 
 function carregarRecursos() {
     fetch(`/comissao-api-recursos-vinculados?empr_id=${emprId}`)
         .then(r => r.json())
         .then(result => {
-            recursos = result.data || result;
-            const select = document.getElementById('filtroRecurso');
-            select.innerHTML = '<option value="">Selecione o Recurso</option>';
-            recursos.forEach(r => {
-                select.innerHTML += `<option value="${r.ID}">${r.COD_MAQUINA} - ${r.DESCRICAO}</option>`;
-            });
+            recursos = result.data || result || [];
+            inicializarSelect2Recurso();
         });
+}
+
+function inicializarSelect2Recurso() {
+    if ($('#filtroRecurso').data('select2')) {
+        $('#filtroRecurso').select2('destroy');
+    }
+    
+    const dados = [{id: '', text: 'Selecione o Recurso'}].concat(
+        recursos.map(r => ({
+            id: r.ID,
+            text: (r.COD_MAQUINA || '') + ' - ' + (r.DESCRICAO || '')
+        }))
+    );
+    
+    $('#filtroRecurso').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou nome...',
+        allowClear: true,
+        data: dados
+    });
 }
 
 function buscarApontamentos() {
@@ -187,15 +226,14 @@ function renderizarTabela() {
                 <td>${ap.COD_CENTRO || ''}</td>
                 <td>${dataFmt}</td>
                 <td class="text-center">${ap.QUANTIDADE}</td>
-                <td>
-                    <select class="form-select form-select-sm" id="rec_${ap.APONTAMENTO_ID}">
+                <td style="min-width: 280px;">
+                    <select class="form-select form-select-sm select-recurso" id="rec_${ap.APONTAMENTO_ID}" style="width: 100%;">
                         <option value="">Selecione</option>
-                        ${recursos.map(r => `<option value="${r.ID}">${r.COD_MAQUINA} - ${r.DESCRICAO}</option>`).join('')}
                     </select>
                 </td>
                 <td>
-                    <button class="btn btn-success btn-vincular" onclick="vincularIndividual(${ap.APONTAMENTO_ID})">
-                        <i class="bi bi-link"></i> Vincular
+                    <button class="btn btn-success btn-sm py-0 px-2" onclick="vincularIndividual(${ap.APONTAMENTO_ID})" title="Vincular">
+                        <i class="bi bi-link-45deg"></i>
                     </button>
                 </td>
             </tr>
@@ -203,7 +241,29 @@ function renderizarTabela() {
     });
     
     tbody.innerHTML = html;
+    inicializarSelect2Tabela();
     atualizarContador();
+}
+
+function inicializarSelect2Tabela() {
+    $('.select-recurso').each(function() {
+        if ($(this).data('select2')) {
+            $(this).select2('destroy');
+        }
+        
+        $(this).select2({
+            theme: 'bootstrap-5',
+            language: 'pt-BR',
+            placeholder: 'Digite...',
+            allowClear: true,
+            data: [{id: '', text: 'Selecione'}].concat(
+                recursos.map(r => ({
+                    id: r.ID,
+                    text: (r.COD_MAQUINA || '') + ' - ' + (r.DESCRICAO || '')
+                }))
+            )
+        });
+    });
 }
 
 function formatarData(data) {

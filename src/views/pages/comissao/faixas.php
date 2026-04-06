@@ -113,7 +113,6 @@ if (!$acessoComissao) {
                                 <select id="tipoFuncionario" class="form-select" required>
                                     <option value="T">Todos</option>
                                     <option value="N">Normal</option>
-                                    <option value="A">Apoio</option>
                                 </select>
                             </div>
                         </div>

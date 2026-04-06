@@ -772,6 +772,7 @@ class ApontamentoProducao
      * Buscar pontos totais de um ou mais centros de trabalho por dia
      * Usado para calcular comissão de funcionários APOIO (que ganham sobre o total do centro)
      * 
+     * @idsql comissao.apontamento.pontosTotaisCentroPorDia
      * @param string $dataInicio (YYYY-MM-DD)
      * @param string $dataFim (YYYY-MM-DD)
      * @param array $centroIds Array de IDs de centros
@@ -786,36 +787,14 @@ class ApontamentoProducao
 
         $inCentros = implode(',', array_map('intval', $centroIds));
         
-        $sql = "SELECT
-                    TORDENS_ROT.CENTR_TRAB_ID,
-                    TO_CHAR(TORDENS_MOVTO.DT_APONT, 'YYYY-MM-DD') AS DATA_APONTAMENTO,
-                    TITENS.ID AS ITEM_ID,
-                    TITENS_EMPR.ID AS ITEMPR_ID,
-                    TMASC_ITEM.ID AS MASCARA_ID,
-                    SUM(TORDENS_MOVTO.QUANTIDADE) AS TOTAL_QUANTIDADE,
-                    COUNT(*) AS QTD_APONTAMENTOS
-                FROM FOCCO3I.TORDENS
-                INNER JOIN FOCCO3I.TORDENS_ROT ON TORDENS.ID = TORDENS_ROT.ORDEM_ID
-                INNER JOIN FOCCO3I.TORDENS_MOVTO ON TORDENS_ROT.ID = TORDENS_MOVTO.TORDEN_ROT_ID
-                INNER JOIN FOCCO3I.TITENS_PLANEJAMENTO TP ON TP.ID = TORDENS.ITPL_ID
-                INNER JOIN FOCCO3I.TITENS_EMPR ON TITENS_EMPR.ID = TP.ITEMPR_ID
-                INNER JOIN FOCCO3I.TITENS ON TITENS.ID = TITENS_EMPR.ITEM_ID
-                LEFT JOIN FOCCO3I.TMASC_ITEM ON TMASC_ITEM.ID = TORDENS.TMASC_ITEM_ID
-                WHERE TORDENS_MOVTO.DT_APONT BETWEEN TO_DATE(:data_inicio, 'YYYY-MM-DD') AND TO_DATE(:data_fim, 'YYYY-MM-DD') + 0.99999
-                AND TORDENS_ROT.CENTR_TRAB_ID IN ({$inCentros})
-                AND TORDENS.EMPR_ID = :empr_id
-                AND TORDENS_ROT.APONTAMENTO = 1
-                AND TORDENS_ROT.OBRIGATORIO = 1
-                GROUP BY TORDENS_ROT.CENTR_TRAB_ID, TO_CHAR(TORDENS_MOVTO.DT_APONT, 'YYYY-MM-DD'), 
-                         TITENS.ID, TITENS_EMPR.ID, TMASC_ITEM.ID";
-        
         $params = [
             'data_inicio' => "'" . str_replace("'", "''", $dataInicio) . "'",
             'data_fim' => "'" . str_replace("'", "''", $dataFim) . "'",
-            'empr_id' => intval($emprId)
+            'empr_id' => intval($emprId),
+            'centros_ids' => $inCentros
         ];
 
-        $result = \core\Database::switchParams('focco', $params, null, true, false, null, $sql);
+        $result = \core\Database::switchParams('focco', $params, 'comissao.apontamento.pontosTotaisCentroPorDia', true);
         $dadosBrutos = $result['retorno'] ?? [];
         
         // Carregar cache de pontuação
@@ -867,6 +846,191 @@ class ApontamentoProducao
         }
         
         return $pontosPorCentroDia;
+    }
+
+    /**
+     * Contar quantidade de recursos (funcionários) vinculados a cada centro de trabalho
+     * Usado para calcular média de pontos por recurso no modo de apoio "MÉDIA"
+     * 
+     * @idsql comissao.apontamento.contarRecursosPorCentroDia
+     * @param string $dataInicio (YYYY-MM-DD) - não usado, mantido por compatibilidade
+     * @param string $dataFim (YYYY-MM-DD) - não usado, mantido por compatibilidade
+     * @param array $centroIds Array de IDs de centros
+     * @param int $emprId
+     * @return array Indexado por centro_id => [data => quantidade_recursos]
+     */
+    public static function contarRecursosPorCentroDia(string $dataInicio, string $dataFim, array $centroIds, int $emprId): array
+    {
+        if (empty($centroIds)) {
+            return [];
+        }
+
+        $inCentros = implode(',', array_map('intval', $centroIds));
+        
+        $params = [
+            'empr_id' => intval($emprId),
+            'centros_ids' => $inCentros
+        ];
+
+        try {
+            $result = \core\Database::switchParams('focco', $params, 'comissao.apontamento.contarRecursosPorCentroDia', true);
+            $dados = $result['retorno'] ?? [];
+        } catch (\Throwable $e) {
+            // Se der erro na query, retorna array vazio
+            return [];
+        }
+        
+        // Organizar por centro - como é contagem de vinculados, é o mesmo valor para todos os dias
+        $recursosPorCentroDia = [];
+        foreach ($centroIds as $centroId) {
+            $recursosPorCentroDia[(int)$centroId] = [];
+        }
+        
+        // Gerar lista de datas no período
+        $datasNoPeriodo = [];
+        $dataAtual = new \DateTime($dataInicio);
+        $dataFimObj = new \DateTime($dataFim);
+        while ($dataAtual <= $dataFimObj) {
+            $datasNoPeriodo[] = $dataAtual->format('Y-m-d');
+            $dataAtual->modify('+1 day');
+        }
+        
+        if (!empty($dados) && is_array($dados)) {
+            foreach ($dados as $row) {
+                $centroId = (int)($row['CENTRO_TRAB_ID'] ?? 0);
+                $qtdRecursos = (int)($row['QTD_RECURSOS'] ?? 0);
+                
+                if ($centroId && $qtdRecursos > 0) {
+                    // Aplicar a mesma quantidade para todas as datas do período
+                    foreach ($datasNoPeriodo as $data) {
+                        $recursosPorCentroDia[$centroId][$data] = $qtdRecursos;
+                    }
+                }
+            }
+        }
+        
+        return $recursosPorCentroDia;
+    }
+
+    /**
+     * Listar apontamentos por centro de trabalho (sem filtro de funcionário)
+     * Útil para mostrar apontamentos do centro em dias de apoio/média
+     * 
+     * @param int $centroTrabId ID do centro de trabalho
+     * @param string $dataInicio (YYYY-MM-DD)
+     * @param string $dataFim (YYYY-MM-DD)
+     * @param int $emprId ID da empresa
+     * @return array Apontamentos com pontuação calculada
+     */
+    public static function listarApontamentosPorCentro(int $centroTrabId, string $dataInicio, string $dataFim, int $emprId): array
+    {
+        // Usar produtividadeDiaria que já busca por centro
+        $apontamentos = self::produtividadeDiaria($dataInicio, $emprId, null, $centroTrabId, $dataFim);
+        
+        if (empty($apontamentos)) {
+            return [];
+        }
+        
+        // Agrupar por item similar a listarApontamentosVinculados
+        $agrupado = [];
+        foreach ($apontamentos as $apt) {
+            $itemId = $apt['ID_ITEM'] ?? 0;
+            $mascaraId = $apt['ID_MASCARA'] ?? 0;
+            $key = $itemId . '_' . $mascaraId;
+            
+            if (!isset($agrupado[$key])) {
+                $agrupado[$key] = [
+                    'ID_ITEM' => $itemId,
+                    'COD_ITEM' => $apt['COD_ITEM'] ?? '-',
+                    'DESC_ITEM' => $apt['DESC_ITEM'] ?? '-',
+                    'ID_MASCARA' => $mascaraId ?: null,
+                    'CENTRO_TRAB_ID' => $centroTrabId,
+                    'DESC_CENTRO' => $apt['DESC_CENTRO'] ?? '-',
+                    'RECURSO' => $apt['RECURSO'] ?? $apt['DESC_MAQUINA'] ?? '-',
+                    'QTD_APONTAMENTOS' => 0,
+                    'TOTAL_QUANTIDADE' => 0,
+                    'PONTOS_UP' => floatval($apt['PONTOS_UP'] ?? 0),
+                    'TOTAL_PONTOS' => 0,
+                    'TEM_PONTUACAO' => $apt['TEM_PONTUACAO'] ?? 'N',
+                    'ORIGEM' => 'CENTRO',
+                    'SEM_VINCULO' => true
+                ];
+            }
+            
+            $agrupado[$key]['QTD_APONTAMENTOS'] += intval($apt['QTD_APONTAMENTOS'] ?? 1);
+            $agrupado[$key]['TOTAL_QUANTIDADE'] += floatval($apt['QUANTIDADE'] ?? $apt['TOTAL_QUANTIDADE'] ?? 0);
+        }
+        
+        // Calcular pontos totais
+        foreach ($agrupado as &$item) {
+            $item['TOTAL_PONTOS'] = round($item['TOTAL_QUANTIDADE'] * $item['PONTOS_UP'], 4);
+        }
+        unset($item);
+        
+        return array_values($agrupado);
+    }
+
+    /**
+     * Listar apontamentos do centro por dias específicos (para dias de apoio)
+     * 
+     * @param int $centroTrabId ID do centro de trabalho
+     * @param array $datas Array de datas YYYY-MM-DD
+     * @param int $emprId ID da empresa
+     * @return array Apontamentos agrupados por data
+     */
+    public static function listarApontamentosCentroPorDias(int $centroTrabId, array $datas, int $emprId): array
+    {
+        if (empty($datas)) {
+            return [];
+        }
+        
+        $resultado = [];
+        foreach ($datas as $data) {
+            $apontamentos = self::produtividadeDiaria($data, $emprId, null, $centroTrabId, null);
+            
+            if (!empty($apontamentos)) {
+                // Agrupar por item
+                $agrupado = [];
+                foreach ($apontamentos as $apt) {
+                    $itemId = $apt['ID_ITEM'] ?? 0;
+                    $mascaraId = $apt['ID_MASCARA'] ?? 0;
+                    $key = $itemId . '_' . $mascaraId;
+                    
+                    if (!isset($agrupado[$key])) {
+                        $agrupado[$key] = [
+                            'ID_ITEM' => $itemId,
+                            'COD_ITEM' => $apt['COD_ITEM'] ?? '-',
+                            'DESC_ITEM' => $apt['DESC_ITEM'] ?? '-',
+                            'ID_MASCARA' => $mascaraId ?: null,
+                            'CENTRO_TRAB_ID' => $centroTrabId,
+                            'DESC_CENTRO' => $apt['DESC_CENTRO'] ?? '-',
+                            'RECURSO' => $apt['RECURSO'] ?? $apt['DESC_MAQUINA'] ?? '-',
+                            'QTD_APONTAMENTOS' => 0,
+                            'TOTAL_QUANTIDADE' => 0,
+                            'PONTOS_UP' => floatval($apt['PONTOS_UP'] ?? 0),
+                            'TOTAL_PONTOS' => 0,
+                            'TEM_PONTUACAO' => $apt['TEM_PONTUACAO'] ?? 'N',
+                            'DATA_APONTAMENTO' => $data,
+                            'ORIGEM' => 'CENTRO',
+                            'SEM_VINCULO' => true
+                        ];
+                    }
+                    
+                    $agrupado[$key]['QTD_APONTAMENTOS'] += intval($apt['QTD_APONTAMENTOS'] ?? 1);
+                    $agrupado[$key]['TOTAL_QUANTIDADE'] += floatval($apt['QUANTIDADE'] ?? $apt['TOTAL_QUANTIDADE'] ?? 0);
+                }
+                
+                // Calcular pontos totais
+                foreach ($agrupado as &$item) {
+                    $item['TOTAL_PONTOS'] = round($item['TOTAL_QUANTIDADE'] * $item['PONTOS_UP'], 4);
+                }
+                unset($item);
+                
+                $resultado[$data] = array_values($agrupado);
+            }
+        }
+        
+        return $resultado;
     }
 }
 

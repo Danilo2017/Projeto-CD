@@ -14,6 +14,10 @@ if (!$acessoComissao) {
     'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 5px 10px; margin: 0;">
     <!-- Filtros -->
     <div class="dashboard-filters">
@@ -23,9 +27,9 @@ if (!$acessoComissao) {
                 <input type="text" id="filtroEmpresaDisplay" class="form-control" readonly style="background-color: #e9ecef;">
                 <input type="hidden" id="filtroEmpresa" value="<?= $empresa['id'] ?? '' ?>">
             </div>
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 280px;">
                 <label for="filtroFuncionario">Funcionário</label>
-                <select id="filtroFuncionario" class="form-select">
+                <select id="filtroFuncionario" class="form-select" style="width: 100%;">
                     <option value="">Todos</option>
                 </select>
             </div>
@@ -87,7 +91,7 @@ if (!$acessoComissao) {
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="funcionarioId" class="form-label">Funcionário *</label>
-                                <select id="funcionarioId" class="form-select" required>
+                                <select id="funcionarioId" class="form-select" style="width: 100%;" required>
                                     <option value="">Selecione</option>
                                 </select>
                             </div>
@@ -148,7 +152,7 @@ if (!$acessoComissao) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="salvarRegra()">
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSalvarRegra" onclick="salvarRegra()">
                         <i class="bi bi-check-lg"></i> Salvar
                     </button>
                 </div>
@@ -175,26 +179,58 @@ function carregarEmpresas() {
     }
 }
 
+let funcionariosCache = [];
+
 function carregarFuncionarios(emprId) {
     if (!emprId) return;
     
     fetch(`/comissao-api-funcionarios?empr_id=${emprId}`)
         .then(response => response.json())
         .then(result => {
-            const funcionarios = result.data || result;
-            const selects = ['filtroFuncionario', 'funcionarioId'];
-            selects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                select.innerHTML = '<option value="">Selecione</option>';
-                funcionarios.forEach(func => {
-                    const option = document.createElement('option');
-                    option.value = func.ID;
-                    option.textContent = func.COD_FUNC + ' - ' + func.NOME;
-                    select.appendChild(option);
-                });
-            });
+            funcionariosCache = result.data || result || [];
+            inicializarSelect2Funcionarios();
         })
         .catch(error => console.error('Erro ao carregar funcionários:', error));
+}
+
+function inicializarSelect2Funcionarios() {
+    // Limpar opções existentes e popular com cache
+    const selectFiltro = document.getElementById('filtroFuncionario');
+    const selectModal = document.getElementById('funcionarioId');
+    
+    selectFiltro.innerHTML = '<option value="">Todos</option>';
+    selectModal.innerHTML = '<option value="">Selecione</option>';
+    
+    funcionariosCache.forEach(f => {
+        const texto = (f.COD_FUNC || '') + ' - ' + (f.NOME || '');
+        selectFiltro.innerHTML += `<option value="${f.ID}">${texto}</option>`;
+        selectModal.innerHTML += `<option value="${f.ID}">${texto}</option>`;
+    });
+    
+    // Filtro
+    if ($('#filtroFuncionario').data('select2')) {
+        $('#filtroFuncionario').select2('destroy');
+    }
+    $('#filtroFuncionario').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou nome...',
+        allowClear: true
+    });
+    
+    // Modal - inicializar quando o modal abrir
+    $('#modalRegra').off('shown.bs.modal').on('shown.bs.modal', function() {
+        if ($('#funcionarioId').data('select2')) {
+            $('#funcionarioId').select2('destroy');
+        }
+        $('#funcionarioId').select2({
+            theme: 'bootstrap-5',
+            language: 'pt-BR',
+            placeholder: 'Digite código ou nome...',
+            allowClear: true,
+            dropdownParent: $('#modalRegra .modal-content')
+        });
+    });
 }
 
 // Empresa travada - não precisa listener de change
@@ -365,6 +401,9 @@ function novaRegra() {
     document.getElementById('percentual').value = '';
     document.getElementById('percentual').disabled = false;
     document.getElementById('observacao').value = '';
+    
+    // Limpar Select2 funcionário
+    $('#funcionarioId').val('').trigger('change');
 }
 
 function editarRegra(id) {
@@ -375,7 +414,10 @@ function editarRegra(id) {
             console.log('Regra carregada:', regra);
             
             document.getElementById('regraId').value = regra.ID_REGRA || regra.ID;
-            document.getElementById('funcionarioId').value = regra.ID_FUNCIONARIO || regra.FUNCIONARIO_ID;
+            // Setar funcionário no Select2
+            const funcId = regra.ID_FUNCIONARIO || regra.FUNCIONARIO_ID;
+            $('#funcionarioId').val(funcId).trigger('change');
+            
             document.getElementById('tipoRegra').value = regra.TIPO_COMISSAO || regra.TIPO_REGRA;
             document.getElementById('valorBase').value = regra.VALOR_COMISSAO || regra.VALOR_BASE || '';
             document.getElementById('valorFixoBase').value = regra.VALOR_FIXO || '';
@@ -401,6 +443,13 @@ function editarRegra(id) {
 }
 
 function salvarRegra() {
+    const btnSalvar = document.getElementById('btnSalvarRegra');
+    const textoOriginal = btnSalvar.innerHTML;
+    
+    // Desabilitar botão e mostrar spinner
+    btnSalvar.disabled = true;
+    btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+    
     const regraId = document.getElementById('regraId').value;
     const funcionarioId = document.getElementById('funcionarioId').value;
     const tipoRegra = document.getElementById('tipoRegra').value;
@@ -421,18 +470,24 @@ function salvarRegra() {
     
     if (!funcionarioId || !tipoRegra || !prioridade || !dtVigenciaIni) {
         alert('Preencha todos os campos obrigatórios');
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = textoOriginal;
         return;
     }
     
     // Validar campos conforme tipo
     if (tipoRegra === 'M' && (!valorFixoBase || !valorBase)) {
         alert('Para tipo Misto, informe o Valor Fixo Base e o Valor por Ponto');
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = textoOriginal;
         return;
     }
     
     // Para tipos P, V, F: valorBase pode ser 0 (ex: valor fixo de R$ 0)
     if (['P', 'V', 'F'].includes(tipoRegra) && valorBase === '' && valorBase !== '0') {
         alert('Informe o valor da comissão');
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = textoOriginal;
         return;
     }
     
@@ -468,6 +523,9 @@ function salvarRegra() {
     })
     .then(data => {
         console.log('Response data:', data);
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = textoOriginal;
+        
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('modalRegra')).hide();
             alert(regraId ? 'Regra atualizada com sucesso!' : 'Regra cadastrada com sucesso!');
@@ -478,6 +536,8 @@ function salvarRegra() {
     })
     .catch(error => {
         console.error('Erro:', error);
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = textoOriginal;
         alert('Erro ao salvar regra');
     });
 }

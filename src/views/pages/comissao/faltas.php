@@ -14,6 +14,10 @@ if (!$acessoComissao) {
     'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
     <!-- Filtros -->
     <div class="dashboard-filters">
@@ -24,9 +28,9 @@ if (!$acessoComissao) {
                        value="<?= ($empresa['codigo'] ?? '') . ' - ' . ($empresa['nome_fantasia'] ?? 'Não selecionada') ?>">
                 <input type="hidden" id="filtroEmpresa" value="<?= $empresa['id'] ?? '' ?>">
             </div>
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 250px;">
                 <label for="filtroFuncionario">Funcionário</label>
-                <select id="filtroFuncionario" class="form-select">
+                <select id="filtroFuncionario" class="form-select select2-funcionario" style="width: 100%;">
                     <option value="">Todos</option>
                 </select>
             </div>
@@ -89,7 +93,7 @@ if (!$acessoComissao) {
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="funcionarioId" class="form-label">Funcionário *</label>
-                                <select id="funcionarioId" class="form-select" required>
+                                <select id="funcionarioId" class="form-select select2-funcionario-modal" style="width: 100%;" required>
                                     <option value="">Selecione</option>
                                 </select>
                             </div>
@@ -129,10 +133,22 @@ if (!$acessoComissao) {
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
 <script>
+let funcionariosCache = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     carregarFuncionarios();
     definirDatasIniciais();
+    
+    // Carregar faltas automaticamente após a página carregar
+    setTimeout(() => carregarFaltas(), 500);
+    
+    // Reinicializar Select2 do modal quando abrir
+    $('#modalFalta').on('shown.bs.modal', function() {
+        inicializarSelect2Modal();
+    });
 });
 
 function definirDatasIniciais() {
@@ -143,6 +159,38 @@ function definirDatasIniciais() {
     document.getElementById('filtroDataFim').value = hoje.toISOString().split('T')[0];
 }
 
+function inicializarSelect2Filtro() {
+    $('#filtroFuncionario').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite para buscar...',
+        allowClear: true,
+        data: [{id: '', text: 'Todos'}].concat(funcionariosCache.map(f => ({
+            id: f.ID,
+            text: f.COD_FUNC + ' - ' + f.NOME
+        })))
+    });
+}
+
+function inicializarSelect2Modal() {
+    // Destruir se já existir
+    if ($('#funcionarioId').hasClass('select2-hidden-accessible')) {
+        $('#funcionarioId').select2('destroy');
+    }
+    
+    $('#funcionarioId').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou nome...',
+        allowClear: true,
+        dropdownParent: $('#modalFalta'),
+        data: [{id: '', text: 'Selecione'}].concat(funcionariosCache.map(f => ({
+            id: f.ID,
+            text: f.COD_FUNC + ' - ' + f.NOME
+        })))
+    });
+}
+
 function carregarFuncionarios() {
     const emprId = document.getElementById('filtroEmpresa').value;
     if (!emprId) return;
@@ -150,18 +198,8 @@ function carregarFuncionarios() {
     fetch(`/comissao-api-funcionarios?empr_id=${emprId}`)
         .then(response => response.json())
         .then(result => {
-            const funcionarios = result.data || result;
-            const selects = ['filtroFuncionario', 'funcionarioId'];
-            selects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                select.innerHTML = '<option value="">Selecione</option>';
-                funcionarios.forEach(func => {
-                    const option = document.createElement('option');
-                    option.value = func.ID;
-                    option.textContent = func.COD_FUNC + ' - ' + func.NOME;
-                    select.appendChild(option);
-                });
-            });
+            funcionariosCache = result.data || result;
+            inicializarSelect2Filtro();
         })
         .catch(error => console.error('Erro ao carregar funcionários:', error));
 }
@@ -223,9 +261,17 @@ function novaFalta() {
     document.getElementById('formFalta').reset();
     document.getElementById('faltaId').value = '';
     document.getElementById('modalFaltaTitulo').innerHTML = '<i class="bi bi-calendar-x"></i> Registrar Falta';
+    
+    // Limpar Select2 do modal
+    if ($('#funcionarioId').hasClass('select2-hidden-accessible')) {
+        $('#funcionarioId').val('').trigger('change');
+    }
 }
 
 function salvarFalta() {
+    const btnSalvar = document.querySelector('#modalFalta .btn-primary');
+    const btnTextoOriginal = btnSalvar.innerHTML;
+    
     const funcionarioId = document.getElementById('funcionarioId').value;
     const dataFalta = document.getElementById('dataFalta').value;
     const tipoFalta = document.getElementById('tipoFalta').value;
@@ -241,6 +287,10 @@ function salvarFalta() {
         alert('Preencha todos os campos obrigatórios');
         return;
     }
+    
+    // Desabilitar botão e mostrar loading
+    btnSalvar.disabled = true;
+    btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
     
     const dados = {
         id_funcionario: funcionarioId,
@@ -268,6 +318,11 @@ function salvarFalta() {
     .catch(error => {
         console.error('Erro:', error);
         alert('Erro ao salvar falta');
+    })
+    .finally(() => {
+        // Reabilitar botão
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = btnTextoOriginal;
     });
 }
 

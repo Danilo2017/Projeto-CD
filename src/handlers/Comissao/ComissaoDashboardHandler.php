@@ -83,8 +83,7 @@ class ComissaoDashboardHandler
      */
     public static function simularComissoes(string $dataInicio, string $dataFim, int $emprId, ?int $centroTrabId = null): array
     {
-        $comissaoModel = new Comissao();
-        $simulacao = $comissaoModel->calcularComissaoTodos($dataInicio, $dataFim, $emprId, $centroTrabId);
+        $simulacao = Comissao::calcularComissaoTodos($dataInicio, $dataFim, $emprId, $centroTrabId);
 
         // Calcular totais
         $totais = [
@@ -105,8 +104,7 @@ class ComissaoDashboardHandler
      */
     public static function getDashboardCompleto(string $dataInicio, string $dataFim, int $emprId): array
     {
-        $comissaoModel = new Comissao();
-        $resultado = $comissaoModel->calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId);
+        $resultado = Comissao::calcularComissaoTodosCompletaOtimizado($dataInicio, $dataFim, $emprId);
         $funcionarios = $resultado['funcionarios'] ?? [];
 
         // Cards de resumo

@@ -14,25 +14,29 @@ if (!$acessoComissao) {
     'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row">
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 220px;">
                 <label for="filtroFuncionario">Funcionário</label>
-                <select id="filtroFuncionario" class="form-select">
+                <select id="filtroFuncionario" class="form-select" style="width: 100%;">
                     <option value="">Todos</option>
                 </select>
             </div>
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 220px;">
                 <label for="filtroRecurso">Recurso</label>
-                <select id="filtroRecurso" class="form-select">
+                <select id="filtroRecurso" class="form-select" style="width: 100%;">
                     <option value="">Todos</option>
                 </select>
             </div>
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 220px;">
                 <label for="filtroCentro">Centro de Trabalho</label>
-                <select id="filtroCentro" class="form-select">
+                <select id="filtroCentro" class="form-select" style="width: 100%;">
                     <option value="">Todos</option>
                 </select>
             </div>
@@ -91,22 +95,22 @@ if (!$acessoComissao) {
                         </div>
                         <div class="mb-3">
                             <label for="funcionario_id" class="form-label">Funcionário *</label>
-                            <select class="form-select" id="funcionario_id" name="funcionario_id" required></select>
+                            <select class="form-select" id="funcionario_id" name="funcionario_id" style="width: 100%;" required></select>
                         </div>
                         <div class="mb-3" id="recursoGroup">
                             <label for="recurso_id" class="form-label">Recurso <span id="recursoReq">*</span></label>
-                            <select class="form-select" id="recurso_id" name="recurso_id" required></select>
+                            <select class="form-select" id="recurso_id" name="recurso_id" style="width: 100%;" required></select>
                             <small class="text-muted" id="recursoHelp" style="display:none;">Opcional para funcionários de Apoio</small>
                         </div>
                         <div class="mb-3">
                             <label for="centro_id" class="form-label">Centro de Trabalho *</label>
-                            <select class="form-select" id="centro_id" name="centro_id" required></select>
+                            <select class="form-select" id="centro_id" name="centro_id" style="width: 100%;" required></select>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="salvarVinculo()">
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSalvarVinculo" onclick="salvarVinculo()">
                         <i class="bi bi-check-lg"></i> Salvar
                     </button>
                 </div>
@@ -146,6 +150,16 @@ if (!$acessoComissao) {
                         </select>
                         <small class="text-muted">Centro onde o funcionário ganhará como apoio nos dias selecionados</small>
                     </div>
+
+                    <!-- Tipo de Cálculo (fixo em Média) -->
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Cálculo dos Pontos</label>
+                        <input type="hidden" name="tipoCalculoApoio" id="tipoCalculoApoio" value="M">
+                        <div class="alert alert-info py-2 mb-0">
+                            <i class="fas fa-calculator me-2"></i>
+                            <strong>Média</strong> - Recebe pontos ÷ recursos ativos no dia
+                        </div>
+                    </div>
                     
                     <!-- Adicionar nova data -->
                     <div class="row mb-3">
@@ -171,13 +185,14 @@ if (!$acessoComissao) {
                             <table class="table table-sm table-bordered" id="tabelaDiasApoio">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 40%">Data</th>
-                                        <th style="width: 40%">Centro Apoio</th>
-                                        <th style="width: 20%">Ação</th>
+                                        <th style="width: 30%">Data</th>
+                                        <th style="width: 35%">Centro Apoio</th>
+                                        <th style="width: 20%">Tipo Cálculo</th>
+                                        <th style="width: 15%">Ação</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabelaDiasApoioBody">
-                                    <tr><td colspan="3" class="text-center text-muted">Nenhuma data configurada</td></tr>
+                                    <tr><td colspan="4" class="text-center text-muted">Nenhuma data configurada</td></tr>
                                 </tbody>
                             </table>
                         </div>

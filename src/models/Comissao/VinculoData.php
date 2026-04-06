@@ -15,40 +15,49 @@ class VinculoData
 {
     /**
      * Verificar se a tabela de datas existe
+     * @idsql vinculodata.tabela.existe
      */
     public static function verificarTabelaExiste(): bool
     {
-        $sql = "SELECT COUNT(*) AS EXISTE FROM USER_TABLES WHERE TABLE_NAME = 'TGAZIN_VINC_FUNC_DATA'";
-        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $result = Database::switchParams('focco', [], 'vinculodata.tabela.existe', true);
         return ($result['retorno'][0]['EXISTE'] ?? 0) > 0;
     }
 
     /**
+     * Verificar se coluna TIPO_CALCULO existe na tabela
+     * @idsql vinculodata.coluna.tipoCalculoExiste
+     */
+    private static function colunaExiste(): bool
+    {
+        static $existe = null;
+        if ($existe === null) {
+            try {
+                $result = Database::switchParams('focco', [], 'vinculodata.coluna.tipoCalculoExiste', true);
+                $existe = ($result['retorno'][0]['EXISTE'] ?? 0) > 0;
+            } catch (\Throwable $e) {
+                $existe = false;
+            }
+        }
+        return $existe;
+    }
+
+    /**
      * Listar datas de apoio de um vínculo
+     * @idsql vinculodata.vinculo.listarPorVinculo
      * @param int $idVinculo ID do vínculo principal
      * @return array
      */
     public static function listarPorVinculo(int $idVinculo): array
     {
-        $sql = "SELECT 
-                    vd.ID_VINCULO_DATA,
-                    vd.ID_VINCULO,
-                    TO_CHAR(vd.DATA, 'YYYY-MM-DD') AS DATA,
-                    TO_CHAR(vd.DATA, 'DD/MM/YYYY') AS DATA_FORMATADA,
-                    vd.ID_CENTRO_TRAB_APOIO,
-                    ct.COD_CENTRO AS CENTRO_APOIO_COD,
-                    ct.DESCRICAO AS CENTRO_APOIO_DESCRICAO,
-                    vd.ATIVO
-                FROM FOCCO3I.TGAZIN_VINC_FUNC_DATA vd
-                LEFT JOIN FOCCO3I.TCENTROS_TRAB ct ON ct.ID = vd.ID_CENTRO_TRAB_APOIO
-                WHERE vd.ID_VINCULO = :id_vinculo
-                AND vd.ATIVO = 'S'
-                ORDER BY vd.DATA DESC";
+        $campoTipoCalculo = self::colunaExiste() ? "NVL(vd.TIPO_CALCULO, 'T') AS TIPO_CALCULO" : "'T' AS TIPO_CALCULO";
         
-        $params = ['id_vinculo' => intval($idVinculo)];
+        $params = [
+            'id_vinculo' => intval($idVinculo),
+            'campo_tipo_calculo' => $campoTipoCalculo
+        ];
         
         try {
-            $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+            $result = Database::switchParams('focco', $params, 'vinculodata.vinculo.listarPorVinculo', true);
             return $result['retorno'] ?? [];
         } catch (\Throwable $e) {
             return [];
@@ -60,30 +69,11 @@ class VinculoData
      * @param int $idFuncionario
      * @param int $idEmpr
      * @param string $mesAno Formato: 'YYYY-MM'
+     * @idsql vinculodata.funcionario.listarPorMes
      * @return array
      */
     public static function listarPorFuncionarioMes(int $idFuncionario, int $idEmpr, string $mesAno): array
     {
-        $sql = "SELECT 
-                    vd.ID_VINCULO_DATA,
-                    vd.ID_VINCULO,
-                    TO_CHAR(vd.DATA, 'YYYY-MM-DD') AS DATA,
-                    vd.ID_CENTRO_TRAB_APOIO,
-                    ct.COD_CENTRO,
-                    ct.DESCRICAO AS CENTRO_DESCRICAO,
-                    v.ID_FUNCIONARIO,
-                    f.NOME AS FUNCIONARIO_NOME
-                FROM FOCCO3I.TGAZIN_VINC_FUNC_DATA vd
-                INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC v ON v.ID_VINCULO = vd.ID_VINCULO
-                INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO
-                LEFT JOIN FOCCO3I.TCENTROS_TRAB ct ON ct.ID = vd.ID_CENTRO_TRAB_APOIO
-                WHERE v.ID_FUNCIONARIO = :id_funcionario
-                AND v.ID_EMPR = :id_empr
-                AND TO_CHAR(vd.DATA, 'YYYY-MM') = :mes_ano
-                AND vd.ATIVO = 'S'
-                AND v.ATIVO = 'S'
-                ORDER BY vd.DATA";
-        
         $params = [
             'id_funcionario' => intval($idFuncionario),
             'id_empr' => intval($idEmpr),
@@ -91,7 +81,7 @@ class VinculoData
         ];
         
         try {
-            $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+            $result = Database::switchParams('focco', $params, 'vinculodata.funcionario.listarPorMes', true);
             return $result['retorno'] ?? [];
         } catch (\Throwable $e) {
             return [];
@@ -105,28 +95,11 @@ class VinculoData
      * @param int $idFuncionario
      * @param int $idEmpr
      * @param string $data Formato: 'YYYY-MM-DD'
+     * @idsql vinculodata.apoio.verificarNaData
      * @return array|null
      */
     public static function verificarApoioNaData(int $idFuncionario, int $idEmpr, string $data): ?array
     {
-        $sql = "SELECT 
-                    vd.ID_VINCULO_DATA,
-                    vd.ID_VINCULO,
-                    vd.ID_CENTRO_TRAB_APOIO,
-                    ct.COD_CENTRO,
-                    ct.DESCRICAO AS CENTRO_DESCRICAO,
-                    v.ID_FUNCIONARIO,
-                    v.ID_CENTRO_TRAB AS CENTRO_PRINCIPAL
-                FROM FOCCO3I.TGAZIN_VINC_FUNC_DATA vd
-                INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC v ON v.ID_VINCULO = vd.ID_VINCULO
-                LEFT JOIN FOCCO3I.TCENTROS_TRAB ct ON ct.ID = vd.ID_CENTRO_TRAB_APOIO
-                WHERE v.ID_FUNCIONARIO = :id_funcionario
-                AND v.ID_EMPR = :id_empr
-                AND vd.DATA = TO_DATE(:data, 'YYYY-MM-DD')
-                AND vd.ATIVO = 'S'
-                AND v.ATIVO = 'S'
-                FETCH FIRST 1 ROW ONLY";
-        
         $params = [
             'id_funcionario' => intval($idFuncionario),
             'id_empr' => intval($idEmpr),
@@ -134,7 +107,7 @@ class VinculoData
         ];
         
         try {
-            $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+            $result = Database::switchParams('focco', $params, 'vinculodata.apoio.verificarNaData', true);
             return $result['retorno'][0] ?? null;
         } catch (\Throwable $e) {
             return null;
@@ -146,35 +119,72 @@ class VinculoData
      * @param int $idVinculo ID do vínculo principal
      * @param string $data Formato: 'YYYY-MM-DD'
      * @param int|null $idCentroTrabApoio Centro onde vai atuar como apoio (se null, usa o mesmo do vínculo)
+     * @param string $tipoCalculo Tipo de cálculo: 'T' = Total, 'M' = Média
      * @return bool
      */
-    public static function inserir(int $idVinculo, string $data, ?int $idCentroTrabApoio = null): bool
+    /**
+     * Inserir nova data de apoio
+     * @idsql vinculodata.vinculo.buscarCentro, vinculodata.registro.buscarExistente, vinculodata.registro.reativarComTipo, vinculodata.registro.inserirComTipo
+     * @param int $idVinculo ID do vínculo principal
+     * @param string $data Formato: 'YYYY-MM-DD'
+     * @param int|null $idCentroTrabApoio Centro onde vai atuar como apoio (se null, usa o mesmo do vínculo)
+     * @param string $tipoCalculo Tipo de cálculo: 'T' = Total, 'M' = Média
+     * @return bool
+     */
+    public static function inserir(int $idVinculo, string $data, ?int $idCentroTrabApoio = null, string $tipoCalculo = 'T'): bool
     {
         // Se não especificou centro, busca do vínculo principal
         if ($idCentroTrabApoio === null) {
-            $sqlVinculo = "SELECT ID_CENTRO_TRAB FROM FOCCO3I.TGAZIN_VINC_FUNC WHERE ID_VINCULO = :id_vinculo";
-            $resultVinculo = Database::switchParams('focco', ['id_vinculo' => intval($idVinculo)], null, true, false, null, $sqlVinculo);
+            $params = ['id_vinculo' => intval($idVinculo)];
+            $resultVinculo = Database::switchParams('focco', $params, 'vinculodata.vinculo.buscarCentro', true);
             $idCentroTrabApoio = $resultVinculo['retorno'][0]['ID_CENTRO_TRAB'] ?? null;
         }
         
-        // Usar sintaxe direta para evitar problemas com bind variables de data
         $centroValue = $idCentroTrabApoio !== null ? intval($idCentroTrabApoio) : 'NULL';
         
-        $sql = "INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC_DATA (
-                    ID_VINCULO,
-                    DATA,
-                    ID_CENTRO_TRAB_APOIO,
-                    ATIVO,
-                    DT_CADASTRO
-                ) VALUES (
-                    " . intval($idVinculo) . ",
-                    TO_DATE('" . $data . "', 'YYYY-MM-DD'),
-                    " . $centroValue . ",
-                    'S',
-                    SYSDATE
-                )";
+        // Validar tipo de cálculo (T = Total, M = Média)
+        $tipoCalculo = in_array(strtoupper($tipoCalculo), ['T', 'M']) ? strtoupper($tipoCalculo) : 'T';
         
-        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        // Verificar se já existe registro (ativo ou inativo) para esta data
+        $paramsExiste = [
+            'id_vinculo' => intval($idVinculo),
+            'data' => "'" . $data . "'"
+        ];
+        
+        $resultExiste = Database::switchParams('focco', $paramsExiste, 'vinculodata.registro.buscarExistente', true);
+        $registroExistente = $resultExiste['retorno'][0] ?? null;
+        
+        if ($registroExistente) {
+            // Se existe registro inativo, reativa e atualiza
+            $paramsUpdate = [
+                'centro_value' => $centroValue,
+                'id_vinculo_data' => intval($registroExistente['ID_VINCULO_DATA'])
+            ];
+            
+            if (self::colunaExiste()) {
+                $paramsUpdate['tipo_calculo'] = "'" . $tipoCalculo . "'";
+                $result = Database::switchParams('focco', $paramsUpdate, 'vinculodata.registro.reativarComTipo', true);
+            } else {
+                $result = Database::switchParams('focco', $paramsUpdate, 'vinculodata.registro.reativarSemTipo', true);
+            }
+            
+            return !$result['error'];
+        }
+        
+        // Não existe, insere novo registro
+        $paramsInsert = [
+            'id_vinculo' => intval($idVinculo),
+            'data' => "'" . $data . "'",
+            'centro_value' => $centroValue
+        ];
+        
+        if (self::colunaExiste()) {
+            $paramsInsert['tipo_calculo'] = "'" . $tipoCalculo . "'";
+            $result = Database::switchParams('focco', $paramsInsert, 'vinculodata.registro.inserirComTipo', true);
+        } else {
+            $result = Database::switchParams('focco', $paramsInsert, 'vinculodata.registro.inserirSemTipo', true);
+        }
+        
         return !$result['error'];
     }
 
@@ -183,17 +193,16 @@ class VinculoData
      * @param int $idVinculo
      * @param array $datas Array de datas no formato 'YYYY-MM-DD'
      * @param int|null $idCentroTrabApoio
-     * @return int Quantidade de datas inseridas
+     * @param string $tipoCalculo Tipo de cálculo: 'T' = Total, 'M' = Média
+     * @return int Quantidade de datas inseridas/atualizadas
      */
-    public static function inserirMultiplas(int $idVinculo, array $datas, ?int $idCentroTrabApoio = null): int
+    public static function inserirMultiplas(int $idVinculo, array $datas, ?int $idCentroTrabApoio = null, string $tipoCalculo = 'T'): int
     {
         $count = 0;
         foreach ($datas as $data) {
-            // Verificar se já existe
-            if (!self::existeData($idVinculo, $data)) {
-                if (self::inserir($idVinculo, $data, $idCentroTrabApoio)) {
-                    $count++;
-                }
+            // A função inserir agora lida com reativação de registros inativos
+            if (self::inserir($idVinculo, $data, $idCentroTrabApoio, $tipoCalculo)) {
+                $count++;
             }
         }
         return $count;
@@ -201,56 +210,55 @@ class VinculoData
 
     /**
      * Verificar se já existe registro para a data
+     * @idsql vinculodata.data.existe
      */
     public static function existeData(int $idVinculo, string $data): bool
     {
-        $sql = "SELECT COUNT(*) AS EXISTE 
-                FROM FOCCO3I.TGAZIN_VINC_FUNC_DATA 
-                WHERE ID_VINCULO = " . intval($idVinculo) . " 
-                AND DATA = TO_DATE('" . $data . "', 'YYYY-MM-DD')
-                AND ATIVO = 'S'";
+        $params = [
+            'id_vinculo' => intval($idVinculo),
+            'data' => "'" . $data . "'"
+        ];
         
-        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $result = Database::switchParams('focco', $params, 'vinculodata.data.existe', true);
         return ($result['retorno'][0]['EXISTE'] ?? 0) > 0;
     }
 
     /**
      * Excluir data de apoio (inativa o registro)
+     * @idsql vinculodata.registro.excluirPorId
      */
     public static function excluir(int $idVinculoData): bool
     {
-        $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC_DATA 
-                SET ATIVO = 'N', DT_ALTERACAO = SYSDATE 
-                WHERE ID_VINCULO_DATA = " . intval($idVinculoData);
+        $params = ['id_vinculo_data' => intval($idVinculoData)];
         
-        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $result = Database::switchParams('focco', $params, 'vinculodata.registro.excluirPorId', true);
         return !$result['error'];
     }
 
     /**
      * Excluir data de apoio por vínculo e data
+     * @idsql vinculodata.registro.excluirPorData
      */
     public static function excluirPorData(int $idVinculo, string $data): bool
     {
-        $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC_DATA 
-                SET ATIVO = 'N', DT_ALTERACAO = SYSDATE 
-                WHERE ID_VINCULO = " . intval($idVinculo) . " 
-                AND DATA = TO_DATE('" . $data . "', 'YYYY-MM-DD')";
+        $params = [
+            'id_vinculo' => intval($idVinculo),
+            'data' => "'" . $data . "'"
+        ];
         
-        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $result = Database::switchParams('focco', $params, 'vinculodata.registro.excluirPorData', true);
         return !$result['error'];
     }
 
     /**
      * Excluir todas as datas de um vínculo
+     * @idsql vinculodata.vinculo.excluirTodas
      */
     public static function excluirTodasPorVinculo(int $idVinculo): bool
     {
-        $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC_DATA 
-                SET ATIVO = 'N', DT_ALTERACAO = SYSDATE 
-                WHERE ID_VINCULO = " . intval($idVinculo);
+        $params = ['id_vinculo' => intval($idVinculo)];
         
-        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $result = Database::switchParams('focco', $params, 'vinculodata.vinculo.excluirTodas', true);
         return !$result['error'];
     }
 
@@ -276,11 +284,12 @@ class VinculoData
 
     /**
      * Buscar datas de apoio em batch para múltiplos funcionários em um período
+     * @idsql vinculodata.apoio.buscarDatasApoioBatch
      * @param array $funcIds IDs dos funcionários
      * @param int $emprId ID da empresa
      * @param string $periodoIni Data início (YYYY-MM-DD)
      * @param string $periodoFim Data fim (YYYY-MM-DD)
-     * @return array Indexado por ID_FUNCIONARIO -> [DATA => centro_apoio_id]
+     * @return array Indexado por ID_FUNCIONARIO -> [DATA => ['centro' => id, 'tipo_calculo' => 'T'|'M']]
      */
     public static function buscarDatasApoioBatch(array $funcIds, int $emprId, string $periodoIni, string $periodoFim): array
     {
@@ -289,43 +298,35 @@ class VinculoData
         }
 
         $inIds = implode(',', array_map('intval', $funcIds));
-        
-        $sql = "SELECT 
-                    v.ID_FUNCIONARIO,
-                    TO_CHAR(vd.DATA, 'YYYY-MM-DD') AS DATA,
-                    vd.ID_CENTRO_TRAB_APOIO,
-                    v.ID_CENTRO_TRAB AS CENTRO_PRINCIPAL
-                FROM FOCCO3I.TGAZIN_VINC_FUNC_DATA vd
-                INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC v ON v.ID_VINCULO = vd.ID_VINCULO
-                WHERE v.ID_FUNCIONARIO IN ({$inIds})
-                AND v.ID_EMPR = :id_empr
-                AND vd.DATA BETWEEN TO_DATE(:periodo_ini, 'YYYY-MM-DD') AND TO_DATE(:periodo_fim, 'YYYY-MM-DD')
-                AND vd.ATIVO = 'S'
-                AND v.ATIVO = 'S'
-                AND v.TIPO_VINCULO = 'N'
-                ORDER BY v.ID_FUNCIONARIO, vd.DATA";
+        $campoTipoCalculo = self::colunaExiste() ? "NVL(vd.TIPO_CALCULO, 'T') AS TIPO_CALCULO" : "'T' AS TIPO_CALCULO";
         
         $params = [
+            'func_ids' => $inIds,
             'id_empr' => intval($emprId),
             'periodo_ini' => "'" . $periodoIni . "'",
-            'periodo_fim' => "'" . $periodoFim . "'"
+            'periodo_fim' => "'" . $periodoFim . "'",
+            'campo_tipo_calculo' => $campoTipoCalculo
         ];
         
         try {
-            $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+            $result = Database::switchParams('focco', $params, 'vinculodata.apoio.buscarDatasApoioBatch', true);
             $rows = $result['retorno'] ?? [];
             
-            // Indexar por funcionário e data
+            // Indexar por funcionário e data - agora retorna objeto com centro e tipo_calculo
             $datasApoio = [];
             foreach ($rows as $row) {
                 $funcId = (int)$row['ID_FUNCIONARIO'];
                 $data = $row['DATA'];
                 $centroApoio = $row['ID_CENTRO_TRAB_APOIO'] ?? $row['CENTRO_PRINCIPAL'];
+                $tipoCalculo = $row['TIPO_CALCULO'] ?? 'T';
                 
                 if (!isset($datasApoio[$funcId])) {
                     $datasApoio[$funcId] = [];
                 }
-                $datasApoio[$funcId][$data] = $centroApoio;
+                $datasApoio[$funcId][$data] = [
+                    'centro' => $centroApoio,
+                    'tipo_calculo' => $tipoCalculo
+                ];
             }
             
             return $datasApoio;
@@ -337,6 +338,7 @@ class VinculoData
     /**
      * Buscar todos os funcionários com datas de apoio configuradas em um período
      * Retorna dados básicos dos funcionários para incluir no relatório mesmo sem apontamentos
+     * @idsql vinculodata.apoio.buscarFuncionariosPeriodo
      * @param int $emprId
      * @param string $periodoIni
      * @param string $periodoFim
@@ -349,33 +351,15 @@ class VinculoData
             ? "AND (v.ID_CENTRO_TRAB = " . intval($centroTrabId) . " OR vd.ID_CENTRO_TRAB_APOIO = " . intval($centroTrabId) . ")"
             : '';
         
-        $sql = "SELECT DISTINCT
-                    v.ID_FUNCIONARIO AS FUNC_ID,
-                    f.COD_FUNC,
-                    f.NOME AS NOME_FUNC,
-                    v.ID_CENTRO_TRAB AS CENTRO_TRAB_ID,
-                    ct.COD_CENTRO,
-                    ct.DESCRICAO AS DESC_CENTRO,
-                    v.TIPO_VINCULO
-                FROM FOCCO3I.TGAZIN_VINC_FUNC_DATA vd
-                INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC v ON v.ID_VINCULO = vd.ID_VINCULO
-                INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO
-                LEFT JOIN FOCCO3I.TCENTROS_TRAB ct ON ct.ID = v.ID_CENTRO_TRAB
-                WHERE v.ID_EMPR = :id_empr
-                AND vd.DATA BETWEEN TO_DATE(:periodo_ini, 'YYYY-MM-DD') AND TO_DATE(:periodo_fim, 'YYYY-MM-DD')
-                AND vd.ATIVO = 'S'
-                AND v.ATIVO = 'S'
-                {$filtroCtId}
-                ORDER BY f.NOME";
-        
         $params = [
             'id_empr' => intval($emprId),
             'periodo_ini' => "'" . $periodoIni . "'",
-            'periodo_fim' => "'" . $periodoFim . "'"
+            'periodo_fim' => "'" . $periodoFim . "'",
+            'filtro_centro' => $filtroCtId
         ];
         
         try {
-            $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+            $result = Database::switchParams('focco', $params, 'vinculodata.apoio.buscarFuncionariosPeriodo', true);
             return $result['retorno'] ?? [];
         } catch (\Throwable $e) {
             return [];
@@ -385,11 +369,12 @@ class VinculoData
     /**
      * Buscar datas de apoio para todos os funcionários de um centro/empresa em um período
      * Usado para incluir funcionários que trabalham como apoio mas podem não ter apontamentos individuais
+     * @idsql vinculodata.apoio.buscarTodasDatasPeriodo
      * @param int $emprId
      * @param string $periodoIni
      * @param string $periodoFim
      * @param int|null $centroTrabId
-     * @return array Indexado por ID_FUNCIONARIO -> [DATA => centro_apoio_id]
+     * @return array Indexado por ID_FUNCIONARIO -> [DATA => ['centro' => id, 'tipo_calculo' => 'T'|'M']]
      */
     public static function buscarTodasDatasApoioPeriodo(int $emprId, string $periodoIni, string $periodoFim, ?int $centroTrabId = null): array
     {
@@ -397,28 +382,18 @@ class VinculoData
             ? "AND (v.ID_CENTRO_TRAB = " . intval($centroTrabId) . " OR vd.ID_CENTRO_TRAB_APOIO = " . intval($centroTrabId) . ")"
             : '';
         
-        $sql = "SELECT 
-                    v.ID_FUNCIONARIO,
-                    TO_CHAR(vd.DATA, 'YYYY-MM-DD') AS DATA,
-                    vd.ID_CENTRO_TRAB_APOIO,
-                    v.ID_CENTRO_TRAB AS CENTRO_PRINCIPAL
-                FROM FOCCO3I.TGAZIN_VINC_FUNC_DATA vd
-                INNER JOIN FOCCO3I.TGAZIN_VINC_FUNC v ON v.ID_VINCULO = vd.ID_VINCULO
-                WHERE v.ID_EMPR = :id_empr
-                AND vd.DATA BETWEEN TO_DATE(:periodo_ini, 'YYYY-MM-DD') AND TO_DATE(:periodo_fim, 'YYYY-MM-DD')
-                AND vd.ATIVO = 'S'
-                AND v.ATIVO = 'S'
-                {$filtroCtId}
-                ORDER BY v.ID_FUNCIONARIO, vd.DATA";
+        $campoTipoCalculo = self::colunaExiste() ? "NVL(vd.TIPO_CALCULO, 'T') AS TIPO_CALCULO" : "'T' AS TIPO_CALCULO";
         
         $params = [
             'id_empr' => intval($emprId),
             'periodo_ini' => "'" . $periodoIni . "'",
-            'periodo_fim' => "'" . $periodoFim . "'"
+            'periodo_fim' => "'" . $periodoFim . "'",
+            'filtro_centro' => $filtroCtId,
+            'campo_tipo_calculo' => $campoTipoCalculo
         ];
         
         try {
-            $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+            $result = Database::switchParams('focco', $params, 'vinculodata.apoio.buscarTodasDatasPeriodo', true);
             $rows = $result['retorno'] ?? [];
             
             $datasApoio = [];
@@ -426,11 +401,15 @@ class VinculoData
                 $funcId = (int)$row['ID_FUNCIONARIO'];
                 $data = $row['DATA'];
                 $centroApoio = $row['ID_CENTRO_TRAB_APOIO'] ?? $row['CENTRO_PRINCIPAL'];
+                $tipoCalculo = $row['TIPO_CALCULO'] ?? 'T';
                 
                 if (!isset($datasApoio[$funcId])) {
                     $datasApoio[$funcId] = [];
                 }
-                $datasApoio[$funcId][$data] = (int)$centroApoio;
+                $datasApoio[$funcId][$data] = [
+                    'centro' => (int)$centroApoio,
+                    'tipo_calculo' => $tipoCalculo
+                ];
             }
             
             return $datasApoio;

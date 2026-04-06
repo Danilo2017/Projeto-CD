@@ -136,6 +136,8 @@ $router->get('/comissao-relatorio-diario', 'Comissao\\ComissaoRelatorioControlle
 $router->get('/comissao-relatorio-comissoes', 'Comissao\\ComissaoRelatorioController@comissoesIndex', true);
 $router->get('/comissao-relatorio-funcionario', 'Comissao\\ComissaoRelatorioController@porFuncionarioIndex', true);
 $router->get('/comissao-relatorio-centro-trabalho', 'Comissao\\ComissaoRelatorioController@porCentroTrabalhoIndex', true);
+$router->get('/comissao-relatorio-faltas', 'Comissao\\ComissaoRelatorioController@faltasIndex', true);
+$router->get('/comissao-extrato-analitico', 'Comissao\\ComissaoRelatorioController@extratoAnaliticoIndex', true);
 
 // APIs de Relatórios
 $router->get('/comissao-api-produtividade-diaria', 'Comissao\\ComissaoRelatorioController@getProdutividadeDiaria', true);
@@ -147,6 +149,8 @@ $router->post('/comissao-api-aprovar', 'Comissao\\ComissaoRelatorioController@ap
 $router->post('/comissao-api-cancelar', 'Comissao\\ComissaoRelatorioController@cancelarComissao', true);
 $router->get('/comissao-api-funcionario', 'Comissao\\ComissaoRelatorioController@getRelatorioFuncionario', true);
 $router->get('/comissao-api-relatorio-centro-trabalho', 'Comissao\\ComissaoRelatorioController@getRelatorioCentroTrabalho', true);
+$router->get('/comissao-api-relatorio-faltas', 'Comissao\\ComissaoRelatorioController@getRelatorioFaltas', true);
+$router->get('/comissao-api-extrato-analitico', 'Comissao\\ComissaoRelatorioController@getExtratoAnalitico', true);
 
 // ========== Rotas de Permissões ==========
 $router->get('/permissao', 'PermissaoController@index', true);
@@ -183,6 +187,8 @@ $router->delete('/meta-empresa-api-excluir', 'Faturamento\\MetaEmpresaController
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);
 $router->get('/admin-api-sqls', 'AdminSqlsController@listar', true);
 $router->get('/admin-api-sql', 'AdminSqlsController@buscar', true);
+$router->get('/admin-api-sql-historico', 'AdminSqlsController@historico', true);
 $router->post('/admin-api-sql-salvar', 'AdminSqlsController@salvar', true);
+$router->post('/admin-api-sql-validar', 'AdminSqlsController@validar', true);
 $router->put('/admin-api-sql-atualizar', 'AdminSqlsController@atualizar', true);
 $router->delete('/admin-api-sql-excluir', 'AdminSqlsController@excluir', true);

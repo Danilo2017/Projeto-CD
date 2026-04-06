@@ -99,7 +99,10 @@ class ComissaoCadastroController extends ctrl
             // Verificar se deve incluir inativos
             $incluirInativas = isset($_GET['incluirInativas']) && $_GET['incluirInativas'] === 'true';
             
-            $pontuacoes = ComissaoCadastroHandler::listarPontuacoes($emprId ? (int)$emprId : null, $incluirInativas);
+            // Filtro de busca por código ou descrição do produto
+            $busca = $_GET['busca'] ?? null;
+            
+            $pontuacoes = ComissaoCadastroHandler::listarPontuacoes($emprId ? (int)$emprId : null, $incluirInativas, $busca);
 
             self::response([
                 'success' => true,
@@ -1537,6 +1540,7 @@ class ComissaoCadastroController extends ctrl
             $idVinculo = $dados['vinculo_id'] ?? $dados['id_vinculo'] ?? null;
             $datas = $dados['datas'] ?? [];
             $idCentroApoio = $dados['centro_apoio_id'] ?? $dados['id_centro_apoio'] ?? null;
+            $tipoCalculo = $dados['tipo_calculo'] ?? 'T'; // T = Total, M = Média
             
             if (!$idVinculo) {
                 throw new \Exception('ID do vínculo é obrigatório');
@@ -1546,7 +1550,8 @@ class ComissaoCadastroController extends ctrl
             $count = \src\models\Comissao\VinculoData::inserirMultiplas(
                 (int)$idVinculo, 
                 $datas, 
-                $idCentroApoio ? (int)$idCentroApoio : null
+                $idCentroApoio ? (int)$idCentroApoio : null,
+                $tipoCalculo
             );
 
             self::response([

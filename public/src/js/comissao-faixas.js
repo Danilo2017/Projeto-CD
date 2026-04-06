@@ -190,7 +190,7 @@ function initDataTable() {
             }
         },
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[3, 'asc']], // Ordenar por ponto inicial
         columnDefs: [
             { orderable: false, targets: [9] }

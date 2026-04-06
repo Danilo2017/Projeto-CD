@@ -171,16 +171,16 @@ class PontuacaoProduto
 
         $params = [];
         $params['id_pontuacao'] = intval($novoId);
-        $params['empr_id'] = ($dados['empr_id'] ?? null) !== null ? intval($dados['empr_id']) : 'NULL';
-        $params['item_id'] = ($dados['item_id'] ?? null) !== null ? intval($dados['item_id']) : 'NULL';
-        $params['itempr_id'] = ($dados['itempr_id'] ?? null) !== null ? intval($dados['itempr_id']) : 'NULL';
-        $params['mascara_id'] = ($dados['mascara_id'] ?? null) !== null ? intval($dados['mascara_id']) : 'NULL';
-        $params['centro_trab_id'] = ($dados['centro_trab_id'] ?? null) !== null ? intval($dados['centro_trab_id']) : 'NULL';
+        $params['empr_id'] = !empty($dados['empr_id']) ? intval($dados['empr_id']) : 'NULL';
+        $params['item_id'] = !empty($dados['item_id']) ? intval($dados['item_id']) : 'NULL';
+        $params['itempr_id'] = !empty($dados['itempr_id']) ? intval($dados['itempr_id']) : 'NULL';
+        $params['mascara_id'] = !empty($dados['mascara_id']) ? intval($dados['mascara_id']) : 'NULL';
+        $params['centro_trab_id'] = !empty($dados['centro_trab_id']) ? intval($dados['centro_trab_id']) : 'NULL';
         $params['pontos_up'] = floatval($dados['pontos_up']);
         $params['dt_vigencia_ini'] = "'" . str_replace("'", "''", $dados['dt_vigencia_ini']) . "'";
-        $dtFim = $dados['dt_vigencia_fim'] ?? null;
+        $dtFim = !empty($dados['dt_vigencia_fim']) ? $dados['dt_vigencia_fim'] : null;
         $params['dt_vigencia_fim'] = $dtFim !== null ? "'" . str_replace("'", "''", $dtFim) . "'" : 'NULL';
-        $params['id_usuario'] = ($dados['id_usuario'] ?? null) !== null ? intval($dados['id_usuario']) : 'NULL';
+        $params['id_usuario'] = !empty($dados['id_usuario']) ? intval($dados['id_usuario']) : 'NULL';
 
         $result = Database::switchParams('focco', $params, 'comissao.pontuacao.inserir', true);
         if ($result['error']) {

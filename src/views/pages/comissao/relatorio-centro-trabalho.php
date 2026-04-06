@@ -14,14 +14,18 @@ if (!$acessoComissao) {
     'bodyStyle' => 'margin: 0; padding: 0;'
 ]) ?>
 
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
 <div class="comissao-dashboard-container" style="max-width: 100%; overflow-x: hidden;">
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row">
-            <div class="filter-group">
+            <div class="filter-group" style="min-width: 350px;">
                 <label for="filtroCentro">Centro de Trabalho *</label>
-                <select id="filtroCentro" class="form-select" required>
-                    <option value="">Selecione um centro de trabalho</option>
+                <select id="filtroCentro" class="form-select" style="width: 100%;" required>
+                    <option value="">Digite código ou nome...</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -148,6 +152,10 @@ if (!$acessoComissao) {
         </div>
     </div>
 </div>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
 
 <?= $render('footer', [
     'customJS' => ['src/js/comissao-relatorio-centro-trabalho.js']

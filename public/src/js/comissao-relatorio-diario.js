@@ -82,11 +82,29 @@ function carregarCentrosTrabalho() {
                 data.data.forEach(centro => {
                     select.innerHTML += `<option value="${centro.ID}">${centro.COD_CENTRO} - ${centro.DESCRICAO}</option>`;
                 });
+                inicializarSelect2Centro();
             } else {
                 console.error('Erro ao carregar centros:', data.error);
             }
         })
         .catch(error => console.error('Erro ao carregar centros:', error));
+}
+
+/**
+ * Inicializa Select2 no campo Centro de Trabalho
+ */
+function inicializarSelect2Centro() {
+    if ($('#filtroCentro').data('select2')) {
+        $('#filtroCentro').select2('destroy');
+    }
+    $('#filtroCentro').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou nome...',
+        allowClear: true
+    }).on('change', function() {
+        carregarRecursos();
+    });
 }
 
 /**
@@ -108,9 +126,25 @@ function carregarRecursos() {
                 data.data.forEach(recurso => {
                     select.innerHTML += `<option value="${recurso.ID}">${recurso.COD_MAQUINA} - ${recurso.DESCRICAO}</option>`;
                 });
+                inicializarSelect2Recurso();
             }
         })
         .catch(error => console.error('Erro ao carregar recursos:', error));
+}
+
+/**
+ * Inicializa Select2 no campo Recurso
+ */
+function inicializarSelect2Recurso() {
+    if ($('#filtroRecurso').data('select2')) {
+        $('#filtroRecurso').select2('destroy');
+    }
+    $('#filtroRecurso').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Digite código ou nome...',
+        allowClear: true
+    });
 }
 
 /**
@@ -323,7 +357,7 @@ function initDataTableProdutividade() {
     dataTableProdutividade = $('#tabelaProdutividade').DataTable({
         language: dtLanguagePtBr,
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[5, 'desc']]
     });
 }
@@ -340,7 +374,7 @@ function initDataTableApontamentos() {
     dataTableApontamentos = $('#tabelaApontamentos').DataTable({
         language: dtLanguagePtBr,
         lengthChange: false,
-        pageLength: 10,
+        pageLength: 20,
         order: [[0, 'asc']]
     });
 }

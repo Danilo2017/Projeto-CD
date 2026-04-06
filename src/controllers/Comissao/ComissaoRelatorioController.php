@@ -79,6 +79,19 @@ class ComissaoRelatorioController extends ctrl
         $this->render('comissao/relatorio-centro-trabalho', $dados);
     }
 
+    /**
+     * Página de relatório de faltas por funcionário
+     */
+    public function faltasIndex()
+    {
+        $dados = [
+            'titulo' => 'Relatório de Faltas por Funcionário',
+            'pagina' => 'Faltas'
+        ];
+
+        $this->render('comissao/relatorio-faltas', $dados);
+    }
+
     // ==================== API RELATÓRIOS ====================
 
     /**
@@ -426,6 +439,103 @@ class ComissaoRelatorioController extends ctrl
                 'resumo' => $resultado['resumo'],
                 'funcionarios' => $resultado['funcionarios']
             ], 200);
+
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API - Relatório de faltas por funcionário no período
+     */
+    public function getRelatorioFaltas()
+    {
+        try {
+            $dataInicio = $_GET['dataInicio'] ?? $_GET['data_inicio'] ?? null;
+            $dataFim = $_GET['dataFim'] ?? $_GET['data_fim'] ?? null;
+            $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? ($_SESSION['empresa']['id'] ?? null);
+            $funcionarioId = $_GET['funcionarioId'] ?? $_GET['funcionario_id'] ?? null;
+            $tipoFalta = $_GET['tipoFalta'] ?? $_GET['tipo_falta'] ?? null;
+
+            if (!$dataInicio || !$dataFim) {
+                throw new \Exception('Período é obrigatório');
+            }
+
+            if (!$emprId) {
+                throw new \Exception('Empresa não selecionada');
+            }
+
+            $resultado = ComissaoRelatorioHandler::getRelatorioFaltas(
+                $dataInicio, 
+                $dataFim, 
+                (int)$emprId, 
+                $funcionarioId ? (int)$funcionarioId : null,
+                $tipoFalta
+            );
+
+            self::response([
+                'success' => true,
+                'data' => $resultado['faltas'],
+                'resumo' => $resultado['resumo'],
+                'total' => count($resultado['faltas'])
+            ], 200);
+
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Página do extrato analítico de comissão
+     */
+    public function extratoAnaliticoIndex()
+    {
+        $dados = [
+            'titulo' => 'Extrato Analítico de Comissão',
+            'pagina' => 'Extrato Analítico'
+        ];
+
+        $this->render('comissao/extrato-analitico', $dados);
+    }
+
+    /**
+     * API - Extrato analítico de comissão por centro de trabalho
+     */
+    public function getExtratoAnalitico()
+    {
+        try {
+            set_time_limit(300);
+            $dataInicio = $_GET['dataInicio'] ?? $_GET['data_inicio'] ?? null;
+            $dataFim = $_GET['dataFim'] ?? $_GET['data_fim'] ?? null;
+            $centroTrabId = $_GET['centroTrabId'] ?? $_GET['centro_trab_id'] ?? null;
+            $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? ($_SESSION['empresa']['id'] ?? null);
+
+            if (!$dataInicio || !$dataFim) {
+                throw new \Exception('Período é obrigatório');
+            }
+
+            if (!$centroTrabId) {
+                throw new \Exception('Centro de trabalho é obrigatório');
+            }
+
+            if (!$emprId) {
+                throw new \Exception('Empresa não selecionada');
+            }
+
+            $resultado = \src\handlers\Comissao\ComissaoExtratoHandler::getExtratoAnalitico(
+                $dataInicio, 
+                $dataFim, 
+                (int)$emprId, 
+                (int)$centroTrabId
+            );
+
+            self::response($resultado, 200);
 
         } catch (\Exception $e) {
             self::response([
