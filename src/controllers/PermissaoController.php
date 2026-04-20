@@ -95,6 +95,7 @@ class PermissaoController extends ctrl
             }
             
             $perfis = PerfilAcesso::buscarPerfisUsuario($login);
+            $filiais = PerfilAcesso::buscarFiliaisUsuario($login);
             
             self::response([
                 'success' => true,
@@ -102,6 +103,8 @@ class PermissaoController extends ctrl
                     'LOGIN_USUARIO' => strtoupper($login),
                     'PERFIS' => $perfis,
                     'PERFIS_IDS' => array_column($perfis, 'PERFIL_ID'),
+                    'FILIAIS' => $filiais,
+                    'FILIAIS_IDS' => array_column($filiais, 'EMPR_ID'),
                 ]
             ], 200);
             
@@ -114,7 +117,28 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Define perfis de um usuário (novo ou existente)
+     * API - Lista empresas/filiais disponíveis
+     */
+    public function listarEmpresas()
+    {
+        try {
+            $empresas = PerfilAcesso::listarEmpresas();
+
+            self::response([
+                'success' => true,
+                'data' => $empresas
+            ], 200);
+
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API - Define perfis e filiais de um usuário (novo ou existente)
      */
     public function salvar()
     {
@@ -123,18 +147,21 @@ class PermissaoController extends ctrl
             
             $login = $body['login'] ?? null;
             $perfisIds = $body['perfis'] ?? [];
+            $filiaisIds = $body['filiais'] ?? [];
             
             if (!$login) {
                 throw new \Exception('Login do usuário é obrigatório');
             }
 
             // Permitir array vazio para remover todos os perfis
-            
             PerfilAcesso::definirPerfisUsuario($login, $perfisIds);
+            
+            // Definir filiais do usuário
+            PerfilAcesso::definirFiliaisUsuario($login, $filiaisIds);
             
             self::response([
                 'success' => true,
-                'message' => 'Perfis salvos com sucesso'
+                'message' => 'Permissões salvas com sucesso'
             ], 200);
             
         } catch (\Exception $e) {
@@ -146,7 +173,7 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Atualiza perfis de um usuário
+     * API - Atualiza perfis e filiais de um usuário
      */
     public function atualizar()
     {
@@ -155,18 +182,21 @@ class PermissaoController extends ctrl
             
             $login = $body['login'] ?? null;
             $perfisIds = $body['perfis'] ?? [];
+            $filiaisIds = $body['filiais'] ?? [];
             
             if (!$login) {
                 throw new \Exception('Login do usuário é obrigatório');
             }
 
             // Permitir array vazio para remover todos os perfis
-            
             PerfilAcesso::definirPerfisUsuario($login, $perfisIds);
+            
+            // Definir filiais do usuário
+            PerfilAcesso::definirFiliaisUsuario($login, $filiaisIds);
             
             self::response([
                 'success' => true,
-                'message' => 'Perfis atualizados com sucesso'
+                'message' => 'Permissões atualizadas com sucesso'
             ], 200);
             
         } catch (\Exception $e) {
@@ -178,7 +208,7 @@ class PermissaoController extends ctrl
     }
 
     /**
-     * API - Remove todos os perfis de um usuário (inativa)
+     * API - Remove todos os perfis e filiais de um usuário (inativa)
      */
     public function excluir()
     {
@@ -191,6 +221,7 @@ class PermissaoController extends ctrl
             }
             
             PerfilAcesso::definirPerfisUsuario($login, []);
+            PerfilAcesso::definirFiliaisUsuario($login, []);
             
             self::response([
                 'success' => true,

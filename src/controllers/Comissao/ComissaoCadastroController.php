@@ -5,6 +5,7 @@ namespace src\controllers\Comissao;
 use \core\Controller as ctrl;
 use \core\Request;
 use src\handlers\Comissao\ComissaoCadastroHandler;
+use src\models\PerfilAcesso;
 
 /**
  * Controller de Cadastros do Sistema de Comissao
@@ -682,12 +683,31 @@ class ComissaoCadastroController extends ctrl
     // ==================== API EMPRESAS ====================
 
     /**
-     * Listar empresas para select
+     * Listar empresas para select (filtradas por permissões do usuário)
      */
     public function getEmpresas()
     {
         try {
             $empresas = ComissaoCadastroHandler::listarEmpresas();
+            
+            // Buscar filiais permitidas (da sessão ou do banco se logado)
+            $filiaisPermitidas = $_SESSION['user']['filiais_permitidas'] ?? null;
+            
+            // Se usuário logado mas não tem filiais na sessão, buscar do banco
+            if ($filiaisPermitidas === null && !empty($_SESSION['user']['login'])) {
+                $filiaisPermitidas = PerfilAcesso::getFiliaisPermitidas($_SESSION['user']['login']);
+                $_SESSION['user']['filiais_permitidas'] = $filiaisPermitidas;
+                $_SESSION['user']['tem_restricao_filial'] = !empty($filiaisPermitidas);
+            }
+            
+            // Filtrar empresas com base nas permissões do usuário
+            if (!empty($filiaisPermitidas)) {
+                $filiaisPermitidasInt = array_map('intval', $filiaisPermitidas);
+                $empresas = array_filter($empresas, function($empresa) use ($filiaisPermitidasInt) {
+                    return in_array((int)$empresa['ID'], $filiaisPermitidasInt, true);
+                });
+                $empresas = array_values($empresas); // Reindexar array
+            }
 
             self::response([
                 'success' => true,
@@ -714,7 +734,34 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('ID da empresa é obrigatório');
             }
             
-            $empresa = ComissaoCadastroHandler::buscarEmpresa((int)$dados['empr_id']);
+            $emprId = (int)$dados['empr_id'];
+            
+            // Buscar filiais permitidas (da sessão ou do banco)
+            $filiaisPermitidas = $_SESSION['user']['filiais_permitidas'] ?? null;
+            
+            // Se não existir na sessão, buscar do banco
+            if ($filiaisPermitidas === null && !empty($_SESSION['user']['login'])) {
+                $filiaisPermitidas = PerfilAcesso::getFiliaisPermitidas($_SESSION['user']['login']);
+                $_SESSION['user']['filiais_permitidas'] = $filiaisPermitidas;
+                $_SESSION['user']['tem_restricao_filial'] = !empty($filiaisPermitidas);
+            }
+            
+            // Validar se o usuário tem permissão para acessar esta filial
+            if (!empty($filiaisPermitidas)) {
+                // Converter todos os IDs para inteiros para comparação correta
+                $filiaisPermitidasInt = array_map('intval', $filiaisPermitidas);
+                if (!in_array($emprId, $filiaisPermitidasInt, true)) {
+                    // Buscar nomes das filiais permitidas para mostrar na mensagem
+                    $filiaisInfo = PerfilAcesso::buscarFiliaisUsuario($_SESSION['user']['login']);
+                    $nomes = array_map(function($f) {
+                        return $f['CODIGO'] . ' - ' . ($f['NOME_FANTASIA'] ?: $f['RAZAO_SOCIAL']);
+                    }, $filiaisInfo);
+                    $listaFiliais = implode(', ', $nomes);
+                    throw new \Exception('Você não tem permissão para acessar esta filial. Filiais permitidas: ' . $listaFiliais);
+                }
+            }
+            
+            $empresa = ComissaoCadastroHandler::buscarEmpresa($emprId);
             
             if (!$empresa) {
                 throw new \Exception('Empresa não encontrada');

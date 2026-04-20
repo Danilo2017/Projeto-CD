@@ -155,6 +155,7 @@ $router->get('/comissao-api-extrato-analitico', 'Comissao\\ComissaoRelatorioCont
 // ========== Rotas de Permissões ==========
 $router->get('/permissao', 'PermissaoController@index', true);
 $router->get('/permissao-api-perfis', 'PermissaoController@listarPerfis', true);
+$router->get('/permissao-api-empresas', 'PermissaoController@listarEmpresas', true);
 $router->get('/permissao-api-listar', 'PermissaoController@listar', true);
 $router->get('/permissao-api-buscar', 'PermissaoController@buscar', true);
 $router->post('/permissao-api-salvar', 'PermissaoController@salvar', true);

@@ -84,8 +84,21 @@ if (empty($is_admin)) {
                         <div class="mb-3">
                             <label class="form-label">Perfis de Acesso *</label>
                             <div class="card">
-                                <div class="card-body" id="perfisCheckboxes">
+                                <div class="card-body" id="perfisCheckboxes" style="max-height: 200px; overflow-y: auto;">
                                     <p class="text-muted">Carregando perfis...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Filiais Permitidas</label>
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-info-circle"></i> 
+                                Se nenhuma filial for selecionada, o usuário terá acesso a todas.
+                            </small>
+                            <div class="card">
+                                <div class="card-body" id="filiaisCheckboxes" style="max-height: 250px; overflow-y: auto;">
+                                    <p class="text-muted">Carregando filiais...</p>
                                 </div>
                             </div>
                         </div>
@@ -104,9 +117,13 @@ if (empty($is_admin)) {
 
 <script>
 let perfisDisponiveis = [];
+let empresasDisponiveis = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-    carregarPerfisDisponiveis().then(() => carregarPermissoes());
+    Promise.all([
+        carregarPerfisDisponiveis(),
+        carregarEmpresasDisponiveis()
+    ]).then(() => carregarPermissoes());
 });
 
 function carregarPerfisDisponiveis() {
@@ -120,6 +137,18 @@ function carregarPerfisDisponiveis() {
             }
         })
         .catch(error => console.error('Erro ao carregar perfis:', error));
+}
+
+function carregarEmpresasDisponiveis() {
+    return fetch('/permissao-api-empresas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                empresasDisponiveis = data.data;
+                renderizarCheckboxesFiliais();
+            }
+        })
+        .catch(error => console.error('Erro ao carregar empresas:', error));
 }
 
 function renderizarFiltroPerfis() {
@@ -137,9 +166,12 @@ function renderizarCheckboxesPerfis(selecionados = []) {
         return;
     }
 
+    // Converter selecionados para números para comparação correta
+    const selecionadosNum = selecionados.map(Number);
+
     let html = '';
     perfisDisponiveis.forEach(p => {
-        const checked = selecionados.includes(p.ID_PERFIL) ? 'checked' : '';
+        const checked = selecionadosNum.includes(Number(p.ID_PERFIL)) ? 'checked' : '';
         html += `
             <div class="form-check form-switch mb-2">
                 <input class="form-check-input perfil-checkbox" type="checkbox" 
@@ -151,6 +183,49 @@ function renderizarCheckboxesPerfis(selecionados = []) {
             </div>`;
     });
     container.innerHTML = html;
+}
+
+function renderizarCheckboxesFiliais(selecionados = []) {
+    const container = document.getElementById('filiaisCheckboxes');
+    if (!empresasDisponiveis.length) {
+        container.innerHTML = '<p class="text-muted">Nenhuma filial cadastrada</p>';
+        return;
+    }
+
+    // Converter selecionados para números para comparação correta
+    const selecionadosNum = selecionados.map(Number);
+
+    let html = `
+        <div class="mb-2">
+            <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="selecionarTodasFiliais()">
+                <i class="bi bi-check-all"></i> Todas
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparFiliais()">
+                <i class="bi bi-x-circle"></i> Limpar
+            </button>
+        </div>
+        <hr class="my-2">`;
+    
+    empresasDisponiveis.forEach(e => {
+        const checked = selecionadosNum.includes(Number(e.ID)) ? 'checked' : '';
+        html += `
+            <div class="form-check mb-1">
+                <input class="form-check-input filial-checkbox" type="checkbox" 
+                       id="filial_${e.ID}" value="${e.ID}" ${checked}>
+                <label class="form-check-label" for="filial_${e.ID}">
+                    <strong>${e.CODIGO}</strong> - ${e.NOME_FANTASIA || e.RAZAO_SOCIAL}
+                </label>
+            </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function selecionarTodasFiliais() {
+    document.querySelectorAll('.filial-checkbox').forEach(cb => cb.checked = true);
+}
+
+function limparFiliais() {
+    document.querySelectorAll('.filial-checkbox').forEach(cb => cb.checked = false);
 }
 
 function carregarPermissoes() {
@@ -234,6 +309,7 @@ function novaPermissao() {
     document.getElementById('login').disabled = false;
     document.getElementById('modalPermissaoTitulo').innerHTML = '<i class="bi bi-shield-plus"></i> Nova Permissão';
     renderizarCheckboxesPerfis([]);
+    renderizarCheckboxesFiliais([]);
 }
 
 function editarPermissao(login) {
@@ -247,8 +323,11 @@ function editarPermissao(login) {
                 document.getElementById('login').disabled = true;
                 document.getElementById('modalPermissaoTitulo').innerHTML = '<i class="bi bi-shield"></i> Editar Permissão';
 
-                const ids = (info.PERFIS_IDS || []).map(Number);
-                renderizarCheckboxesPerfis(ids);
+                const perfisIds = (info.PERFIS_IDS || []).map(Number);
+                renderizarCheckboxesPerfis(perfisIds);
+
+                const filiaisIds = (info.FILIAIS_IDS || []).map(Number);
+                renderizarCheckboxesFiliais(filiaisIds);
 
                 const modal = new bootstrap.Modal(document.getElementById('modalPermissao'));
                 modal.show();
@@ -281,12 +360,17 @@ function salvarPermissao() {
         return;
     }
 
+    const filiais = [];
+    document.querySelectorAll('.filial-checkbox:checked').forEach(cb => {
+        filiais.push(Number(cb.value));
+    });
+
     const url = editando ? '/permissao-api-atualizar' : '/permissao-api-salvar';
 
     fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login, perfis })
+        body: JSON.stringify({ login, perfis, filiais })
     })
     .then(response => response.json())
     .then(data => {

@@ -4,6 +4,7 @@ namespace src\models;
 
 use core\Database;
 use src\utils\DecryptPassword;
+use src\models\PerfilAcesso;
 
 class Login
 {
@@ -42,15 +43,22 @@ class Login
 
         // Buscar perfis e rotas permitidas do usuário
         $permissoes = self::buscarPerfisUsuario($username);
+        
+        // Buscar filiais permitidas do usuário
+        $filiaisPermitidas = PerfilAcesso::getFiliaisPermitidas($username);
+        $filiais = PerfilAcesso::buscarFiliaisUsuario($username);
 
-        // Retornar resultado da autenticação com perfis
+        // Retornar resultado da autenticação com perfis e filiais
         $_SESSION['user'] = [
             'login' => $username,
             'resultado' => $resultado,
             'perfis' => $permissoes['perfis'],
             'rotas_permitidas' => $permissoes['rotas'],
             'is_admin' => $permissoes['is_admin'],
-            'tem_permissao' => !empty($permissoes['rotas'])
+            'tem_permissao' => !empty($permissoes['rotas']),
+            'filiais_permitidas' => $filiaisPermitidas, // Array de IDs (vazio = todas)
+            'filiais' => $filiais, // Dados completos das filiais
+            'tem_restricao_filial' => !empty($filiaisPermitidas)
         ];
         return $_SESSION['user'];
     }

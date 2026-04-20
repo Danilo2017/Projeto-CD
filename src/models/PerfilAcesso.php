@@ -380,4 +380,203 @@ class PerfilAcesso
         
         return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
     }
+
+    // ==================== USUÁRIOS X FILIAIS ====================
+
+    /**
+     * Lista todas as empresas/filiais disponíveis
+     * @return array
+     */
+    public static function listarEmpresas()
+    {
+        $pdo = Database::getInstance('focco');
+        
+        $sql = "SELECT 
+                    ID,
+                    COD_EMP AS CODIGO,
+                    RAZAO_SOCIAL,
+                    NOME_FAN AS NOME_FANTASIA
+                FROM FOCCO3I.TEMPRESAS
+                ORDER BY COD_EMP";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Busca filiais de um usuário específico (ativas)
+     * @param string $login
+     * @return array
+     */
+    public static function buscarFiliaisUsuario($login)
+    {
+        $pdo = Database::getInstance('focco');
+        
+        $sql = "SELECT 
+                    UF.ID_USUARIO_FILIAL,
+                    UF.EMPR_ID,
+                    E.COD_EMP AS CODIGO,
+                    E.RAZAO_SOCIAL,
+                    E.NOME_FAN AS NOME_FANTASIA,
+                    UF.ATIVO
+                FROM FOCCO3I.TGAZIN_USUARIO_FILIAL UF
+                INNER JOIN FOCCO3I.TEMPRESAS E ON E.ID = UF.EMPR_ID
+                WHERE UPPER(UF.LOGIN_USUARIO) = UPPER(:login)
+                AND UF.ATIVO = 'S'
+                ORDER BY E.COD_EMP";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':login', $login, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Adiciona uma filial a um usuário
+     * @param string $login
+     * @param int $emprId
+     * @return int ID inserido
+     */
+    public static function adicionarFilialUsuario($login, $emprId)
+    {
+        $pdo = Database::getInstance('focco');
+        
+        // Verificar se já existe (ativo ou inativo)
+        $sqlCheck = "SELECT ID_USUARIO_FILIAL, ATIVO 
+                     FROM FOCCO3I.TGAZIN_USUARIO_FILIAL 
+                     WHERE UPPER(LOGIN_USUARIO) = UPPER(:login) 
+                     AND EMPR_ID = :empr_id
+                     ORDER BY ID_USUARIO_FILIAL DESC";
+        $stmtCheck = $pdo->prepare($sqlCheck);
+        $stmtCheck->bindParam(':login', $login, PDO::PARAM_STR);
+        $stmtCheck->bindParam(':empr_id', $emprId, PDO::PARAM_INT);
+        $stmtCheck->execute();
+        $registros = $stmtCheck->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (!empty($registros)) {
+            // Verificar se algum está ativo
+            foreach ($registros as $reg) {
+                if ($reg['ATIVO'] === 'S') {
+                    return $reg['ID_USUARIO_FILIAL'];
+                }
+            }
+            
+            // Todos estão inativos - reativar o mais recente e deletar os duplicados
+            $primeiroId = $registros[0]['ID_USUARIO_FILIAL'];
+            
+            // Deletar duplicados antigos (manter apenas o mais recente)
+            if (count($registros) > 1) {
+                $idsParaDeletar = [];
+                for ($i = 1; $i < count($registros); $i++) {
+                    $idsParaDeletar[] = $registros[$i]['ID_USUARIO_FILIAL'];
+                }
+                $sqlDeletar = "DELETE FROM FOCCO3I.TGAZIN_USUARIO_FILIAL WHERE ID_USUARIO_FILIAL IN (" . implode(',', $idsParaDeletar) . ")";
+                $pdo->exec($sqlDeletar);
+            }
+            
+            // Reativar o registro mais recente
+            $sqlReativar = "UPDATE FOCCO3I.TGAZIN_USUARIO_FILIAL 
+                            SET ATIVO = 'S', DT_ALTERACAO = SYSDATE 
+                            WHERE ID_USUARIO_FILIAL = :id";
+            $stmtReativar = $pdo->prepare($sqlReativar);
+            $stmtReativar->bindParam(':id', $primeiroId, PDO::PARAM_INT);
+            $stmtReativar->execute();
+            return $primeiroId;
+        }
+        
+        $sql = "INSERT INTO FOCCO3I.TGAZIN_USUARIO_FILIAL (
+                    LOGIN_USUARIO,
+                    EMPR_ID,
+                    ATIVO,
+                    DT_CADASTRO
+                ) VALUES (
+                    UPPER(:login),
+                    :empr_id,
+                    'S',
+                    SYSDATE
+                )";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':login', $login, PDO::PARAM_STR);
+        $stmt->bindParam(':empr_id', $emprId, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        // Buscar ID inserido
+        $sqlId = "SELECT MAX(ID_USUARIO_FILIAL) AS ID 
+                  FROM FOCCO3I.TGAZIN_USUARIO_FILIAL 
+                  WHERE UPPER(LOGIN_USUARIO) = UPPER(:login) 
+                  AND EMPR_ID = :empr_id";
+        $stmtId = $pdo->prepare($sqlId);
+        $stmtId->bindParam(':login', $login, PDO::PARAM_STR);
+        $stmtId->bindParam(':empr_id', $emprId, PDO::PARAM_INT);
+        $stmtId->execute();
+        $result = $stmtId->fetch(PDO::FETCH_ASSOC);
+        
+        return $result['ID'] ?? 0;
+    }
+
+    /**
+     * Define todas as filiais de um usuário (remove anteriores e adiciona novas)
+     * @param string $login
+     * @param array $filiaisIds Array de IDs de empresa
+     * @return bool
+     */
+    public static function definirFiliaisUsuario($login, array $filiaisIds)
+    {
+        $pdo = Database::getInstance('focco');
+        
+        // Inativar todas as filiais atuais
+        $sqlInativar = "UPDATE FOCCO3I.TGAZIN_USUARIO_FILIAL 
+                        SET ATIVO = 'N', DT_ALTERACAO = SYSDATE 
+                        WHERE UPPER(LOGIN_USUARIO) = UPPER(:login)";
+        $stmtInativar = $pdo->prepare($sqlInativar);
+        $stmtInativar->bindParam(':login', $login, PDO::PARAM_STR);
+        $stmtInativar->execute();
+        
+        // Adicionar as novas filiais
+        foreach ($filiaisIds as $emprId) {
+            if ($emprId) {
+                self::adicionarFilialUsuario($login, $emprId);
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * Verifica se o usuário tem acesso a uma filial específica
+     * @param string $login
+     * @param int $emprId ID da empresa
+     * @return bool
+     */
+    public static function temAcessoFilial($login, $emprId)
+    {
+        // Se não tem filiais cadastradas, tem acesso a todas
+        $filiais = self::buscarFiliaisUsuario($login);
+        if (empty($filiais)) {
+            return true;
+        }
+        
+        foreach ($filiais as $filial) {
+            if ($filial['EMPR_ID'] == $emprId) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Retorna a lista de IDs das filiais que o usuário tem acesso
+     * @param string $login
+     * @return array Array de IDs de empresa (vazio = todas)
+     */
+    public static function getFiliaisPermitidas($login)
+    {
+        $filiais = self::buscarFiliaisUsuario($login);
+        return array_column($filiais, 'EMPR_ID');
+    }
 }
