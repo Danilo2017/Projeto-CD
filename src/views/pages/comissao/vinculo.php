@@ -47,6 +47,9 @@ if (!$acessoComissao) {
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalVinculo" onclick="novoVinculo()">
                     <i class="bi bi-plus-circle"></i> Novo Vínculo
                 </button>
+                <button type="button" class="btn btn-info text-white" onclick="exportarVinculosExcel()" title="Baixar lista atual em Excel">
+                    <i class="bi bi-file-earmark-excel"></i> Baixar Excel
+                </button>
             </div>
         </div>
     </div>
@@ -62,6 +65,7 @@ if (!$acessoComissao) {
                     <th>Tipo</th>
                     <th>Recurso</th>
                     <th>Centro de Trabalho</th>
+                    <th>Alocação</th>
                     <th>Status</th>
                     <th>Ações</th>
                 </tr>
@@ -105,6 +109,11 @@ if (!$acessoComissao) {
                         <div class="mb-3">
                             <label for="centro_id" class="form-label">Centro de Trabalho *</label>
                             <select class="form-select" id="centro_id" name="centro_id" style="width: 100%;" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cc_id" class="form-label">Alocação do Funcionário</label>
+                            <select class="form-select" id="cc_id" name="cc_id" style="width: 100%;"></select>
+                            <small class="text-muted">Centro de custo onde o funcionário está alocado. Opcional. Usado apenas em relatórios para divisão de comissão por CC. Não influencia cálculos.</small>
                         </div>
                     </form>
                 </div>
@@ -205,6 +214,9 @@ if (!$acessoComissao) {
         </div>
     </div>
 </div>
+
+<!-- SheetJS para exportação Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <?= $render('footer', [
     'customJS' => ['src/js/comissao-vinculo.js']

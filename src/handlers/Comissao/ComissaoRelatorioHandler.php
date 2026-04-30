@@ -25,6 +25,44 @@ use src\models\Comissao\VinculoData;
 class ComissaoRelatorioHandler
 {
     /**
+     * Cache de mapa de alocação por empresa, para evitar consultas repetidas dentro
+     * de uma mesma requisição.
+     */
+    private static $cacheAlocacao = [];
+
+    /**
+     * Retorna o mapa funcId => alocação (cacheado por empresa).
+     */
+    private static function mapaAlocacao(int $emprId): array
+    {
+        if (!array_key_exists($emprId, self::$cacheAlocacao)) {
+            self::$cacheAlocacao[$emprId] = Vinculo::getAlocacaoPorFuncionario($emprId);
+        }
+        return self::$cacheAlocacao[$emprId];
+    }
+
+    /**
+     * Acrescenta os campos ALOCACAO_COD, ALOCACAO_DESC e ALOCACAO em cada linha.
+     * Não altera valores existentes nem influencia cálculos.
+     */
+    private static function enriquecerComAlocacao(array $rows, int $emprId, string $funcIdKey = 'FUNC_ID'): array
+    {
+        $mapa = self::mapaAlocacao($emprId);
+        foreach ($rows as &$r) {
+            if (!is_array($r)) continue;
+            $fid = $r[$funcIdKey] ?? null;
+            $info = ($fid !== null && isset($mapa[$fid])) ? $mapa[$fid] : null;
+            $cod = $info['COD_CC'] ?? null;
+            $desc = $info['CC_DESCRICAO'] ?? null;
+            $r['ALOCACAO_COD'] = $cod;
+            $r['ALOCACAO_DESC'] = $desc;
+            $r['ALOCACAO'] = ($cod || $desc) ? trim(($cod ?? '') . ' - ' . ($desc ?? ''), ' -') : null;
+        }
+        unset($r);
+        return $rows;
+    }
+
+    /**
      * Obter produtividade diária com validações de cadastro
      * 
      * @param string $data Data no formato Y-m-d
@@ -179,9 +217,12 @@ class ComissaoRelatorioHandler
         
         $resumo['TOTAL_FUNCIONARIOS'] = count($funcionariosUnicos);
 
+        $apontamentos = self::enriquecerComAlocacao($apontamentos, $emprId, 'FUNC_ID');
+        $produtividadePorFunc = self::enriquecerComAlocacao(array_values($produtividadePorFunc), $emprId, 'FUNC_ID');
+
         return [
             'resumo' => $resumo,
-            'produtividade' => array_values($produtividadePorFunc),
+            'produtividade' => $produtividadePorFunc,
             'apontamentos' => $apontamentos
         ];
     }
@@ -249,10 +290,12 @@ class ComissaoRelatorioHandler
             $comissoes = array_filter($comissoes, fn($c) => ($c['STATUS'] ?? 'P') === $status);
         }
 
+        $comissoes = self::enriquecerComAlocacao(array_values($comissoes), $emprId, 'FUNC_ID');
+
         return [
             'resumo' => $resumo,
             'porCentro' => array_values($porCentro),
-            'comissoes' => array_values($comissoes)
+            'comissoes' => $comissoes
         ];
     }
 
@@ -997,6 +1040,15 @@ class ComissaoRelatorioHandler
         // Buscar comissões já salvas
         $comissoesSalvas = Comissao::listarCalculos(null, $dataInicio, $dataFim, $funcionarioId);
 
+        // Alocação do funcionário (apenas para exibição no relatório)
+        $mapaAloc = self::mapaAlocacao($emprId);
+        $alocInfo = $mapaAloc[$funcionarioId] ?? null;
+        $funcionario['ALOCACAO_COD'] = $alocInfo['COD_CC'] ?? null;
+        $funcionario['ALOCACAO_DESC'] = $alocInfo['CC_DESCRICAO'] ?? null;
+        $funcionario['ALOCACAO'] = $alocInfo
+            ? trim(($alocInfo['COD_CC'] ?? '') . ' - ' . ($alocInfo['CC_DESCRICAO'] ?? ''), ' -')
+            : null;
+
         return [
             'funcionario' => $funcionario,
             'resumo' => $resumo,
@@ -1095,6 +1147,8 @@ class ComissaoRelatorioHandler
 
         // Ordenar por nome
         usort($funcionarios, fn($a, $b) => strcmp($a['NOME_FUNC'], $b['NOME_FUNC']));
+
+        $funcionarios = self::enriquecerComAlocacao($funcionarios, $emprId, 'FUNC_ID');
 
         return [
             'centro' => [
@@ -1385,6 +1439,24 @@ class ComissaoRelatorioHandler
         
         // Ordenar funcionários por total de faltas (decrescente)
         uasort($funcionariosComFalta, fn($a, $b) => $b['total_faltas'] - $a['total_faltas']);
+
+        // Alocação por funcionário (apenas para exibição)
+        $mapaAloc = self::mapaAlocacao($emprId);
+        foreach ($faltas as &$f) {
+            $fid = $f['ID_FUNCIONARIO'] ?? null;
+            $info = $fid !== null ? ($mapaAloc[$fid] ?? null) : null;
+            $f['ALOCACAO_COD'] = $info['COD_CC'] ?? null;
+            $f['ALOCACAO_DESC'] = $info['CC_DESCRICAO'] ?? null;
+            $f['ALOCACAO'] = $info ? trim(($info['COD_CC'] ?? '') . ' - ' . ($info['CC_DESCRICAO'] ?? ''), ' -') : null;
+        }
+        unset($f);
+        foreach ($funcionariosComFalta as $fid => &$fc) {
+            $info = $mapaAloc[$fid] ?? null;
+            $fc['alocacao_cod'] = $info['COD_CC'] ?? null;
+            $fc['alocacao_desc'] = $info['CC_DESCRICAO'] ?? null;
+            $fc['alocacao'] = $info ? trim(($info['COD_CC'] ?? '') . ' - ' . ($info['CC_DESCRICAO'] ?? ''), ' -') : null;
+        }
+        unset($fc);
         
         return [
             'faltas' => $faltas,

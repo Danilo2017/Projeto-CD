@@ -66,6 +66,10 @@ if (!$acessoComissao) {
                             <p id="centroFuncionario" class="mb-0">-</p>
                         </div>
                         <div class="col-md-3">
+                            <small class="text-muted">Alocação</small>
+                            <p id="alocacaoFuncionario" class="mb-0">-</p>
+                        </div>
+                        <div class="col-md-3">
                             <small class="text-muted">Admissão</small>
                             <p id="admissaoFuncionario" class="mb-0">-</p>
                         </div>

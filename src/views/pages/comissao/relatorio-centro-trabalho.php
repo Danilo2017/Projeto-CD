@@ -124,6 +124,7 @@ if (!$acessoComissao) {
                         </th>
                         <th>Código</th>
                         <th>Funcionário</th>
+                        <th>Alocação</th>
                         <th class="text-end">Total Pontos</th>
                         <th>Faixa Aplicada</th>
                         <th class="text-center">Dias Trab.</th>
@@ -134,12 +135,12 @@ if (!$acessoComissao) {
                 </thead>
                 <tbody id="tabelaFuncionariosBody">
                     <tr>
-                        <td colspan="9" class="text-center">Selecione o centro e período e clique em "Gerar Relatório"</td>
+                        <td colspan="10" class="text-center">Selecione o centro e período e clique em "Gerar Relatório"</td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr class="table-primary">
-                        <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                        <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
                         <td class="text-end" id="footTotalPontos"><strong>-</strong></td>
                         <td></td>
                         <td></td>

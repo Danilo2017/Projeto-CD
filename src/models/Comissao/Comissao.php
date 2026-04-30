@@ -999,6 +999,19 @@ class Comissao
             $regraEspecifica = $regrasPorFunc[$funcId] ?? null;
             $datasApoio = $dadosFunc['DATAS_APOIO'] ?? [];
             
+            // Funcionário de Apoio puro (TIPO_VINCULO='A'): ganha sobre a produção
+            // TOTAL do centro de trabalho em TODAS as datas com produção do período,
+            // sem necessidade de marcar datas em TGAZIN_VINC_FUNC_DATA.
+            $tipoVincFunc = $dadosFunc['TIPO_VINCULO'] ?? 'N';
+            $centroFuncId = (int)($dadosFunc['CENTRO_TRAB_ID'] ?? 0);
+            if ($tipoVincFunc === 'A' && $centroFuncId > 0 && !empty($pontosTotaisCentro[$centroFuncId])) {
+                foreach ($pontosTotaisCentro[$centroFuncId] as $dataCentro => $_pts) {
+                    if (!isset($datasApoio[$dataCentro])) {
+                        $datasApoio[$dataCentro] = ['centro' => $centroFuncId, 'tipo_calculo' => 'T'];
+                    }
+                }
+            }
+            
             // Mapear faltas por data
             $faltasPorData = [];
             foreach ($faltas as $falta) {
@@ -1056,11 +1069,26 @@ class Comissao
                             $pontosApoioDia = $pontosTotaisDia;
                         }
                         
-                        $pontosApoio += $pontosApoioDia;
-                        $totalPontosBruto += $pontosApoioDia;
+                        // Aplicar desconto de falta no dia de apoio
+                        $aplicarDia = true;
+                        if (isset($faltasPorData[$dataApt])) {
+                            $tipoFalta = $faltasPorData[$dataApt];
+                            if ($tipoFalta === 'I') {
+                                // Falta integral: zera o dia
+                                $aplicarDia = false;
+                            } else {
+                                // Falta parcial: 50%
+                                $pontosApoioDia = $pontosApoioDia * 0.5;
+                            }
+                        }
+                        
+                        if ($aplicarDia) {
+                            $pontosApoio += $pontosApoioDia;
+                            $totalPontosBruto += $pontosApoioDia;
+                            $diasApoioUsados++;
+                            $diasTrabalhados++;
+                        }
                     }
-                    $diasApoioUsados++;
-                    $diasTrabalhados++;
                     $datasProcessadas[$dataApt] = true;
                 } else {
                     // Dia NORMAL: usa pontos individuais com desconto de falta
@@ -1120,6 +1148,18 @@ class Comissao
                         $pontosApoioDia = $pontosTotaisDia;
                     }
                     
+                    // Aplicar desconto de falta no dia de apoio
+                    if (isset($faltasPorData[$dataApoio])) {
+                        $tipoFalta = $faltasPorData[$dataApoio];
+                        if ($tipoFalta === 'I') {
+                            // Falta integral: zera o dia
+                            $datasProcessadas[$dataApoio] = true;
+                            continue;
+                        }
+                        // Falta parcial: 50%
+                        $pontosApoioDia = $pontosApoioDia * 0.5;
+                    }
+                    
                     $pontosApoio += $pontosApoioDia;
                     $totalPontosBruto += $pontosApoioDia;
                     $diasApoioUsados++;
@@ -1154,9 +1194,12 @@ class Comissao
                 $valorComissaoNormal = 0;
                 $valorComissaoApoio = 0;
                 
-                // Comissão de dias normais (faixa NORMAL)
+                // Comissão de dias normais (faixa conforme TIPO_VINCULO do funcionário)
+                // Funcionário Normal (N) -> faixa Normal
+                // Funcionário Apoio  (A) -> faixa Apoio
                 if ($pontosNormais > 0) {
-                    $faixaNormal = self::buscarFaixaAplicavelEmMemoria($faixas, $pontosNormais, 'N');
+                    $tipoFaixaNormal = ($tipoVinculoFunc === 'A') ? 'A' : 'N';
+                    $faixaNormal = self::buscarFaixaAplicavelEmMemoria($faixas, $pontosNormais, $tipoFaixaNormal);
                     if ($faixaNormal) {
                         $faixaAplicada = [
                             'id' => $faixaNormal['ID_FAIXA'],
@@ -1253,9 +1296,9 @@ class Comissao
                 }
                 // Se não encontrou, buscar direto
                 if (!$codCentroExibicao && isset($centrosNecessarios[$centroApoioInfo])) {
+                    $sqlCentro = "SELECT COD_CENTRO, DESCRICAO FROM FOCCO3I.TCENTROS_TRAB WHERE ID = " . intval($centroApoioInfo);
                     try {
-                        $paramsCentro = ['id_centro' => intval($centroApoioInfo)];
-                        $resCentro = Database::switchParams('focco', $paramsCentro, 'comissao.centro.buscarPorId', true);
+                        $resCentro = Database::switchParams('focco', [], null, true, false, null, $sqlCentro);
                         if (!empty($resCentro['retorno'][0])) {
                             $codCentroExibicao = $resCentro['retorno'][0]['COD_CENTRO'];
                             $descCentroExibicao = $resCentro['retorno'][0]['DESCRICAO'];

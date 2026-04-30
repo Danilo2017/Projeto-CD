@@ -278,8 +278,11 @@ function atualizarCamposRegra() {
             lblValorBase.textContent = 'Valor por Ponto (R$)';
             helpValorBase.textContent = 'Valor adicional por cada ponto produzido';
             divPercentual.style.display = 'none';
-            break;
-        default:
+            break;        case 'A':
+            lblValorBase.textContent = 'Valor por Ponto (R$)';
+            helpValorBase.textContent = 'Valor em R$ por ponto aplicado nos dias de apoio (ignora faixa APOIO)';
+            divPercentual.style.display = 'none';
+            break;        default:
             lblValorBase.textContent = 'Valor';
             helpValorBase.textContent = '';
             divPercentual.style.display = 'none';

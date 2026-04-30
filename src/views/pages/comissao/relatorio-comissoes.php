@@ -151,6 +151,7 @@ if (!$acessoComissao) {
                         <th>Código</th>
                         <th>Funcionário</th>
                         <th>Centro Trab.</th>
+                        <th>Alocação</th>
                         <th class="text-end">Total Pontos</th>
                         <th>Faixa Aplicada</th>
                         <th class="text-end">Valor Comissão</th>
@@ -160,12 +161,12 @@ if (!$acessoComissao) {
                 </thead>
                 <tbody id="tabelaComissoesBody">
                     <tr>
-                        <td colspan="10" class="text-center">Selecione o período e clique em "Buscar"</td>
+                        <td colspan="11" class="text-center">Selecione o período e clique em "Buscar"</td>
                     </tr>
                 </tbody>
                 <tfoot id="tabelaComissoesFoot">
                     <tr class="table-primary">
-                        <td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
+                        <td colspan="6" class="text-end"><strong>TOTAL:</strong></td>
                         <td class="text-end" id="footTotalPontos"><strong>-</strong></td>
                         <td>-</td>
                         <td class="text-end" id="footTotalComissao"><strong>-</strong></td>

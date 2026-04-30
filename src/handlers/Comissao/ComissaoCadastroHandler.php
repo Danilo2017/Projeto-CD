@@ -330,7 +330,7 @@ class ComissaoCadastroHandler
     /**
      * Salvar nova faixa
      */
-    public static function salvarFaixa(array $dados): int
+    public static function salvarFaixa(array $dados, bool $sobrescrever = false): int
     {
         $dados = self::normalizarDadosFaixa($dados);
         
@@ -340,7 +340,12 @@ class ComissaoCadastroHandler
         
         $conflito = FaixaComissao::verificarConflito($dados);
         if ($conflito) {
-            throw new \Exception(self::formatarMensagemConflito($conflito));
+            if (!$sobrescrever) {
+                $ex = new \Exception(self::formatarMensagemConflito($conflito));
+                $GLOBALS['__faixa_conflito'] = $conflito;
+                throw $ex;
+            }
+            self::inativarConflitos($dados, null, $dados['id_usuario'] ?? null);
         }
         
         return FaixaComissao::inserir($dados);
@@ -349,16 +354,39 @@ class ComissaoCadastroHandler
     /**
      * Atualizar faixa existente
      */
-    public static function atualizarFaixa(int $id, array $dados): void
+    public static function atualizarFaixa(int $id, array $dados, bool $sobrescrever = false): void
     {
         $dados = self::normalizarDadosFaixa($dados);
         
         $conflito = FaixaComissao::verificarConflito($dados, $id);
         if ($conflito) {
-            throw new \Exception(self::formatarMensagemConflito($conflito));
+            if (!$sobrescrever) {
+                $GLOBALS['__faixa_conflito'] = $conflito;
+                throw new \Exception(self::formatarMensagemConflito($conflito));
+            }
+            self::inativarConflitos($dados, $id, $dados['id_usuario'] ?? null);
         }
         
         FaixaComissao::atualizar($id, $dados);
+    }
+
+    /**
+     * Inativa todas as faixas conflitantes (loop com limite de segurança)
+     */
+    private static function inativarConflitos(array $dados, ?int $idIgnorar, ?int $idUsuario): void
+    {
+        $maxIter = 50;
+        while ($maxIter-- > 0) {
+            $conflito = FaixaComissao::verificarConflito($dados, $idIgnorar);
+            if (!$conflito) {
+                return;
+            }
+            $idConflito = (int)($conflito['ID_FAIXA'] ?? 0);
+            if ($idConflito <= 0) {
+                return;
+            }
+            FaixaComissao::inativar($idConflito, $idUsuario);
+        }
     }
 
     /**
@@ -635,6 +663,134 @@ class ComissaoCadastroHandler
     }
 
     /**
+     * Registrar várias faltas em lote (mesma data/tipo/motivo para vários funcionários).
+     * Funcionários que já tenham falta na data são ignorados (não duplica).
+     *
+     * @return array{inseridos:int,ignorados:int,erros:array,ids:array}
+     */
+    public static function salvarFaltasLote(array $dados): array
+    {
+        $funcionarios = $dados['id_funcionarios'] ?? [];
+        if (!is_array($funcionarios) || empty($funcionarios)) {
+            throw new \Exception('Selecione ao menos um funcionário');
+        }
+
+        $resumo = [
+            'inseridos' => 0,
+            'ignorados' => 0,
+            'erros' => [],
+            'ids' => []
+        ];
+
+        foreach ($funcionarios as $funcId) {
+            $funcId = intval($funcId);
+            if ($funcId <= 0) {
+                continue;
+            }
+            try {
+                $jaExiste = FaltaFuncionario::verificarFaltaExistente(
+                    $funcId,
+                    $dados['dt_falta'],
+                    intval($dados['id_empr'] ?? 0)
+                );
+                if ($jaExiste) {
+                    $resumo['ignorados']++;
+                    continue;
+                }
+
+                $id = FaltaFuncionario::registrar([
+                    'id_empr' => $dados['id_empr'] ?? null,
+                    'id_funcionario' => $funcId,
+                    'dt_falta' => $dados['dt_falta'],
+                    'motivo' => $dados['motivo'] ?? null,
+                    'tipo_falta' => $dados['tipo_falta'] ?? 'I',
+                    'id_usuario' => $dados['id_usuario'] ?? null
+                ]);
+
+                $resumo['inseridos']++;
+                $resumo['ids'][] = $id;
+            } catch (\Exception $e) {
+                $resumo['erros'][] = [
+                    'id_funcionario' => $funcId,
+                    'mensagem' => $e->getMessage()
+                ];
+            }
+        }
+
+        return $resumo;
+    }
+
+    /**
+     * Importar faltas a partir de uma lista heterogênea de registros vindos de arquivo.
+     * Cada item deve conter: id_funcionario, dt_falta (YYYY-MM-DD), tipo_falta (I/P), motivo (opcional).
+     *
+     * @return array{inseridos:int,ignorados:int,erros:array,ids:array,total:int}
+     */
+    public static function importarFaltas(array $dados): array
+    {
+        $registros = $dados['registros'] ?? [];
+        if (!is_array($registros) || empty($registros)) {
+            throw new \Exception('Nenhum registro para importar');
+        }
+
+        $emprId = intval($dados['id_empr'] ?? 0);
+        $usuarioId = $dados['id_usuario'] ?? null;
+
+        $resumo = [
+            'total' => count($registros),
+            'inseridos' => 0,
+            'ignorados' => 0,
+            'erros' => [],
+            'ids' => []
+        ];
+
+        foreach ($registros as $idx => $reg) {
+            $linha = $reg['linha'] ?? ($idx + 1);
+            try {
+                $funcId = intval($reg['id_funcionario'] ?? 0);
+                $dtFalta = trim((string)($reg['dt_falta'] ?? ''));
+                $tipoFalta = strtoupper(trim((string)($reg['tipo_falta'] ?? 'I')));
+                if ($tipoFalta !== 'I' && $tipoFalta !== 'P') {
+                    $tipoFalta = 'I';
+                }
+
+                if ($funcId <= 0) {
+                    throw new \Exception('Funcionário inválido');
+                }
+                if ($dtFalta === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dtFalta)) {
+                    throw new \Exception('Data inválida (esperado YYYY-MM-DD)');
+                }
+
+                $jaExiste = FaltaFuncionario::verificarFaltaExistente($funcId, $dtFalta, $emprId);
+                if ($jaExiste) {
+                    $resumo['ignorados']++;
+                    continue;
+                }
+
+                $id = FaltaFuncionario::registrar([
+                    'id_empr' => $emprId,
+                    'id_funcionario' => $funcId,
+                    'dt_falta' => $dtFalta,
+                    'motivo' => $reg['motivo'] ?? null,
+                    'tipo_falta' => $tipoFalta,
+                    'id_usuario' => $usuarioId
+                ]);
+
+                $resumo['inseridos']++;
+                $resumo['ids'][] = $id;
+            } catch (\Exception $e) {
+                $resumo['erros'][] = [
+                    'linha' => $linha,
+                    'id_funcionario' => $reg['id_funcionario'] ?? null,
+                    'mensagem' => $e->getMessage()
+                ];
+            }
+        }
+
+        return $resumo;
+    }
+
+    /**
      * Atualizar falta
      */
     public static function atualizarFalta(int $id, array $dados): void
@@ -855,6 +1011,7 @@ class ComissaoCadastroHandler
             'descricao' => $dados['descricao'] ?? null,
             'tipo_comissao' => $dados['tipo_comissao'],
             'valor_comissao' => $dados['valor_comissao'],
+            'valor_fixo' => $dados['valor_fixo'] ?? null,
             'dt_vigencia_ini' => $dados['dt_vigencia_ini'],
             'dt_vigencia_fim' => $dados['dt_vigencia_fim'] ?? null,
             'prioridade' => $dados['prioridade'] ?? 1,

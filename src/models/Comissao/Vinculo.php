@@ -15,6 +15,7 @@ class Vinculo
     const TIPO_APOIO = 'A';
 
     private static $colunaApoioCache = null;
+    private static $colunaCcCache = null;
 
     /**
      * Verifica se a coluna TIPO_VINCULO existe na tabela
@@ -32,6 +33,23 @@ class Vinculo
     }
 
     /**
+     * Verifica se a coluna ID_CENTRO_ALOCACAO existe na tabela TGAZIN_VINC_FUNC.
+     * Necessária para gravar a Alocação (Centro de Trabalho) por vínculo.
+     */
+    public static function verificarColunaCc()
+    {
+        if (self::$colunaCcCache !== null) {
+            return self::$colunaCcCache;
+        }
+        $sql = "SELECT COUNT(*) AS EXISTE FROM ALL_TAB_COLUMNS "
+            . "WHERE OWNER = 'FOCCO3I' AND TABLE_NAME = 'TGAZIN_VINC_FUNC' AND COLUMN_NAME = 'ID_EMP_CC'";
+        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $row = $result['retorno'][0] ?? null;
+        self::$colunaCcCache = ($row['EXISTE'] ?? 0) > 0;
+        return self::$colunaCcCache;
+    }
+
+    /**
      * Listar vínculos com filtros opcionais
      */
     public static function listar($filtros = [])
@@ -44,24 +62,88 @@ class Vinculo
             'filtro_ativo' => isset($filtros['ativo']) ? "AND v.ATIVO = '" . ($filtros['ativo'] === 'S' ? 'S' : 'N') . "'" : '--',
         ];
 
-        try {
-            $result = Database::switchParams('focco', $params, 'comissao.vinculo.listar', true);
-            return $result['retorno'] ?? [];
-        } catch (\Throwable $e) {
-            // Fallback: SQL sem TIPO_VINCULO caso a coluna não exista
-            $sqlFallback = "SELECT v.ID_VINCULO, v.ID_EMPR, v.ID_FUNCIONARIO, f.COD_FUNC, f.NOME AS FUNCIONARIO_NOME, "
-                . "v.ID_CENTRO_TRAB, c.COD_CENTRO, c.DESCRICAO AS CENTRO_DESCRICAO, "
-                . "v.ID_RECURSO, r.COD_MAQUINA, r.DESCRICAO AS RECURSO_DESCRICAO, v.ATIVO, "
-                . "'N' AS TIPO_VINCULO "
-                . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
-                . "INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO "
-                . "INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB "
-                . "LEFT JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO "
-                . "WHERE 1=1 :filtro_empr :filtro_centro :filtro_recurso :filtro_func :filtro_ativo "
-                . "ORDER BY c.DESCRICAO, f.NOME";
-            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlFallback);
-            return $result['retorno'] ?? [];
+        // Alocação (Centro de Trabalho) vem APENAS do que estiver gravado em v.ID_CENTRO_ALOCACAO.
+        // Vínculos ainda não alocados aparecem com a célula em branco para serem editados.
+        $temColunaCc = self::verificarColunaCc();
+
+        if ($temColunaCc) {
+            // ID_EMP_CC armazena o ID de TCENTROS_TRAB (Alocação = Centro de Trabalho).
+            $colunasCc = "v.ID_EMP_CC, ca.COD_CENTRO AS COD_CC, ca.DESCRICAO AS CC_DESCRICAO ";
+            $joinsCc = "LEFT JOIN FOCCO3I.TCENTROS_TRAB ca ON ca.ID = v.ID_EMP_CC ";
+        } else {
+            $colunasCc = "NULL AS ID_EMP_CC, NULL AS COD_CC, NULL AS CC_DESCRICAO ";
+            $joinsCc = "";
         }
+
+        $sql = "SELECT v.ID_VINCULO, v.ID_EMPR, v.ID_FUNCIONARIO, f.COD_FUNC, f.NOME AS FUNCIONARIO_NOME, "
+            . "v.ID_CENTRO_TRAB, c.COD_CENTRO, c.DESCRICAO AS CENTRO_DESCRICAO, "
+            . "v.ID_RECURSO, r.COD_MAQUINA, r.DESCRICAO AS RECURSO_DESCRICAO, v.ATIVO, "
+            . "NVL(v.TIPO_VINCULO, 'N') AS TIPO_VINCULO, "
+            . $colunasCc
+            . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
+            . "INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO "
+            . "INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB "
+            . "LEFT JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO "
+            . $joinsCc
+            . "WHERE 1=1 :filtro_empr :filtro_centro :filtro_recurso :filtro_func :filtro_ativo "
+            . "ORDER BY c.DESCRICAO, f.NOME";
+        $result = Database::switchParams('focco', $params, null, true, true, null, $sql);
+        return $result['retorno'] ?? [];
+    }
+
+    /**
+     * Listar Centros de Trabalho da empresa para popular o select de Alocação.
+     * (Mantém o nome legado da função por compatibilidade.)
+     * Não influencia cálculos.
+     */
+    public static function listarCentrosCusto($idEmpr = null)
+    {
+        $params = [
+            'filtro_empr' => $idEmpr ? "AND tt.EMPR_ID = " . intval($idEmpr) : '--',
+        ];
+        // Retorna campos com aliases COD/DESCRICAO para o JS continuar funcionando.
+        $sql = "SELECT tt.ID, tt.EMPR_ID, tt.COD_CENTRO AS COD, tt.DESCRICAO "
+            . "FROM FOCCO3I.TCENTROS_TRAB tt "
+            . "WHERE 1=1 :filtro_empr "
+            . "ORDER BY tt.COD_CENTRO";
+        $result = Database::switchParams('focco', $params, null, true, true, null, $sql);
+        return $result['retorno'] ?? [];
+    }
+
+    /**
+     * Retorna mapa de Alocação (Centro de Trabalho) por ID_FUNCIONARIO para uma empresa.
+     * Resultado: [ funcId => ['ID_EMP_CC' => x, 'COD_CC' => 'xxx', 'CC_DESCRICAO' => 'yyy'] ]
+     * (Aliases mantidos por compatibilidade.)
+     * Usado nos relatórios para exibir a Alocação sem alterar cálculos.
+     */
+    public static function getAlocacaoPorFuncionario($idEmpr = null)
+    {
+        if (!self::verificarColunaCc()) {
+            return [];
+        }
+        $params = [
+            'filtro_empr' => $idEmpr ? "AND v.ID_EMPR = " . intval($idEmpr) : '--',
+        ];
+        $sql = "SELECT v.ID_FUNCIONARIO, v.ID_EMP_CC, ca.COD_CENTRO AS COD_CC, ca.DESCRICAO AS CC_DESCRICAO "
+            . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
+            . "LEFT JOIN FOCCO3I.TCENTROS_TRAB ca ON ca.ID = v.ID_EMP_CC "
+            . "WHERE v.ATIVO = 'S' AND v.ID_EMP_CC IS NOT NULL :filtro_empr";
+        $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+        if (!empty($result['error'])) {
+            return [];
+        }
+        $mapa = [];
+        foreach (($result['retorno'] ?? []) as $row) {
+            $funcId = $row['ID_FUNCIONARIO'] ?? null;
+            if ($funcId !== null && !isset($mapa[$funcId])) {
+                $mapa[$funcId] = [
+                    'ID_EMP_CC' => $row['ID_EMP_CC'] ?? null,
+                    'COD_CC' => $row['COD_CC'] ?? null,
+                    'CC_DESCRICAO' => $row['CC_DESCRICAO'] ?? null,
+                ];
+            }
+        }
+        return $mapa;
     }
 
     /**
@@ -85,7 +167,7 @@ class Vinculo
     /**
      * Inserir novo vínculo
      */
-    public static function inserir($idEmpr, $idFuncionario, $idCentroTrab, $idRecurso = null, $tipoVinculo = 'N')
+    public static function inserir($idEmpr, $idFuncionario, $idCentroTrab, $idRecurso = null, $tipoVinculo = 'N', $idEmpCc = null)
     {
         $params = [
             'id_empr' => intval($idEmpr),
@@ -93,26 +175,76 @@ class Vinculo
             'id_centro_trab' => intval($idCentroTrab),
             'id_recurso' => $idRecurso !== null ? intval($idRecurso) : 'NULL',
             'tipo_vinculo' => "'" . ($tipoVinculo === 'A' ? 'A' : 'N') . "'",
+            'id_emp_cc' => $idEmpCc !== null && $idEmpCc !== '' ? intval($idEmpCc) : 'NULL',
         ];
 
-        $result = Database::switchParams('focco', $params, 'comissao.vinculo.inserir', true);
-        return !$result['error'];
+        // Tenta inserir com ID_EMP_CC; se a coluna não existir, faz fallback sem ela.
+        $sqlComCc = "INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC "
+            . "(ID_VINCULO, ID_EMPR, ID_FUNCIONARIO, ID_CENTRO_TRAB, ID_RECURSO, TIPO_VINCULO, ID_EMP_CC, ATIVO, DT_CADASTRO) "
+            . "VALUES (FOCCO3I.SEQ_TGAZIN_VINC_FUNC.NEXTVAL, :id_empr, :id_funcionario, :id_centro_trab, :id_recurso, :tipo_vinculo, :id_emp_cc, 'S', SYSDATE)";
+        $result = Database::switchParams('focco', $params, null, true, true, null, $sqlComCc);
+        if (empty($result['error'])) {
+            self::$colunaCcCache = true;
+            return true;
+        }
+        // Fallback apenas se a falha for por coluna inválida (ORA-00904 / ORA-06550 / PLS-00302)
+        if (self::erroColunaInvalida($result['error'])) {
+            self::$colunaCcCache = false;
+            $sqlSemCc = "INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC "
+                . "(ID_VINCULO, ID_EMPR, ID_FUNCIONARIO, ID_CENTRO_TRAB, ID_RECURSO, TIPO_VINCULO, ATIVO, DT_CADASTRO) "
+                . "VALUES (FOCCO3I.SEQ_TGAZIN_VINC_FUNC.NEXTVAL, :id_empr, :id_funcionario, :id_centro_trab, :id_recurso, :tipo_vinculo, 'S', SYSDATE)";
+            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
+            return empty($result['error']);
+        }
+        return false;
     }
 
     /**
      * Atualizar vínculo
      */
-    public static function atualizar($id, $idCentroTrab, $idRecurso = null, $tipoVinculo = 'N')
+    public static function atualizar($id, $idCentroTrab, $idRecurso = null, $tipoVinculo = 'N', $idEmpCc = null)
     {
         $params = [
             'id' => intval($id),
             'id_centro_trab' => intval($idCentroTrab),
             'id_recurso' => $idRecurso !== null ? intval($idRecurso) : 'NULL',
             'tipo_vinculo' => "'" . ($tipoVinculo === 'A' ? 'A' : 'N') . "'",
+            'id_emp_cc' => $idEmpCc !== null && $idEmpCc !== '' ? intval($idEmpCc) : 'NULL',
         ];
 
-        $result = Database::switchParams('focco', $params, 'comissao.vinculo.atualizar', true);
-        return !$result['error'];
+        $sqlComCc = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC "
+            . "SET ID_CENTRO_TRAB = :id_centro_trab, "
+            . "    ID_RECURSO = :id_recurso, "
+            . "    TIPO_VINCULO = :tipo_vinculo, "
+            . "    ID_EMP_CC = :id_emp_cc "
+            . "WHERE ID_VINCULO = :id";
+        $result = Database::switchParams('focco', $params, null, true, true, null, $sqlComCc);
+        if (empty($result['error'])) {
+            self::$colunaCcCache = true;
+            return true;
+        }
+        if (self::erroColunaInvalida($result['error'])) {
+            self::$colunaCcCache = false;
+            $sqlSemCc = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC "
+                . "SET ID_CENTRO_TRAB = :id_centro_trab, "
+                . "    ID_RECURSO = :id_recurso, "
+                . "    TIPO_VINCULO = :tipo_vinculo "
+                . "WHERE ID_VINCULO = :id";
+            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
+            return empty($result['error']);
+        }
+        return false;
+    }
+
+    /**
+     * Detecta se uma mensagem de erro Oracle indica coluna inexistente.
+     */
+    private static function erroColunaInvalida($msg)
+    {
+        if (!$msg) return false;
+        return (strpos($msg, 'ORA-00904') !== false)
+            || (stripos($msg, 'invalid identifier') !== false)
+            || (stripos($msg, 'identificador inv') !== false);
     }
 
     /**

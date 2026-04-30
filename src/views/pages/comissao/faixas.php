@@ -92,7 +92,7 @@ if (!$acessoComissao) {
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="formFaixa">
+                    <form id="formFaixa" onsubmit="event.preventDefault(); return false;">
                         <input type="hidden" id="faixaId">
                         
                         <div class="row mb-3">
@@ -113,6 +113,7 @@ if (!$acessoComissao) {
                                 <select id="tipoFuncionario" class="form-select" required>
                                     <option value="T">Todos</option>
                                     <option value="N">Normal</option>
+                                    <option value="A">Apoio</option>
                                 </select>
                             </div>
                         </div>

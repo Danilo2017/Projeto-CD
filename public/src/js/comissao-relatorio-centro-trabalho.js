@@ -205,6 +205,7 @@ function renderizarTabelaFuncionarios(dados) {
                 </td>
                 <td>${item.COD_FUNC || '-'}</td>
                 <td><strong>${item.NOME_FUNC || '-'}</strong>${tipoVinculo}</td>
+                <td>${item.ALOCACAO || '-'}</td>
                 <td class="text-end">${formatarNumero(item.TOTAL_PONTOS, 2)}</td>
                 <td>${item.FAIXA_DESCRICAO || '-'}</td>
                 <td class="text-center">${formatarNumero(item.DIAS_TRABALHADOS || 0)}</td>
@@ -251,8 +252,9 @@ function initDataTable() {
             emptyTable: "Nenhum dado disponível na tabela",
             paginate: { first: "Primeiro", previous: "Anterior", next: "Próximo", last: "Último" }
         },
-        lengthChange: false,
-        pageLength: 25,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[2, 'asc']],
         columnDefs: [
             { orderable: false, targets: [0, 8] }

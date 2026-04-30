@@ -10,6 +10,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Carregar dados iniciais
     carregarFaixas();
+
+    // Impedir que Enter dentro do form do modal dispare salvamento implícito
+    const formFaixa = document.getElementById('formFaixa');
+    if (formFaixa) {
+        formFaixa.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+            }
+        });
+    }
 });
 
 /**
@@ -189,8 +199,9 @@ function initDataTable() {
                 last: "Último"
             }
         },
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[3, 'asc']], // Ordenar por ponto inicial
         columnDefs: [
             { orderable: false, targets: [9] }
@@ -275,6 +286,11 @@ function editarFaixa(id) {
  * Salva faixa (criar ou atualizar)
  */
 function salvarFaixa() {
+    // Guarda contra duplo-clique / Enter repetido
+    const btnGuard = document.getElementById('btnSalvarFaixa');
+    if (btnGuard && btnGuard.disabled) {
+        return;
+    }
     const id = document.getElementById('faixaId').value;
     const dados = {
         descricao: document.getElementById('descricao').value,
@@ -336,28 +352,61 @@ function salvarFaixa() {
     const metodo = id ? 'PUT' : 'POST';
     if (id) dados.id = id;
     
+    enviarSalvarFaixa(dados, metodo, btnSalvar, false);
+}
+
+/**
+ * Envia o request de salvar faixa. Se houver conflito, pergunta ao usuário se
+ * deseja sobrescrever (inativando a faixa conflitante) e reenvia.
+ */
+function enviarSalvarFaixa(dados, metodo, btnSalvar, sobrescrever) {
+    const payload = Object.assign({}, dados, { sobrescrever: !!sobrescrever });
+    const id = dados.id;
+
     fetch('/comissao-api-faixas', {
         method: metodo,
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(dados)
+        body: JSON.stringify(payload)
     })
-    .then(response => response.json())
-    .then(data => {
+    .then(response => response.json().then(data => ({ status: response.status, data })))
+    .then(({ status, data }) => {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('modalFaixa')).hide();
             carregarFaixas();
             exibirMensagemSucesso(id ? 'Faixa atualizada com sucesso!' : 'Faixa cadastrada com sucesso!');
-        } else {
-            exibirMensagemErro(data.message || 'Erro ao salvar faixa');
+            return;
+        }
+
+        if ((status === 409 || data.conflito) && !sobrescrever) {
+            const c = data.conflito_faixa || {};
+            const centroNome = c.DESC_CENTRO
+                ? (c.COD_CENTRO ? c.COD_CENTRO + ' - ' + c.DESC_CENTRO : c.DESC_CENTRO)
+                : 'Todos';
+            const desc = c.DESCRICAO ? '"' + c.DESCRICAO + '"' : '';
+            const pontos = (c.PONTO_INICIAL ?? '0') + ' a ' + (c.PONTO_FINAL ?? '∞');
+            const msg =
+                'Já existe uma faixa ativa conflitante:\n\n' +
+                'Faixa: ' + desc + '\n' +
+                'Centro: ' + centroNome + '\n' +
+                'Pontos: ' + pontos + '\n\n' +
+                'Deseja SOBRESCREVER (inativar a faixa existente e salvar esta)?';
+            if (window.confirm(msg)) {
+                enviarSalvarFaixa(dados, metodo, btnSalvar, true);
+                return;
+            }
+        }
+
+        exibirMensagemErro(data.message || data.error || 'Erro ao salvar faixa');
+        if (btnSalvar) {
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = '<i class="bi bi-check"></i> Salvar';
         }
     })
     .catch(error => {
         console.error('Erro ao salvar:', error);
         exibirMensagemErro('Erro ao salvar faixa');
-    })
-    .finally(() => {
         if (btnSalvar) {
             btnSalvar.disabled = false;
             btnSalvar.innerHTML = '<i class="bi bi-check"></i> Salvar';

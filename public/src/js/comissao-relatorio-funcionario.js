@@ -192,6 +192,8 @@ function renderizarFuncionario(func) {
     document.getElementById('nomeFuncionario').textContent = func.NOME;
     document.getElementById('codigoFuncionario').textContent = func.CODIGO;
     document.getElementById('centroFuncionario').textContent = func.CENTRO_TRABALHO || '-';
+    const alocEl = document.getElementById('alocacaoFuncionario');
+    if (alocEl) alocEl.textContent = func.ALOCACAO || '-';
     document.getElementById('admissaoFuncionario').textContent = formatarData(func.DT_ADMISSAO);
     document.getElementById('situacaoFuncionario').textContent = func.SITUACAO === 'A' ? 'Ativo' : 'Inativo';
 }
@@ -380,8 +382,9 @@ function initDataTableApontamentosCentro() {
     if (dataTableApontamentosCentro) dataTableApontamentosCentro.destroy();
     dataTableApontamentosCentro = $('#tabelaApontamentosCentro').DataTable({
         language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por página", info: "Mostrando _START_ até _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 até 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado disponível na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Próximo", last: "Último" } },
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[0, 'desc']]
     });
 }
@@ -425,8 +428,9 @@ function initDataTableDiario() {
     if (dataTableDiario) dataTableDiario.destroy();
     dataTableDiario = $('#tabelaDiario').DataTable({
         language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por p\u00e1gina", info: "Mostrando _START_ at\u00e9 _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 at\u00e9 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado dispon\u00edvel na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Pr\u00f3ximo", last: "\u00daltimo" } },
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[0, 'desc']]
     });
 }
@@ -435,8 +439,9 @@ function initDataTableApontamentos() {
     if (dataTableApontamentos) dataTableApontamentos.destroy();
     dataTableApontamentos = $('#tabelaApontamentos').DataTable({
         language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por p\u00e1gina", info: "Mostrando _START_ at\u00e9 _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 at\u00e9 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado dispon\u00edvel na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Pr\u00f3ximo", last: "\u00daltimo" } },
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[0, 'desc'], [1, 'desc']]
     });
 }
@@ -445,8 +450,9 @@ function initDataTableComissoes() {
     if (dataTableComissoes) dataTableComissoes.destroy();
     dataTableComissoes = $('#tabelaComissoes').DataTable({
         language: { processing: "Processando...", search: "Pesquisar:", lengthMenu: "Exibir _MENU_ resultados por p\u00e1gina", info: "Mostrando _START_ at\u00e9 _END_ de _TOTAL_ registros", infoEmpty: "Mostrando 0 at\u00e9 0 de 0 registros", infoFiltered: "(filtrado de _MAX_ registros no total)", loadingRecords: "Carregando...", zeroRecords: "Nenhum registro encontrado", emptyTable: "Nenhum dado dispon\u00edvel na tabela", paginate: { first: "Primeiro", previous: "Anterior", next: "Pr\u00f3ximo", last: "\u00daltimo" } },
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[0, 'desc']]
     });
 }

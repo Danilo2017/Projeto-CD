@@ -155,6 +155,18 @@ class ComissaoExtratoHandler
             // Buscar dias de apoio deste funcionário
             $datasApoio = $datasApoioPorFunc[$funcId] ?? [];
             
+            // Funcionário de Apoio puro (TIPO_VINCULO='A'): considera TODAS as datas
+            // com produção do centro como dias de apoio (igual
+            // calcularComissaoTodosCompletaOtimizado em Comissao.php).
+            $tipoVincFunc = $vinculo['TIPO_VINCULO'] ?? 'N';
+            if ($tipoVincFunc === 'A' && !empty($pontosTotaisCentro[$centroTrabId])) {
+                foreach ($pontosTotaisCentro[$centroTrabId] as $dataCentro => $_pts) {
+                    if (!isset($datasApoio[$dataCentro])) {
+                        $datasApoio[$dataCentro] = ['centro' => $centroTrabId, 'tipo_calculo' => 'T'];
+                    }
+                }
+            }
+            
             // Verificar se tem regra específica
             $temRegraEspecifica = isset($regrasEspecificas[$funcId]);
             $regraFunc = $regrasEspecificas[$funcId] ?? null;
@@ -194,6 +206,7 @@ class ComissaoExtratoHandler
             $totalPontosFuncionario = 0;
             $totalPontosNormais = 0;
             $totalPontosApoio = 0;
+            $valorComissaoAcumulado = 0;
             $diasDetalhe = [];
             $diasNormaisFunc = 0;
             $diasApoioFunc = 0;
@@ -214,7 +227,8 @@ class ComissaoExtratoHandler
                 $pontosAplicados = $pontosDia;
                 $motivoFalta = null;
                 $valorComissaoDia = 0;
-                $valorPontoUsado = $valorPontoNormal;
+                // Para funcionário Apoio, dia normal também usa faixa Apoio
+                $valorPontoUsado = ($tipoVincFunc === 'A') ? $valorPontoApoio : $valorPontoNormal;
                 $tipoCalculo = null;
                 
                 // Verificar se é dia de apoio
@@ -235,15 +249,9 @@ class ComissaoExtratoHandler
                     }
                     
                     $status = 'APOIO';
-                    $valorPontoUsado = $valorPontoApoio;
-                    $diasApoioFunc++;
-                    $resumo['total_dias_apoio']++;
-                    $totalPontosApoio += $pontosAplicados;
-                } else {
-                    // Dia NORMAL
-                    $diasNormaisFunc++;
-                    $resumo['total_dias_normais']++;
-                    $totalPontosNormais += $pontosAplicados;
+                    // Tipo MÉDIA -> usa faixa NORMAL
+                    // Tipo TOTAL -> usa faixa APOIO
+                    $valorPontoUsado = ($tipoCalculo === 'M') ? $valorPontoNormal : $valorPontoApoio;
                 }
                 
                 // Verificar falta (aplica desconto mesmo em dias de apoio)
@@ -255,14 +263,6 @@ class ComissaoExtratoHandler
                         $status = 'FALTA_INTEGRAL';
                         $pontosAplicados = 0;
                         $resumo['total_dias_falta_integral']++;
-                        // Descontar do resumo de dias normais/apoio
-                        if ($isDiaApoio) {
-                            $resumo['total_dias_apoio']--;
-                            $diasApoioFunc--;
-                        } else {
-                            $resumo['total_dias_normais']--;
-                            $diasNormaisFunc--;
-                        }
                     } else {
                         $status = $isDiaApoio ? 'APOIO' : 'FALTA_PARCIAL';
                         $pontosAplicados = $pontosAplicados * 0.5;
@@ -270,10 +270,26 @@ class ComissaoExtratoHandler
                     }
                 }
                 
+                // Contabilizar dias e pontos APÓS aplicar a falta
+                if ($isDiaApoio) {
+                    if (!($faltaDia && $tipoFalta === 'I')) {
+                        $diasApoioFunc++;
+                        $resumo['total_dias_apoio']++;
+                    }
+                    $totalPontosApoio += $pontosAplicados;
+                } else {
+                    if (!($faltaDia && $tipoFalta === 'I')) {
+                        $diasNormaisFunc++;
+                        $resumo['total_dias_normais']++;
+                    }
+                    $totalPontosNormais += $pontosAplicados;
+                }
+                
                 $totalPontosFuncionario += $pontosAplicados;
                 
                 // Calcular valor da comissão do dia
                 $valorComissaoDia = round($pontosAplicados * $valorPontoUsado, 2);
+                $valorComissaoAcumulado += $valorComissaoDia;
                 
                 $diasDetalhe[] = [
                     'data' => $dia,
@@ -297,10 +313,9 @@ class ComissaoExtratoHandler
             if ($temRegraEspecifica) {
                 $valorEstimado = RegraFuncionario::calcularComissao($totalPontosFuncionario, $regraFunc);
             } else {
-                // Calcular separado: dias normais e dias de apoio
-                $valorNormal = $totalPontosNormais * $valorPontoNormal;
-                $valorApoio = $totalPontosApoio * $valorPontoApoio;
-                $valorEstimado = $valorNormal + $valorApoio;
+                // Soma dos valores calculados dia a dia (cada dia já considera
+                // a faixa correta: Normal/Apoio e tipo de cálculo MÉDIA/TOTAL)
+                $valorEstimado = $valorComissaoAcumulado;
             }
             
             $resumo['total_pontos'] += $totalPontosFuncionario;
@@ -385,12 +400,12 @@ class ComissaoExtratoHandler
         $tipo = $faixa['TIPO'] ?? 'F';
         $valor = floatval($faixa['VALOR_COMISSAO'] ?? 0);
         
-        // Tipo Q (Quantidade) = valor por ponto
-        if ($tipo === 'Q') {
-            return $valor;
+        // Tipo P (Percentual) -> retorna valor/100 (a comissão é pontos * % / 100)
+        if ($tipo === 'P') {
+            return $valor / 100;
         }
         
-        // Outros tipos retornam o valor (será multiplicado pelo total de pontos)
+        // Tipo Q (Quantidade) = valor por ponto
         return $valor;
     }
     

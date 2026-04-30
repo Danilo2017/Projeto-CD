@@ -157,6 +157,7 @@ if (!$acessoComissao) {
                     <tr>
                         <th>Funcionário</th>
                         <th>Centro Trab.</th>
+                        <th>Alocação</th>
                         <th>Recurso</th>
                         <th class="text-center">Itens</th>
                         <th class="text-center">Qtd. Produzida</th>
@@ -168,7 +169,7 @@ if (!$acessoComissao) {
                 </thead>
                 <tbody id="tabelaProdutividadeBody">
                     <tr>
-                        <td colspan="9" class="text-center">Selecione os filtros e clique em "Gerar Relatório"</td>
+                        <td colspan="10" class="text-center">Selecione os filtros e clique em "Gerar Relatório"</td>
                     </tr>
                 </tbody>
             </table>
@@ -185,6 +186,7 @@ if (!$acessoComissao) {
                 <thead>
                     <tr>
                         <th>Funcionário</th>
+                        <th>Alocação</th>
                         <th>Produto</th>
                         <th>Centro Trab.</th>
                         <th>Operação</th>
@@ -199,7 +201,7 @@ if (!$acessoComissao) {
                 </thead>
                 <tbody id="tabelaApontamentosBody">
                     <tr>
-                        <td colspan="11" class="text-center">Selecione os filtros e clique em "Gerar Relatório"</td>
+                        <td colspan="12" class="text-center">Selecione os filtros e clique em "Gerar Relatório"</td>
                     </tr>
                 </tbody>
             </table>

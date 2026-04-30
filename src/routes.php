@@ -93,6 +93,7 @@ $router->get('/comissao-api-empresas', 'Comissao\\ComissaoCadastroController@get
 $router->get('/comissao-api-centros-vinculados', 'Comissao\\ComissaoCadastroController@getCentrosComVinculo', true);
 $router->get('/comissao-api-recursos-vinculados', 'Comissao\\ComissaoCadastroController@getRecursosComVinculo', true);
 $router->get('/comissao-api-funcionarios-vinculados', 'Comissao\\ComissaoCadastroController@getFuncionariosComVinculo', true);
+$router->get('/comissao-api-centros-custo', 'Comissao\\ComissaoCadastroController@getCentrosCusto', true);
 
 // API para seleção de empresa (define sessão)
 $router->post('/comissao-api-selecionar-empresa', 'Comissao\\ComissaoCadastroController@selecionarEmpresa', true);
@@ -102,6 +103,8 @@ $router->get('/comissao-api-empresa-selecionada', 'Comissao\\ComissaoCadastroCon
 $router->get('/comissao-faltas', 'Comissao\\ComissaoCadastroController@faltasIndex', true);
 $router->get('/comissao-api-faltas', 'Comissao\\ComissaoCadastroController@listarFaltas', true);
 $router->post('/comissao-api-falta', 'Comissao\\ComissaoCadastroController@salvarFalta', true);
+$router->post('/comissao-api-faltas-lote', 'Comissao\\ComissaoCadastroController@salvarFaltasLote', true);
+$router->post('/comissao-api-faltas-import', 'Comissao\\ComissaoCadastroController@importarFaltas', true);
 $router->put('/comissao-api-falta', 'Comissao\\ComissaoCadastroController@atualizarFalta', true);
 $router->delete('/comissao-api-falta', 'Comissao\\ComissaoCadastroController@excluirFalta', true);
 

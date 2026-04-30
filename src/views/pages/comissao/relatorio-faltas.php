@@ -75,6 +75,7 @@ if (!$acessoComissao) {
                     <tr>
                         <th>Código</th>
                         <th>Funcionário</th>
+                        <th>Alocação</th>
                         <th>Data da Falta</th>
                         <th>Tipo</th>
                         <th>Motivo/Observação</th>
@@ -83,7 +84,7 @@ if (!$acessoComissao) {
                     </tr>
                 </thead>
                 <tbody id="tabelaFaltasBody">
-                    <tr><td colspan="7" class="text-center text-muted py-4">Clique em Filtrar para carregar</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">Clique em Filtrar para carregar</td></tr>
                 </tbody>
             </table>
         </div>
@@ -153,7 +154,7 @@ function carregarRelatorio() {
     if (tipoFalta) url += `&tipo_falta=${tipoFalta}`;
     
     const tbody = document.getElementById('tabelaFaltasBody');
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Carregando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Carregando...</td></tr>';
     
     fetch(url)
         .then(response => response.json())
@@ -169,7 +170,7 @@ function carregarRelatorio() {
             
             // Preencher tabela detalhada
             if (faltas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhuma falta encontrada no período</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Nenhuma falta encontrada no período</td></tr>';
             } else {
                 tbody.innerHTML = '';
                 faltas.forEach(falta => {
@@ -181,6 +182,7 @@ function carregarRelatorio() {
                         <tr>
                             <td>${falta.COD_FUNC || '-'}</td>
                             <td>${falta.NOME_FUNCIONARIO || falta.NOME || '-'}</td>
+                            <td>${falta.ALOCACAO || '-'}</td>
                             <td>${falta.DT_FALTA_FMT || formatarData(falta.DT_FALTA)}</td>
                             <td>${tipoDesc}</td>
                             <td>${falta.MOTIVO || '-'}</td>
@@ -193,7 +195,7 @@ function carregarRelatorio() {
         })
         .catch(error => {
             console.error('Erro:', error);
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Erro ao carregar relatório</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Erro ao carregar relatório</td></tr>';
         });
 }
 

@@ -277,6 +277,7 @@ function renderizarTabelaComissoes(dados) {
                     <strong>${item.NOME_FUNC}</strong>${faltaBadge}${apoioBadge}
                 </td>
                 <td>${item.CENTRO_TRABALHO || '-'}</td>
+                <td>${item.ALOCACAO || '-'}</td>
                 <td class="text-end">${formatarNumero(item.TOTAL_PONTOS, 2)}</td>
                 <td>${item.FAIXA_DESCRICAO || '-'}</td>
                 <td class="text-end"><strong>${formatarMoeda(item.VALOR_COMISSAO)}</strong></td>
@@ -331,8 +332,9 @@ function initDataTable() {
                 last: "\u00daltimo"
             }
         },
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[7, 'desc']],
         columnDefs: [
             { orderable: false, targets: [0, 9] }

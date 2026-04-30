@@ -427,18 +427,25 @@ class ComissaoCadastroController extends ctrl
             $dados['centro_trab_id'] = $dados['centro_trab_id'] ?: null;
             $dados['dt_vigencia_fim'] = $dados['dt_vigencia_fim'] ?: null;
             
-            // Verificar se já existe faixa conflitante
-            $conflito = /* conflito verificado no handler */ null;
-            if ($conflito) {
-                $centroNome = $conflito['DESC_CENTRO'] ? $conflito['COD_CENTRO'] . ' - ' . $conflito['DESC_CENTRO'] : 'Todos';
-                throw new \Exception(
-                    'Já existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
-                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? '∞') . ' ' .
-                    'que conflita com a vigência informada.'
-                );
-            }
+            $sobrescrever = !empty($dados['sobrescrever']);
             
-            $id = ComissaoCadastroHandler::salvarFaixa($dados);
+            try {
+                $id = ComissaoCadastroHandler::salvarFaixa($dados, $sobrescrever);
+            } catch (\Exception $e) {
+                if (!empty($GLOBALS['__faixa_conflito'])) {
+                    $conflito = $GLOBALS['__faixa_conflito'];
+                    unset($GLOBALS['__faixa_conflito']);
+                    self::response([
+                        'success' => false,
+                        'conflito' => true,
+                        'conflito_faixa' => $conflito,
+                        'error' => $e->getMessage(),
+                        'message' => $e->getMessage()
+                    ], 409);
+                    return;
+                }
+                throw $e;
+            }
 
             self::response([
                 'success' => true,
@@ -448,7 +455,8 @@ class ComissaoCadastroController extends ctrl
         } catch (\Exception $e) {
             self::response([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 400);
         }
     }
@@ -489,18 +497,25 @@ class ComissaoCadastroController extends ctrl
             $dados['centro_trab_id'] = $dados['centro_trab_id'] ?: null;
             $dados['dt_vigencia_fim'] = $dados['dt_vigencia_fim'] ?: null;
             
-            // Verificar se já existe faixa conflitante (excluindo a faixa atual)
-            $conflito = /* conflito verificado no handler */ null;
-            if ($conflito) {
-                $centroNome = $conflito['DESC_CENTRO'] ? $conflito['COD_CENTRO'] . ' - ' . $conflito['DESC_CENTRO'] : 'Todos';
-                throw new \Exception(
-                    'Já existe uma faixa ativa para este centro de trabalho (' . $centroNome . ') ' .
-                    'com pontuação de ' . $conflito['PONTO_INICIAL'] . ' a ' . ($conflito['PONTO_FINAL'] ?? '∞') . ' ' .
-                    'que conflita com a vigência informada.'
-                );
-            }
+            $sobrescrever = !empty($dados['sobrescrever']);
             
-            ComissaoCadastroHandler::atualizarFaixa((int)$id, $dados);
+            try {
+                ComissaoCadastroHandler::atualizarFaixa((int)$id, $dados, $sobrescrever);
+            } catch (\Exception $e) {
+                if (!empty($GLOBALS['__faixa_conflito'])) {
+                    $conflito = $GLOBALS['__faixa_conflito'];
+                    unset($GLOBALS['__faixa_conflito']);
+                    self::response([
+                        'success' => false,
+                        'conflito' => true,
+                        'conflito_faixa' => $conflito,
+                        'error' => $e->getMessage(),
+                        'message' => $e->getMessage()
+                    ], 409);
+                    return;
+                }
+                throw $e;
+            }
 
             self::response([
                 'success' => true,
@@ -509,7 +524,8 @@ class ComissaoCadastroController extends ctrl
         } catch (\Exception $e) {
             self::response([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], 400);
         }
     }
@@ -891,6 +907,25 @@ class ComissaoCadastroController extends ctrl
     }
 
     /**
+     * Listar Centros de Custo (TIPO_CC = 'PRO') vinculados à empresa
+     * Apenas para popular o select no cadastro - não influencia cálculos.
+     */
+    public function getCentrosCusto()
+    {
+        try {
+            $emprId = $_GET['emprId'] ?? $_GET['empr_id'] ?? $_GET['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $ccs = \src\models\Comissao\Vinculo::listarCentrosCusto($emprId);
+            self::response([
+                'success' => true,
+                'data' => $ccs,
+                'empresa_id' => $emprId
+            ], 200);
+        } catch (\Throwable $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Alterar status do vínculo (ativar/inativar)
      */
     public function alterarStatusVinculo()
@@ -935,7 +970,8 @@ class ComissaoCadastroController extends ctrl
                 $dados['funcionario_id'], 
                 $dados['centro_id'],
                 $dados['recurso_id'] ?? null,
-                $tipoVinculo
+                $tipoVinculo,
+                $dados['cc_id'] ?? null
             );
             if (!$ok) {
                 throw new \Exception('Falha no INSERT do vínculo no banco de dados');
@@ -973,7 +1009,8 @@ class ComissaoCadastroController extends ctrl
                 $dados['id'], 
                 $dados['centro_id'],
                 $dados['recurso_id'] ?? null,
-                $tipoVinculo
+                $tipoVinculo,
+                $dados['cc_id'] ?? null
             );
             if (!$ok) {
                 throw new \Exception('Falha ao atualizar vínculo');
@@ -1062,6 +1099,80 @@ class ComissaoCadastroController extends ctrl
                 'success' => true,
                 'message' => 'Falta registrada com sucesso',
                 'id' => $id
+            ], 201);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Salvar faltas em lote (API)
+     * Body: { id_funcionarios: [], dt_falta, tipo_falta, motivo, id_empr? }
+     */
+    public function salvarFaltasLote()
+    {
+        try {
+            $dados = Request::getJsonBody();
+
+            self::verificarCamposVazios($dados, ['dt_falta', 'tipo_falta']);
+
+            if (empty($dados['id_funcionarios']) || !is_array($dados['id_funcionarios'])) {
+                throw new \Exception('Selecione ao menos um funcionário');
+            }
+
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
+
+            $resumo = ComissaoCadastroHandler::salvarFaltasLote($dados);
+
+            $msg = $resumo['inseridos'] . ' falta(s) registrada(s)';
+            if ($resumo['ignorados'] > 0) {
+                $msg .= ', ' . $resumo['ignorados'] . ' ignorada(s) (já existiam)';
+            }
+            if (!empty($resumo['erros'])) {
+                $msg .= ', ' . count($resumo['erros']) . ' com erro';
+            }
+
+            self::response([
+                'success' => true,
+                'message' => $msg,
+                'resumo' => $resumo
+            ], 201);
+        } catch (\Exception $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Importar faltas a partir de arquivo (Excel/CSV) — frontend converte e envia JSON.
+     * Body: { id_empr?, registros: [ {linha, id_funcionario, dt_falta, tipo_falta, motivo}, ... ] }
+     */
+    public function importarFaltas()
+    {
+        try {
+            $dados = Request::getJsonBody();
+
+            if (empty($dados['registros']) || !is_array($dados['registros'])) {
+                throw new \Exception('Nenhum registro para importar');
+            }
+
+            $dados['id_empr'] = $dados['id_empr'] ?? $_SESSION['empresa']['id'] ?? null;
+            $dados['id_usuario'] = $_SESSION['user']['id'] ?? null;
+
+            $resumo = ComissaoCadastroHandler::importarFaltas($dados);
+
+            $msg = "Importação concluída: " . $resumo['inseridos'] . ' inserida(s)';
+            if ($resumo['ignorados'] > 0) {
+                $msg .= ', ' . $resumo['ignorados'] . ' ignorada(s) (já existiam)';
+            }
+            if (!empty($resumo['erros'])) {
+                $msg .= ', ' . count($resumo['erros']) . ' com erro';
+            }
+
+            self::response([
+                'success' => true,
+                'message' => $msg,
+                'resumo' => $resumo
             ], 201);
         } catch (\Exception $e) {
             self::response(['success' => false, 'error' => $e->getMessage()], 400);

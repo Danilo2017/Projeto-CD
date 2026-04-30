@@ -4,11 +4,15 @@
 let funcionariosCache = [];
 let recursosCache = [];
 let centrosCache = [];
+let centrosCustoCache = [];
+// Cache da última listagem (para exportação Excel)
+let vinculosListaAtual = [];
 
 $(document).ready(function() {
     carregarFuncionarios();
     carregarRecursos();
     carregarCentros();
+    carregarCentrosCusto();
     carregarVinculos();
     
     // Inicializar Select2 do modal quando abrir
@@ -112,6 +116,22 @@ function inicializarSelect2Modal() {
             text: (c.COD_CENTRO ? c.COD_CENTRO + ' - ' : '') + c.DESCRICAO
         })))
     });
+
+    // Select2 para Centro de Custo no modal (opcional)
+    if ($('#cc_id').data('select2')) {
+        $('#cc_id').select2('destroy');
+    }
+    $('#cc_id').select2({
+        theme: 'bootstrap-5',
+        language: 'pt-BR',
+        placeholder: 'Selecione (opcional)...',
+        allowClear: true,
+        dropdownParent: $('#modalVinculo'),
+        data: [{id: '', text: 'Nenhum'}].concat(centrosCustoCache.map(c => ({
+            id: c.ID,
+            text: (c.COD ? c.COD + ' - ' : '') + c.DESCRICAO
+        })))
+    });
 }
 
 function carregarFuncionarios() {
@@ -135,6 +155,12 @@ function carregarCentros() {
     });
 }
 
+function carregarCentrosCusto() {
+    $.get('/comissao-api-centros-custo', function(res) {
+        centrosCustoCache = (res && res.data) ? res.data : [];
+    });
+}
+
 function novoVinculo() {
     $('#formVinculo')[0].reset();
     $('#vinculoId').val('');
@@ -151,6 +177,9 @@ function novoVinculo() {
     }
     if ($('#centro_id').data('select2')) {
         $('#centro_id').val('').trigger('change');
+    }
+    if ($('#cc_id').data('select2')) {
+        $('#cc_id').val('').trigger('change');
     }
 }
 
@@ -182,6 +211,7 @@ function salvarVinculo() {
     const funcionario_id = $('#funcionario_id').val();
     const recurso_id = $('#recurso_id').val();
     const centro_id = $('#centro_id').val();
+    const cc_id = $('#cc_id').val();
     const tipo_vinculo = $('#tipo_vinculo').val() || 'N';
     
     // Validação: recurso obrigatório apenas para vínculo Normal
@@ -199,7 +229,7 @@ function salvarVinculo() {
     btnSalvar.html('<span class="spinner-border spinner-border-sm me-1"></span> Salvando...');
     
     const isEdit = vinculoId && vinculoId !== '';
-    const payload = { funcionario_id, recurso_id: recurso_id || null, centro_id, tipo_vinculo };
+    const payload = { funcionario_id, recurso_id: recurso_id || null, centro_id, tipo_vinculo, cc_id: cc_id || null };
     if (isEdit) payload.id = vinculoId;
     $.ajax({
         url: '/comissao-api-vinculo',
@@ -231,7 +261,7 @@ function salvarVinculo() {
     });
 }
 
-function editarVinculo(id, funcionarioId, recursoId, centroId, tipoVinculo) {
+function editarVinculo(id, funcionarioId, recursoId, centroId, tipoVinculo, ccId) {
     $('#vinculoId').val(id);
     $('#tipo_vinculo').val(tipoVinculo || 'N');
     toggleRecursoObrigatorio();
@@ -250,6 +280,9 @@ function editarVinculo(id, funcionarioId, recursoId, centroId, tipoVinculo) {
         }
         if ($('#centro_id').data('select2')) {
             $('#centro_id').val(centroId).trigger('change');
+        }
+        if ($('#cc_id').data('select2')) {
+            $('#cc_id').val(ccId || '').trigger('change');
         }
     }, 300);
 }
@@ -289,11 +322,13 @@ function carregarVinculos() {
             $('#tabelaVinculos').DataTable().destroy();
         }
         let html = '';
+        vinculosListaAtual = (resp.success && resp.data) ? resp.data : [];
         if (resp.success && resp.data && resp.data.length > 0) {
             resp.data.forEach(function(v) {
                 let funcLabel = v.COD_FUNC ? v.COD_FUNC + ' - ' + v.FUNCIONARIO_NOME : v.FUNCIONARIO_NOME;
                 let recLabel = v.ID_RECURSO ? (v.COD_MAQUINA ? v.COD_MAQUINA + ' - ' + v.RECURSO_DESCRICAO : v.RECURSO_DESCRICAO) : '<em class="text-muted">-</em>';
                 let centroLabel = v.COD_CENTRO ? v.COD_CENTRO + ' - ' + v.CENTRO_DESCRICAO : v.CENTRO_DESCRICAO;
+                let ccLabel = v.ID_EMP_CC && v.COD_CC ? (v.COD_CC + ' - ' + (v.CC_DESCRICAO || '')) : '<em class="text-muted">-</em>';
                 let tipoVinculo = v.TIPO_VINCULO || 'N';
                 let tipoBadge = tipoVinculo === 'A' 
                     ? '<span class="badge bg-info">Apoio</span>'
@@ -302,7 +337,7 @@ function carregarVinculos() {
                     ? '<span class="badge bg-success">Ativo</span>'
                     : '<span class="badge bg-danger">Inativo</span>';
                 let acoes = '<div class="d-flex gap-1 flex-wrap">';
-                acoes += '<button class="btn btn-sm btn-primary" onclick="editarVinculo(' + v.ID_VINCULO + ', ' + v.ID_FUNCIONARIO + ', ' + (v.ID_RECURSO || 'null') + ', ' + v.ID_CENTRO_TRAB + ', \'' + tipoVinculo + '\')" title="Editar"><i class="bi bi-pencil"></i></button>';
+                acoes += '<button class="btn btn-sm btn-primary" onclick="editarVinculo(' + v.ID_VINCULO + ', ' + v.ID_FUNCIONARIO + ', ' + (v.ID_RECURSO || 'null') + ', ' + v.ID_CENTRO_TRAB + ', \'' + tipoVinculo + '\', ' + (v.ID_EMP_CC || 'null') + ')" title="Editar"><i class="bi bi-pencil"></i></button>';
                 acoes += '<button class="btn btn-sm btn-danger" onclick="excluirVinculo(' + v.ID_VINCULO + ')" title="Excluir"><i class="bi bi-trash"></i></button>';
                 if (v.ATIVO === 'S') {
                     acoes += '<button class="btn btn-sm btn-warning" onclick="toggleVinculo(' + v.ID_VINCULO + ', \'N\')" title="Inativar"><i class="bi bi-x-circle"></i></button>';
@@ -323,6 +358,7 @@ function carregarVinculos() {
                 html += '<td>' + tipoBadge + '</td>';
                 html += '<td>' + (recLabel || '') + '</td>';
                 html += '<td>' + (centroLabel || '') + '</td>';
+                html += '<td>' + ccLabel + '</td>';
                 html += '<td>' + statusBadge + '</td>';
                 html += '<td>' + acoes + '</td>';
                 html += '</tr>';
@@ -554,4 +590,54 @@ function removerDataApoio(idVinculoData, vinculoId) {
         },
         error: function() { alert('Erro ao remover data de apoio'); }
     });
+}
+
+// Exporta a listagem atual de vínculos para um arquivo Excel (.xlsx)
+function exportarVinculosExcel() {
+    if (typeof XLSX === 'undefined') {
+        alert('Biblioteca de exportação Excel não carregou. Recarregue a página.');
+        return;
+    }
+    if (!vinculosListaAtual || vinculosListaAtual.length === 0) {
+        alert('Não há dados para exportar. Aplique os filtros e tente novamente.');
+        return;
+    }
+
+    const dados = vinculosListaAtual.map(function(v) {
+        const tipoVinculo = v.TIPO_VINCULO === 'A' ? 'Apoio' : 'Normal';
+        const recurso = v.ID_RECURSO
+            ? (v.COD_MAQUINA ? v.COD_MAQUINA + ' - ' + v.RECURSO_DESCRICAO : v.RECURSO_DESCRICAO)
+            : '';
+        const centro = v.COD_CENTRO ? v.COD_CENTRO + ' - ' + v.CENTRO_DESCRICAO : (v.CENTRO_DESCRICAO || '');
+        const funcionario = v.COD_FUNC ? v.COD_FUNC + ' - ' + v.FUNCIONARIO_NOME : (v.FUNCIONARIO_NOME || '');
+        return {
+            'ID': v.ID_VINCULO,
+            'Empresa': v.ID_EMPR || '',
+            'Cód. Funcionário': v.COD_FUNC || '',
+            'Funcionário': v.FUNCIONARIO_NOME || '',
+            'Tipo': tipoVinculo,
+            'Cód. Recurso': v.COD_MAQUINA || '',
+            'Recurso': v.RECURSO_DESCRICAO || '',
+            'Cód. Centro': v.COD_CENTRO || '',
+            'Centro de Trabalho': v.CENTRO_DESCRICAO || '',
+            'Cód. Alocação': v.COD_CC || '',
+            'Alocação': v.CC_DESCRICAO || '',
+            'Status': v.ATIVO === 'S' ? 'Ativo' : 'Inativo'
+        };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    // Ajuste de largura aproximada das colunas
+    ws['!cols'] = [
+        { wch: 6 },  { wch: 8 },  { wch: 14 }, { wch: 35 }, { wch: 10 },
+        { wch: 12 }, { wch: 30 }, { wch: 12 }, { wch: 30 },
+        { wch: 10 }, { wch: 30 }, { wch: 10 }
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vínculos');
+
+    const hoje = new Date();
+    const stamp = hoje.getFullYear() + String(hoje.getMonth() + 1).padStart(2, '0') + String(hoje.getDate()).padStart(2, '0')
+        + '_' + String(hoje.getHours()).padStart(2, '0') + String(hoje.getMinutes()).padStart(2, '0');
+    XLSX.writeFile(wb, 'vinculos_' + stamp + '.xlsx');
 }

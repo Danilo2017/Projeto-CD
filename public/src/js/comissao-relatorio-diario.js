@@ -287,6 +287,7 @@ function renderizarTabelaProdutividade(dados) {
                     <br><small class="text-muted" style="font-size:0.7rem">${item.CODIGO}</small>
                 </td>
                 <td><small>${item.CENTRO_TRABALHO || '-'}</small></td>
+                <td><small>${item.ALOCACAO || '-'}</small></td>
                 <td><small>${item.RECURSO || '-'}</small></td>
                 <td class="text-center"><small>${formatarNumero(item.QTD_ITENS)}</small></td>
                 <td class="text-center"><small>${formatarNumero(item.QTD_PRODUZIDA)}</small></td>
@@ -326,6 +327,7 @@ function renderizarTabelaApontamentos(dados) {
         html += `
             <tr class="${rowClass}">
                 <td><small>${item.FUNCIONARIO}</small></td>
+                <td><small>${item.ALOCACAO || '-'}</small></td>
                 <td><small><strong>${item.CODIGO_PRODUTO || ''}</strong> (${item.ID_ITEM || ''})</small><br><small>${item.PRODUTO || ''}</small><br><small class="text-muted" style="font-size:0.7rem">${item.MASCARA || ''}</small></td>
                 <td><small>${item.CENTRO_TRAB || '-'}</small></td>
                 <td><small>${item.OPERACAO || '-'}</small></td>
@@ -356,8 +358,9 @@ function initDataTableProdutividade() {
     
     dataTableProdutividade = $('#tabelaProdutividade').DataTable({
         language: dtLanguagePtBr,
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[5, 'desc']]
     });
 }
@@ -373,8 +376,9 @@ function initDataTableApontamentos() {
     
     dataTableApontamentos = $('#tabelaApontamentos').DataTable({
         language: dtLanguagePtBr,
-        lengthChange: false,
-        pageLength: 20,
+        lengthChange: true,
+        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Todos']],
+        pageLength: 50,
         order: [[0, 'asc']]
     });
 }

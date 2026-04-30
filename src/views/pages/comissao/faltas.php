@@ -52,6 +52,11 @@ if (!$acessoComissao) {
                     <i class="bi bi-plus-circle"></i> Registrar Falta
                 </button>
             </div>
+            <div class="filter-group d-flex gap-2 align-items-end">
+                <button type="button" class="btn btn-warning mt-3" data-bs-toggle="modal" data-bs-target="#modalFaltaImport" onclick="novaImportacao()">
+                    <i class="bi bi-file-earmark-excel"></i> Importar Excel/CSV
+                </button>
+            </div>
         </div>
     </div>
 
@@ -131,7 +136,72 @@ if (!$acessoComissao) {
             </div>
         </div>
     </div>
+
+    <!-- Modal de Importação Excel/CSV -->
+    <div class="modal fade" id="modalFaltaImport" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">
+                        <i class="bi bi-file-earmark-excel"></i> Importar Faltas (Excel / CSV)
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <strong>Colunas esperadas (na primeira linha):</strong>
+                        <code>COD_FUNC</code>, <code>DT_FALTA</code>, <code>TIPO_FALTA</code> (I = Integral, P = Parcial), <code>MOTIVO</code> (opcional).<br>
+                        Aceita formatos <code>.xlsx</code>, <code>.xls</code> e <code>.csv</code>.
+                        Datas podem estar em <code>DD/MM/AAAA</code> ou <code>AAAA-MM-DD</code>.<br>
+                        Faltas já cadastradas (mesmo funcionário+data) serão ignoradas automaticamente.
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-2" onclick="baixarTemplateFaltas()">
+                            <i class="bi bi-download"></i> Baixar modelo CSV
+                        </button>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="arquivoImport" class="form-label">Arquivo *</label>
+                            <input type="file" id="arquivoImport" class="form-control" accept=".xlsx,.xls,.csv" onchange="lerArquivoImport(event)">
+                        </div>
+                    </div>
+
+                    <div id="resumoPreview" class="mb-3" style="display:none;">
+                        <span class="badge bg-success me-2">Válidas: <span id="contValidas">0</span></span>
+                        <span class="badge bg-danger me-2">Inválidas: <span id="contInvalidas">0</span></span>
+                        <span class="badge bg-secondary">Total: <span id="contTotal">0</span></span>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered" id="tabelaPreview" style="display:none;">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>#</th>
+                                    <th>COD_FUNC</th>
+                                    <th>Funcionário</th>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Motivo</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaPreviewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning btn-sm" id="btnConfirmarImport" onclick="confirmarImportacao()" disabled>
+                        <i class="bi bi-cloud-upload"></i> Importar válidas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- SheetJS (leitura de XLSX/CSV no navegador) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
@@ -343,6 +413,209 @@ function excluirFalta(id) {
             console.error('Erro:', error);
             alert('Erro ao excluir falta: ' + (error && error.message ? error.message : error));
         });
+}
+
+// ========== Importação Excel/CSV ==========
+let registrosImport = []; // [{ linha, cod_func, id_funcionario, nome, dt_falta, tipo_falta, motivo, valido, erro }]
+
+function novaImportacao() {
+    registrosImport = [];
+    document.getElementById('arquivoImport').value = '';
+    document.getElementById('tabelaPreview').style.display = 'none';
+    document.getElementById('tabelaPreviewBody').innerHTML = '';
+    document.getElementById('resumoPreview').style.display = 'none';
+    document.getElementById('btnConfirmarImport').disabled = true;
+}
+
+function baixarTemplateFaltas() {
+    const csv = 'COD_FUNC;DT_FALTA;TIPO_FALTA;MOTIVO\n' +
+                '1234;01/05/2026;I;Atestado médico\n' +
+                '1235;01/05/2026;P;Saída antecipada\n';
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'modelo_importacao_faltas.csv';
+    link.click();
+}
+
+function lerArquivoImport(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    if (typeof XLSX === 'undefined') {
+        alert('Biblioteca de leitura de Excel não carregou. Recarregue a página.');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const firstSheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+            processarLinhasImport(rows);
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao ler arquivo: ' + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function processarLinhasImport(rows) {
+    if (!rows || rows.length < 2) {
+        alert('Arquivo vazio ou sem dados.');
+        return;
+    }
+
+    const header = rows[0].map(h => String(h || '').trim().toUpperCase());
+    const idxCod = header.indexOf('COD_FUNC');
+    const idxData = header.indexOf('DT_FALTA');
+    const idxTipo = header.indexOf('TIPO_FALTA');
+    const idxMot = header.indexOf('MOTIVO');
+
+    if (idxCod === -1 || idxData === -1 || idxTipo === -1) {
+        alert('Cabeçalho inválido. Esperado: COD_FUNC, DT_FALTA, TIPO_FALTA, MOTIVO');
+        return;
+    }
+
+    const mapCod = {};
+    funcionariosCache.forEach(f => { mapCod[String(f.COD_FUNC)] = f; });
+
+    registrosImport = [];
+    for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || r.every(c => String(c || '').trim() === '')) continue;
+
+        const codFunc = String(r[idxCod] || '').trim();
+        const dataRaw = r[idxData];
+        const tipoRaw = String(r[idxTipo] || 'I').trim().toUpperCase();
+        const motivo = idxMot >= 0 ? String(r[idxMot] || '').trim() : '';
+
+        let erro = '';
+        const dtFalta = converterDataImport(dataRaw);
+        const tipo = (tipoRaw === 'P' || tipoRaw === 'PARCIAL') ? 'P' : 'I';
+
+        const func = mapCod[codFunc];
+        if (!codFunc) erro = 'COD_FUNC vazio';
+        else if (!func) erro = 'Funcionário não encontrado';
+        else if (!dtFalta) erro = 'Data inválida';
+
+        registrosImport.push({
+            linha: i + 1,
+            cod_func: codFunc,
+            id_funcionario: func ? func.ID : null,
+            nome: func ? func.NOME : '-',
+            dt_falta: dtFalta,
+            tipo_falta: tipo,
+            motivo: motivo,
+            valido: !erro,
+            erro: erro
+        });
+    }
+
+    renderizarPreviewImport();
+}
+
+function converterDataImport(valor) {
+    if (!valor) return '';
+    const s = String(valor).trim();
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return m[1] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[3]).padStart(2, '0');
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return m[3] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+    if (m) {
+        const ano = parseInt(m[3], 10) < 50 ? '20' + m[3] : '19' + m[3];
+        return ano + '-' + String(m[1]).padStart(2, '0') + '-' + String(m[2]).padStart(2, '0');
+    }
+    return '';
+}
+
+function renderizarPreviewImport() {
+    const tbody = document.getElementById('tabelaPreviewBody');
+    tbody.innerHTML = '';
+    let validas = 0, invalidas = 0;
+
+    registrosImport.forEach(r => {
+        if (r.valido) validas++; else invalidas++;
+        const status = r.valido
+            ? '<span class="badge bg-success">OK</span>'
+            : '<span class="badge bg-danger" title="' + r.erro + '">' + r.erro + '</span>';
+        const tipoTxt = r.tipo_falta === 'P' ? 'Parcial' : 'Integral';
+        tbody.innerHTML += `
+            <tr class="${r.valido ? '' : 'table-danger'}">
+                <td>${r.linha}</td>
+                <td>${r.cod_func}</td>
+                <td>${r.nome}</td>
+                <td>${r.dt_falta || '-'}</td>
+                <td>${tipoTxt}</td>
+                <td>${r.motivo || '-'}</td>
+                <td>${status}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById('contValidas').textContent = validas;
+    document.getElementById('contInvalidas').textContent = invalidas;
+    document.getElementById('contTotal').textContent = registrosImport.length;
+    document.getElementById('resumoPreview').style.display = '';
+    document.getElementById('tabelaPreview').style.display = '';
+    document.getElementById('btnConfirmarImport').disabled = (validas === 0);
+}
+
+function confirmarImportacao() {
+    const validos = registrosImport.filter(r => r.valido).map(r => ({
+        linha: r.linha,
+        id_funcionario: r.id_funcionario,
+        dt_falta: r.dt_falta,
+        tipo_falta: r.tipo_falta,
+        motivo: r.motivo
+    }));
+
+    if (validos.length === 0) {
+        alert('Nenhum registro válido para importar.');
+        return;
+    }
+
+    if (!confirm('Importar ' + validos.length + ' registro(s)?')) return;
+
+    const btn = document.getElementById('btnConfirmarImport');
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Importando...';
+
+    const emprId = document.getElementById('filtroEmpresa').value;
+
+    fetch('/comissao-api-faltas-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_empr: emprId, registros: validos })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalFaltaImport')).hide();
+            let msg = data.message || 'Concluído';
+            if (data.resumo && data.resumo.erros && data.resumo.erros.length > 0) {
+                msg += '\n\nErros:\n' + data.resumo.erros.slice(0, 20).map(e => '- Linha ' + e.linha + ' (Func ' + (e.id_funcionario || '?') + '): ' + e.mensagem).join('\n');
+                if (data.resumo.erros.length > 20) msg += '\n... e mais ' + (data.resumo.erros.length - 20) + ' erro(s).';
+            }
+            alert(msg);
+            carregarFaltas();
+        } else {
+            alert('Erro: ' + (data.error || data.message || 'Erro desconhecido'));
+        }
+    })
+    .catch(err => {
+        console.error('Erro:', err);
+        alert('Erro ao importar faltas');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = textoOriginal;
+    });
 }
 
 function formatarData(data) {
