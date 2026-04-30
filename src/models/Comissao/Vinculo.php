@@ -193,10 +193,13 @@ class Vinculo
             $sqlSemCc = "INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC "
                 . "(ID_VINCULO, ID_EMPR, ID_FUNCIONARIO, ID_CENTRO_TRAB, ID_RECURSO, TIPO_VINCULO, ATIVO, DT_CADASTRO) "
                 . "VALUES (FOCCO3I.SEQ_TGAZIN_VINC_FUNC.NEXTVAL, :id_empr, :id_funcionario, :id_centro_trab, :id_recurso, :tipo_vinculo, 'S', SYSDATE)";
-            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
-            return empty($result['error']);
+            $resultFallback = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
+            if (empty($resultFallback['error'])) {
+                return true;
+            }
+            throw new \Exception('Erro Oracle (sem ID_EMP_CC): ' . $resultFallback['error']);
         }
-        return false;
+        throw new \Exception('Erro Oracle: ' . $result['error']);
     }
 
     /**
@@ -230,10 +233,13 @@ class Vinculo
                 . "    ID_RECURSO = :id_recurso, "
                 . "    TIPO_VINCULO = :tipo_vinculo "
                 . "WHERE ID_VINCULO = :id";
-            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
-            return empty($result['error']);
+            $resultFallback = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
+            if (empty($resultFallback['error'])) {
+                return true;
+            }
+            throw new \Exception('Erro Oracle (sem ID_EMP_CC): ' . $resultFallback['error']);
         }
-        return false;
+        throw new \Exception('Erro Oracle: ' . $result['error']);
     }
 
     /**
