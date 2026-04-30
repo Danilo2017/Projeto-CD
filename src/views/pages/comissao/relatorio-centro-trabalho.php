@@ -1,4 +1,11 @@
 <?php
+/**
+ * Variáveis injetadas pelo Controller via extract():
+ * @var bool     $is_admin
+ * @var array    $rotas_permitidas
+ * @var string   $base
+ * @var callable $render
+ */
 // Verificar permissão de acesso (dados injetados pelo Controller)
 $acessoComissao = $is_admin || in_array('comissao', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoComissao) {
