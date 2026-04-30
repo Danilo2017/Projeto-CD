@@ -562,7 +562,7 @@ function exportarExcel() {
     // Headers (pular checkbox e ações)
     const headers = [];
     tabela.querySelectorAll('thead th').forEach((th, idx) => {
-        if (idx === 0 || idx === 8) return; // pular checkbox e comprovante
+        if (idx === 0 || idx === 9) return; // pular checkbox e comprovante
         headers.push('"' + th.innerText.replace(/"/g, '""') + '"');
     });
     csvContent += headers.join(';') + '\n';
@@ -575,7 +575,7 @@ function exportarExcel() {
                 const row = this.node();
                 const cols = [];
                 row.querySelectorAll('td').forEach((td, idx) => {
-                    if (idx === 0 || idx === 8) return; // pular checkbox e comprovante
+                    if (idx === 0 || idx === 9) return; // pular checkbox e comprovante
                     cols.push('"' + td.innerText.replace(/"/g, '""') + '"');
                 });
                 csvContent += cols.join(';') + '\n';
@@ -585,7 +585,7 @@ function exportarExcel() {
         tabela.querySelectorAll('tbody tr').forEach(tr => {
             const cols = [];
             tr.querySelectorAll('td').forEach((td, idx) => {
-                if (idx === 0 || idx === 8) return;
+                if (idx === 0 || idx === 9) return;
                 cols.push('"' + td.innerText.replace(/"/g, '""') + '"');
             });
             csvContent += cols.join(';') + '\n';
