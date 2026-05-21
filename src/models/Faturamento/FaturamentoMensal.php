@@ -19,4 +19,17 @@ class FaturamentoMensal
         $result = Database::switchParams('focco', [], 'faturamento.resumo.mensal', true);
         return $result['retorno'] ?? [];
     }
+
+    public static function getDiasMes(): array
+    {
+        $result = Database::switchParams('focco', [], 'faturamento.dashboard.dias-mes', true);
+        return $result['retorno'] ?? [];
+    }
+
+    public static function getDiasMesEmpresa(): array
+    {
+        $result = Database::switchParams('focco', [], 'faturamento.dashboard.dias-mes-empresa', true);
+        return $result['retorno'] ?? [];
+    }
+
 }

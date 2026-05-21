@@ -41,9 +41,7 @@ class Vinculo
         if (self::$colunaCcCache !== null) {
             return self::$colunaCcCache;
         }
-        $sql = "SELECT COUNT(*) AS EXISTE FROM ALL_TAB_COLUMNS "
-            . "WHERE OWNER = 'FOCCO3I' AND TABLE_NAME = 'TGAZIN_VINC_FUNC' AND COLUMN_NAME = 'ID_EMP_CC'";
-        $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $result = Database::switchParams('focco', [], 'comissao.vinculo.verificarColunaCc', true, false);
         $row = $result['retorno'][0] ?? null;
         self::$colunaCcCache = ($row['EXISTE'] ?? 0) > 0;
         return self::$colunaCcCache;
@@ -101,12 +99,7 @@ class Vinculo
         $params = [
             'filtro_empr' => $idEmpr ? "AND tt.EMPR_ID = " . intval($idEmpr) : '--',
         ];
-        // Retorna campos com aliases COD/DESCRICAO para o JS continuar funcionando.
-        $sql = "SELECT tt.ID, tt.EMPR_ID, tt.COD_CENTRO AS COD, tt.DESCRICAO "
-            . "FROM FOCCO3I.TCENTROS_TRAB tt "
-            . "WHERE 1=1 :filtro_empr "
-            . "ORDER BY tt.COD_CENTRO";
-        $result = Database::switchParams('focco', $params, null, true, true, null, $sql);
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.listarCentrosCusto', true);
         return $result['retorno'] ?? [];
     }
 
@@ -124,11 +117,7 @@ class Vinculo
         $params = [
             'filtro_empr' => $idEmpr ? "AND v.ID_EMPR = " . intval($idEmpr) : '--',
         ];
-        $sql = "SELECT v.ID_FUNCIONARIO, v.ID_EMP_CC, ca.COD_CENTRO AS COD_CC, ca.DESCRICAO AS CC_DESCRICAO "
-            . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
-            . "LEFT JOIN FOCCO3I.TCENTROS_TRAB ca ON ca.ID = v.ID_EMP_CC "
-            . "WHERE v.ATIVO = 'S' AND v.ID_EMP_CC IS NOT NULL :filtro_empr";
-        $result = Database::switchParams('focco', $params, null, true, false, null, $sql);
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.getAlocacaoPorFuncionario', true, false);
         if (!empty($result['error'])) {
             return [];
         }
@@ -137,8 +126,8 @@ class Vinculo
             $funcId = $row['ID_FUNCIONARIO'] ?? null;
             if ($funcId !== null && !isset($mapa[$funcId])) {
                 $mapa[$funcId] = [
-                    'ID_EMP_CC' => $row['ID_EMP_CC'] ?? null,
-                    'COD_CC' => $row['COD_CC'] ?? null,
+                    'ID_EMP_CC'    => $row['ID_EMP_CC'] ?? null,
+                    'COD_CC'       => $row['COD_CC'] ?? null,
                     'CC_DESCRICAO' => $row['CC_DESCRICAO'] ?? null,
                 ];
             }

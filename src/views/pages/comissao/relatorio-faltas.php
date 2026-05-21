@@ -26,6 +26,11 @@ if (!$acessoComissao) {
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
 <div class="container-fluid p-3">
+    <div class="d-flex justify-content-end mb-2">
+        <a href="<?= $base ?>comissao-relatorio" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
     <!-- Filtros -->
     <div class="card mb-3">
         <div class="card-body">

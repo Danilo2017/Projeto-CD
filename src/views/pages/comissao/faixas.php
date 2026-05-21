@@ -22,11 +22,11 @@ if (!$acessoComissao) {
 ]) ?>
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
-    <!-- Header com botão de adicionar -->
-
-
-
-
+    <div class="d-flex justify-content-end mb-2">
+        <a href="<?= $base ?>comissao-cadastro" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row">
@@ -51,12 +51,12 @@ if (!$acessoComissao) {
                 </div>
             </div>
             <div class="filter-group d-flex gap-2 align-items-end">
-                <button type="button" class="btn btn-primary mt-3" onclick="carregarFaixas()">
+                <button type="button" class="btn btn-sm btn-primary" onclick="carregarFaixas()">
                     <i class="bi bi-search"></i> Filtrar
                 </button>
             </div>
             <div class="filter-group d-flex gap-2 align-items-end">
-                <button type="button" class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#modalFaixa" onclick="novaFaixa()">
+                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalFaixa" onclick="novaFaixa()">
                     <i class="bi bi-plus-circle"></i> Nova Faixa
                 </button>
             </div>
@@ -139,7 +139,7 @@ if (!$acessoComissao) {
                                 <label for="valorComissao" class="form-label" id="labelValorComissao">Valor *</label>
                                 <div class="input-group">
                                     <span class="input-group-text" id="prefixoValor">R$</span>
-                                    <input type="number" id="valorComissao" class="form-control" step="0.01" min="0" required>
+                                    <input type="number" id="valorComissao" class="form-control" step="any" min="0" required>
                                     <span class="input-group-text" id="sufixoValor" style="display:none;">%</span>
                                 </div>
                             </div>

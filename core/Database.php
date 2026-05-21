@@ -140,23 +140,31 @@ class Database
                 $res['retorno'] = $sql; // dry-run
             }
 
-            if ($log) {
+            if ($log && Config::LOG_SQL) {
+                $logDir = rtrim(Config::LOG_DIR, '/\\') . DIRECTORY_SEPARATOR;
+                if (!is_dir($logDir)) {
+                    @mkdir($logDir, 0755, true);
+                }
                 $logjv = [
-                    'data' => date('Y-m-d H:i:s'),
-                    'sql'  => $sql,
+                    'data'   => date('Y-m-d H:i:s'),
+                    'sql'    => $sql,
                     'params' => $params,
-                    'res'  => $res['retorno']
+                    'res'    => $res['retorno']
                 ];
-                file_put_contents('./exec' . date('Y-m-d') . '-sql.txt', print_r($logjv, true), FILE_APPEND);
+                file_put_contents($logDir . 'exec' . date('Y-m-d') . '-sql.txt', print_r($logjv, true), FILE_APPEND);
             }
         } catch (\Exception $e) {
             if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+            $logDir = rtrim(Config::LOG_DIR, '/\\') . DIRECTORY_SEPARATOR;
+            if (!is_dir($logDir)) {
+                @mkdir($logDir, 0755, true);
+            }
             $logjv = [
                 'data' => date('Y-m-d H:i:s'),
                 'msg'  => $e->getMessage(),
                 'sql'  => $sql
             ];
-            file_put_contents('./error' . date('Y-m-d') . '-sql.txt', print_r($logjv, true), FILE_APPEND);
+            file_put_contents($logDir . 'error' . date('Y-m-d') . '-sql.txt', print_r($logjv, true), FILE_APPEND);
             $res['error'] = $e->getMessage();
         }
 

@@ -91,4 +91,44 @@ class FaturamentoDashboardController extends ctrl
             ], 500);
         }
     }
+
+    public function getDiasMes()
+    {
+        try {
+            $resultado = FaturamentoDashboardHandler::getDiasMes();
+            self::response($resultado, 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getDiasMesEmpresa()
+    {
+        try {
+            $resultado = FaturamentoDashboardHandler::getDiasMesEmpresa();
+            self::response($resultado, 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getVlrFaltanteCarga()
+    {
+        try {
+            $resultado = FaturamentoDashboardHandler::getVlrFaltanteCarga();
+            self::response($resultado, 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

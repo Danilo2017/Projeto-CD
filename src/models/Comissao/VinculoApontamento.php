@@ -39,24 +39,26 @@ class VinculoApontamento
     public static function vincularRecurso($apontamentoId, $recursoId)
     {
         // Verificar se já existe
-        $paramsCheck = [];
-        $paramsCheck['apt_id'] = intval($apontamentoId);
+        $paramsCheck = ['apt_id' => intval($apontamentoId)];
         $resultCheck = Database::switchParams('focco', $paramsCheck, 'comissao.vincApt.verificarRecursoExistente', true);
         if ((int)($resultCheck['retorno'][0]['TOTAL'] ?? 0) > 0) {
             throw new \Exception('Este apontamento já possui um recurso vinculado');
         }
 
-        // Buscar próximo ID (MAX + 1)
-        $resultMax = Database::switchParams('focco', [], 'comissao.vincApt.maxIdRecurso', true);
-        $nextId = (int)($resultMax['retorno'][0]['NEXT_ID'] ?? 1);
-
-        $params = [];
-        $params['id'] = $nextId;
-        $params['apt_id'] = intval($apontamentoId);
-        $params['rec_id'] = intval($recursoId);
+        // O SQL comissao.vincApt.vincularRecurso DEVE usar NEXTVAL da sequence correta
+        // do FOCCO para TORD_MOV_FAB_MAQ — NÃO usar MAX+1 (race condition).
+        // Verificar no Oracle: SELECT SEQUENCE_NAME FROM ALL_SEQUENCES
+        //   WHERE SEQUENCE_OWNER='FOCCO3I' AND SEQUENCE_NAME LIKE '%MAQ%';
+        $params = [
+            'apt_id' => intval($apontamentoId),
+            'rec_id' => intval($recursoId),
+        ];
 
         $result = Database::switchParams('focco', $params, 'comissao.vincApt.vincularRecurso', true);
-        return !$result['error'];
+        if ($result['error']) {
+            throw new \Exception('Erro ao vincular recurso: ' . $result['error']);
+        }
+        return true;
     }
 
     /**

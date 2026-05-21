@@ -75,6 +75,11 @@ if (!$acessoComissao) {
 </style>
 
 <div class="comissao-dashboard-container">
+    <div class="d-flex justify-content-end mb-2">
+        <a href="<?= $base ?>comissao-relatorio" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row d-flex align-items-end flex-wrap">

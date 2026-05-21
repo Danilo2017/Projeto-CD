@@ -1,4 +1,11 @@
 <?php
+/**
+ * Variáveis injetadas pelo Controller via extract():
+ * @var bool     $is_admin
+ * @var array    $rotas_permitidas
+ * @var string   $base
+ * @var callable $render
+ */
 // Verificar acesso ao módulo faturamento usando variáveis injetadas pelo Controller
 $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoFaturamento) {
@@ -86,11 +93,15 @@ if (!$acessoFaturamento) {
             <div class="faturamento-pedido-value" id="pedidosLiberados">-</div>
         </div>
         <div class="faturamento-pedido-card">
-            <div class="faturamento-pedido-label">PEDIDOS EM CARGA</div>
+            <div class="faturamento-pedido-label">LIB. P/ MÊS ATUAL</div>
             <div class="faturamento-pedido-value" id="pedidosEmCarga">-</div>
         </div>
         <div class="faturamento-pedido-card">
-            <div class="faturamento-pedido-label">PEDIDOS SEM CARGA</div>
+            <div class="faturamento-pedido-label">LIB. P/ SEGUINTE</div>
+            <div class="faturamento-pedido-value" id="pedidosProxMes">-</div>
+        </div>
+        <div class="faturamento-pedido-card">
+            <div class="faturamento-pedido-label">SEM PROGRAMAÇÃO</div>
             <div class="faturamento-pedido-value" id="pedidosSemCarga">-</div>
         </div>
         <div class="faturamento-pedido-card">
@@ -107,23 +118,26 @@ if (!$acessoFaturamento) {
         </div>
     </div>
 
-    <!-- Layout com Painel de Vendas e FAT LIQ x META -->
+    <!-- Painel de Vendas -->
     <div class="faturamento-content-layout">
-        <!-- Painel de Vendas Indústria -->
         <div class="faturamento-iframe-section">
-            <div class="faturamento-iframe-header">PAINEL DE VENDAS INDÚSTRIA</div>
+            <div class="faturamento-iframe-header">PAINEL GESTÃO INDUSTRIAL</div>
             <div class="faturamento-painel-vendas-tabela">
                 <table class="faturamento-tabela-painel" id="tabela-painel-vendas">
                     <thead>
                         <tr>
                             <th>Empresa</th>
+                            <th>D.Úteis</th>
                             <th>Meta</th>
                             <th>Faturamento</th>
                             <th>% Atingido</th>
+                            <th>Vlr. Pen Cargas</th>
                             <th>Planejado</th>
                             <th>Fat Proj</th>
                             <th>% Proj</th>
+                            <th>Fat. Dia</th>
                             <th>Carteira</th>
+                            <th>Carteira. Mês</th>
                             <th>Meta Estoq</th>
                             <th>Estoq Atual</th>
                             <th>% Estoq</th>
@@ -131,31 +145,11 @@ if (!$acessoFaturamento) {
                     </thead>
                     <tbody id="tabela-painel-vendas-body">
                         <tr>
-                            <td colspan="11" class="faturamento-loading">Carregando...</td>
+                            <td colspan="15" class="faturamento-loading">Carregando...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <!-- FAT LIQ X META -->
-        <div class="faturamento-table-section">
-            <div class="faturamento-iframe-header">FAT LIQ X META</div>
-            <table class="faturamento-tabela-painel fat-meta">
-                <thead>
-                    <tr>
-                        <th>Local</th>
-                        <th>FAT LIQ</th>
-                        <th>META</th>
-                        <th>% ATINGIDO</th>
-                    </tr>
-                </thead>
-                <tbody id="fat-meta-table">
-                    <tr>
-                        <td colspan="4" class="faturamento-loading">Carregando...</td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 </div>

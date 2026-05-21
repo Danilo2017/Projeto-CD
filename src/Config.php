@@ -4,6 +4,9 @@ namespace src;
 
 require_once __DIR__ . '/Env.php';
 
+if (!defined('LOG_DIR')) define('LOG_DIR', '../logs/');
+if (!defined('LOG_SQL'))  define('LOG_SQL', false);
+
 class Config
 {
     const BASE_DIR = BASE_DIR;
@@ -19,4 +22,7 @@ class Config
     const FOCCO_DATABASE = FOCCO_DATABASE;
     const FOCCO_USER = FOCCO_USER;
     const FOCCO_PASS = FOCCO_PASS;
+
+    const LOG_DIR = LOG_DIR;
+    const LOG_SQL  = LOG_SQL;
 }

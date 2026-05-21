@@ -127,7 +127,7 @@ function renderizarTabela(dados) {
         
         let valorFormatado = '';
         if (item.TIPO === 'P') {
-            valorFormatado = formatarNumero(item.VALOR_COMISSAO, 2) + '%';
+            valorFormatado = formatarNumero(item.VALOR_COMISSAO, 4) + '%';
         } else {
             valorFormatado = formatarMoeda(item.VALOR_COMISSAO);
         }
@@ -447,18 +447,20 @@ function excluirFaixa(id) {
  */
 function formatarNumero(valor, casasDecimais = 2) {
     return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: casasDecimais,
+        minimumFractionDigits: Math.min(casasDecimais, 2),
         maximumFractionDigits: casasDecimais
     }).format(valor || 0);
 }
 
 /**
- * Formata moeda
+ * Formata moeda (até 4 casas decimais para valores fracionados)
  */
 function formatarMoeda(valor) {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
-        currency: 'BRL'
+        currency: 'BRL',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 4
     }).format(valor || 0);
 }
 

@@ -9,6 +9,13 @@
   --text-light: #9ca3af;
   --border-color: #e8ecf1;
   --shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+  /* Sidebar colapsável */
+  --sb-w:     64px;
+  --sb-w-exp: 240px;
+  --hdr-h:    60px;
+  --hdr-bg:   #2563eb;
+  --sb-accent: #2563eb;
 }
 
 * {
@@ -17,11 +24,53 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg-color);
   color: var(--text-dark);
-  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  /* NÃO usar overflow-x:hidden no body — bloqueia scroll vertical em alguns browsers */
+}
+
+/* ─── Wrapper de conteúdo (gerado pelo header.php quando navbar está ativa) ─── */
+.app-content {
+  margin-left: 64px;
+  margin-left: var(--sb-w, 64px);
+  margin-top: 60px;
+  margin-top: var(--hdr-h, 60px);
+  transition: margin-left 0.28s ease;
+  overflow-x: hidden; /* clip horizontal aqui, não no body */
+}
+
+body.sidebar-expanded .app-content {
+  margin-left: 240px;
+  margin-left: var(--sb-w-exp, 240px);
+}
+
+/* ─── Responsivo: telas pequenas — sidebar vira overlay temporário ─── */
+@media (max-width: 768px) {
+  .app-content,
+  body.sidebar-expanded .app-content {
+    margin-left: 0 !important;
+  }
+  .app-header {
+    left: 0 !important;
+  }
+  .app-sidebar {
+    left: -80px !important; /* esconde fora da tela */
+    box-shadow: none;
+  }
+  .app-sidebar.expanded {
+    left: 0 !important;
+    width: 240px !important;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15) !important;
+  }
 }
 
 /* Header Styles */

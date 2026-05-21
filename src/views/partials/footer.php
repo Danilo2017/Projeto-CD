@@ -1,3 +1,5 @@
+   </div><!-- /app-content -->
+
    <?php if(isset($customScriptsBeforeFooter)): ?>
       <?php foreach((array)$customScriptsBeforeFooter as $script): ?>
          <script>

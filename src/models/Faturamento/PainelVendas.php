@@ -19,4 +19,10 @@ class PainelVendas
         $result = Database::switchParams('focco', [], 'faturamento.painel.vendas', true);
         return $result['retorno'] ?? [];
     }
+
+    public static function getVlrFaltanteCarga(): array
+    {
+        $result = Database::switchParams('focco', [], 'faturamento.painel.vlr-faltante-carga', true);
+        return $result['retorno'] ?? [];
+    }
 }

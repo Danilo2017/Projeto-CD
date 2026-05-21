@@ -22,9 +22,11 @@ if (!$acessoComissao) {
 ]) ?>
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
-    <!-- Header com botão de adicionar -->
-
-
+    <div class="d-flex justify-content-end mb-2">
+        <a href="<?= $base ?>comissao-cadastro" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row">

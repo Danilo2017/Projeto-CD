@@ -26,6 +26,11 @@ if (!$acessoComissao) {
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 5px 10px; margin: 0;">
+    <div class="d-flex justify-content-end mb-2">
+        <a href="<?= $base ?>comissao-cadastro" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row">
@@ -47,12 +52,12 @@ if (!$acessoComissao) {
                 </div>
             </div>
             <div class="filter-group d-flex gap-2 align-items-end">
-                <button type="button" class="btn btn-primary mt-3" onclick="carregarRegras()">
+                <button type="button" class="btn btn-sm btn-primary" onclick="carregarRegras()">
                     <i class="bi bi-search"></i> Filtrar
                 </button>
             </div>
             <div class="filter-group d-flex gap-2 align-items-end">
-                <button type="button" class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#modalRegra" onclick="novaRegra()">
+                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalRegra" onclick="novaRegra()">
                     <i class="bi bi-plus-circle"></i> Nova Regra
                 </button>
             </div>

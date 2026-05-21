@@ -27,7 +27,7 @@
    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
    
    <!-- Template Custom CSS -->
-   <link href="<?= $base; ?>src/css/template-style.css" rel="stylesheet">
+   <link href="<?= $base; ?>src/css/template-style.css?v=2" rel="stylesheet">
    
    <!-- Design System (Padrão Visual Unificado) -->
    <link href="<?= $base; ?>src/css/design-system.css" rel="stylesheet">
@@ -46,10 +46,13 @@
 
 <?php if(isset($showNavbar) && $showNavbar): ?>
    <?= $render('navbar', [
-       'base' => $base, 
+       'base' => $base,
        'pageActive' => isset($pageActive) ? $pageActive : '',
        'pageTitle' => isset($pageTitle) ? $pageTitle : 'SISTEMA CD',
        'showRefreshBtn' => isset($showRefreshBtn) ? $showRefreshBtn : ($pageActive === 'dashboard'),
        'showLastUpdate' => isset($showLastUpdate) ? $showLastUpdate : ($pageActive === 'dashboard')
    ]) ?>
+   <div class="app-content" id="appContent">
+<?php else: ?>
+   <div id="appContent">
 <?php endif; ?>

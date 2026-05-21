@@ -175,6 +175,14 @@ $router->get('/faturamento-api-resumo', 'Faturamento\\FaturamentoDashboardContro
 $router->get('/faturamento-api-painel', 'Faturamento\\FaturamentoDashboardController@getPainelVendas', true);
 $router->get('/faturamento-api-pedidos', 'Faturamento\\FaturamentoDashboardController@getPedidos', true);
 $router->get('/faturamento-api-pedidos-planejado', 'Faturamento\\FaturamentoDashboardController@getPedidosPlanejado', true);
+$router->get('/faturamento-api-dias-mes', 'Faturamento\\FaturamentoDashboardController@getDiasMes', true);
+$router->get('/faturamento-api-dias-mes-empresa', 'Faturamento\\FaturamentoDashboardController@getDiasMesEmpresa', true);
+$router->get('/faturamento-api-vlr-faltante-carga', 'Faturamento\\FaturamentoDashboardController@getVlrFaltanteCarga', true);
+
+// ========== Programação de Pedidos ==========
+$router->get('/faturamento-programacao', 'Faturamento\\FaturamentoProgramacaoController@index', true);
+$router->get('/faturamento-api-programacao', 'Faturamento\\FaturamentoProgramacaoController@listar', true);
+$router->get('/faturamento-api-ocupacao', 'Faturamento\\FaturamentoProgramacaoController@ocupacao', true);
 
 // ========== Gestão de Metas por Empresa ==========
 // Página de Gestão de Metas

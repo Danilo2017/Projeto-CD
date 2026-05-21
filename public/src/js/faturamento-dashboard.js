@@ -5,6 +5,11 @@
 
 // Variável global para armazenar dados de faturamento
 let dadosFaturamentoGlobal = null;
+let diasMesCache = null;       // { diasPassados, diasRestantes, totalDiasMes } — EMPR_ID=1
+let diasMesPorEmpresa = {};   // emprId (string) → { diasPassados, diasRestantes, totalDiasMes }
+let vlrFaltanteCache = {};    // codEmp (string) → VLR_FALTANTE
+let libMesPorEmpresa = {};    // emprId (string) → libMes (número)
+let painelDadosCache = null;  // cache do painel para re-render após vlr-faltante chegar
 
 // ========== FUNÇÕES AUXILIARES ==========
 
@@ -163,19 +168,15 @@ function buscarDadosBanco() {
 /**
  * Buscar dados do painel de vendas
  */
-function buscarDadosPainelVendas(callback) {
+async function buscarDadosPainelVendas() {
     console.log('📊 Buscando dados do painel de vendas...');
-    
-    fetch('/faturamento-api-painel?_=' + Date.now())
-        .then(response => response.json())
-        .then(data => {
-            console.log('✅ Dados do painel recebidos:', data.total_registros, 'registros');
-            callback(data);
-        })
-        .catch(error => {
-            console.error('❌ Erro ao buscar painel:', error);
-            callback({ sucesso: false, dados: [] });
-        });
+    try {
+        const response = await fetch('/faturamento-api-painel?_=' + Date.now());
+        return await response.json();
+    } catch (error) {
+        console.error('❌ Erro ao buscar painel:', error);
+        return { sucesso: false, dados: [] };
+    }
 }
 
 /**
@@ -200,6 +201,84 @@ function buscarDadosPedidos() {
                 resolve(null);
             });
     });
+}
+
+/**
+ * Buscar totais Lib. P/ Mês e Sem Programação da programação de pedidos
+ */
+async function buscarProgramacaoResumo() {
+    try {
+        const r = await fetch('/faturamento-api-programacao');
+        const d = await r.json();
+        if (!d.success || !d.data) return null;
+
+        const hoje      = new Date();
+        const proximo   = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+
+        const mesLabel      = hoje.toLocaleString('pt-BR', { month: 'long' });
+        const proxMesLabel  = proximo.toLocaleString('pt-BR', { month: 'long' });
+
+        const agendaMesAtual = '01/' + String(hoje.getMonth() + 1).padStart(2, '0') + '/' + hoje.getFullYear();
+        const agendaProxMes  = '01/' + String(proximo.getMonth() + 1).padStart(2, '0') + '/' + proximo.getFullYear();
+
+        let libMes = 0, proxMes = 0, semAgenda = 0;
+        const libMesEmp = {};
+        d.data.forEach(function(row) {
+            const val    = parseFloat(String(row.PDV_VALOR_PENDENTE || 0).replace(/,/g, ''));
+            const emprId = String(row.EMPR_ID || '');
+            if (row.AGENDA === agendaMesAtual) {
+                libMes += val;
+                if (emprId) libMesEmp[emprId] = (libMesEmp[emprId] || 0) + val;
+            }
+            if (row.AGENDA === agendaProxMes)                proxMes   += val;
+            if (!row.AGENDA || row.AGENDA === 'SEM AGENDA') semAgenda += val;
+        });
+
+        return { libMes, proxMes, semAgenda, mesLabel, proxMesLabel, libMesEmp };
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Buscar dias úteis do mês pelo calendário (TCALENDARIOS, UTIL_GER_DIA=1, EMPR_ID=1)
+ */
+async function buscarDiasMes() {
+    try {
+        const r = await fetch('/faturamento-api-dias-mes');
+        const d = await r.json();
+        if (!d.success || !d.data || !d.data.length) return null;
+        const row = d.data[0];
+        return {
+            diasPassados:  parseInt(row.DIAS_PASSADOS        || 0, 10),
+            diasRestantes: parseInt(row.DIAS_RESTANTES       || 0, 10),
+            totalDiasMes:  parseInt(row.TOTAL_DIAS_UTEIS_MES || 0, 10),
+        };
+    } catch {
+        return null;
+    }
+}
+
+async function buscarDiasMesEmpresa() {
+    try {
+        const r = await fetch('/faturamento-api-dias-mes-empresa');
+        const d = await r.json();
+        if (!d.success || !d.data || !d.data.length) return null;
+        return d.data; // array de linhas, uma por EMPR_ID
+    } catch {
+        return null;
+    }
+}
+
+async function buscarVlrFaltanteCarga() {
+    try {
+        const r = await fetch('/faturamento-api-vlr-faltante-carga');
+        const d = await r.json();
+        if (!d.success || !d.data) return null;
+        return d.data;
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -233,51 +312,38 @@ function buscarDadosPedidosPlanejado() {
  */
 function calcularValoresAgregados(dados) {
     console.log('🧮 Calculando valores agregados...');
-    
+
     const primeiroRegistro = dados[0];
-    
-    // Parse seguro dos valores (formato americano: "98,318,858.19")
+
     function parseValor(valor) {
         if (!valor) return 0;
         return parseFloat(String(valor).replace(/,/g, '')) || 0;
     }
-    
+
     const totalFaturamento = parseValor(primeiroRegistro.TOTAL_FATURAMENTO);
-    const totalDevolucoes = Math.abs(parseValor(primeiroRegistro.TOTAL_DEVOLUCOES));
-    const totalFatLiquido = parseValor(primeiroRegistro.TOTAL_FATURAMENTO_LI);
-    const totalMeta = parseValor(primeiroRegistro.TOTAL_META);
-    
-    console.log('📊 Valores calculados:', { totalFaturamento, totalDevolucoes, totalFatLiquido, totalMeta });
-    
-    // Usa a data que vem do banco para evitar problemas de timezone
-    let dia;
-    if (primeiroRegistro.DATA_ATUAL) {
-        // Data vem no formato "31-MAR-26" (DD-MON-YY)
-        const dataStr = primeiroRegistro.DATA_ATUAL;
-        if (dataStr.includes('-')) {
-            // Extrai o dia (primeiro número antes do hífen)
-            const partes = dataStr.split('-');
-            dia = parseInt(partes[0], 10);
-        } else {
-            dia = new Date().getDate();
-        }
-    } else {
-        dia = new Date().getDate();
-    }
-    const diasUteis = dia;
-    
-    console.log('📊 Dia:', dia);
-    
+    const totalDevolucoes  = Math.abs(parseValor(primeiroRegistro.TOTAL_DEVOLUCOES));
+    const totalFatLiquido  = parseValor(primeiroRegistro.TOTAL_FATURAMENTO_LI);
+    const totalMeta        = parseValor(primeiroRegistro.TOTAL_META);
+
+    // Dias do calendário industrial (TCALENDARIOS, UTIL_GER_DIA=1, EMPR_ID=1)
+    const diasPassados  = diasMesCache ? diasMesCache.diasPassados  : 0;
+    const diasRestantes = diasMesCache ? diasMesCache.diasRestantes : 0;
+    const totalDiasMes  = diasMesCache ? diasMesCache.totalDiasMes  : 0;
+
+    console.log('📊 Dias:', { diasPassados, diasRestantes, totalDiasMes });
+
     return {
         totalFaturamento,
         totalDevolucoes,
         totalFatLiquido,
         totalMeta,
-        diasUteis,
-        mediaDia: totalFatLiquido / diasUteis,
-        metaDiaria: totalMeta / 23,
-        metaAtualDiaria: (totalMeta - totalFatLiquido) / (23 - diasUteis),
-        percMeta: (totalFatLiquido / totalMeta) * 100
+        diasPassados,
+        diasRestantes,
+        totalDiasMes,
+        mediaDia:        diasPassados  > 0 ? totalFatLiquido / diasPassados                  : 0,
+        metaDiaria:      totalDiasMes  > 0 ? totalMeta       / totalDiasMes                  : 0,
+        metaAtualDiaria: diasRestantes > 0 ? (totalMeta - totalFatLiquido) / diasRestantes   : 0,
+        percMeta:        totalMeta     > 0 ? (totalFatLiquido / totalMeta) * 100             : 0,
     };
 }
 
@@ -319,9 +385,6 @@ function atualizarDashboardComDadosReais(dados) {
     // Atualizar meta do header
     document.getElementById('metaGeral').textContent = 
         'R$ ' + valores.totalMeta.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    
-    // Atualizar tabela FAT LIQ X META
-    atualizarTabelaFatMeta(dados);
     
     console.log('✅ Dashboard atualizado com sucesso!');
 }
@@ -430,29 +493,53 @@ function atualizarPainelVendas(dados) {
     }
     
     tbody.innerHTML = '';
-    
+
     for (let i = 0; i < dados.dados.length; i++) {
         const row = dados.dados[i];
         const tr = document.createElement('tr');
-        
-        if (row.EMPR_ID === 'TOTAL') {
-            tr.className = 'row-total';
-        }
-        
+
+        const isTotal = row.EMPR_ID === 'TOTAL';
+        if (isTotal) tr.className = 'row-total';
+
+        const diasInfo = diasMesPorEmpresa[String(row.EMPR_ID)];
+        const diasUteis = isTotal
+            ? (diasMesCache ? diasMesCache.diasRestantes : '-')
+            : (diasInfo ? diasInfo.diasRestantes : '-');
+
+        const vlrFalt = isTotal
+            ? Object.values(vlrFaltanteCache).reduce((s, v) => s + v, 0)
+            : (vlrFaltanteCache[String(row.EMPR_ID)] || 0);
+
+        const libMesEmpVal = isTotal
+            ? Object.values(libMesPorEmpresa).reduce((s, v) => s + v, 0)
+            : (libMesPorEmpresa[String(row.EMPR_ID)] || 0);
+
+        // Fat. Dia = (META - FATURAMENTO) / D.Úteis restantes
+        const meta       = parseFloat(String(row.META_FATURAMENTO || 0).replace(/,/g, ''));
+        const fat        = parseFloat(String(row.FATURAMENTO      || 0).replace(/,/g, ''));
+        const diasRest   = isTotal
+            ? (diasMesCache ? diasMesCache.diasRestantes : 0)
+            : (diasInfo ? diasInfo.diasRestantes : 0);
+        const fatDia     = diasRest > 0 ? (meta - fat) / diasRest : 0;
+
         tr.innerHTML = `
             <td>${row.EMPR_ID || '-'}</td>
+            <td>${diasUteis}</td>
             <td class="text-right">${formatarValorBR(row.META_FATURAMENTO)}</td>
             <td class="text-right">${formatarValorBR(row.FATURAMENTO)}</td>
             <td class="text-right">${row.PCT_ATINGIDO ? row.PCT_ATINGIDO.replace('.', ',') + '%' : '-'}</td>
+            <td class="text-right">${formatarValorBR(vlrFalt)}</td>
             <td class="text-right">${formatarValorBR(row.PLANEJADO)}</td>
             <td class="text-right">${formatarValorBR(row.FAT_PROJETADO)}</td>
             <td class="text-right">${row.PCT_PROJETADO ? row.PCT_PROJETADO.replace('.', ',') + '%' : '-'}</td>
+            <td class="text-right">${formatarValorBR(fatDia)}</td>
             <td class="text-right">${formatarValorBR(row.CARTEIRA)}</td>
+            <td class="text-right">${formatarValorBR(libMesEmpVal)}</td>
             <td class="text-right">${formatarValorBR(row.META_ESTOQUE)}</td>
             <td class="text-right">${formatarValorBR(row.ESTOQUE_ATUAL)}</td>
             <td class="text-right">${row.PCT_ESTOQUE ? row.PCT_ESTOQUE.replace('.', ',') + '%' : '-'}</td>
         `;
-        
+
         tbody.appendChild(tr);
     }
     
@@ -534,36 +621,87 @@ function atualizarDadosPedidosPlanejado(dados, dadosFaturamento) {
 function atualizarTodosDados() {
     // Atualizar timestamp
     const agora = new Date();
-    document.getElementById('ultima-atualizacao').textContent = 
+    document.getElementById('ultima-atualizacao').textContent =
         agora.toLocaleTimeString('pt-BR');
-    
-    // Buscar painel de vendas
-    buscarDadosPainelVendas(function(dados) {
-        if (dados) {
-            atualizarPainelVendas(dados);
+
+    // Busca dados críticos em paralelo (sem vlr-faltante que é query pesada)
+    Promise.all([
+        buscarDadosBanco(),
+        buscarDiasMes(),
+        buscarDiasMesEmpresa(),
+        buscarDadosPainelVendas(),
+        buscarProgramacaoResumo(),
+        buscarDadosPedidos()
+    ]).then(function(res) {
+        var dadosFat     = res[0];
+        var dadosDias    = res[1];
+        var dadosDiasEmp = res[2];
+        var dadosPainel  = res[3];
+        var dadosProgr   = res[4];
+        var dadosPedidos = res[5];
+
+        // diasMesCache: calendário industrial geral (EMPR_ID=1) para cálculos do topo
+        if (dadosDias) diasMesCache = dadosDias;
+
+        // diasMesPorEmpresa: mapa EMPR_ID → dias para a coluna D.Úteis da tabela
+        if (dadosDiasEmp && dadosDiasEmp.length) {
+            dadosDiasEmp.forEach(function(row) {
+                diasMesPorEmpresa[String(row.EMPR_ID)] = {
+                    diasPassados:  parseInt(row.DIAS_PASSADOS        || 0, 10),
+                    diasRestantes: parseInt(row.DIAS_RESTANTES       || 0, 10),
+                    totalDiasMes:  parseInt(row.TOTAL_DIAS_UTEIS_MES || 0, 10),
+                };
+            });
         }
-    });
-    
-    // Buscar faturamento
-    buscarDadosBanco().then(function(dados) {
-        if (dados) {
-            dadosFaturamentoGlobal = dados;
-            atualizarDashboardComDadosReais(dados);
-            
-            // Buscar pedidos planejados após faturamento
+
+        // libMesPorEmpresa: mapa EMPR_ID → lib. mês atual (programação)
+        if (dadosProgr && dadosProgr.libMesEmp) {
+            libMesPorEmpresa = dadosProgr.libMesEmp;
+        }
+
+        // Renderiza painel (vlrFaltanteCache pode estar vazio, coluna mostra 0 por ora)
+        if (dadosPainel) {
+            painelDadosCache = dadosPainel;
+            atualizarPainelVendas(dadosPainel);
+        }
+
+        // Atualiza métricas do topo
+        if (dadosFat) {
+            dadosFaturamentoGlobal = dadosFat;
+            atualizarDashboardComDadosReais(dadosFat);
             buscarDadosPedidosPlanejado().then(function(dadosPlanejado) {
                 if (dadosPlanejado) {
                     atualizarDadosPedidosPlanejado(dadosPlanejado, dadosFaturamentoGlobal);
                 }
             });
         }
-    });
-    
-    // Buscar pedidos
-    buscarDadosPedidos().then(function(dados) {
-        if (dados) {
-            atualizarDadosPedidos(dados);
+
+        // Atualiza card PEDIDOS LIBERADOS
+        if (dadosPedidos && dadosPedidos.length > 0) {
+            var pedidosLiberados = parseFloat((dadosPedidos[0].PEDIDOS_LIBERADOS || '0').replace(/,/g, ''));
+            document.getElementById('pedidosLiberados').textContent =
+                'R$ ' + pedidosLiberados.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
+
+        // Atualiza cards de programação em carteira
+        if (dadosProgr) {
+            document.getElementById('pedidosEmCarga').textContent =
+                'R$ ' + dadosProgr.libMes.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('pedidosProxMes').textContent =
+                'R$ ' + dadosProgr.proxMes.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('pedidosSemCarga').textContent =
+                'R$ ' + dadosProgr.semAgenda.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    });
+
+    // Vlr Pen Cargas roda independente (query pesada) — re-renderiza painel quando pronto
+    buscarVlrFaltanteCarga().then(function(dadosVlrFalt) {
+        if (!dadosVlrFalt || !dadosVlrFalt.length) return;
+        vlrFaltanteCache = {};
+        dadosVlrFalt.forEach(function(row) {
+            vlrFaltanteCache[String(row.COD_EMP)] = parseFloat(String(row.VLR_FALTANTE || 0).replace(/,/g, ''));
+        });
+        if (painelDadosCache) atualizarPainelVendas(painelDadosCache);
     });
 }
 

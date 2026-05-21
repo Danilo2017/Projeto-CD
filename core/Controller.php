@@ -42,10 +42,11 @@ class Controller {
      */
     private function getCommonViewData() {
         return [
-            'is_admin' => $_SESSION['user']['is_admin'] ?? false,
+            'is_admin'         => $_SESSION['user']['is_admin']         ?? false,
             'rotas_permitidas' => $_SESSION['user']['rotas_permitidas'] ?? [],
-            'tem_permissao' => $_SESSION['user']['tem_permissao'] ?? false,
-            'empresa' => $_SESSION['empresa'] ?? null,
+            'tem_permissao'    => $_SESSION['user']['tem_permissao']    ?? false,
+            'empresa'          => $_SESSION['empresa']                  ?? null,
+            'user_login'       => $_SESSION['user']['login']            ?? 'Usuário',
         ];
     }
 

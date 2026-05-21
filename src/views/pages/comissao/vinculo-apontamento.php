@@ -19,6 +19,11 @@ if (!$acessoComissao) {
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
 <div class="container-fluid p-2">
+    <div class="d-flex justify-content-end mb-2">
+        <a href="<?= $base ?>comissao-cadastro" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
     <!-- Filtros Simples -->
     <div class="card mb-3">
         <div class="card-body">
@@ -53,16 +58,21 @@ if (!$acessoComissao) {
     </div>
 
     <!-- Botão Vincular em Lote -->
-    <div class="mb-3" id="acoesLote" style="display: none;">
+    <div class="mb-3 d-flex flex-wrap align-items-center gap-2" id="acoesLote" style="display: none;">
         <button type="button" class="btn btn-success btn-sm" onclick="vincularLote()">
             <i class="bi bi-link-45deg"></i> Vincular Selecionados (<span id="qtdSelecionados">0</span>)
         </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="selecionarTodos()">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selecionarTodos()">
             <i class="bi bi-check2-square"></i> Selecionar Todos
         </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="desmarcarTodos()">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="desmarcarTodos()">
             <i class="bi bi-square"></i> Desmarcar Todos
         </button>
+        <div class="ms-auto" style="min-width: 280px;">
+            <input type="text" id="filtroProduto" class="form-control form-control-sm"
+                   placeholder="Filtrar por produto, código ou máscara..."
+                   oninput="filtrarTabela()">
+        </div>
     </div>
 
     <!-- Tabela de Apontamentos -->
@@ -204,19 +214,40 @@ function buscarApontamentos() {
 
 function renderizarTabela() {
     const tbody = document.getElementById('tabelaBody');
-    document.getElementById('totalRegistros').textContent = apontamentos.length;
-    document.getElementById('acoesLote').style.display = apontamentos.length > 0 ? 'block' : 'none';
-    
+    const filtroTxt = (document.getElementById('filtroProduto')?.value || '').trim().toLowerCase();
+
+    let lista = apontamentos;
+    if (filtroTxt) {
+        lista = apontamentos.filter(ap => {
+            const alvo = [
+                ap.COD_ITEM,
+                ap.DESC_ITEM,
+                ap.MASCARA,
+                ap.ID_MASCARA,
+                ap.APONTAMENTO_ID
+            ].map(v => (v ?? '').toString().toLowerCase()).join(' ');
+            return alvo.indexOf(filtroTxt) !== -1;
+        });
+    }
+
+    document.getElementById('totalRegistros').textContent = lista.length + (filtroTxt ? ' / ' + apontamentos.length : '');
+    document.getElementById('acoesLote').style.display = apontamentos.length > 0 ? 'flex' : 'none';
+
     if (!apontamentos.length) {
         tbody.innerHTML = '<tr><td colspan="9" class="text-center text-success py-4"><i class="bi bi-check-circle"></i> Nenhum apontamento sem recurso encontrado</td></tr>';
         return;
     }
-    
+
+    if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-search"></i> Nenhum apontamento corresponde ao filtro</td></tr>';
+        return;
+    }
+
     let html = '';
-    apontamentos.forEach(ap => {
+    lista.forEach(ap => {
         const checked = selecionados.includes(ap.APONTAMENTO_ID) ? 'checked' : '';
         const dataFmt = ap.DT_APONT_FMT || formatarData(ap.DATA_APONTAMENTO);
-        
+
         html += `
             <tr>
                 <td><input type="checkbox" class="checkItem" value="${ap.APONTAMENTO_ID}" ${checked} onchange="toggleItem(${ap.APONTAMENTO_ID})"></td>
@@ -239,10 +270,14 @@ function renderizarTabela() {
             </tr>
         `;
     });
-    
+
     tbody.innerHTML = html;
     inicializarSelect2Tabela();
     atualizarContador();
+}
+
+function filtrarTabela() {
+    renderizarTabela();
 }
 
 function inicializarSelect2Tabela() {

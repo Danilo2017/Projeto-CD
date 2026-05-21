@@ -6,6 +6,7 @@ use src\models\Faturamento\FaturamentoMensal;
 use src\models\Faturamento\PainelVendas;
 use src\models\Faturamento\Pedidos;
 
+
 /**
  * Handler do Dashboard de Faturamento Indústrias
  * Orquestra chamadas aos models e formata dados
@@ -62,11 +63,30 @@ class FaturamentoDashboardHandler
     public static function getPedidosPlanejado(): array
     {
         $dados = Pedidos::getPedidosPlanejado();
-        
+
         return [
             'success' => true,
             'data' => $dados,
             'ultima_atualizacao' => date('Y-m-d H:i:s')
         ];
     }
+
+    public static function getDiasMes(): array
+    {
+        $dados = FaturamentoMensal::getDiasMes();
+        return ['success' => true, 'data' => $dados];
+    }
+
+    public static function getDiasMesEmpresa(): array
+    {
+        $dados = FaturamentoMensal::getDiasMesEmpresa();
+        return ['success' => true, 'data' => $dados];
+    }
+
+    public static function getVlrFaltanteCarga(): array
+    {
+        $dados = PainelVendas::getVlrFaltanteCarga();
+        return ['success' => true, 'data' => $dados];
+    }
+
 }

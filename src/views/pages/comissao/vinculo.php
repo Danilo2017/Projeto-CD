@@ -26,6 +26,11 @@ if (!$acessoComissao) {
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
 <div class="comissao-dashboard-container" style="width: 100%; max-width: 100%; padding: 10px; margin: 0;">
+    <div class="d-flex justify-content-end mb-2">
+        <a href="<?= $base ?>comissao-cadastro" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
     <!-- Filtros -->
     <div class="dashboard-filters">
         <div class="filter-row">
@@ -48,13 +53,13 @@ if (!$acessoComissao) {
                 </select>
             </div>
             <div class="filter-group d-flex gap-2 align-items-end">
-                <button type="button" class="btn btn-primary" onclick="carregarVinculos()">
+                <button type="button" class="btn btn-sm btn-primary" onclick="carregarVinculos()">
                     <i class="bi bi-search"></i> Filtrar
                 </button>
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalVinculo" onclick="novoVinculo()">
+                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalVinculo" onclick="novoVinculo()">
                     <i class="bi bi-plus-circle"></i> Novo Vínculo
                 </button>
-                <button type="button" class="btn btn-info text-white" onclick="exportarVinculosExcel()" title="Baixar lista atual em Excel">
+                <button type="button" class="btn btn-sm btn-info text-white" onclick="exportarVinculosExcel()" title="Baixar lista atual em Excel">
                     <i class="bi bi-file-earmark-excel"></i> Baixar Excel
                 </button>
             </div>

@@ -118,21 +118,10 @@ class GazinSqls
      */
     public static function listarHistorico($idsql)
     {
-        $sql = "SELECT 
-                    IDLOG,
-                    IDSQL,
-                    ACAO,
-                    DBMS_LOB.SUBSTR(SQL_ANTERIOR, 4000, 1) AS SQL_ANTERIOR,
-                    DBMS_LOB.SUBSTR(SQL_NOVO, 4000, 1) AS SQL_NOVO,
-                    USUARIO,
-                    TO_CHAR(DT_ALTERACAO, 'DD/MM/YYYY HH24:MI:SS') AS DATA_ALTERACAO,
-                    OBSERVACAO
-                FROM FOCCO3I.TGAZIN_SQL_LOG
-                WHERE IDSQL = '" . str_replace("'", "''", $idsql) . "'
-                ORDER BY DT_ALTERACAO DESC";
-        
+        $params = ['idsql' => "'" . str_replace("'", "''", $idsql) . "'"];
+
         try {
-            $result = Database::switchParams('focco', [], null, true, false, null, $sql);
+            $result = Database::switchParams('focco', $params, 'admin.sqls.listarHistorico', true, false);
             return $result['retorno'] ?? [];
         } catch (\Throwable $e) {
             return [];
