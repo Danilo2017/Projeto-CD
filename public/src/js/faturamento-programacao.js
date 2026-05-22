@@ -187,10 +187,10 @@ function renderTabelaEmpresa(agendas, empresas, agg) {
         <th>Meta Desafio Mês</th>
         <th>Faturado</th>
         <th>Valor da Carteira</th>
-        <th>Lib. P/ ${mesLabel}</th>
-        <th>Prog. P/ ${proxLabel}</th>
+        <th>Lib. P/ Atual</th>
+        <th>Prog. P/ Seguinte</th>
         <th>Sem Programação</th>
-        <th>Falta/Sobra P/ ${mesLabel}</th>
+        <th>Falta/Sobra P/ Atual</th>
     </tr></thead><tbody>`;
 
     let totMeta = 0, totFat = 0, totCart = 0, totLib = 0, totProx = 0, totSem = 0;
@@ -548,7 +548,7 @@ function exportarCSVEmpresa() {
     }
 
     const cab = ['Filial', 'Meta Desafio Mes', 'Faturado', 'Valor da Carteira',
-        `Lib. P/ ${mesLabel}`, `Prog. P/ ${proxLabel}`, 'Sem Programacao', `Falta/Sobra P/ ${mesLabel}`];
+        'Lib. P/ Atual', 'Prog. P/ Seguinte', 'Sem Programacao', 'Falta/Sobra P/ Atual'];
     const linhas = [cab.join(';')];
 
     let totMeta = 0, totFat = 0, totCart = 0, totLib = 0, totProx = 0, totSem = 0;
@@ -802,8 +802,16 @@ function agendaLabel(agenda) {
     if (!agenda || agenda === 'SEM AGENDA') return 'Sem Programação';
     const parts = agenda.split('/');
     if (parts.length !== 3) return agenda;
-    const mes = parseInt(parts[1], 10) - 1;
-    return MESES_PT[mes] || agenda;
+    const agMes = parseInt(parts[1], 10) - 1;
+    const agAno = parseInt(parts[2], 10);
+    const hoje = new Date();
+    const mmAtual = hoje.getMonth();
+    const yyyyAtual = hoje.getFullYear();
+    const mmProx = (mmAtual + 1) % 12;
+    const yyyyProx = mmAtual === 11 ? yyyyAtual + 1 : yyyyAtual;
+    if (agMes === mmAtual && agAno === yyyyAtual) return 'Mês Atual';
+    if (agMes === mmProx && agAno === yyyyProx) return 'Mês Seguinte';
+    return MESES_PT[agMes] || agenda;
 }
 
 function parsePtDate(str) {
