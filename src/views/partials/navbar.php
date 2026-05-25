@@ -2,13 +2,15 @@
 $acessoComissao    = $is_admin || in_array('comissao',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoCd          = $is_admin || in_array('cd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoPedidos     = $acessoFaturamento;
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
-    str_starts_with($pActive, 'comissao-') || $pActive === 'comissao'                              => 'comissao',
-    str_starts_with($pActive, 'cd-') || in_array($pActive, ['dashboard', 'calendario'])            => 'cd',
+    str_starts_with($pActive, 'comissao-') || $pActive === 'comissao'                                => 'comissao',
+    str_starts_with($pActive, 'cd-') || in_array($pActive, ['dashboard', 'calendario'])              => 'cd',
     str_starts_with($pActive, 'faturamento-') || in_array($pActive, ['faturamento', 'meta-empresa']) => 'faturamento',
-    $pActive === 'permissao'                                                                        => 'permissao',
+    str_starts_with($pActive, 'pedidos-')                                                            => 'pedidos',
+    $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
 
@@ -27,6 +29,10 @@ $fatSub = match(true) {
     in_array($pActive, ['faturamento-dashboard', 'faturamento']) => 'dashboard',
     $pActive === 'meta-empresa'                                  => 'metas',
     $pActive === 'faturamento-programacao'                       => 'programacao',
+    default => ''
+};
+$pedidosSub = match(true) {
+    $pActive === 'pedidos-transferencia' => 'transferencia',
     default => ''
 };
 
@@ -134,6 +140,24 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>faturamento-programacao"
                        class="sidebar-sublink <?= $fatSub === 'programacao' ? 'active' : '' ?>">
                         Programação
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoPedidos): ?>
+        <li class="sidebar-group" id="grpPedidos">
+            <button class="sidebar-group-btn <?= $activeGroup === 'pedidos' ? 'active open' : '' ?>">
+                <i class="bi bi-bag-check"></i>
+                <span>Pedidos</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'pedidos' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>faturamento-transferencia"
+                       class="sidebar-sublink <?= $pedidosSub === 'transferencia' ? 'active' : '' ?>">
+                        Transferência
                     </a>
                 </li>
             </ul>
