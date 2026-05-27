@@ -20,12 +20,7 @@ class Funcionario
         if (empty($result['error']) && !empty($result['retorno'])) {
             return $result['retorno'];
         }
-        // Fallback: traz funcionários ativos diretamente da TFUNCIONARIOS
-        $sqlFallback = "SELECT F.ID, F.COD_FUNC, F.NOME, F.EMPR_ID "
-            . "FROM FOCCO3I.TFUNCIONARIOS F "
-            . "WHERE F.SITUACAO = 'A' :filtro_empr :filtro_busca "
-            . "ORDER BY F.NOME";
-        $result = Database::switchParams('focco', $params, null, true, true, null, $sqlFallback);
+        $result = Database::switchParams('focco', $params, 'comissao.funcionario.listarAtivos.fallback', true);
         return $result['retorno'] ?? [];
     }
 

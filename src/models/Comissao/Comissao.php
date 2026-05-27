@@ -1296,9 +1296,8 @@ class Comissao
                 }
                 // Se não encontrou, buscar direto
                 if (!$codCentroExibicao && isset($centrosNecessarios[$centroApoioInfo])) {
-                    $sqlCentro = "SELECT COD_CENTRO, DESCRICAO FROM FOCCO3I.TCENTROS_TRAB WHERE ID = " . intval($centroApoioInfo);
                     try {
-                        $resCentro = Database::switchParams('focco', [], null, true, false, null, $sqlCentro);
+                        $resCentro = Database::switchParams('focco', ['id' => intval($centroApoioInfo)], 'comissao.centroTrabalho.buscarPorId', true, false);
                         if (!empty($resCentro['retorno'][0])) {
                             $codCentroExibicao = $resCentro['retorno'][0]['COD_CENTRO'];
                             $descCentroExibicao = $resCentro['retorno'][0]['DESCRICAO'];

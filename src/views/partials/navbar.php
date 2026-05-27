@@ -3,6 +3,7 @@ $acessoComissao    = $is_admin || in_array('comissao',    $rotas_permitidas) || 
 $acessoCd          = $is_admin || in_array('cd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPedidos     = $acessoFaturamento;
+$acessoProcesso    = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
@@ -10,6 +11,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'cd-') || in_array($pActive, ['dashboard', 'calendario'])              => 'cd',
     str_starts_with($pActive, 'faturamento-') || in_array($pActive, ['faturamento', 'meta-empresa']) => 'faturamento',
     str_starts_with($pActive, 'pedidos-')                                                            => 'pedidos',
+    str_starts_with($pActive, 'processo-')                                                           => 'processo',
     $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
@@ -33,6 +35,11 @@ $fatSub = match(true) {
 };
 $pedidosSub = match(true) {
     $pActive === 'pedidos-transferencia' => 'transferencia',
+    default => ''
+};
+$processoSub = match(true) {
+    $pActive === 'processo-troca-almox'    => 'troca-almox',
+    $pActive === 'processo-troca-tipo-nf'  => 'troca-tipo-nf',
     default => ''
 };
 
@@ -158,6 +165,30 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>faturamento-transferencia"
                        class="sidebar-sublink <?= $pedidosSub === 'transferencia' ? 'active' : '' ?>">
                         Transferência
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoProcesso): ?>
+        <li class="sidebar-group" id="grpProcesso">
+            <button class="sidebar-group-btn <?= $activeGroup === 'processo' ? 'active open' : '' ?>">
+                <i class="bi bi-gear"></i>
+                <span>Processo</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'processo' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>processo-troca-almox"
+                       class="sidebar-sublink <?= $processoSub === 'troca-almox' ? 'active' : '' ?>">
+                        Troca Almox.
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>processo-troca-tipo-nf"
+                       class="sidebar-sublink <?= $processoSub === 'troca-tipo-nf' ? 'active' : '' ?>">
+                        Troca Tipo NF Ent.
                     </a>
                 </li>
             </ul>

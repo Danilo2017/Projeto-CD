@@ -200,6 +200,17 @@ $router->get('/meta-empresa-api-empresas', 'Faturamento\\MetaEmpresaController@e
 $router->post('/meta-empresa-api-salvar', 'Faturamento\\MetaEmpresaController@salvar', true);
 $router->delete('/meta-empresa-api-excluir', 'Faturamento\\MetaEmpresaController@excluir', true);
 
+// ========== Processo ==========
+$router->get('/processo-troca-almox',            'Processo\\TrocaAlmoxarifadoController@index',              true);
+$router->get('/processo-api-almoxarifados',      'Processo\\TrocaAlmoxarifadoController@listarAlmoxarifados', true);
+$router->post('/processo-api-troca-almox-ordens','Processo\\TrocaAlmoxarifadoController@buscarOrdens',        true);
+$router->post('/processo-api-troca-almox',       'Processo\\TrocaAlmoxarifadoController@executar',            true);
+
+$router->get('/processo-troca-tipo-nf',           'Processo\\TrocaTipoNfEntradaController@index',       true);
+$router->get('/processo-api-tipos-nf-ent',        'Processo\\TrocaTipoNfEntradaController@listarTipos', true);
+$router->post('/processo-api-troca-tipo-nf-buscar','Processo\\TrocaTipoNfEntradaController@buscarNf',   true);
+$router->post('/processo-api-troca-tipo-nf',      'Processo\\TrocaTipoNfEntradaController@executar',    true);
+
 // ========== Admin - Gerenciamento de SQLs ==========
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);
 $router->get('/admin-api-sqls', 'AdminSqlsController@listar', true);

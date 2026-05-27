@@ -11,52 +11,18 @@ class TransferenciaPedido
      */
     public static function buscarPedidos(int $emprId, array $numeros = []): array
     {
-        $pdo = Database::getInstance('focco');
-
         $filtroNumeros = '';
         if (!empty($numeros)) {
             $inClause      = implode(',', array_map('intval', $numeros));
             $filtroNumeros = "AND TV.NUM_PEDIDO IN ($inClause)";
         }
 
-        $sql = "SELECT TV.ID,
-                       TV.EMPR_ID                AS EMPRESA,
-                       TV.NUM_PEDIDO,
-                       T.COD_CLI                 AS COD_CLIENTE,
-                       T.DESCRICAO               AS NOME_CLIENTE,
-                       TN.COD_TP_NF              AS COD_TP_NF,
-                       TN.DESCRICAO              AS DESCRICAO_NF,
-                       TV2.COD_DIVD              AS COD_DIVISAO,
-                       TV2.DESCRICAO             AS DESCRICAO_DIVISAO,
-                       TV.VLR_LIQ
-                FROM FOCCO3I.TPEDIDOS_VENDA    TV,
-                     FOCCO3I.TTIPOS_NF         TN,
-                     FOCCO3I.TITENS_PDV        TP,
-                     FOCCO3I.TDIVISOES_VENDAS  TV2,
-                     FOCCO3I.TCLIENTES         T
-                WHERE TV2.ID      = TV.DIVD_ID
-                AND   TP.TPNF_ID  = TN.ID
-                AND   T.ID        = TV.CLI_ID
-                AND   TV.ID       = TP.PDV_ID
-                AND   TV.SIT_PDV  = 'LIB'
-                AND   TV.POS_PDV  = 'PE'
-                AND   TV.TIPO     = 'PDV'
-                AND   TV.EMPR_ID  = $emprId
-                $filtroNumeros
-                GROUP BY TV.ID,
-                         TV.EMPR_ID,
-                         TV.NUM_PEDIDO,
-                         T.COD_CLI,
-                         T.DESCRICAO,
-                         TN.COD_TP_NF,
-                         TN.DESCRICAO,
-                         TV2.COD_DIVD,
-                         TV2.DESCRICAO,
-                         TV.VLR_LIQ
-                ORDER BY TV.NUM_PEDIDO";
+        $result = Database::switchParams('focco', [
+            'empr_id'         => $emprId,
+            'filtro_numeros'  => $filtroNumeros ?: '--',
+        ], 'faturamento.transferencia.buscarPedidos', true);
 
-        $stmt = $pdo->query($sql);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $result['retorno'] ?? [];
     }
 
     /**
@@ -68,11 +34,8 @@ class TransferenciaPedido
         try {
             $pdo = Database::getInstance('focco');
 
-            // Grava o maior ID atual da filial destino antes de executar
-            $stmtAntes = $pdo->query(
-                "SELECT NVL(MAX(ID), 0) AS MAX_ID FROM FOCCO3I.TPEDIDOS_VENDA WHERE EMPR_ID = $emprDestId"
-            );
-            $maxIdAntes = (int) ($stmtAntes->fetch(\PDO::FETCH_ASSOC)['MAX_ID'] ?? 0);
+            $resMax     = Database::switchParams('focco', ['empr_id' => $emprDestId], 'faturamento.transferencia.maxIdDest', true, false);
+            $maxIdAntes = (int) ($resMax['retorno'][0]['MAX_ID'] ?? 0);
 
             $block = "DECLARE
                 v_saida  VARCHAR2(32767) := '';
@@ -127,14 +90,11 @@ class TransferenciaPedido
 
             $pdo->exec($block);
 
-            // Busca pedido criado com ID maior que o registrado antes da procedure
-            $stmtNovo = $pdo->query(
-                "SELECT NUM_PEDIDO, ID FROM FOCCO3I.TPEDIDOS_VENDA
-                 WHERE EMPR_ID = $emprDestId
-                 AND ID > $maxIdAntes
-                 ORDER BY ID DESC FETCH FIRST 1 ROW ONLY"
-            );
-            $novo = $stmtNovo->fetch(\PDO::FETCH_ASSOC);
+            $resNovo = Database::switchParams('focco', [
+                'empr_id' => $emprDestId,
+                'max_id'  => $maxIdAntes,
+            ], 'faturamento.transferencia.buscarPedidoGerado', true, false);
+            $novo = $resNovo['retorno'][0] ?? null;
 
             if (!$novo) {
                 return [
@@ -147,14 +107,15 @@ class TransferenciaPedido
 
             $novoId = (int) $novo['ID'];
 
-            // Busca o NUM_PEDIDO do pedido de origem
-            $stmtOrig = $pdo->query("SELECT NUM_PEDIDO FROM FOCCO3I.TPEDIDOS_VENDA WHERE ID = $pdvId");
-            $orig = $stmtOrig->fetch(\PDO::FETCH_ASSOC);
+            $resOrig    = Database::switchParams('focco', ['id' => $pdvId], 'faturamento.transferencia.buscarNumPedOrigem', true, false);
+            $orig       = $resOrig['retorno'][0] ?? null;
             $numPedOrig = (int) ($orig['NUM_PEDIDO'] ?? 0);
 
-            // Grava o número do pedido de origem no pedido gerado
             if ($numPedOrig > 0) {
-                $pdo->exec("UPDATE FOCCO3I.TPEDIDOS_VENDA SET NUM_PED_ORIGEM = $numPedOrig WHERE ID = $novoId");
+                Database::switchParams('focco', [
+                    'num_ped_origem' => $numPedOrig,
+                    'id'             => $novoId,
+                ], 'faturamento.transferencia.gravarNumPedOrigem', true, true);
                 $pdo->exec("COMMIT");
             }
 
@@ -171,11 +132,9 @@ class TransferenciaPedido
 
     private static function limparErro(string $msg): string
     {
-        // Extrai só o texto entre ORA-20001: e o próximo ORA-XXXXX: ou fim
         if (preg_match('/ORA-20001:\s*(.+?)(?:\s*ORA-\d+:|$)/s', $msg, $m)) {
             return trim($m[1]);
         }
-        // Fallback: remove prefixos técnicos
         $msg = preg_replace('/^SQLSTATE\[.*?\]:\s*General error:\s*\d+\s*\S+:\s*/s', '', $msg);
         $msg = preg_replace('/\s*ORA-06512:.*$/s', '', $msg);
         $msg = preg_replace('/^ORA-\d+:\s*/', '', $msg);

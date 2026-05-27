@@ -73,19 +73,9 @@ class Vinculo
             $joinsCc = "";
         }
 
-        $sql = "SELECT v.ID_VINCULO, v.ID_EMPR, v.ID_FUNCIONARIO, f.COD_FUNC, f.NOME AS FUNCIONARIO_NOME, "
-            . "v.ID_CENTRO_TRAB, c.COD_CENTRO, c.DESCRICAO AS CENTRO_DESCRICAO, "
-            . "v.ID_RECURSO, r.COD_MAQUINA, r.DESCRICAO AS RECURSO_DESCRICAO, v.ATIVO, "
-            . "NVL(v.TIPO_VINCULO, 'N') AS TIPO_VINCULO, "
-            . $colunasCc
-            . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
-            . "INNER JOIN FOCCO3I.TFUNCIONARIOS f ON f.ID = v.ID_FUNCIONARIO "
-            . "INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB "
-            . "LEFT JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO "
-            . $joinsCc
-            . "WHERE 1=1 :filtro_empr :filtro_centro :filtro_recurso :filtro_func :filtro_ativo "
-            . "ORDER BY c.DESCRICAO, f.NOME";
-        $result = Database::switchParams('focco', $params, null, true, true, null, $sql);
+        $params['colunas_cc'] = $colunasCc;
+        $params['joins_cc']   = $joinsCc ?: '--';
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.listar', true);
         return $result['retorno'] ?? [];
     }
 
@@ -168,21 +158,14 @@ class Vinculo
         ];
 
         // Tenta inserir com ID_EMP_CC; se a coluna não existir, faz fallback sem ela.
-        $sqlComCc = "INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC "
-            . "(ID_VINCULO, ID_EMPR, ID_FUNCIONARIO, ID_CENTRO_TRAB, ID_RECURSO, TIPO_VINCULO, ID_EMP_CC, ATIVO, DT_CADASTRO) "
-            . "VALUES (FOCCO3I.SEQ_TGAZIN_VINC_FUNC.NEXTVAL, :id_empr, :id_funcionario, :id_centro_trab, :id_recurso, :tipo_vinculo, :id_emp_cc, 'S', SYSDATE)";
-        $result = Database::switchParams('focco', $params, null, true, true, null, $sqlComCc);
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.inserirComCc', true, true);
         if (empty($result['error'])) {
             self::$colunaCcCache = true;
             return true;
         }
-        // Fallback apenas se a falha for por coluna inválida (ORA-00904 / ORA-06550 / PLS-00302)
         if (self::erroColunaInvalida($result['error'])) {
             self::$colunaCcCache = false;
-            $sqlSemCc = "INSERT INTO FOCCO3I.TGAZIN_VINC_FUNC "
-                . "(ID_VINCULO, ID_EMPR, ID_FUNCIONARIO, ID_CENTRO_TRAB, ID_RECURSO, TIPO_VINCULO, ATIVO, DT_CADASTRO) "
-                . "VALUES (FOCCO3I.SEQ_TGAZIN_VINC_FUNC.NEXTVAL, :id_empr, :id_funcionario, :id_centro_trab, :id_recurso, :tipo_vinculo, 'S', SYSDATE)";
-            $resultFallback = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
+            $resultFallback = Database::switchParams('focco', $params, 'comissao.vinculo.inserirSemCc', true, true);
             if (empty($resultFallback['error'])) {
                 return true;
             }
@@ -204,25 +187,14 @@ class Vinculo
             'id_emp_cc' => $idEmpCc !== null && $idEmpCc !== '' ? intval($idEmpCc) : 'NULL',
         ];
 
-        $sqlComCc = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC "
-            . "SET ID_CENTRO_TRAB = :id_centro_trab, "
-            . "    ID_RECURSO = :id_recurso, "
-            . "    TIPO_VINCULO = :tipo_vinculo, "
-            . "    ID_EMP_CC = :id_emp_cc "
-            . "WHERE ID_VINCULO = :id";
-        $result = Database::switchParams('focco', $params, null, true, true, null, $sqlComCc);
+        $result = Database::switchParams('focco', $params, 'comissao.vinculo.atualizarComCc', true, true);
         if (empty($result['error'])) {
             self::$colunaCcCache = true;
             return true;
         }
         if (self::erroColunaInvalida($result['error'])) {
             self::$colunaCcCache = false;
-            $sqlSemCc = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC "
-                . "SET ID_CENTRO_TRAB = :id_centro_trab, "
-                . "    ID_RECURSO = :id_recurso, "
-                . "    TIPO_VINCULO = :tipo_vinculo "
-                . "WHERE ID_VINCULO = :id";
-            $resultFallback = Database::switchParams('focco', $params, null, true, true, null, $sqlSemCc);
+            $resultFallback = Database::switchParams('focco', $params, 'comissao.vinculo.atualizarSemCc', true, true);
             if (empty($resultFallback['error'])) {
                 return true;
             }
@@ -299,12 +271,7 @@ class Vinculo
             return $result['retorno'] ?? [];
         } catch (\Throwable $e) {
             // Fallback: SQL simplificada sem joins extras (TEMP_CC/TCC)
-            $sqlFallback = "SELECT DISTINCT c.ID, c.COD_CENTRO, c.DESCRICAO "
-                . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
-                . "INNER JOIN FOCCO3I.TCENTROS_TRAB c ON c.ID = v.ID_CENTRO_TRAB "
-                . "WHERE v.ATIVO = 'S' :filtro_empr "
-                . "ORDER BY c.COD_CENTRO, c.DESCRICAO";
-            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlFallback);
+            $result = Database::switchParams('focco', $params, 'comissao.vinculo.listarCentrosComVinculo.fallback', true);
             return $result['retorno'] ?? [];
         }
     }
@@ -324,12 +291,7 @@ class Vinculo
             return $result['retorno'] ?? [];
         } catch (\Throwable $e) {
             // Fallback: SQL simplificada sem filtro TP_RECURSO
-            $sqlFallback = "SELECT DISTINCT r.ID, r.COD_MAQUINA, r.DESCRICAO "
-                . "FROM FOCCO3I.TGAZIN_VINC_FUNC v "
-                . "INNER JOIN FOCCO3I.TMAQUINAS r ON r.ID = v.ID_RECURSO "
-                . "WHERE v.ATIVO = 'S' AND v.ID_RECURSO IS NOT NULL :filtro_empr :filtro_centro "
-                . "ORDER BY r.COD_MAQUINA, r.DESCRICAO";
-            $result = Database::switchParams('focco', $params, null, true, true, null, $sqlFallback);
+            $result = Database::switchParams('focco', $params, 'comissao.vinculo.listarRecursosComVinculo.fallback', true);
             return $result['retorno'] ?? [];
         }
     }

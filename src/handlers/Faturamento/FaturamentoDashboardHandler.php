@@ -5,88 +5,123 @@ namespace src\handlers\Faturamento;
 use src\models\Faturamento\FaturamentoMensal;
 use src\models\Faturamento\PainelVendas;
 use src\models\Faturamento\Pedidos;
-
+use src\utils\DashboardCache;
 
 /**
  * Handler do Dashboard de Faturamento Indústrias
- * Orquestra chamadas aos models e formata dados
+ *
+ * Usa stale-while-revalidate:
+ *   - TTL fresco = 4 min  → dado expira antes do auto-refresh de 5 min
+ *   - Quando expirado: retorna dado antigo INSTANTANEAMENTE + atualiza Oracle em background
+ *   - Usuário nunca espera 50s após o primeiro acesso
+ *
+ * TTLs (fresco):
+ *   - resumo, painel, pedidos, planejado, programação → 4 min
+ *   - vlr-faltante-carga (query pesada)               → 4 min
+ *   - dias-mes / dias-mes-empresa (dado mensal)        → 60 min
  */
 class FaturamentoDashboardHandler
 {
     /**
-     * Buscar resumo mensal de faturamento
+     * Cache com stale-while-revalidate.
+     * Se dado fresco → retorna imediatamente.
+     * Se expirado + stale disponível → retorna stale + agenda refresh em background (FPM).
+     * Se sem cache → busca Oracle de forma síncrona.
      */
+    private static function cached(string $key, int $ttl, callable $fn): array
+    {
+        $fresh = DashboardCache::get($key);
+        if ($fresh !== null) {
+            return $fresh;
+        }
+
+        $stale = DashboardCache::getStale($key);
+        if ($stale !== null && function_exists('fastcgi_finish_request')) {
+            register_shutdown_function(function () use ($key, $ttl, $fn) {
+                fastcgi_finish_request();
+                DashboardCache::set($key, $fn(), $ttl);
+            });
+            return $stale;
+        }
+
+        $result = $fn();
+        DashboardCache::set($key, $result, $ttl);
+        return $result;
+    }
+
     public static function getResumoMensal(): array
     {
-        $dados = FaturamentoMensal::getResumoMensal();
-        
-        return [
-            'success' => true,
-            'data' => $dados,
-            'total' => count($dados),
-            'ultima_atualizacao' => date('Y-m-d H:i:s')
-        ];
+        return self::cached('dashboard.resumo_mensal', 240, function () {
+            $dados = FaturamentoMensal::getResumoMensal();
+            return [
+                'success'            => true,
+                'data'               => $dados,
+                'total'              => count($dados),
+                'ultima_atualizacao' => date('Y-m-d H:i:s'),
+            ];
+        });
     }
 
-    /**
-     * Buscar painel de vendas por empresa
-     */
     public static function getPainelVendas(): array
     {
-        $dados = PainelVendas::getPainelVendas();
-        
-        return [
-            'sucesso' => true,
-            'total_registros' => count($dados),
-            'ultima_atualizacao' => date('Y-m-d H:i:s'),
-            'dados' => $dados
-        ];
+        return self::cached('dashboard.painel_vendas', 240, function () {
+            $dados = PainelVendas::getPainelVendas();
+            return [
+                'sucesso'            => true,
+                'total_registros'    => count($dados),
+                'ultima_atualizacao' => date('Y-m-d H:i:s'),
+                'dados'              => $dados,
+            ];
+        });
     }
 
-    /**
-     * Buscar status de pedidos em carteira
-     */
     public static function getPedidos(): array
     {
-        $dados = Pedidos::getPedidosCarteira();
-        
-        return [
-            'success' => true,
-            'data' => $dados,
-            'ultima_atualizacao' => date('Y-m-d H:i:s')
-        ];
+        return self::cached('dashboard.pedidos', 240, function () {
+            $dados = Pedidos::getPedidosCarteira();
+            return [
+                'success'            => true,
+                'data'               => $dados,
+                'ultima_atualizacao' => date('Y-m-d H:i:s'),
+            ];
+        });
     }
 
-    /**
-     * Buscar pedidos planejados
-     */
     public static function getPedidosPlanejado(): array
     {
-        $dados = Pedidos::getPedidosPlanejado();
-
-        return [
-            'success' => true,
-            'data' => $dados,
-            'ultima_atualizacao' => date('Y-m-d H:i:s')
-        ];
+        return self::cached('dashboard.pedidos_planejado', 240, function () {
+            $dados = Pedidos::getPedidosPlanejado();
+            return [
+                'success'            => true,
+                'data'               => $dados,
+                'ultima_atualizacao' => date('Y-m-d H:i:s'),
+            ];
+        });
     }
 
     public static function getDiasMes(): array
     {
-        $dados = FaturamentoMensal::getDiasMes();
-        return ['success' => true, 'data' => $dados];
+        $key = 'dashboard.dias_mes_' . date('Y-m');
+        return self::cached($key, 3600, function () {
+            $dados = FaturamentoMensal::getDiasMes();
+            return ['success' => true, 'data' => $dados];
+        });
     }
 
     public static function getDiasMesEmpresa(): array
     {
-        $dados = FaturamentoMensal::getDiasMesEmpresa();
-        return ['success' => true, 'data' => $dados];
+        $key = 'dashboard.dias_mes_empresa_' . date('Y-m');
+        return self::cached($key, 3600, function () {
+            $dados = FaturamentoMensal::getDiasMesEmpresa();
+            return ['success' => true, 'data' => $dados];
+        });
     }
 
     public static function getVlrFaltanteCarga(): array
     {
-        $dados = PainelVendas::getVlrFaltanteCarga();
-        return ['success' => true, 'data' => $dados];
+        return self::cached('dashboard.vlr_faltante_carga', 240, function () {
+            $dados = PainelVendas::getVlrFaltanteCarga();
+            return ['success' => true, 'data' => $dados];
+        });
     }
-
 }
