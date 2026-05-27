@@ -1,4 +1,10 @@
 <?php
+/** @var bool   $is_admin */
+/** @var array  $rotas_permitidas */
+/** @var string $base */
+/** @var string $pageActive */
+/** @var string $user_login */
+/** @var array  $empresa */
 $acessoComissao    = $is_admin || in_array('comissao',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoCd          = $is_admin || in_array('cd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
