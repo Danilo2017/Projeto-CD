@@ -185,9 +185,9 @@ $router->get('/faturamento-api-programacao', 'Faturamento\\FaturamentoProgramaca
 $router->get('/faturamento-api-ocupacao', 'Faturamento\\FaturamentoProgramacaoController@ocupacao', true);
 
 // ========== Transferência de Pedidos ==========
-$router->get('/faturamento-transferencia', 'Faturamento\\TransferenciaPedidoController@index', true);
-$router->post('/faturamento-api-transferencia-buscar', 'Faturamento\\TransferenciaPedidoController@buscarPedidos', true);
-$router->post('/faturamento-api-transferencia', 'Faturamento\\TransferenciaPedidoController@executar', true);
+$router->get('/pedidos-transferencia', 'Faturamento\\TransferenciaPedidoController@index', true);
+$router->post('/pedidos-api-transferencia-buscar', 'Faturamento\\TransferenciaPedidoController@buscarPedidos', true);
+$router->post('/pedidos-api-transferencia', 'Faturamento\\TransferenciaPedidoController@executar', true);
 
 // ========== Gestão de Metas por Empresa ==========
 // Página de Gestão de Metas

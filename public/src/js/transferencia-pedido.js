@@ -85,7 +85,7 @@
         tabelaPedidos.innerHTML = '';
         pedidoMap = {};
 
-        fetchJson('faturamento-api-transferencia-buscar', { empr_orig_id: emprOrigId, numeros: numeros })
+        fetchJson('pedidos-api-transferencia-buscar', { empr_orig_id: emprOrigId, numeros: numeros })
             .then(function (data) {
                 if (data.error) { toast(data.error); return; }
 
@@ -161,7 +161,7 @@
         secaoResultados.classList.add('d-none');
         tabelaResultados.innerHTML = '';
 
-        fetchJson('faturamento-api-transferencia', {
+        fetchJson('pedidos-api-transferencia', {
             pdv_ids:      pdvIds,
             empr_dest_id: emprDest,
             cod_tp_nf:    codTpNf,

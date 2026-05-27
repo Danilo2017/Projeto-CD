@@ -2,7 +2,7 @@
 $acessoComissao    = $is_admin || in_array('comissao',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoCd          = $is_admin || in_array('cd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
-$acessoPedidos     = $acessoFaturamento;
+$acessoPedidos     = $is_admin || in_array('pedidos', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoProcesso    = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
@@ -162,7 +162,7 @@ $userName = $user_login ?? 'Usuário';
             </button>
             <ul class="sidebar-submenu <?= $activeGroup === 'pedidos' ? 'open' : '' ?>">
                 <li>
-                    <a href="<?= $base ?>faturamento-transferencia"
+                    <a href="<?= $base ?>pedidos-transferencia"
                        class="sidebar-sublink <?= $pedidosSub === 'transferencia' ? 'active' : '' ?>">
                         Transferência
                     </a>
