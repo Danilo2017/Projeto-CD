@@ -1,9 +1,10 @@
 <?php
-/** @var array  $empresas */
-/** @var bool   $is_admin */
-/** @var array  $rotas_permitidas */
-$acessoCd = $is_admin || in_array('cd', $rotas_permitidas) || in_array('*', $rotas_permitidas);
-if (!$acessoCd) {
+/** @var bool      $is_admin */
+/** @var array     $rotas_permitidas */
+/** @var string    $base */
+/** @var callable  $render */
+$acessoCarga = $is_admin || in_array('carga', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+if (!$acessoCarga) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
 }
@@ -11,7 +12,7 @@ if (!$acessoCd) {
 <?= $render('header', [
     'pageTitle'  => 'Projeção de Carga',
     'showNavbar' => true,
-    'pageActive' => 'cd-projecao-carga',
+    'pageActive' => 'carga-projecao',
     'customCSS'  => ['src/css/comissao-dashboard.css'],
     'bodyStyle'  => 'margin:0;padding:0;',
 ]) ?>
@@ -22,16 +23,8 @@ if (!$acessoCd) {
     <div class="dashboard-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-truck-flatbed"></i> Projeção de Carga</h4>
         <div class="d-flex align-items-center gap-2">
-            <select id="selEmpresa" class="form-select form-select-sm" style="min-width:260px;">
-                <option value="">— Selecione a empresa —</option>
-                <?php foreach ($empresas as $e): ?>
-                    <option value="<?= (int)$e['ID'] ?>">
-                        <?= htmlspecialchars($e['CODIGO'] . ' – ' . ($e['NOME_FANTASIA'] ?: $e['RAZAO_SOCIAL'])) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
             <button id="btnAtualizar" class="btn btn-sm btn-outline-primary" title="Atualizar">
-                <i class="bi bi-arrow-clockwise"></i>
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
             </button>
             <span class="text-muted small">
                 Total: <strong id="totalCargas">0</strong> cargas
@@ -57,7 +50,9 @@ if (!$acessoCd) {
                 </tr>
             </thead>
             <tbody id="tabelaBody">
-                <tr><td colspan="10" class="text-center text-muted py-4">Selecione uma empresa para carregar as cargas.</td></tr>
+                <tr><td colspan="10" class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm"></div> Carregando...
+                </td></tr>
             </tbody>
         </table>
     </div>
@@ -72,7 +67,6 @@ if (!$acessoCd) {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="fldEmprId">
                 <input type="hidden" id="fldNumCarga">
                 <div class="row g-3">
                     <div class="col-md-4">

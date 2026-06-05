@@ -8,8 +8,9 @@
 $acessoComissao    = $is_admin || in_array('comissao',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoCd          = $is_admin || in_array('cd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
-$acessoPedidos     = $is_admin || in_array('pedidos', $rotas_permitidas) || in_array('*', $rotas_permitidas);
-$acessoProcesso    = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoPedidos     = $is_admin || in_array('pedidos',     $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoProcesso    = $is_admin || in_array('processo',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoCarga       = $is_admin || in_array('carga',       $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
@@ -18,6 +19,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'faturamento-') || in_array($pActive, ['faturamento', 'meta-empresa']) => 'faturamento',
     str_starts_with($pActive, 'pedidos-')                                                            => 'pedidos',
     str_starts_with($pActive, 'processo-')                                                           => 'processo',
+    str_starts_with($pActive, 'carga-')                                                              => 'carga',
     $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
@@ -29,9 +31,12 @@ $comissaoSub = match(true) {
     default => ''
 };
 $cdSub = match(true) {
-    in_array($pActive, ['cd-dashboard', 'dashboard'])      => 'dashboard',
-    in_array($pActive, ['cd-calendario', 'calendario'])    => 'calendario',
-    $pActive === 'cd-projecao-carga'                       => 'projecao-carga',
+    in_array($pActive, ['cd-dashboard', 'dashboard'])   => 'dashboard',
+    in_array($pActive, ['cd-calendario', 'calendario']) => 'calendario',
+    default => ''
+};
+$cargaSub = match(true) {
+    $pActive === 'carga-projecao' => 'projecao',
     default => ''
 };
 $fatSub = match(true) {
@@ -126,12 +131,6 @@ $userName = $user_login ?? 'Usuário';
                         Agendamento
                     </a>
                 </li>
-                <li>
-                    <a href="<?= $base ?>cd-projecao-carga"
-                       class="sidebar-sublink <?= $cdSub === 'projecao-carga' ? 'active' : '' ?>">
-                        Projeção de Carga
-                    </a>
-                </li>
             </ul>
         </li>
         <?php endif; ?>
@@ -202,6 +201,24 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>processo-troca-tipo-nf"
                        class="sidebar-sublink <?= $processoSub === 'troca-tipo-nf' ? 'active' : '' ?>">
                         Troca Tipo NF Ent.
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoCarga): ?>
+        <li class="sidebar-group" id="grpCarga">
+            <button class="sidebar-group-btn <?= $activeGroup === 'carga' ? 'active open' : '' ?>">
+                <i class="bi bi-truck-flatbed"></i>
+                <span>Cargas</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'carga' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>carga-projecao"
+                       class="sidebar-sublink <?= $cargaSub === 'projecao' ? 'active' : '' ?>">
+                        Projeção de Carga
                     </a>
                 </li>
             </ul>
