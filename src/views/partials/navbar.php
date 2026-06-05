@@ -31,6 +31,7 @@ $comissaoSub = match(true) {
 $cdSub = match(true) {
     in_array($pActive, ['cd-dashboard', 'dashboard'])      => 'dashboard',
     in_array($pActive, ['cd-calendario', 'calendario'])    => 'calendario',
+    $pActive === 'cd-projecao-carga'                       => 'projecao-carga',
     default => ''
 };
 $fatSub = match(true) {
@@ -123,6 +124,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>cd-calendario"
                        class="sidebar-sublink <?= $cdSub === 'calendario' ? 'active' : '' ?>">
                         Agendamento
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>cd-projecao-carga"
+                       class="sidebar-sublink <?= $cdSub === 'projecao-carga' ? 'active' : '' ?>">
+                        Projeção de Carga
                     </a>
                 </li>
             </ul>
