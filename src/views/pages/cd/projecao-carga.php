@@ -13,7 +13,7 @@ if (!$acessoCarga) {
     'pageTitle'  => 'Projeção de Carga',
     'showNavbar' => true,
     'pageActive' => 'carga-projecao',
-    'customCSS'  => ['src/css/comissao-dashboard.css'],
+    'customCSS'  => ['src/css/comissao-dashboard.css', 'src/css/cd-dashboard.css'],
     'bodyStyle'  => 'margin:0;padding:0;',
 ]) ?>
 
@@ -38,14 +38,14 @@ if (!$acessoCarga) {
             <thead class="table-dark">
                 <tr>
                     <th class="text-center">Nº CARGA</th>
-                    <th>DT GERAÇÃO</th>
+                    <th>DT CARGA</th>
                     <th>DESCRIÇÃO</th>
                     <th class="text-end">CUBAGEM</th>
                     <th class="text-end">VALOR</th>
                     <th class="text-center">DT CARREGAMENTO</th>
                     <th class="text-center">SITUAÇÃO</th>
                     <th>MOTORISTA</th>
-                    <th>FROTA / PLACAS</th>
+                    <th class="text-center">PLACA</th>
                     <th class="text-center">AÇÕES</th>
                 </tr>
             </thead>

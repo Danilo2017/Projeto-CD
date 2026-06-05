@@ -81,7 +81,7 @@
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
                 <td class="text-center">${badgeSituacao(r.SITUACAO)}${badgePosPLC(r.POS_PLC)}</td>
                 <td>${fmt(r.MOTORISTA)}</td>
-                <td>${fmt(r.FROTA)} ${r.PLACAS ? '/ ' + r.PLACAS : ''}</td>
+                <td class="text-center">${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}</td>
                 <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
                         <i class="bi bi-pencil-fill"></i>
