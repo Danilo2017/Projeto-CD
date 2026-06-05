@@ -68,9 +68,18 @@
         if (!rows.length) {
             tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
             document.getElementById('totalCargas').textContent = '0';
+            document.getElementById('totalPendente').textContent = '-';
+            document.getElementById('totalFaturado').textContent = '-';
             return;
         }
         document.getElementById('totalCargas').textContent = rows.length;
+
+        const sumPend = rows.reduce((s, r) => s + (parseFloat(r.VALOR_PENDENTE) || 0), 0);
+        const sumFat  = rows.reduce((s, r) => s + (parseFloat(r.VALOR_FATURADO)  || 0), 0);
+        const fmt2    = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('totalPendente').textContent = fmt2(sumPend);
+        document.getElementById('totalFaturado').textContent = fmt2(sumFat);
+
         tbody.innerHTML = rows.map(r => {
             const isFaturada = r.POS_PLC === 'FT' || r.POS_PLC === 'FP';
             const rowClass   = isFaturada ? 'table-success' : '';

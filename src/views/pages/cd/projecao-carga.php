@@ -22,12 +22,18 @@ if (!$acessoCarga) {
     <!-- Cabeçalho -->
     <div class="dashboard-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-truck-flatbed"></i> Projeção de Carga</h4>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
             <button id="btnAtualizar" class="btn btn-sm btn-outline-primary" title="Atualizar">
                 <i class="bi bi-arrow-clockwise"></i> Atualizar
             </button>
             <span class="text-muted small">
-                Total: <strong id="totalCargas">0</strong> cargas
+                <strong id="totalCargas">0</strong> cargas
+            </span>
+            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 fs-6">
+                Pendente: <strong id="totalPendente">-</strong>
+            </span>
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fs-6">
+                Faturado: <strong id="totalFaturado">-</strong>
             </span>
         </div>
     </div>
