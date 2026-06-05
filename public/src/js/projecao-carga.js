@@ -23,6 +23,12 @@
         const cls = cores[sit] || 'bg-secondary';
         return `<span class="badge ${cls}">${sit}</span>`;
     }
+    function badgePosPLC(pos) {
+        if (!pos || pos === 'PE') return '';
+        const map = { 'FT': ['bg-primary', 'Faturado'], 'FP': ['bg-info text-dark', 'Fat. Parcial'] };
+        const [cls, label] = map[pos] || ['bg-secondary', pos];
+        return ` <span class="badge ${cls}" title="Situação no FOCCO: ${pos}">${label}</span>`;
+    }
     async function fetchJson(url, body) {
         const opts = body
             ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
@@ -73,7 +79,7 @@
                 <td class="text-end">${fmt(r.CUBAGEM)}</td>
                 <td class="text-end">${fmtValor(r.VALOR)}</td>
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
-                <td class="text-center">${badgeSituacao(r.SITUACAO)}</td>
+                <td class="text-center">${badgeSituacao(r.SITUACAO)}${badgePosPLC(r.POS_PLC)}</td>
                 <td>${fmt(r.MOTORISTA)}</td>
                 <td>${fmt(r.FROTA)} ${r.PLACAS ? '/ ' + r.PLACAS : ''}</td>
                 <td class="text-center text-nowrap">
