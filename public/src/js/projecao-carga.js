@@ -49,7 +49,7 @@
         carregandoLista = true;
         document.getElementById('btnAtualizar').disabled = true;
         document.getElementById('tabelaBody').innerHTML =
-            '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
+            '<tr><td colspan="11" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
 
         try {
             const data = await fetchJson('carga-api-listar', {});
@@ -66,18 +66,22 @@
     function renderTabela(rows) {
         const tbody = document.getElementById('tabelaBody');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
             document.getElementById('totalCargas').textContent = '0';
             return;
         }
         document.getElementById('totalCargas').textContent = rows.length;
-        tbody.innerHTML = rows.map(r => `
-            <tr data-carga="${r.NUM_CARGA}">
+        tbody.innerHTML = rows.map(r => {
+            const isFaturada = r.POS_PLC === 'FT' || r.POS_PLC === 'FP';
+            const rowClass   = isFaturada ? 'table-success' : '';
+            return `
+            <tr data-carga="${r.NUM_CARGA}" class="${rowClass}">
                 <td class="text-center fw-bold">${fmt(r.NUM_CARGA)}</td>
                 <td>${fmt(r.DT_GERACAO)}</td>
-                <td class="text-truncate" style="max-width:180px" title="${r.DESCRICAO ?? ''}">${fmt(r.DESCRICAO)}</td>
+                <td class="text-truncate" style="max-width:160px" title="${r.DESCRICAO ?? ''}">${fmt(r.DESCRICAO)}</td>
                 <td class="text-end">${fmt(r.CUBAGEM)}</td>
-                <td class="text-end">${fmtValor(r.VALOR)}</td>
+                <td class="text-end">${fmtValor(r.VALOR_PENDENTE)}</td>
+                <td class="text-end">${fmtValor(r.VALOR_FATURADO)}</td>
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
                 <td class="text-center">${badgeSituacao(r.SITUACAO)}${badgePosPLC(r.POS_PLC)}</td>
                 <td>${fmt(r.MOTORISTA)}</td>
@@ -90,7 +94,8 @@
                         <i class="bi bi-clock-history"></i>
                     </button>
                 </td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
     }
 
     /* ── Modal Editar ────────────────────────────────── */
