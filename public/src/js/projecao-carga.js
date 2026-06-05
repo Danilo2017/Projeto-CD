@@ -75,7 +75,7 @@
             const isFaturada = r.POS_PLC === 'FT' || r.POS_PLC === 'FP';
             const rowClass   = isFaturada ? 'table-success' : '';
             return `
-            <tr data-carga="${r.NUM_CARGA}" class="${rowClass}">
+            <tr data-carga="${r.NUM_CARGA}" data-pos="${r.POS_PLC}" class="${rowClass}">
                 <td class="text-center fw-bold">${fmt(r.NUM_CARGA)}</td>
                 <td>${fmt(r.DT_GERACAO)}</td>
                 <td class="text-truncate" style="max-width:160px" title="${r.DESCRICAO ?? ''}">${fmt(r.DESCRICAO)}</td>
@@ -83,7 +83,7 @@
                 <td class="text-end">${fmtValor(r.VALOR_PENDENTE)}</td>
                 <td class="text-end">${fmtValor(r.VALOR_FATURADO)}</td>
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
-                <td class="text-center">${badgeSituacao(r.SITUACAO)}${badgePosPLC(r.POS_PLC)}</td>
+                <td class="text-center">${(r.POS_PLC === 'FT' || r.POS_PLC === 'FP') ? badgePosPLC(r.POS_PLC) : badgeSituacao(r.SITUACAO)}</td>
                 <td>${fmt(r.MOTORISTA)}</td>
                 <td class="text-center">${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}</td>
                 <td class="text-center text-nowrap">
@@ -100,6 +100,10 @@
 
     /* ── Modal Editar ────────────────────────────────── */
     window.abrirModal = async function (numCarga) {
+        const tr     = document.querySelector(`tr[data-carga="${numCarga}"]`);
+        const posPLC = tr ? tr.dataset.pos : '';
+        const isFat  = posPLC === 'FT' || posPLC === 'FP';
+
         document.getElementById('modalCargaTitulo').textContent = `Carga #${numCarga}`;
         document.getElementById('fldNumCarga').value = numCarga;
 
@@ -108,6 +112,10 @@
          'fldTipoVeiculo','fldMotorista','fldContato','fldNumDocs','fldObservacoes']
             .forEach(id => { document.getElementById(id).value = ''; });
         document.getElementById('fldSituacao').value = 'PENDENTE';
+
+        // Esconder campo Situação para cargas já faturadas no FOCCO
+        const grpSituacao = document.getElementById('fldSituacao').closest('.col-md-4');
+        grpSituacao.style.display = isFat ? 'none' : '';
 
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCarga')).show();
 
