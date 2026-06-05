@@ -51,13 +51,14 @@ if (!$acessoCarga) {
                     <th class="text-end">VLR FATURADO</th>
                     <th class="text-center">DT CARREGAMENTO</th>
                     <th class="text-center">SITUAÇÃO</th>
+                    <th class="text-center">EXPEDIÇÃO</th>
                     <th>MOTORISTA</th>
                     <th class="text-center">PLACA</th>
                     <th class="text-center">AÇÕES</th>
                 </tr>
             </thead>
             <tbody id="tabelaBody">
-                <tr><td colspan="11" class="text-center py-4">
+                <tr><td colspan="12" class="text-center py-4">
                     <div class="spinner-border spinner-border-sm"></div> Carregando...
                 </td></tr>
             </tbody>
