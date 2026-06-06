@@ -15,7 +15,8 @@ class ProjecaoCargaHandler
     public static function listar(array $dados): array
     {
         Controller::verificarCamposVazios($dados, ['empr_id']);
-        $lista = ProjecaoCarga::listar((int) $dados['empr_id']);
+        $dataFiltro = $dados['data_filtro'] ?? date('Y-m-d');
+        $lista = ProjecaoCarga::listar((int) $dados['empr_id'], $dataFiltro);
         return ['success' => true, 'data' => $lista, 'total' => count($lista)];
     }
 

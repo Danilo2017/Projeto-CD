@@ -11,9 +11,13 @@ class ProjecaoCarga
         'FROTA', 'PLACAS', 'TIPO_VEICULO', 'MOTORISTA', 'CONTATO', 'SITUACAO',
     ];
 
-    public static function listar(int $emprId): array
+    public static function listar(int $emprId, string $dataFiltro = ''): array
     {
-        $result = Database::switchParams('focco', ['empr_id' => $emprId], 'cd.carga.listar', true);
+        if (!$dataFiltro) $dataFiltro = date('Y-m-d');
+        $result = Database::switchParams('focco', [
+            'empr_id'     => $emprId,
+            'data_filtro' => $dataFiltro,
+        ], 'cd.carga.listar', true);
         return $result['retorno'] ?? [];
     }
 

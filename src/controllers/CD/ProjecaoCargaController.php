@@ -24,8 +24,12 @@ class ProjecaoCargaController extends Controller
     public function listar(): void
     {
         try {
-            $emprId = $this->emprIdSessao();
-            $result = ProjecaoCargaHandler::listar(['empr_id' => $emprId]);
+            $body       = self::getBody() ?? [];
+            $dataFiltro = $body['data_filtro'] ?? date('Y-m-d');
+            $result     = ProjecaoCargaHandler::listar([
+                'empr_id'     => $this->emprIdSessao(),
+                'data_filtro' => $dataFiltro,
+            ]);
             self::response($result, 200);
         } catch (\Exception $e) {
             $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;

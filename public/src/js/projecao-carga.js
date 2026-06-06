@@ -43,6 +43,10 @@
         bootstrap.Toast.getOrCreateInstance(el).show();
     }
 
+    function dataFiltroAtual() {
+        return document.getElementById('inputDataFiltro')?.value || new Date().toISOString().slice(0, 10);
+    }
+
     /* ── Carregar lista ───────────────────────────────── */
     async function carregarLista() {
         if (carregandoLista) return;
@@ -52,7 +56,7 @@
             '<tr><td colspan="12" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
 
         try {
-            const data = await fetchJson('carga-api-listar', {});
+            const data = await fetchJson('carga-api-listar', { data_filtro: dataFiltroAtual() });
             if (data.error) { toast(data.error); return; }
             renderTabela(data.data || []);
         } catch (e) {
@@ -211,6 +215,9 @@
 
     /* ── Init ─────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
+        // Data padrão: hoje
+        document.getElementById('inputDataFiltro').value = new Date().toISOString().slice(0, 10);
+
         document.getElementById('btnAtualizar').addEventListener('click', carregarLista);
 
         // Preencher situacao select
