@@ -39,6 +39,9 @@ if (!$acessoCarga) {
             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fs-6">
                 Faturado: <strong id="totalFaturado">-</strong>
             </span>
+            <button class="btn btn-sm btn-success" onclick="downloadExcel()" title="Exportar para Excel">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </button>
         </div>
     </div>
 

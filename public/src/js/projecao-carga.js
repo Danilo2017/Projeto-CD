@@ -232,6 +232,52 @@
         }
     };
 
+    /* ── Download Excel ──────────────────────────────── */
+    window.downloadExcel = function () {
+        if (!_cargasData.length) { toast('Nenhum dado para exportar.', 'warning'); return; }
+
+        const cols = [
+            ['NUM_CARGA',       'Nº CARGA'],
+            ['DT_GERACAO',      'DT CARGA'],
+            ['DESCRICAO',       'DESCRIÇÃO'],
+            ['ROTA',            'ROTA'],
+            ['CUBAGEM',         'CUBAGEM'],
+            ['VALOR_PENDENTE',  'VLR PENDENTE'],
+            ['VALOR_FATURADO',  'VLR FATURADO'],
+            ['DT_CARREGAMENTO', 'DT CARREGAMENTO'],
+            ['SITUACAO',        'SITUAÇÃO'],
+            ['STATUS_WMS',      'EXPEDIÇÃO'],
+            ['MOTORISTA',       'MOTORISTA'],
+            ['PLACAS',          'PLACA'],
+            ['FROTA',           'FROTA'],
+            ['TIPO_VEICULO',    'TIPO VEÍCULO'],
+            ['CONTATO',         'CONTATO'],
+            ['NUM_DOCS',        'Nº DOCUMENTOS'],
+            ['OBSERVACOES',     'OBSERVAÇÕES'],
+            ['POS_PLC',         'POS. PLC'],
+        ];
+
+        const esc = v => {
+            if (v === null || v === undefined) return '';
+            const s = String(v).replaceAll('"', '""');
+            return /[;\"\n\r]/.test(s) ? `"${s}"` : s;
+        };
+
+        const linhas = [
+            cols.map(([, l]) => esc(l)).join(';'),
+            ..._cargasData.map(r => cols.map(([k]) => esc(r[k])).join(';')),
+        ];
+
+        const blob = new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = Object.assign(document.createElement('a'), {
+            href:     url,
+            download: `cargas_${document.getElementById('inputDataFiltro').value || 'export'}.csv`,
+        });
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     /* ── Modal Anexos ────────────────────────────────── */
     let _numCargaAnexo = null;
 
