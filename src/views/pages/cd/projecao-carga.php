@@ -109,6 +109,20 @@ if (!$acessoCarga) {
                         <label class="form-label fw-semibold">Tipo Veículo</label>
                         <input type="text" id="fldTipoVeiculo" class="form-control form-control-sm" placeholder="Ex: Carreta, Truck">
                     </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">Situação do Caminhão</label>
+                        <select id="fldSituacaoCaminhao" class="form-select form-select-sm">
+                            <option value="">— Selecione —</option>
+                            <option>AGUARDANDO CARREGAMENTO</option>
+                            <option>CARREGANDO</option>
+                            <option>EM TRÂNSITO</option>
+                            <option>EM ENTREGA</option>
+                            <option>DESCARREGANDO</option>
+                            <option>RETORNANDO</option>
+                            <option>EM MANUTENÇÃO</option>
+                            <option>DISPONÍVEL</option>
+                        </select>
+                    </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Motorista</label>
                         <input type="text" id="fldMotorista" class="form-control form-control-sm">

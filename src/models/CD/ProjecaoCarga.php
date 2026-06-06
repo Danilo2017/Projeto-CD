@@ -9,6 +9,7 @@ class ProjecaoCarga
     private static array $campos = [
         'DT_CARREGAMENTO', 'OBSERVACOES', 'NUM_DOCS', 'SITUACAO_CARGA',
         'FROTA', 'PLACAS', 'TIPO_VEICULO', 'MOTORISTA', 'CONTATO', 'SITUACAO',
+        'SITUACAO_CAMINHAO',
     ];
 
     public static function listar(int $emprId, string $dataFiltro = '', string $wmsSchema = 'FOCCOWMS14A'): array

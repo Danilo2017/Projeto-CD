@@ -35,6 +35,21 @@
         const cls = cores[status] || 'bg-secondary';
         return `<span class="badge ${cls}">${status}</span>`;
     }
+    function badgeSitCaminhao(sit) {
+        if (!sit) return '';
+        const cores = {
+            'AGUARDANDO CARREGAMENTO': 'bg-secondary',
+            'CARREGANDO':              'bg-warning text-dark',
+            'EM TRÂNSITO':             'bg-primary',
+            'EM ENTREGA':              'bg-info text-dark',
+            'DESCARREGANDO':           'bg-info text-dark',
+            'RETORNANDO':              'bg-success',
+            'EM MANUTENÇÃO':           'bg-danger',
+            'DISPONÍVEL':              'bg-light text-dark border',
+        };
+        const cls = cores[sit] || 'bg-secondary';
+        return `<span class="badge ${cls}" style="font-size:0.65rem;white-space:normal;max-width:110px">${sit}</span>`;
+    }
     function badgePosPLC(pos) {
         if (!pos || pos === 'PE') return '';
         const map = { 'FT': ['bg-primary', 'Faturado'], 'FP': ['bg-info text-dark', 'Fat. Parcial'] };
@@ -122,6 +137,7 @@
                 <td class="text-center" style="width:115px;min-width:115px">
                     ${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}
                     ${r.PLACAS && r.FROTA ? `<div class="text-muted" style="font-size:0.7rem">${r.FROTA}</div>` : ''}
+                    ${r.SITUACAO_CAMINHAO ? `<div class="mt-1">${badgeSitCaminhao(r.SITUACAO_CAMINHAO)}</div>` : ''}
                 </td>
                 <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
@@ -152,8 +168,9 @@
         document.getElementById('fldSituacaoCarga').value  = r.SITUACAO_CARGA || '';
         document.getElementById('fldFrota').value          = r.FROTA          || '';
         document.getElementById('fldPlacas').value         = r.PLACAS         || '';
-        document.getElementById('fldTipoVeiculo').value    = r.TIPO_VEICULO   || '';
-        document.getElementById('fldMotorista').value      = r.MOTORISTA      || '';
+        document.getElementById('fldTipoVeiculo').value      = r.TIPO_VEICULO       || '';
+        document.getElementById('fldSituacaoCaminhao').value = r.SITUACAO_CAMINHAO || '';
+        document.getElementById('fldMotorista').value        = r.MOTORISTA         || '';
         document.getElementById('fldContato').value        = r.CONTATO        || '';
         document.getElementById('fldNumDocs').value        = r.NUM_DOCS       || '';
         document.getElementById('fldObservacoes').value    = r.OBSERVACOES    || '';
@@ -177,8 +194,9 @@
             situacao_carga:  document.getElementById('fldSituacaoCarga').value,
             frota:           document.getElementById('fldFrota').value,
             placas:          document.getElementById('fldPlacas').value,
-            tipo_veiculo:    document.getElementById('fldTipoVeiculo').value,
-            motorista:       document.getElementById('fldMotorista').value,
+            tipo_veiculo:       document.getElementById('fldTipoVeiculo').value,
+            situacao_caminhao:  document.getElementById('fldSituacaoCaminhao').value,
+            motorista:          document.getElementById('fldMotorista').value,
             contato:         document.getElementById('fldContato').value,
             num_docs:        document.getElementById('fldNumDocs').value,
             observacoes:     document.getElementById('fldObservacoes').value,
@@ -200,8 +218,9 @@
                 r.SITUACAO_CARGA  = payload.situacao_carga  || null;
                 r.FROTA           = payload.frota           || null;
                 r.PLACAS          = payload.placas          || null;
-                r.TIPO_VEICULO    = payload.tipo_veiculo    || null;
-                r.MOTORISTA       = payload.motorista       || null;
+                r.TIPO_VEICULO      = payload.tipo_veiculo      || null;
+                r.SITUACAO_CAMINHAO = payload.situacao_caminhao || null;
+                r.MOTORISTA         = payload.motorista         || null;
                 r.CONTATO         = payload.contato         || null;
                 r.NUM_DOCS        = payload.num_docs        || null;
                 r.OBSERVACOES     = payload.observacoes     || null;
