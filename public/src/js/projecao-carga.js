@@ -92,7 +92,7 @@
                 <td class="text-end">${fmtValor(r.VALOR_PENDENTE)}</td>
                 <td class="text-end">${fmtValor(r.VALOR_FATURADO)}</td>
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
-                <td class="text-center">${isFaturada ? badgePosPLC(r.POS_PLC) : ''}</td>
+                <td class="text-center">${isFaturada ? badgePosPLC(r.POS_PLC) : badgeSituacao(r.SITUACAO)}</td>
                 <td class="text-center text-muted small">-</td>
                 <td>${fmt(r.MOTORISTA)}</td>
                 <td class="text-center">${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}</td>
