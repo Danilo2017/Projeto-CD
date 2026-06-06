@@ -114,6 +114,7 @@ if (!$acessoCarga) {
                         <label class="form-label fw-semibold">Situação do Caminhão</label>
                         <select id="fldSituacaoCaminhao" class="form-select form-select-sm">
                             <option value="">— Selecione —</option>
+                            <option>DISPONÍVEL</option>
                             <option>AGUARDANDO CARREGAMENTO</option>
                             <option>CARREGANDO</option>
                             <option>EM TRÂNSITO</option>
@@ -121,7 +122,8 @@ if (!$acessoCarga) {
                             <option>DESCARREGANDO</option>
                             <option>RETORNANDO</option>
                             <option>EM MANUTENÇÃO</option>
-                            <option>DISPONÍVEL</option>
+                            <option>AGUARDANDO DOCUMENTAÇÃO</option>
+                            <option>FINALIZADO</option>
                         </select>
                     </div>
                     <div class="col-md-6">

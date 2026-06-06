@@ -124,6 +124,38 @@ class ProjecaoCarga
         return $result['retorno'] ?? [];
     }
 
+    // ── Transições automáticas de situação do caminhão ───────────────────────
+
+    public static function marcarAguardandoDocumentacao(int $emprId, array $numCargas): void
+    {
+        if (!$numCargas) return;
+        $pdo = Database::getInstance('focco');
+        $in  = implode(',', array_map('intval', $numCargas));
+        $pdo->prepare(
+            "UPDATE FOCCO3I.TGAZIN_CARGA_AGEND
+             SET SITUACAO_CAMINHAO = 'AGUARDANDO DOCUMENTAÇÃO', DT_ALTERACAO = SYSDATE
+             WHERE EMPR_ID = :e AND NUM_CARGA IN ($in) AND SITUACAO_CAMINHAO IS NULL"
+        )->execute([':e' => $emprId]);
+        $pdo->exec('COMMIT');
+    }
+
+    public static function marcarFinalizado(int $emprId, int $numCarga): void
+    {
+        $pdo = Database::getInstance('focco');
+        $pdo->prepare(
+            "MERGE INTO FOCCO3I.TGAZIN_CARGA_AGEND A
+             USING (SELECT :e AS EMPR_ID, :c AS NUM_CARGA FROM DUAL) S
+             ON (A.EMPR_ID = S.EMPR_ID AND A.NUM_CARGA = S.NUM_CARGA)
+             WHEN MATCHED THEN
+                 UPDATE SET SITUACAO_CAMINHAO = 'FINALIZADO', DT_ALTERACAO = SYSDATE
+                 WHERE NVL(A.SITUACAO_CAMINHAO,'') <> 'DISPONÍVEL'
+             WHEN NOT MATCHED THEN
+                 INSERT (EMPR_ID, NUM_CARGA, SITUACAO_CAMINHAO, DT_CADASTRO)
+                 VALUES (S.EMPR_ID, S.NUM_CARGA, 'FINALIZADO', SYSDATE)"
+        )->execute([':e' => $emprId, ':c' => $numCarga]);
+        $pdo->exec('COMMIT');
+    }
+
     // ── Anexos (OCI8 / BLOB) ──────────────────────────────────────────────────
 
     private static function oci8Conn()

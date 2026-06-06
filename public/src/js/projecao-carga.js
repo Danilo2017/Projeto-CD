@@ -38,6 +38,7 @@
     function badgeSitCaminhao(sit) {
         if (!sit) return '';
         const cores = {
+            'DISPONÍVEL':              'bg-light text-dark border',
             'AGUARDANDO CARREGAMENTO': 'bg-secondary',
             'CARREGANDO':              'bg-warning text-dark',
             'EM TRÂNSITO':             'bg-primary',
@@ -45,10 +46,14 @@
             'DESCARREGANDO':           'bg-info text-dark',
             'RETORNANDO':              'bg-success',
             'EM MANUTENÇÃO':           'bg-danger',
-            'DISPONÍVEL':              'bg-light text-dark border',
+            'AGUARDANDO DOCUMENTAÇÃO': 'text-white',
+            'FINALIZADO':              'bg-success',
         };
-        const cls = cores[sit] || 'bg-secondary';
-        return `<span class="badge ${cls}" style="font-size:0.65rem;white-space:normal;max-width:110px">${sit}</span>`;
+        const cls   = cores[sit] || 'bg-secondary';
+        const style = sit === 'AGUARDANDO DOCUMENTAÇÃO'
+            ? 'background-color:#fd7e14;font-size:0.65rem;white-space:normal;max-width:110px'
+            : 'font-size:0.65rem;white-space:normal;max-width:110px';
+        return `<span class="badge ${cls}" style="${style}">${sit}</span>`;
     }
     function badgePosPLC(pos) {
         if (!pos || pos === 'PE') return '';

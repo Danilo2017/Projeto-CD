@@ -92,8 +92,9 @@ class ProjecaoCargaController extends Controller
                 self::response(['error' => 'Arquivo inválido ou carga não informada.'], 400);
                 return;
             }
+            $emprId = $this->emprIdSessao();
             $id = \src\models\Cd\ProjecaoCarga::salvarAnexo(
-                $this->emprIdSessao(),
+                $emprId,
                 $numCarga,
                 $arquivo['name'],
                 $arquivo['type'] ?: 'application/octet-stream',
@@ -101,6 +102,7 @@ class ProjecaoCargaController extends Controller
                 file_get_contents($arquivo['tmp_name']),
                 $_SESSION['user']['login'] ?? 'desconhecido'
             );
+            \src\models\Cd\ProjecaoCarga::marcarFinalizado($emprId, $numCarga);
             self::response(['success' => true, 'id' => $id], 200);
         } catch (\Exception $e) {
             self::response(['error' => $e->getMessage()], 500);
