@@ -264,36 +264,46 @@
     window.downloadExcel = function () {
         if (!_cargasData.length) { toast('Nenhum dado para exportar.', 'warning'); return; }
 
+        const NUMERICOS = new Set(['CUBAGEM', 'VALOR_PENDENTE', 'VALOR_FATURADO']);
+
         const cols = [
-            ['NUM_CARGA',       'Nº CARGA'],
-            ['DT_GERACAO',      'DT CARGA'],
-            ['DESCRICAO',       'DESCRIÇÃO'],
-            ['ROTA',            'ROTA'],
-            ['CUBAGEM',         'CUBAGEM'],
-            ['VALOR_PENDENTE',  'VLR PENDENTE'],
-            ['VALOR_FATURADO',  'VLR FATURADO'],
-            ['DT_CARREGAMENTO', 'DT CARREGAMENTO'],
-            ['SITUACAO',        'SITUAÇÃO'],
-            ['STATUS_WMS',      'EXPEDIÇÃO'],
-            ['MOTORISTA',       'MOTORISTA'],
-            ['PLACAS',          'PLACA'],
-            ['FROTA',           'FROTA'],
-            ['TIPO_VEICULO',    'TIPO VEÍCULO'],
-            ['CONTATO',         'CONTATO'],
-            ['NUM_DOCS',        'Nº DOCUMENTOS'],
-            ['OBSERVACOES',     'OBSERVAÇÕES'],
-            ['POS_PLC',         'POS. PLC'],
+            ['NUM_CARGA',          'Nº CARGA'],
+            ['DT_GERACAO',         'DT CARGA'],
+            ['DESCRICAO',          'DESCRIÇÃO'],
+            ['ROTA',               'ROTA'],
+            ['CUBAGEM',            'CUBAGEM'],
+            ['VALOR_PENDENTE',     'VLR PENDENTE'],
+            ['VALOR_FATURADO',     'VLR FATURADO'],
+            ['DT_CARREGAMENTO',    'DT CARREGAMENTO'],
+            ['SITUACAO',           'SITUAÇÃO'],
+            ['SITUACAO_CAMINHAO',  'SIT. CAMINHÃO'],
+            ['STATUS_WMS',         'EXPEDIÇÃO'],
+            ['MOTORISTA',          'MOTORISTA'],
+            ['PLACAS',             'PLACA'],
+            ['FROTA',              'FROTA'],
+            ['TIPO_VEICULO',       'TIPO VEÍCULO'],
+            ['CONTATO',            'CONTATO'],
+            ['NUM_DOCS',           'Nº DOCUMENTOS'],
+            ['OBSERVACOES',        'OBSERVAÇÕES'],
+            ['POS_PLC',            'POS. PLC'],
         ];
 
-        const esc = v => {
-            if (v === null || v === undefined) return '';
+        const fmtNum = v => {
+            const n = parseFloat(v);
+            if (isNaN(n)) return '';
+            return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+        };
+
+        const esc = (v, key) => {
+            if (v === null || v === undefined || v === '') return '';
+            if (NUMERICOS.has(key)) return fmtNum(v);
             const s = String(v).replaceAll('"', '""');
             return /[;\"\n\r]/.test(s) ? `"${s}"` : s;
         };
 
         const linhas = [
-            cols.map(([, l]) => esc(l)).join(';'),
-            ..._cargasData.map(r => cols.map(([k]) => esc(r[k])).join(';')),
+            cols.map(([, l]) => esc(l, '')).join(';'),
+            ..._cargasData.map(r => cols.map(([k]) => esc(r[k], k)).join(';')),
         ];
 
         const blob = new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
