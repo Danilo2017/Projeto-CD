@@ -110,10 +110,19 @@
                 <td class="text-end">${fmtValor(r.VALOR_PENDENTE)}</td>
                 <td class="text-end">${fmtValor(r.VALOR_FATURADO)}</td>
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
-                <td class="text-center">${isFaturada ? badgePosPLC(r.POS_PLC) : badgeSituacao(r.SITUACAO)}</td>
+                <td class="text-center">
+                    ${isFaturada ? badgePosPLC(r.POS_PLC) : badgeSituacao(r.SITUACAO)}
+                    ${r.SITUACAO_CARGA ? `<div class="text-muted text-truncate" style="font-size:0.7rem;max-width:110px;margin:0 auto" title="${r.SITUACAO_CARGA}">${r.SITUACAO_CARGA}</div>` : ''}
+                </td>
                 <td class="text-center">${badgeWms(r.STATUS_WMS)}</td>
-                <td class="text-truncate" style="max-width:160px" title="${r.MOTORISTA ?? ''}">${fmt(r.MOTORISTA)}</td>
-                <td class="text-center" style="width:115px;min-width:115px">${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}</td>
+                <td style="max-width:160px">
+                    <div class="text-truncate" title="${r.MOTORISTA ?? ''}">${fmt(r.MOTORISTA)}</div>
+                    ${r.CONTATO ? `<div class="text-muted text-truncate" style="font-size:0.7rem" title="${r.CONTATO}">${r.CONTATO}</div>` : ''}
+                </td>
+                <td class="text-center" style="width:115px;min-width:115px">
+                    ${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}
+                    ${r.PLACAS && r.FROTA ? `<div class="text-muted" style="font-size:0.7rem">${r.FROTA}</div>` : ''}
+                </td>
                 <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
                         <i class="bi bi-pencil-fill"></i>
