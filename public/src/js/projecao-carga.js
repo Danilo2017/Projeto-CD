@@ -64,7 +64,7 @@
         carregandoLista = true;
         document.getElementById('btnAtualizar').disabled = true;
         document.getElementById('tabelaBody').innerHTML =
-            '<tr><td colspan="12" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
+            '<tr><td colspan="13" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
 
         try {
             const data = await fetchJson('carga-api-listar', { data_filtro: dataFiltroAtual() });
@@ -81,7 +81,7 @@
     function renderTabela(rows) {
         const tbody = document.getElementById('tabelaBody');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
             document.getElementById('totalCargas').textContent = '0';
             document.getElementById('totalPendente').textContent = '-';
             document.getElementById('totalFaturado').textContent = '-';
@@ -103,6 +103,7 @@
                 <td class="text-center fw-bold">${fmt(r.NUM_CARGA)}</td>
                 <td>${fmt(r.DT_GERACAO)}</td>
                 <td class="text-truncate" style="max-width:160px" title="${r.DESCRICAO ?? ''}">${fmt(r.DESCRICAO)}</td>
+                <td class="text-truncate small" style="max-width:200px" title="${r.ROTA ?? ''}">${fmt(r.ROTA)}</td>
                 <td class="text-end">${fmt(r.CUBAGEM)}</td>
                 <td class="text-end">${fmtValor(r.VALOR_PENDENTE)}</td>
                 <td class="text-end">${fmtValor(r.VALOR_FATURADO)}</td>

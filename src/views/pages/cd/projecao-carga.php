@@ -50,6 +50,7 @@ if (!$acessoCarga) {
                     <th class="text-center">Nº CARGA</th>
                     <th>DT CARGA</th>
                     <th>DESCRIÇÃO</th>
+                    <th>ROTA</th>
                     <th class="text-end">CUBAGEM</th>
                     <th class="text-end">VLR PENDENTE</th>
                     <th class="text-end">VLR FATURADO</th>
@@ -62,7 +63,7 @@ if (!$acessoCarga) {
                 </tr>
             </thead>
             <tbody id="tabelaBody">
-                <tr><td colspan="12" class="text-center py-4">
+                <tr><td colspan="13" class="text-center py-4">
                     <div class="spinner-border spinner-border-sm"></div> Carregando...
                 </td></tr>
             </tbody>
