@@ -70,4 +70,69 @@ class ProjecaoCargaController extends Controller
             self::response(['error' => $e->getMessage()], $code ?: 500);
         }
     }
+
+    public function listarAnexos(): void
+    {
+        try {
+            $numCarga = (int) ($_GET['num_carga'] ?? 0);
+            if ($numCarga <= 0) { self::response(['error' => 'num_carga obrigatório.'], 400); return; }
+            $lista = \src\models\Cd\ProjecaoCarga::listarAnexos($this->emprIdSessao(), $numCarga);
+            self::response(['success' => true, 'data' => $lista], 200);
+        } catch (\Exception $e) {
+            self::response(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function uploadAnexo(): void
+    {
+        try {
+            $numCarga = (int) ($_POST['num_carga'] ?? 0);
+            $arquivo  = $_FILES['arquivo'] ?? null;
+            if ($numCarga <= 0 || !$arquivo || $arquivo['error'] !== UPLOAD_ERR_OK) {
+                self::response(['error' => 'Arquivo inválido ou carga não informada.'], 400);
+                return;
+            }
+            $id = \src\models\Cd\ProjecaoCarga::salvarAnexo(
+                $this->emprIdSessao(),
+                $numCarga,
+                $arquivo['name'],
+                $arquivo['type'] ?: 'application/octet-stream',
+                (int) $arquivo['size'],
+                file_get_contents($arquivo['tmp_name']),
+                $_SESSION['user']['login'] ?? 'desconhecido'
+            );
+            self::response(['success' => true, 'id' => $id], 200);
+        } catch (\Exception $e) {
+            self::response(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function downloadAnexo(): void
+    {
+        try {
+            $id    = (int) ($_GET['id'] ?? 0);
+            $anexo = \src\models\Cd\ProjecaoCarga::downloadAnexo($this->emprIdSessao(), $id);
+            if (!$anexo) { http_response_code(404); echo 'Arquivo não encontrado'; return; }
+            header('Content-Type: ' . ($anexo['MIME_TYPE'] ?: 'application/octet-stream'));
+            header('Content-Disposition: attachment; filename="' . rawurlencode($anexo['NOME_ORIG']) . '"');
+            header('Content-Length: ' . strlen($anexo['CONTEUDO']));
+            echo $anexo['CONTEUDO'];
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo $e->getMessage();
+        }
+    }
+
+    public function excluirAnexo(): void
+    {
+        try {
+            $body = self::getBody() ?? [];
+            $id   = (int) ($body['id'] ?? 0);
+            if ($id <= 0) { self::response(['error' => 'ID inválido.'], 400); return; }
+            \src\models\Cd\ProjecaoCarga::excluirAnexo($this->emprIdSessao(), $id);
+            self::response(['success' => true], 200);
+        } catch (\Exception $e) {
+            self::response(['error' => $e->getMessage()], 500);
+        }
+    }
 }

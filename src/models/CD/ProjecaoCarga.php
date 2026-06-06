@@ -122,4 +122,116 @@ class ProjecaoCarga
         $result = Database::switchParams('focco', [], 'acesso.empresa.listar', true);
         return $result['retorno'] ?? [];
     }
+
+    // ── Anexos (OCI8 / BLOB) ──────────────────────────────────────────────────
+
+    private static function oci8Conn()
+    {
+        $tns = sprintf(
+            '(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=%s)(PORT=%s)))(CONNECT_DATA=(SERVICE_NAME=%s)))',
+            \src\Config::FOCCO_HOST, \src\Config::FOCCO_PORT, \src\Config::FOCCO_DATABASE
+        );
+        $conn = oci_connect(\src\Config::FOCCO_USER, \src\Config::FOCCO_PASS, $tns, 'AL32UTF8');
+        if (!$conn) {
+            $e = oci_error();
+            throw new \Exception('OCI8 connection error: ' . $e['message']);
+        }
+        return $conn;
+    }
+
+    public static function salvarAnexo(int $emprId, int $numCarga, string $nomeOrig, string $mimeType, int $tamanho, string $conteudo, string $usuario): int
+    {
+        $conn = self::oci8Conn();
+        $sql  = "INSERT INTO FOCCO3I.TGAZIN_CARGA_ANEXO
+                    (EMPR_ID, NUM_CARGA, NOME_ORIG, MIME_TYPE, TAMANHO, CONTEUDO, USUARIO)
+                 VALUES (:empr_id, :num_carga, :nome_orig, :mime_type, :tamanho, EMPTY_BLOB(), :usuario)
+                 RETURNING ID, CONTEUDO INTO :ret_id, :blob";
+
+        $stmt  = oci_parse($conn, $sql);
+        $blob  = oci_new_descriptor($conn, OCI_D_LOB);
+        $retId = 0;
+
+        oci_bind_by_name($stmt, ':empr_id',   $emprId);
+        oci_bind_by_name($stmt, ':num_carga', $numCarga);
+        oci_bind_by_name($stmt, ':nome_orig', $nomeOrig, 500);
+        oci_bind_by_name($stmt, ':mime_type', $mimeType, 200);
+        oci_bind_by_name($stmt, ':tamanho',   $tamanho);
+        oci_bind_by_name($stmt, ':usuario',   $usuario, 100);
+        oci_bind_by_name($stmt, ':ret_id',    $retId,   32, SQLT_INT);
+        oci_bind_by_name($stmt, ':blob',      $blob,    -1, OCI_B_BLOB);
+
+        oci_execute($stmt, OCI_NO_AUTO_COMMIT);
+        $blob->save($conteudo);
+        oci_commit($conn);
+
+        oci_free_statement($stmt);
+        $blob->free();
+        oci_close($conn);
+
+        return (int) $retId;
+    }
+
+    public static function listarAnexos(int $emprId, int $numCarga): array
+    {
+        $conn = self::oci8Conn();
+        $stmt = oci_parse($conn,
+            "SELECT ID, NOME_ORIG, MIME_TYPE, TAMANHO, USUARIO,
+                    TO_CHAR(DT_CADASTRO,'DD/MM/YYYY HH24:MI') AS DT_CADASTRO
+             FROM FOCCO3I.TGAZIN_CARGA_ANEXO
+             WHERE EMPR_ID = :empr_id AND NUM_CARGA = :num_carga
+             ORDER BY DT_CADASTRO DESC"
+        );
+        oci_bind_by_name($stmt, ':empr_id',   $emprId);
+        oci_bind_by_name($stmt, ':num_carga', $numCarga);
+        oci_execute($stmt);
+
+        $rows = [];
+        while ($row = oci_fetch_assoc($stmt)) {
+            $rows[] = $row;
+        }
+
+        oci_free_statement($stmt);
+        oci_close($conn);
+        return $rows;
+    }
+
+    public static function downloadAnexo(int $emprId, int $id): ?array
+    {
+        $conn = self::oci8Conn();
+        $stmt = oci_parse($conn,
+            "SELECT NOME_ORIG, MIME_TYPE, CONTEUDO
+             FROM FOCCO3I.TGAZIN_CARGA_ANEXO
+             WHERE ID = :id AND EMPR_ID = :empr_id"
+        );
+        oci_bind_by_name($stmt, ':id',      $id);
+        oci_bind_by_name($stmt, ':empr_id', $emprId);
+        oci_execute($stmt);
+
+        $row = oci_fetch_assoc($stmt);
+        if (!$row) {
+            oci_free_statement($stmt);
+            oci_close($conn);
+            return null;
+        }
+
+        $conteudo = $row['CONTEUDO'] ? $row['CONTEUDO']->load() : '';
+        oci_free_statement($stmt);
+        oci_close($conn);
+
+        return ['NOME_ORIG' => $row['NOME_ORIG'], 'MIME_TYPE' => $row['MIME_TYPE'], 'CONTEUDO' => $conteudo];
+    }
+
+    public static function excluirAnexo(int $emprId, int $id): void
+    {
+        $conn = self::oci8Conn();
+        $stmt = oci_parse($conn,
+            "DELETE FROM FOCCO3I.TGAZIN_CARGA_ANEXO WHERE ID = :id AND EMPR_ID = :empr_id"
+        );
+        oci_bind_by_name($stmt, ':id',      $id);
+        oci_bind_by_name($stmt, ':empr_id', $emprId);
+        oci_execute($stmt);
+        oci_commit($conn);
+        oci_free_statement($stmt);
+        oci_close($conn);
+    }
 }

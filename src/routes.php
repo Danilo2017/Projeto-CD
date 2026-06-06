@@ -38,7 +38,11 @@ $router->get('/cd', 'CD\\CDDashboardController@index', true);
 $router->get('/carga-projecao',          'Cd\\ProjecaoCargaController@index',    true);
 $router->post('/carga-api-listar',       'Cd\\ProjecaoCargaController@listar',   true);
 $router->post('/carga-api-salvar',       'Cd\\ProjecaoCargaController@salvar',   true);
-$router->get('/carga-api-log',           'Cd\\ProjecaoCargaController@listarLog',true);
+$router->get('/carga-api-log',           'Cd\\ProjecaoCargaController@listarLog',   true);
+$router->get('/carga-api-anexo-listar',  'Cd\\ProjecaoCargaController@listarAnexos', true);
+$router->post('/carga-api-anexo-upload', 'Cd\\ProjecaoCargaController@uploadAnexo',  true);
+$router->get('/carga-api-anexo-download','Cd\\ProjecaoCargaController@downloadAnexo',true);
+$router->post('/carga-api-anexo-excluir','Cd\\ProjecaoCargaController@excluirAnexo', true);
 
 // ========== Rotas do Sistema de Comissão ==========
 

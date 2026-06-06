@@ -134,6 +134,49 @@ if (!$acessoCarga) {
     </div>
 </div>
 
+<!-- ═══ Modal Anexos ═══ -->
+<div class="modal fade" id="modalAnexo" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="modalAnexoTitulo"><i class="bi bi-paperclip"></i> Anexos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Adicionar arquivo</label>
+                    <div class="input-group">
+                        <input type="file" id="fldArquivo" class="form-control form-control-sm" multiple>
+                        <button id="btnUpload" type="button" class="btn btn-sm btn-primary" onclick="uploadAnexo()">
+                            <i class="bi bi-upload"></i> Enviar
+                        </button>
+                    </div>
+                    <div id="uploadProgress" class="progress mt-2 d-none" style="height:5px">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div>
+                    </div>
+                </div>
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Arquivo</th>
+                            <th class="text-end">Tamanho</th>
+                            <th>Usuário</th>
+                            <th>Data</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anexoBody">
+                        <tr><td colspan="5" class="text-center text-muted py-3">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Modal Log ═══ -->
 <div class="modal fade" id="modalLog" tabindex="-1">
     <div class="modal-dialog modal-xl">

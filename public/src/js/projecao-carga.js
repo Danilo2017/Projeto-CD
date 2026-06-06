@@ -116,8 +116,11 @@
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
                         <i class="bi bi-pencil-fill"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="abrirLog(${r.NUM_CARGA})" title="Histórico">
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="abrirLog(${r.NUM_CARGA})" title="Histórico">
                         <i class="bi bi-clock-history"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-dark py-0 px-2" onclick="abrirAnexos(${r.NUM_CARGA})" title="Anexos">
+                        <i class="bi bi-paperclip"></i>
                     </button>
                 </td>
             </tr>`;
@@ -222,6 +225,96 @@
                 </tr>`).join('');
         } catch (e) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-danger">Erro ao carregar histórico.</td></tr>';
+        }
+    };
+
+    /* ── Modal Anexos ────────────────────────────────── */
+    let _numCargaAnexo = null;
+
+    function fmtBytes(bytes) {
+        if (!bytes) return '-';
+        if (bytes < 1024)        return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    window.abrirAnexos = async function (numCarga) {
+        _numCargaAnexo = numCarga;
+        document.getElementById('modalAnexoTitulo').innerHTML =
+            `<i class="bi bi-paperclip"></i> Anexos — Carga #${numCarga}`;
+        document.getElementById('fldArquivo').value = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAnexo')).show();
+        await _carregarAnexos();
+    };
+
+    async function _carregarAnexos() {
+        const tbody = document.getElementById('anexoBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        try {
+            const data = await fetchJson(`carga-api-anexo-listar?num_carga=${_numCargaAnexo}`);
+            if (!data.data?.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Nenhum anexo vinculado.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.data.map(a => `
+                <tr>
+                    <td><i class="bi bi-file-earmark me-1"></i>${a.NOME_ORIG}</td>
+                    <td class="text-end small">${fmtBytes(a.TAMANHO)}</td>
+                    <td class="small">${a.USUARIO ?? '-'}</td>
+                    <td class="small">${a.DT_CADASTRO ?? '-'}</td>
+                    <td class="text-center text-nowrap">
+                        <a href="carga-api-anexo-download?id=${a.ID}" target="_blank"
+                           class="btn btn-sm btn-outline-primary py-0 px-2 me-1" title="Download">
+                            <i class="bi bi-download"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-2"
+                                onclick="_excluirAnexo(${a.ID})" title="Excluir">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>`).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center">Erro ao carregar anexos.</td></tr>';
+        }
+    }
+
+    window.uploadAnexo = async function () {
+        const input = document.getElementById('fldArquivo');
+        const btn   = document.getElementById('btnUpload');
+        const prog  = document.getElementById('uploadProgress');
+        const files = input.files;
+        if (!files.length) { toast('Selecione ao menos um arquivo.', 'warning'); return; }
+
+        btn.disabled = true;
+        prog.classList.remove('d-none');
+        try {
+            for (const file of files) {
+                const fd = new FormData();
+                fd.append('num_carga', _numCargaAnexo);
+                fd.append('arquivo', file);
+                const res  = await fetch('carga-api-anexo-upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+            }
+            input.value = '';
+            await _carregarAnexos();
+            toast(`${files.length} arquivo(s) enviado(s).`, 'success');
+        } catch (e) {
+            toast(e.message || 'Erro no upload.');
+        } finally {
+            btn.disabled = false;
+            prog.classList.add('d-none');
+        }
+    };
+
+    window._excluirAnexo = async function (id) {
+        if (!confirm('Excluir este anexo? Esta ação não pode ser desfeita.')) return;
+        try {
+            const data = await fetchJson('carga-api-anexo-excluir', { id });
+            if (data.error) throw new Error(data.error);
+            await _carregarAnexos();
+        } catch (e) {
+            toast(e.message || 'Erro ao excluir.');
         }
     };
 
