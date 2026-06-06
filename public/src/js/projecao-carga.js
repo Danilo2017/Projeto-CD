@@ -5,6 +5,7 @@
     const SITUACOES = ['PENDENTE', 'EM CARREGAMENTO', 'CARREGADO', 'CANCELADO'];
 
     let carregandoLista = false;
+    let _cargasData     = [];
 
     /* ── Helpers ─────────────────────────────────────── */
     function fmt(v) { return v ?? '-'; }
@@ -79,6 +80,7 @@
     }
 
     function renderTabela(rows) {
+        _cargasData = rows;
         const tbody = document.getElementById('tabelaBody');
         if (!rows.length) {
             tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
@@ -128,44 +130,29 @@
     }
 
     /* ── Modal Editar ────────────────────────────────── */
-    window.abrirModal = async function (numCarga) {
-        const tr     = document.querySelector(`tr[data-carga="${numCarga}"]`);
-        const posPLC = tr ? tr.dataset.pos : '';
-        const isFat  = posPLC === 'FT' || posPLC === 'FP';
+    window.abrirModal = function (numCarga) {
+        const r      = _cargasData.find(x => x.NUM_CARGA == numCarga) || {};
+        const isFat  = r.POS_PLC === 'FT' || r.POS_PLC === 'FP';
 
         document.getElementById('modalCargaTitulo').textContent = `Carga #${numCarga}`;
         document.getElementById('fldNumCarga').value = numCarga;
 
-        // Limpar campos enquanto carrega
-        ['fldDtCarregamento','fldSituacaoCarga','fldFrota','fldPlacas',
-         'fldTipoVeiculo','fldMotorista','fldContato','fldNumDocs','fldObservacoes']
-            .forEach(id => { document.getElementById(id).value = ''; });
-        document.getElementById('fldSituacao').value = 'PENDENTE';
+        const dtVal = r.DT_CARREGAMENTO ? r.DT_CARREGAMENTO.split('/').reverse().join('-') : '';
+        document.getElementById('fldDtCarregamento').value = dtVal;
+        document.getElementById('fldSituacao').value       = r.SITUACAO       || 'PENDENTE';
+        document.getElementById('fldSituacaoCarga').value  = r.SITUACAO_CARGA || '';
+        document.getElementById('fldFrota').value          = r.FROTA          || '';
+        document.getElementById('fldPlacas').value         = r.PLACAS         || '';
+        document.getElementById('fldTipoVeiculo').value    = r.TIPO_VEICULO   || '';
+        document.getElementById('fldMotorista').value      = r.MOTORISTA      || '';
+        document.getElementById('fldContato').value        = r.CONTATO        || '';
+        document.getElementById('fldNumDocs').value        = r.NUM_DOCS       || '';
+        document.getElementById('fldObservacoes').value    = r.OBSERVACOES    || '';
 
-        // Esconder campo Situação para cargas já faturadas no FOCCO
         const grpSituacao = document.getElementById('fldSituacao').closest('.col-md-4');
         grpSituacao.style.display = isFat ? 'none' : '';
 
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCarga')).show();
-
-        try {
-            const res = await fetchJson('carga-api-listar', {});
-            const item = (res.data || []).find(r => r.NUM_CARGA == numCarga);
-            if (item) {
-                const dtVal = item.DT_CARREGAMENTO
-                    ? item.DT_CARREGAMENTO.split('/').reverse().join('-') : '';
-                document.getElementById('fldDtCarregamento').value  = dtVal;
-                document.getElementById('fldSituacao').value        = item.SITUACAO || 'PENDENTE';
-                document.getElementById('fldSituacaoCarga').value   = item.SITUACAO_CARGA || '';
-                document.getElementById('fldFrota').value           = item.FROTA || '';
-                document.getElementById('fldPlacas').value          = item.PLACAS || '';
-                document.getElementById('fldTipoVeiculo').value     = item.TIPO_VEICULO || '';
-                document.getElementById('fldMotorista').value       = item.MOTORISTA || '';
-                document.getElementById('fldContato').value         = item.CONTATO || '';
-                document.getElementById('fldNumDocs').value         = item.NUM_DOCS || '';
-                document.getElementById('fldObservacoes').value     = item.OBSERVACOES || '';
-            }
-        } catch (e) { /* silencioso */ }
     };
 
     /* ── Salvar ──────────────────────────────────────── */
