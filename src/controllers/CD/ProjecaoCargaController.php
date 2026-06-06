@@ -26,9 +26,14 @@ class ProjecaoCargaController extends Controller
         try {
             $body       = self::getBody() ?? [];
             $dataFiltro = $body['data_filtro'] ?? date('Y-m-d');
+            $codEmp     = $_SESSION['empresa']['codigo'] ?? '';
+            $wmsSchema  = (ctype_digit((string)$codEmp) && $codEmp > 0)
+                            ? 'FOCCOWMS' . $codEmp . 'A'
+                            : 'FOCCOWMS14A';
             $result     = ProjecaoCargaHandler::listar([
                 'empr_id'     => $this->emprIdSessao(),
                 'data_filtro' => $dataFiltro,
+                'wms_schema'  => $wmsSchema,
             ]);
             self::response($result, 200);
         } catch (\Exception $e) {

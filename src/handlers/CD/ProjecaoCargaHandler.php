@@ -16,7 +16,8 @@ class ProjecaoCargaHandler
     {
         Controller::verificarCamposVazios($dados, ['empr_id']);
         $dataFiltro = $dados['data_filtro'] ?? date('Y-m-d');
-        $lista = ProjecaoCarga::listar((int) $dados['empr_id'], $dataFiltro);
+        $wmsSchema  = $dados['wms_schema']  ?? 'FOCCOWMS14A';
+        $lista = ProjecaoCarga::listar((int) $dados['empr_id'], $dataFiltro, $wmsSchema);
         return ['success' => true, 'data' => $lista, 'total' => count($lista)];
     }
 

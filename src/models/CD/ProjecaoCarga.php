@@ -11,12 +11,14 @@ class ProjecaoCarga
         'FROTA', 'PLACAS', 'TIPO_VEICULO', 'MOTORISTA', 'CONTATO', 'SITUACAO',
     ];
 
-    public static function listar(int $emprId, string $dataFiltro = ''): array
+    public static function listar(int $emprId, string $dataFiltro = '', string $wmsSchema = 'FOCCOWMS14A'): array
     {
         if (!$dataFiltro) $dataFiltro = date('Y-m-d');
+        if (!$wmsSchema)  $wmsSchema  = 'FOCCOWMS14A';
         $result = Database::switchParams('focco', [
             'empr_id'     => $emprId,
             'data_filtro' => $dataFiltro,
+            'wms_schema'  => $wmsSchema,
         ], 'cd.carga.listar', true);
         return $result['retorno'] ?? [];
     }
