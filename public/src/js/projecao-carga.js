@@ -23,7 +23,7 @@
         const cls = cores[sit] || 'bg-secondary';
         return `<span class="badge ${cls}">${sit}</span>`;
     }
-    function badgeWms(status) {
+    function badgeWms(status, dthr) {
         if (!status) return '<span class="text-muted small">-</span>';
         const cores = {
             'Importada WMS': 'bg-secondary',
@@ -31,8 +31,9 @@
             'Encerrada':     'bg-success',
             'Excluída':      'bg-danger',
         };
-        const cls = cores[status] || 'bg-secondary';
-        return `<span class="badge ${cls}">${status}</span>`;
+        const cls  = cores[status] || 'bg-secondary';
+        const hora = dthr ? `<br><span class="text-muted" style="font-size:0.7rem">${dthr}</span>` : '';
+        return `<span class="badge ${cls}">${status}</span>${hora}`;
     }
     function badgePosPLC(pos) {
         if (!pos || pos === 'PE') return '';
@@ -108,7 +109,7 @@
                 <td class="text-end">${fmtValor(r.VALOR_FATURADO)}</td>
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
                 <td class="text-center">${isFaturada ? badgePosPLC(r.POS_PLC) : badgeSituacao(r.SITUACAO)}</td>
-                <td class="text-center">${badgeWms(r.STATUS_WMS)}</td>
+                <td class="text-center">${badgeWms(r.STATUS_WMS, r.WMS_DTHR)}</td>
                 <td>${fmt(r.MOTORISTA)}</td>
                 <td class="text-center">${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}</td>
                 <td class="text-center text-nowrap">
