@@ -112,8 +112,8 @@
                 <td class="text-center">${fmt(r.DT_CARREGAMENTO)}</td>
                 <td class="text-center">${isFaturada ? badgePosPLC(r.POS_PLC) : badgeSituacao(r.SITUACAO)}</td>
                 <td class="text-center">${badgeWms(r.STATUS_WMS)}</td>
-                <td>${fmt(r.MOTORISTA)}</td>
-                <td class="text-center">${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}</td>
+                <td class="text-truncate" style="max-width:160px" title="${r.MOTORISTA ?? ''}">${fmt(r.MOTORISTA)}</td>
+                <td class="text-center" style="width:115px;min-width:115px">${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}</td>
                 <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
                         <i class="bi bi-pencil-fill"></i>

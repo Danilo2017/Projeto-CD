@@ -57,8 +57,8 @@ if (!$acessoCarga) {
                     <th class="text-center">DT CARREGAMENTO</th>
                     <th class="text-center">SITUAÇÃO</th>
                     <th class="text-center">EXPEDIÇÃO</th>
-                    <th>MOTORISTA</th>
-                    <th class="text-center">PLACA</th>
+                    <th style="min-width:130px">MOTORISTA</th>
+                    <th class="text-center" style="width:115px;min-width:115px">PLACA</th>
                     <th class="text-center">AÇÕES</th>
                 </tr>
             </thead>
