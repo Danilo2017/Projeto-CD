@@ -180,7 +180,24 @@
             if (data.error) { toast(data.error); return; }
             toast(`Salvo com sucesso. ${data.alteracoes} campo(s) alterado(s).`, 'success');
             bootstrap.Modal.getInstance(document.getElementById('modalCarga')).hide();
-            carregarLista();
+
+            // Atualiza o item em memória e re-renderiza sem nova requisição
+            const idx = _cargasData.findIndex(x => x.NUM_CARGA == payload.num_carga);
+            if (idx !== -1) {
+                const r = _cargasData[idx];
+                r.DT_CARREGAMENTO = payload.dt_carregamento
+                    ? payload.dt_carregamento.split('-').reverse().join('/') : null;
+                r.SITUACAO        = payload.situacao        || r.SITUACAO;
+                r.SITUACAO_CARGA  = payload.situacao_carga  || null;
+                r.FROTA           = payload.frota           || null;
+                r.PLACAS          = payload.placas          || null;
+                r.TIPO_VEICULO    = payload.tipo_veiculo    || null;
+                r.MOTORISTA       = payload.motorista       || null;
+                r.CONTATO         = payload.contato         || null;
+                r.NUM_DOCS        = payload.num_docs        || null;
+                r.OBSERVACOES     = payload.observacoes     || null;
+            }
+            renderTabela(_cargasData);
         } catch (e) {
             toast('Erro ao salvar.');
         } finally {
