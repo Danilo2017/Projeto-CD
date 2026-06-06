@@ -80,7 +80,7 @@
         carregandoLista = true;
         document.getElementById('btnAtualizar').disabled = true;
         document.getElementById('tabelaBody').innerHTML =
-            '<tr><td colspan="13" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
+            '<tr><td colspan="14" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
 
         try {
             const data = await fetchJson('carga-api-listar', { data_filtro: dataFiltroAtual() });
@@ -98,7 +98,7 @@
         _cargasData = rows;
         const tbody = document.getElementById('tabelaBody');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
             document.getElementById('totalCargas').textContent = '0';
             document.getElementById('totalPendente').textContent = '-';
             document.getElementById('totalFaturado').textContent = '-';
@@ -137,8 +137,8 @@
                 <td class="text-center" style="width:115px;min-width:115px">
                     ${r.PLACAS ? `<span class="cd-placa-carro">${r.PLACAS}</span>` : (r.FROTA ? fmt(r.FROTA) : '-')}
                     ${r.PLACAS && r.FROTA ? `<div class="text-muted" style="font-size:0.7rem">${r.FROTA}</div>` : ''}
-                    ${r.SITUACAO_CAMINHAO ? `<div class="mt-1">${badgeSitCaminhao(r.SITUACAO_CAMINHAO)}</div>` : ''}
                 </td>
+                <td class="text-center">${r.SITUACAO_CAMINHAO ? badgeSitCaminhao(r.SITUACAO_CAMINHAO) : '<span class="text-muted small">-</span>'}</td>
                 <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
                         <i class="bi bi-pencil-fill"></i>
