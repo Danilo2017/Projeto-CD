@@ -1,9 +1,9 @@
 <?php
 
-namespace src\controllers\Cd;
+namespace src\controllers\CD;
 
 use core\Controller;
-use src\handlers\Cd\ProjecaoCargaHandler;
+use src\handlers\CD\ProjecaoCargaHandler;
 
 class ProjecaoCargaController extends Controller
 {
@@ -76,7 +76,7 @@ class ProjecaoCargaController extends Controller
         try {
             $numCarga = (int) ($_GET['num_carga'] ?? 0);
             if ($numCarga <= 0) { self::response(['error' => 'num_carga obrigatório.'], 400); return; }
-            $lista = \src\models\Cd\ProjecaoCarga::listarAnexos($this->emprIdSessao(), $numCarga);
+            $lista = \src\models\CD\ProjecaoCarga::listarAnexos($this->emprIdSessao(), $numCarga);
             self::response(['success' => true, 'data' => $lista], 200);
         } catch (\Exception $e) {
             self::response(['error' => $e->getMessage()], 500);
@@ -93,7 +93,7 @@ class ProjecaoCargaController extends Controller
                 return;
             }
             $emprId = $this->emprIdSessao();
-            $id = \src\models\Cd\ProjecaoCarga::salvarAnexo(
+            $id = \src\models\CD\ProjecaoCarga::salvarAnexo(
                 $emprId,
                 $numCarga,
                 $arquivo['name'],
@@ -104,7 +104,7 @@ class ProjecaoCargaController extends Controller
             );
             $erroTransicao = null;
             try {
-                \src\models\Cd\ProjecaoCarga::marcarFinalizado($emprId, $numCarga);
+                \src\models\CD\ProjecaoCarga::marcarFinalizado($emprId, $numCarga);
             } catch (\Throwable $t) {
                 $erroTransicao = $t->getMessage();
             }
@@ -120,7 +120,7 @@ class ProjecaoCargaController extends Controller
     {
         try {
             $id    = (int) ($_GET['id'] ?? 0);
-            $anexo = \src\models\Cd\ProjecaoCarga::downloadAnexo($this->emprIdSessao(), $id);
+            $anexo = \src\models\CD\ProjecaoCarga::downloadAnexo($this->emprIdSessao(), $id);
             if (!$anexo) { http_response_code(404); echo 'Arquivo não encontrado'; return; }
             header('Content-Type: ' . ($anexo['MIME_TYPE'] ?: 'application/octet-stream'));
             header('Content-Disposition: attachment; filename="' . rawurlencode($anexo['NOME_ORIG']) . '"');
@@ -138,7 +138,7 @@ class ProjecaoCargaController extends Controller
             $body = self::getBody() ?? [];
             $id   = (int) ($body['id'] ?? 0);
             if ($id <= 0) { self::response(['error' => 'ID inválido.'], 400); return; }
-            \src\models\Cd\ProjecaoCarga::excluirAnexo($this->emprIdSessao(), $id);
+            \src\models\CD\ProjecaoCarga::excluirAnexo($this->emprIdSessao(), $id);
             self::response(['success' => true], 200);
         } catch (\Exception $e) {
             self::response(['error' => $e->getMessage()], 500);

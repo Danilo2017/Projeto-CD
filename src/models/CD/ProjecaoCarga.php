@@ -1,6 +1,6 @@
 <?php
 
-namespace src\models\Cd;
+namespace src\models\CD;
 
 use core\Database;
 

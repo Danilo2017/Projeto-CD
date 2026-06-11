@@ -1,9 +1,9 @@
 <?php
 
-namespace src\handlers\Cd;
+namespace src\handlers\CD;
 
 use core\Controller;
-use src\models\Cd\ProjecaoCarga;
+use src\models\CD\ProjecaoCarga;
 
 class ProjecaoCargaHandler
 {
