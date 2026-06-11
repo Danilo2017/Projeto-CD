@@ -197,6 +197,58 @@ if (!$acessoCarga) {
     </div>
 </div>
 
+<!-- ═══ Modal WhatsApp ═══ -->
+<div class="modal fade" id="modalWhatsapp" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white border-0" style="background-color:#25D366;">
+                <h5 class="modal-title fw-semibold">
+                    <i class="bi bi-whatsapp me-2"></i>Enviar via WhatsApp
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <input type="hidden" id="waNumCarga">
+
+                <!-- Preview da mensagem -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Mensagem</label>
+                    <div class="position-relative">
+                        <textarea id="waMensagem" rows="9"
+                            class="form-control form-control-sm font-monospace"
+                            style="font-size:0.82rem;resize:vertical;background:#f0fdf4;border-color:#86efac;line-height:1.5;"></textarea>
+                    </div>
+                    <div class="form-text">Edite o texto se necessário antes de enviar.</div>
+                </div>
+
+                <hr class="my-2">
+
+                <!-- Enviar para número específico -->
+                <div class="mb-1">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">
+                        Número específico <span class="fw-normal text-muted">(opcional)</span>
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-telephone-fill text-success"></i></span>
+                        <input type="tel" id="waTelefone" class="form-control"
+                               placeholder="DDD + número  Ex: 44 99999-9999">
+                        <button type="button" class="btn btn-success fw-semibold" onclick="enviarWhatsapp('numero')">
+                            <i class="bi bi-send-fill me-1"></i>Enviar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-success fw-semibold" onclick="enviarWhatsapp('escolher')">
+                    <i class="bi bi-whatsapp me-1"></i>Abrir WhatsApp Web
+                    <span class="badge bg-white text-success ms-1" style="font-size:0.65rem">escolher contato</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Modal Log ═══ -->
 <div class="modal fade" id="modalLog" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -236,5 +288,5 @@ if (!$acessoCarga) {
     </div>
 </div>
 
-<script src="<?= $base ?>src/js/projecao-carga.js"></script>
+<script src="<?= $base ?>src/js/projecao-carga.js?v=<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/src/js/projecao-carga.js') ?: date('YmdH') ?>"></script>
 <?= $render('footer') ?>

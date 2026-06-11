@@ -19,6 +19,10 @@ class Database
     public static function getInstance($db = 'sabium')
     {
 
+        if (self::$_pdo !== null) {
+            return self::$_pdo;
+        }
+
         switch ($db) {
             case 'focco':
                 $tns = "(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = " . Config::FOCCO_HOST . ")(PORT = " . Config::FOCCO_PORT . ")))(CONNECT_DATA = (SERVICE_NAME = " . Config::FOCCO_DATABASE . ")))";

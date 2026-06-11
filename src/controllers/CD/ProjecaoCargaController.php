@@ -102,8 +102,15 @@ class ProjecaoCargaController extends Controller
                 file_get_contents($arquivo['tmp_name']),
                 $_SESSION['user']['login'] ?? 'desconhecido'
             );
-            \src\models\Cd\ProjecaoCarga::marcarFinalizado($emprId, $numCarga);
-            self::response(['success' => true, 'id' => $id], 200);
+            $erroTransicao = null;
+            try {
+                \src\models\Cd\ProjecaoCarga::marcarFinalizado($emprId, $numCarga);
+            } catch (\Throwable $t) {
+                $erroTransicao = $t->getMessage();
+            }
+            $resp = ['success' => true, 'id' => $id];
+            if ($erroTransicao) $resp['_transicao_erro'] = $erroTransicao;
+            self::response($resp, 200);
         } catch (\Exception $e) {
             self::response(['error' => $e->getMessage()], 500);
         }

@@ -21,21 +21,31 @@ class ProjecaoCargaHandler
         $lista      = ProjecaoCarga::listar($emprId, $dataFiltro, $wmsSchema);
 
         // Auto-transição: FT/FP sem status → AGUARDANDO DOCUMENTAÇÃO
+        $erroTransicao = null;
+        $naoTransicionar = ['AGUARDANDO DOCUMENTAÇÃO', 'FINALIZADO'];
         $semStatus = array_values(array_filter($lista, fn($r) =>
-            in_array($r['POS_PLC'] ?? '', ['FT', 'FP']) && empty($r['SITUACAO_CAMINHAO'])
+            in_array($r['POS_PLC'] ?? '', ['FT', 'FP'])
+            && !in_array($r['SITUACAO_CAMINHAO'] ?? '', $naoTransicionar)
         ));
         if ($semStatus) {
             $numCargas = array_column($semStatus, 'NUM_CARGA');
-            ProjecaoCarga::marcarAguardandoDocumentacao($emprId, $numCargas);
+            try {
+                ProjecaoCarga::marcarAguardandoDocumentacao($emprId, $numCargas);
+            } catch (\Throwable $t) {
+                $erroTransicao = $t->getMessage();
+            }
             foreach ($lista as &$r) {
-                if (in_array($r['POS_PLC'] ?? '', ['FT', 'FP']) && empty($r['SITUACAO_CAMINHAO'])) {
+                if (in_array($r['POS_PLC'] ?? '', ['FT', 'FP'])
+                    && !in_array($r['SITUACAO_CAMINHAO'] ?? '', $naoTransicionar)) {
                     $r['SITUACAO_CAMINHAO'] = 'AGUARDANDO DOCUMENTAÇÃO';
                 }
             }
             unset($r);
         }
 
-        return ['success' => true, 'data' => $lista, 'total' => count($lista)];
+        $ret = ['success' => true, 'data' => $lista, 'total' => count($lista)];
+        if ($erroTransicao) $ret['_transicao_erro'] = $erroTransicao;
+        return $ret;
     }
 
     public static function salvar(array $dados, string $usuario): array

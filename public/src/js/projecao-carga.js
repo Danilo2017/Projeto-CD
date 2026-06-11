@@ -75,6 +75,11 @@
         bootstrap.Toast.getOrCreateInstance(el).show();
     }
 
+    function mostraWa(sit) {
+        const s = (sit || '').toUpperCase();
+        return s.startsWith('AGUARDANDO DOC') || s === 'FINALIZADO';
+    }
+
     function dataFiltroAtual() {
         return document.getElementById('inputDataFiltro')?.value || new Date().toISOString().slice(0, 10);
     }
@@ -90,6 +95,7 @@
         try {
             const data = await fetchJson('carga-api-listar', { data_filtro: dataFiltroAtual() });
             if (data.error) { toast(data.error); return; }
+            if (data._transicao_erro) console.warn('[transição] erro ao gravar status:', data._transicao_erro);
             renderTabela(data.data || []);
         } catch (e) {
             toast('Erro ao carregar dados.');
@@ -151,9 +157,15 @@
                     <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="abrirLog(${r.NUM_CARGA})" title="Histórico">
                         <i class="bi bi-clock-history"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-dark py-0 px-2" onclick="abrirAnexos(${r.NUM_CARGA})" title="Anexos">
+                    <button class="btn btn-sm btn-outline-dark py-0 px-2 me-1" onclick="abrirAnexos(${r.NUM_CARGA})" title="Anexos">
                         <i class="bi bi-paperclip"></i>
                     </button>
+                    ${mostraWa(r.SITUACAO_CAMINHAO)
+                        ? `<button class="btn btn-sm py-0 px-2" style="background-color:#25D366;color:#fff;border-color:#25D366"
+                               onclick="abrirWhatsapp(${r.NUM_CARGA})" title="Enviar via WhatsApp">
+                               <i class="bi bi-whatsapp"></i>
+                           </button>`
+                        : ''}
                 </td>
             </tr>`;
         }).join('');
@@ -388,9 +400,16 @@
                 const res  = await fetch('carga-api-anexo-upload', { method: 'POST', body: fd });
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
+                if (data._transicao_erro) console.warn('[transição] marcarFinalizado:', data._transicao_erro);
             }
             input.value = '';
             await _carregarAnexos();
+            // Reflete FINALIZADO na tabela sem recarregar a lista
+            const idx = _cargasData.findIndex(x => x.NUM_CARGA == _numCargaAnexo);
+            if (idx !== -1 && _cargasData[idx].SITUACAO_CAMINHAO !== 'DISPONÍVEL') {
+                _cargasData[idx].SITUACAO_CAMINHAO = 'FINALIZADO';
+                renderTabela(_cargasData);
+            }
             toast(`${files.length} arquivo(s) enviado(s).`, 'success');
         } catch (e) {
             toast(e.message || 'Erro no upload.');
@@ -411,10 +430,54 @@
         }
     };
 
+    /* ── WhatsApp ────────────────────────────────────── */
+    window.abrirWhatsapp = function (numCarga) {
+        const r = _cargasData.find(x => x.NUM_CARGA == numCarga) || {};
+
+        const linhas = [
+            '🚛 *Projeção de Carga - Gazin*',
+            '',
+            `📦 Carga: *#${r.NUM_CARGA ?? numCarga}*`,
+            r.PLACAS    ? `🚗 Placa: *${r.PLACAS}*`        : null,
+            r.FROTA     ? `🏭 Frota: ${r.FROTA}`           : null,
+            r.MOTORISTA ? `👤 Condutor: ${r.MOTORISTA}`    : null,
+            r.CONTATO   ? `📱 Contato: ${r.CONTATO}`       : null,
+            r.ROTA      ? `📍 Rota: ${r.ROTA}`             : null,
+            '',
+            `📊 Situação: *${r.SITUACAO_CAMINHAO ?? ''}*`,
+        ].filter(l => l !== null);
+
+        document.getElementById('waMensagem').value  = linhas.join('\n');
+        document.getElementById('waNumCarga').value  = numCarga;
+        document.getElementById('waTelefone').value  = r.CONTATO ? r.CONTATO.replace(/\D/g, '') : '';
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalWhatsapp')).show();
+    };
+
+    window.enviarWhatsapp = function (modo) {
+        const msg = encodeURIComponent(document.getElementById('waMensagem').value);
+        let url;
+
+        if (modo === 'numero') {
+            let tel = document.getElementById('waTelefone').value.replace(/\D/g, '');
+            if (!tel) { toast('Informe o número de telefone.', 'warning'); return; }
+            if (!tel.startsWith('55')) tel = '55' + tel;
+            url = `https://wa.me/${tel}?text=${msg}`;
+        } else {
+            url = `https://web.whatsapp.com/send?text=${msg}`;
+        }
+
+        window.open(url, '_blank', 'noopener');
+    };
+
     /* ── Init ─────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
-        // Data padrão: hoje
-        document.getElementById('inputDataFiltro').value = new Date().toISOString().slice(0, 10);
+        // Data padrão: hoje no fuso local (toISOString usa UTC e pode dar dia errado)
+        const _h = new Date();
+        const _dataHoje = _h.getFullYear() + '-'
+            + String(_h.getMonth() + 1).padStart(2, '0') + '-'
+            + String(_h.getDate()).padStart(2, '0');
+        document.getElementById('inputDataFiltro').value = _dataHoje;
 
         document.getElementById('btnAtualizar').addEventListener('click', carregarLista);
 
@@ -426,6 +489,10 @@
             selSit.appendChild(o);
         });
 
-        carregarLista();
+        // Aguarda clique do usuário — não carrega automaticamente
+        document.getElementById('tabelaBody').innerHTML =
+            '<tr><td colspan="14" class="text-center text-muted py-5">'
+            + '<i class="bi bi-search me-2"></i>Selecione a data e clique em <strong>Buscar</strong>.'
+            + '</td></tr>';
     });
 })();

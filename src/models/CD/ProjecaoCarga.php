@@ -129,31 +129,74 @@ class ProjecaoCarga
     public static function marcarAguardandoDocumentacao(int $emprId, array $numCargas): void
     {
         if (!$numCargas) return;
-        $pdo = Database::getInstance('focco');
-        $in  = implode(',', array_map('intval', $numCargas));
+        $pdo    = Database::getInstance('focco');
+        $status = 'AGUARDANDO DOCUMENTAÇÃO';
+        $in     = implode(',', array_map('intval', $numCargas));
+
         $pdo->prepare(
             "UPDATE FOCCO3I.TGAZIN_CARGA_AGEND
-             SET SITUACAO_CAMINHAO = 'AGUARDANDO DOCUMENTAÇÃO', DT_ALTERACAO = SYSDATE
-             WHERE EMPR_ID = :e AND NUM_CARGA IN ($in) AND SITUACAO_CAMINHAO IS NULL"
-        )->execute([':e' => $emprId]);
+             SET SITUACAO_CAMINHAO = :s, DT_ALTERACAO = SYSDATE
+             WHERE EMPR_ID = $emprId AND NUM_CARGA IN ($in)
+               AND (SITUACAO_CAMINHAO IS NULL
+                    OR SITUACAO_CAMINHAO NOT IN ('AGUARDANDO DOCUMENTAÇÃO','FINALIZADO'))"
+        )->execute([':s' => $status]);
+
+        $pdo->prepare(
+            "INSERT INTO FOCCO3I.TGAZIN_CARGA_AGEND (EMPR_ID, NUM_CARGA, SITUACAO_CAMINHAO, DT_CADASTRO)
+             SELECT $emprId, C.CARGA, :s, SYSDATE
+             FROM FOCCO3I.TCARGAS C
+             WHERE C.EMPR_ID = $emprId AND C.CARGA IN ($in)
+               AND NOT EXISTS (
+                   SELECT 1 FROM FOCCO3I.TGAZIN_CARGA_AGEND A
+                   WHERE A.EMPR_ID = $emprId AND A.NUM_CARGA = C.CARGA
+               )"
+        )->execute([':s' => $status]);
+
         $pdo->exec('COMMIT');
     }
 
     public static function marcarFinalizado(int $emprId, int $numCarga): void
     {
-        $pdo = Database::getInstance('focco');
-        $pdo->prepare(
-            "MERGE INTO FOCCO3I.TGAZIN_CARGA_AGEND A
-             USING (SELECT :e AS EMPR_ID, :c AS NUM_CARGA FROM DUAL) S
-             ON (A.EMPR_ID = S.EMPR_ID AND A.NUM_CARGA = S.NUM_CARGA)
-             WHEN MATCHED THEN
-                 UPDATE SET SITUACAO_CAMINHAO = 'FINALIZADO', DT_ALTERACAO = SYSDATE
-                 WHERE NVL(A.SITUACAO_CAMINHAO,'') <> 'DISPONÍVEL'
-             WHEN NOT MATCHED THEN
-                 INSERT (EMPR_ID, NUM_CARGA, SITUACAO_CAMINHAO, DT_CADASTRO)
-                 VALUES (S.EMPR_ID, S.NUM_CARGA, 'FINALIZADO', SYSDATE)"
-        )->execute([':e' => $emprId, ':c' => $numCarga]);
-        $pdo->exec('COMMIT');
+        $conn   = self::oci8Conn();
+        $status = 'FINALIZADO';
+
+        $chk = oci_parse($conn,
+            'SELECT SITUACAO_CAMINHAO FROM FOCCO3I.TGAZIN_CARGA_AGEND
+             WHERE EMPR_ID = :e AND NUM_CARGA = :c'
+        );
+        oci_bind_by_name($chk, ':e', $emprId);
+        oci_bind_by_name($chk, ':c', $numCarga);
+        oci_execute($chk, OCI_NO_AUTO_COMMIT);
+        $row   = oci_fetch_assoc($chk);
+        oci_free_statement($chk);
+
+        if ($row === false) {
+            // linha não existe — INSERT
+            $ins = oci_parse($conn,
+                'INSERT INTO FOCCO3I.TGAZIN_CARGA_AGEND
+                 (EMPR_ID, NUM_CARGA, SITUACAO_CAMINHAO, DT_CADASTRO)
+                 VALUES (:e, :c, :s, SYSDATE)'
+            );
+            oci_bind_by_name($ins, ':e', $emprId);
+            oci_bind_by_name($ins, ':c', $numCarga);
+            oci_bind_by_name($ins, ':s', $status, 100);
+            oci_execute($ins, OCI_NO_AUTO_COMMIT);
+            oci_free_statement($ins);
+        } elseif (($row['SITUACAO_CAMINHAO'] ?? '') !== 'DISPONÍVEL') {
+            // linha existe e não é DISPONÍVEL — UPDATE
+            $upd = oci_parse($conn,
+                'UPDATE FOCCO3I.TGAZIN_CARGA_AGEND
+                 SET SITUACAO_CAMINHAO = :s, DT_ALTERACAO = SYSDATE
+                 WHERE EMPR_ID = :e AND NUM_CARGA = :c'
+            );
+            oci_bind_by_name($upd, ':s', $status, 100);
+            oci_bind_by_name($upd, ':e', $emprId);
+            oci_bind_by_name($upd, ':c', $numCarga);
+            oci_execute($upd, OCI_NO_AUTO_COMMIT);
+            oci_free_statement($upd);
+        }
+        oci_commit($conn);
+        oci_close($conn);
     }
 
     // ── Anexos (OCI8 / BLOB) ──────────────────────────────────────────────────
