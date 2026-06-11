@@ -28,14 +28,10 @@ class ProjecaoCarga
     {
         $pdo = Database::getInstance('focco');
 
-        $stmt = $pdo->prepare(
-            'SELECT DT_CARREGAMENTO, OBSERVACOES, NUM_DOCS, SITUACAO_CARGA,
-                    FROTA, PLACAS, TIPO_VEICULO, MOTORISTA, CONTATO, SITUACAO
-             FROM FOCCO3I.TGAZIN_CARGA_AGEND
-             WHERE EMPR_ID = :e AND NUM_CARGA = :c'
-        );
-        $stmt->execute([':e' => $emprId, ':c' => $numCarga]);
-        $atual = $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+        $result = Database::switchParams('focco',
+            ['empr_id' => $emprId, 'num_carga' => $numCarga],
+            'cd.carga.buscarAtual', true);
+        $atual = ($result['retorno'][0] ?? null) ?: null;
 
         $logs = [];
 
@@ -129,74 +125,26 @@ class ProjecaoCarga
     public static function marcarAguardandoDocumentacao(int $emprId, array $numCargas): void
     {
         if (!$numCargas) return;
-        $pdo    = Database::getInstance('focco');
-        $status = 'AGUARDANDO DOCUMENTAÇÃO';
-        $in     = implode(',', array_map('intval', $numCargas));
-
-        $pdo->prepare(
-            "UPDATE FOCCO3I.TGAZIN_CARGA_AGEND
-             SET SITUACAO_CAMINHAO = :s, DT_ALTERACAO = SYSDATE
-             WHERE EMPR_ID = $emprId AND NUM_CARGA IN ($in)
-               AND (SITUACAO_CAMINHAO IS NULL
-                    OR SITUACAO_CAMINHAO NOT IN ('AGUARDANDO DOCUMENTAÇÃO','FINALIZADO'))"
-        )->execute([':s' => $status]);
-
-        $pdo->prepare(
-            "INSERT INTO FOCCO3I.TGAZIN_CARGA_AGEND (EMPR_ID, NUM_CARGA, SITUACAO_CAMINHAO, DT_CADASTRO)
-             SELECT $emprId, C.CARGA, :s, SYSDATE
-             FROM FOCCO3I.TCARGAS C
-             WHERE C.EMPR_ID = $emprId AND C.CARGA IN ($in)
-               AND NOT EXISTS (
-                   SELECT 1 FROM FOCCO3I.TGAZIN_CARGA_AGEND A
-                   WHERE A.EMPR_ID = $emprId AND A.NUM_CARGA = C.CARGA
-               )"
-        )->execute([':s' => $status]);
-
-        $pdo->exec('COMMIT');
+        $params = [
+            'empr_id' => $emprId,
+            'in_list' => implode(',', array_map('intval', $numCargas)),
+        ];
+        Database::switchParams('focco', $params, 'cd.carga.marcar_aguardando_upd', true);
+        Database::switchParams('focco', $params, 'cd.carga.marcar_aguardando_ins', true);
     }
 
     public static function marcarFinalizado(int $emprId, int $numCarga): void
     {
-        $conn   = self::oci8Conn();
-        $status = 'FINALIZADO';
+        $params = ['empr_id' => $emprId, 'num_carga' => $numCarga];
 
-        $chk = oci_parse($conn,
-            'SELECT SITUACAO_CAMINHAO FROM FOCCO3I.TGAZIN_CARGA_AGEND
-             WHERE EMPR_ID = :e AND NUM_CARGA = :c'
-        );
-        oci_bind_by_name($chk, ':e', $emprId);
-        oci_bind_by_name($chk, ':c', $numCarga);
-        oci_execute($chk, OCI_NO_AUTO_COMMIT);
-        $row   = oci_fetch_assoc($chk);
-        oci_free_statement($chk);
+        $result = Database::switchParams('focco', $params, 'cd.carga.marcar_finalizado_sel', true);
+        $row    = $result['retorno'][0] ?? false;
 
         if ($row === false) {
-            // linha não existe — INSERT
-            $ins = oci_parse($conn,
-                'INSERT INTO FOCCO3I.TGAZIN_CARGA_AGEND
-                 (EMPR_ID, NUM_CARGA, SITUACAO_CAMINHAO, DT_CADASTRO)
-                 VALUES (:e, :c, :s, SYSDATE)'
-            );
-            oci_bind_by_name($ins, ':e', $emprId);
-            oci_bind_by_name($ins, ':c', $numCarga);
-            oci_bind_by_name($ins, ':s', $status, 100);
-            oci_execute($ins, OCI_NO_AUTO_COMMIT);
-            oci_free_statement($ins);
+            Database::switchParams('focco', $params, 'cd.carga.marcar_finalizado_ins', true);
         } elseif (($row['SITUACAO_CAMINHAO'] ?? '') !== 'DISPONÍVEL') {
-            // linha existe e não é DISPONÍVEL — UPDATE
-            $upd = oci_parse($conn,
-                'UPDATE FOCCO3I.TGAZIN_CARGA_AGEND
-                 SET SITUACAO_CAMINHAO = :s, DT_ALTERACAO = SYSDATE
-                 WHERE EMPR_ID = :e AND NUM_CARGA = :c'
-            );
-            oci_bind_by_name($upd, ':s', $status, 100);
-            oci_bind_by_name($upd, ':e', $emprId);
-            oci_bind_by_name($upd, ':c', $numCarga);
-            oci_execute($upd, OCI_NO_AUTO_COMMIT);
-            oci_free_statement($upd);
+            Database::switchParams('focco', $params, 'cd.carga.marcar_finalizado_upd', true);
         }
-        oci_commit($conn);
-        oci_close($conn);
     }
 
     // ── Anexos (OCI8 / BLOB) ──────────────────────────────────────────────────
