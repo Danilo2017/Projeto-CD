@@ -172,17 +172,6 @@ if (!$acessoPcp) {
     <div class="pcp-form-card">
         <h4 class="mb-3"><i class="bi bi-file-earmark-bar-graph"></i> Relatório de Produção — PCP</h4>
         <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label fw-semibold">Filial</label>
-                <select id="selEmpresa" class="form-select form-select-sm">
-                    <option value="">Selecione a filial...</option>
-                    <?php foreach ($empresas as $e): ?>
-                    <option value="<?= (int)($e['ID'] ?? 0) ?>">
-                        <?= htmlspecialchars(($e['COD_EMP'] ?? '') . ' — ' . ($e['NOME_FANTASIA'] ?? $e['RAZAO_SOCIAL'] ?? '')) ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Nº do Lote</label>
                 <input type="number" id="inputLote" class="form-control form-control-sm" placeholder="Ex: 465" min="1">

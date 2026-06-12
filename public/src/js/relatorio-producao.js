@@ -167,10 +167,8 @@
         const statusMsg   = document.getElementById('statusMsg');
 
         btnGerar.addEventListener('click', async function () {
-            const emprId  = document.getElementById('selEmpresa').value;
             const numLote = document.getElementById('inputLote').value.trim();
 
-            if (!emprId) { alert('Selecione a filial.'); return; }
             if (!numLote || parseInt(numLote) <= 0) { alert('Informe o número do lote.'); return; }
 
             btnGerar.disabled = true;
@@ -184,7 +182,7 @@
                 const res  = await fetch('pcp-api-relatorio-producao', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ empr_id: parseInt(emprId), num_lote: parseInt(numLote) }),
+                    body:    JSON.stringify({ num_lote: parseInt(numLote) }),
                 });
                 const data = await res.json();
 

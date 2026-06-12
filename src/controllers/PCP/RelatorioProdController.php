@@ -7,21 +7,29 @@ use src\handlers\PCP\RelatorioProdHandler;
 
 class RelatorioProdController extends Controller
 {
+    private function emprIdSessao(): int
+    {
+        $id = (int) ($_SESSION['empresa']['id'] ?? 0);
+        if ($id <= 0) {
+            throw new \Exception('Nenhuma empresa selecionada na sessão.', 400);
+        }
+        return $id;
+    }
+
     public function index(): void
     {
-        $empresas = RelatorioProdHandler::listarEmpresas();
-        $this->render('pcp/relatorio-producao', ['empresas' => $empresas]);
+        $this->render('pcp/relatorio-producao', []);
     }
 
     public function buscar(): void
     {
         try {
             $body    = self::getBody() ?? [];
-            $emprId  = (int) ($body['empr_id']  ?? 0);
-            $numLote = (int) ($body['num_lote']  ?? 0);
+            $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = $this->emprIdSessao();
 
-            if ($emprId <= 0 || $numLote <= 0) {
-                throw new \Exception('Empresa e número do lote são obrigatórios.', 400);
+            if ($numLote <= 0) {
+                throw new \Exception('Número do lote é obrigatório.', 400);
             }
 
             $result = RelatorioProdHandler::buscar($emprId, $numLote);
