@@ -11,6 +11,7 @@ $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || 
 $acessoPedidos     = $is_admin || in_array('pedidos',     $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoProcesso    = $is_admin || in_array('processo',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoCarga       = $is_admin || in_array('carga',       $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
@@ -20,6 +21,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'pedidos-')                                                            => 'pedidos',
     str_starts_with($pActive, 'processo-')                                                           => 'processo',
     str_starts_with($pActive, 'carga-')                                                              => 'carga',
+    str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
     $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
@@ -37,6 +39,10 @@ $cdSub = match(true) {
 };
 $cargaSub = match(true) {
     $pActive === 'carga-projecao' => 'projecao',
+    default => ''
+};
+$pcpSub = match(true) {
+    $pActive === 'pcp-relatorio-producao' => 'relatorio-producao',
     default => ''
 };
 $fatSub = match(true) {
@@ -219,6 +225,24 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>carga-projecao"
                        class="sidebar-sublink <?= $cargaSub === 'projecao' ? 'active' : '' ?>">
                         Projeção de Carga
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoPcp): ?>
+        <li class="sidebar-group" id="grpPcp">
+            <button class="sidebar-group-btn <?= $activeGroup === 'pcp' ? 'active open' : '' ?>">
+                <i class="bi bi-clipboard-data"></i>
+                <span>PCP</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'pcp' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>pcp-relatorio-producao"
+                       class="sidebar-sublink <?= $pcpSub === 'relatorio-producao' ? 'active' : '' ?>">
+                        Rel. Produção
                     </a>
                 </li>
             </ul>

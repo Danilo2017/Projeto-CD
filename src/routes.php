@@ -221,6 +221,10 @@ $router->get('/processo-api-tipos-nf-ent',        'Processo\\TrocaTipoNfEntradaC
 $router->post('/processo-api-troca-tipo-nf-buscar','Processo\\TrocaTipoNfEntradaController@buscarNf',   true);
 $router->post('/processo-api-troca-tipo-nf',      'Processo\\TrocaTipoNfEntradaController@executar',    true);
 
+// ========== PCP ==========
+$router->get('/pcp-relatorio-producao',      'PCP\\RelatorioProdController@index',  true);
+$router->post('/pcp-api-relatorio-producao', 'PCP\\RelatorioProdController@buscar', true);
+
 // ========== Admin - Gerenciamento de SQLs ==========
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);
 $router->get('/admin-api-sqls', 'AdminSqlsController@listar', true);
