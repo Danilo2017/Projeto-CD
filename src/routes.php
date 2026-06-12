@@ -35,14 +35,14 @@ $router->get('/cd-dashboard', 'CD\\CDDashboardController@index', true);
 $router->get('/cd', 'CD\\CDDashboardController@index', true);
 
 // ========== Projeção de Carga ==========
-$router->get('/carga-projecao',          'Cd\\ProjecaoCargaController@index',    true);
-$router->post('/carga-api-listar',       'Cd\\ProjecaoCargaController@listar',   true);
-$router->post('/carga-api-salvar',       'Cd\\ProjecaoCargaController@salvar',   true);
-$router->get('/carga-api-log',           'Cd\\ProjecaoCargaController@listarLog',   true);
-$router->get('/carga-api-anexo-listar',  'Cd\\ProjecaoCargaController@listarAnexos', true);
-$router->post('/carga-api-anexo-upload', 'Cd\\ProjecaoCargaController@uploadAnexo',  true);
-$router->get('/carga-api-anexo-download','Cd\\ProjecaoCargaController@downloadAnexo',true);
-$router->post('/carga-api-anexo-excluir','Cd\\ProjecaoCargaController@excluirAnexo', true);
+$router->get('/carga-projecao',          'CD\\ProjecaoCargaController@index',    true);
+$router->post('/carga-api-listar',       'CD\\ProjecaoCargaController@listar',   true);
+$router->post('/carga-api-salvar',       'CD\\ProjecaoCargaController@salvar',   true);
+$router->get('/carga-api-log',           'CD\\ProjecaoCargaController@listarLog',   true);
+$router->get('/carga-api-anexo-listar',  'CD\\ProjecaoCargaController@listarAnexos', true);
+$router->post('/carga-api-anexo-upload', 'CD\\ProjecaoCargaController@uploadAnexo',  true);
+$router->get('/carga-api-anexo-download','CD\\ProjecaoCargaController@downloadAnexo',true);
+$router->post('/carga-api-anexo-excluir','CD\\ProjecaoCargaController@excluirAnexo', true);
 
 // ========== Rotas do Sistema de Comissão ==========
 
