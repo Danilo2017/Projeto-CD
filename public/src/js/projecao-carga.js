@@ -489,7 +489,10 @@
             selSit.appendChild(o);
         });
 
-        // Carrega automaticamente com a data de hoje ao abrir a tela
-        carregarLista();
+        // Aguarda clique do usuário — não carrega automaticamente
+        document.getElementById('tabelaBody').innerHTML =
+            '<tr><td colspan="14" class="text-center text-muted py-5">'
+            + '<i class="bi bi-search me-2"></i>Selecione a data e clique em <strong>Buscar</strong>.'
+            + '</td></tr>';
     });
 })();
