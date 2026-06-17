@@ -30,9 +30,7 @@ class Database
                 $password = Config::FOCCO_PASS;
                 $cx = "oci:dbname=" . $tns . ";charset=AL32UTF8";
                 self::$_pdo = new \PDO($cx, $username, $password);
-                // Alinha NLS com o padrão do ERP Focco (pacotes internos usam datas implicitamente)
                 self::$_pdo->exec("ALTER SESSION SET NLS_DATE_FORMAT = 'DD/MM/YYYY'");
-                self::$_pdo->exec("ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ',.'");
                 break;
             default:
                 throw new Exception("Banco de dados não configurado: " . $db);
