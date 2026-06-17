@@ -4,3 +4,4 @@ logs
 .claude
 exec*.php
 *.txt
+graphify-out/

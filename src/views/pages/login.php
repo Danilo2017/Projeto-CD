@@ -373,9 +373,6 @@
 				return;
 			}
 
-			// Armazenar permissões
-			window.userPermissions = loginResult.user || {};
-
 			// 2. Selecionar empresa
 			const empresaResponse = await fetch('/comissao-api-selecionar-empresa', {
 				method: 'POST',
@@ -386,7 +383,7 @@
 			const empresaResult = await empresaResponse.json();
 			
 			if (empresaResult.success) {
-				window.location.href = getRedirectUrl();
+				window.location.href = '/';
 			} else {
 				errorDiv.textContent = empresaResult.error || 'Erro ao selecionar filial.';
 				errorDiv.style.display = 'block';
@@ -400,25 +397,6 @@
 			submitBtn.disabled = false;
 		}
 	});
-	
-	function getRedirectUrl() {
-		if (window.userPermissions) {
-			if (window.userPermissions.is_admin === true) {
-				return '/permissao';
-			}
-			const rotas = window.userPermissions.rotas_permitidas || [];
-			if (rotas.includes('*')) {
-				return '/permissao';
-			} else if (rotas.includes('comissao')) {
-				return '/comissao-relatorio';
-			} else if (rotas.includes('cd')) {
-				return '/cd-dashboard';
-			} else if (rotas.includes('permissao')) {
-				return '/permissao';
-			}
-		}
-		return '/comissao-relatorio';
-	}
 	
 	// Limpar erro ao digitar
 	['usuario', 'senha'].forEach(fieldId => {

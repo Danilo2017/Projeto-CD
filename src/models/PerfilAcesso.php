@@ -3,6 +3,7 @@
 namespace src\models;
 
 use core\Database;
+use src\utils\GetSqlFocco;
 
 /**
  * Model para gerenciar perfis de acesso (tabelas novas)
@@ -109,7 +110,8 @@ class PerfilAcesso
                     $idsParaDeletar[] = intval($registros[$i]['ID_USUARIO_PERFIL']);
                 }
                 $pdo = Database::getInstance('focco');
-                $pdo->exec("DELETE FROM FOCCO3I.TGAZIN_USUARIO_PERFIL WHERE ID_USUARIO_PERFIL IN (" . implode(',', $idsParaDeletar) . ")");
+                $sqlDelete = str_replace('{lista_ids}', implode(',', $idsParaDeletar), GetSqlFocco::getSql('acesso.usuario.removerPerfisDuplicados'));
+                $pdo->exec($sqlDelete);
             }
 
             // Reativar o registro mais recente
@@ -203,7 +205,8 @@ class PerfilAcesso
                     $idsParaDeletar[] = intval($registros[$i]['ID_USUARIO_FILIAL']);
                 }
                 $pdo = Database::getInstance('focco');
-                $pdo->exec("DELETE FROM FOCCO3I.TGAZIN_USUARIO_FILIAL WHERE ID_USUARIO_FILIAL IN (" . implode(',', $idsParaDeletar) . ")");
+                $sqlDelete = str_replace('{lista_ids}', implode(',', $idsParaDeletar), GetSqlFocco::getSql('acesso.usuario.removerFiliaisDuplicadas'));
+                $pdo->exec($sqlDelete);
             }
 
             // Reativar o registro mais recente

@@ -3,6 +3,7 @@
 namespace src\handlers\Comissao;
 
 use core\Database;
+use src\utils\GetSqlFocco;
 use src\models\Comissao\PontuacaoProduto;
 use src\models\Comissao\FaixaComissao;
 use src\models\Comissao\CentroTrabalho;
@@ -122,19 +123,9 @@ class ComissaoCadastroHandler
         // ===== FASE 1: Validação e resolução de lookups (sem transação) =====
 
         // Prepared statements reutilizáveis para lookups (1 prepare, N executes)
-        $stmtItem = $pdo->prepare(
-            "SELECT I.ID AS ITEM_ID, IE.ID AS ITEMPR_ID 
-             FROM FOCCO3I.TITENS I
-             LEFT JOIN FOCCO3I.TITENS_EMPR IE ON IE.ITEM_ID = I.ID AND IE.EMPR_ID = :empr_id
-             WHERE I.COD_ITEM = :cod_item
-             FETCH FIRST 1 ROW ONLY"
-        );
-        $stmtCentro = $pdo->prepare(
-            "SELECT ID FROM FOCCO3I.TCENTROS_TRAB WHERE COD_CENTRO = :cod_centro AND EMPR_ID = :empr_id FETCH FIRST 1 ROW ONLY"
-        );
-        $stmtMascara = $pdo->prepare(
-            "SELECT 1 FROM FOCCO3I.TMASC_ITEM WHERE ID = :id FETCH FIRST 1 ROW ONLY"
-        );
+        $stmtItem = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.buscarItemPorCodigo'));
+        $stmtCentro = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.buscarCentroPorCodigo'));
+        $stmtMascara = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.verificarMascaraExiste'));
 
         // Pré-validar todas as linhas e resolver lookups
         $linhasValidas = [];
@@ -232,11 +223,7 @@ class ComissaoCadastroHandler
         }
 
         // ===== FASE 2: Pré-carregar TODAS as duplicatas da empresa em uma única query =====
-        $stmtDuplicatas = $pdo->prepare(
-            "SELECT PP.ID_PONTUACAO, PP.ITEM_ID, PP.ID_MASCARA, PP.ID_CENTRO_TRAB
-             FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
-             WHERE PP.ATIVO = 'S' AND PP.ID_EMPR = :empr_id"
-        );
+        $stmtDuplicatas = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.listarDuplicatas'));
         $stmtDuplicatas->execute([':empr_id' => $emprId]);
         $todasDuplicatas = $stmtDuplicatas->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -249,16 +236,8 @@ class ComissaoCadastroHandler
         unset($todasDuplicatas);
 
         // ===== FASE 3: Executar INSERTs e UPDATEs em transação única =====
-        $stmtInsert = $pdo->prepare(
-            "INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO 
-             (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB, PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO, DT_CADASTRO, ID_USUARIO_CAD)
-             VALUES (FOCCO3I.SEQ_GAZIN_PONTUACAO_PROD.NEXTVAL, :empr_id, :item_id, :itempr_id, :mascara_id, :centro_trab_id, :pontos_up, TO_DATE(:dt_ini, 'YYYY-MM-DD'), TO_DATE(:dt_fim, 'YYYY-MM-DD'), 'S', SYSDATE, :id_usuario)"
-        );
-        $stmtUpdate = $pdo->prepare(
-            "UPDATE FOCCO3I.TGAZIN_PONTUACAO_PRODUTO 
-             SET PONTOS_UP = :pontos_up, DT_VIGENCIA_INI = TO_DATE(:dt_ini, 'YYYY-MM-DD'), DT_VIGENCIA_FIM = TO_DATE(:dt_fim, 'YYYY-MM-DD'), DT_ALTERACAO = SYSDATE, ID_USUARIO_ALT = :id_usuario
-             WHERE ID_PONTUACAO = :id_pontuacao"
-        );
+        $stmtInsert = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.importarInserir'));
+        $stmtUpdate = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.importarAtualizar'));
 
         $pdo->beginTransaction();
         try {
@@ -459,19 +438,9 @@ class ComissaoCadastroHandler
             $params['termo'] = '%' . $termo . '%';
             $params['termo2'] = '%' . $termo . '%';
         }
-        
-        $sql = "SELECT DISTINCT
-                    TEMPRESAS.COD_EMP,
-                    TITENS.ID AS ID_ITEM,
-                    TITENS.COD_ITEM,
-                    TITENS.DESC_TECNICA AS DESCRICAO,
-                    TMASC_ITEM.ID AS ID_MASCARA,
-                    TMASC_ITEM.MASCARA,
-                    TITENS_EMPR.ID AS ITEMPR_ID
-                " . $sqlBase . "
-                ORDER BY TITENS.DESC_TECNICA ASC
-                FETCH FIRST 200 ROWS ONLY";
-        
+
+        $sql = str_replace('{FROM_WHERE}', $sqlBase, GetSqlFocco::getSql('comissao.produto.listarSelect'));
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -503,25 +472,14 @@ class ComissaoCadastroHandler
         }
         
         // Contar total
-        $sqlCount = "SELECT COUNT(DISTINCT TITENS_EMPR.ID || '-' || NVL(TMASC_ITEM.ID, 0)) " . $sqlBase;
+        $sqlCount = str_replace('{FROM_WHERE}', $sqlBase, GetSqlFocco::getSql('comissao.produto.countSelect'));
         $stmtCount = $pdo->prepare($sqlCount);
         $stmtCount->execute($params);
         $total = (int)$stmtCount->fetchColumn();
-        
+
         // Buscar dados paginados
-        $sql = "SELECT DISTINCT
-                    TEMPRESAS.ID AS ID_EMPRESA,
-                    TEMPRESAS.COD_EMP,
-                    TITENS.ID AS ITEM_ID,
-                    TITENS_EMPR.ID AS ID_ITEMPR,
-                    TITENS.COD_ITEM,
-                    TITENS.DESC_TECNICA AS DESCRICAO,
-                    TMASC_ITEM.ID AS ID_MASCARA,
-                    TMASC_ITEM.MASCARA
-                " . $sqlBase . "
-                ORDER BY TITENS.DESC_TECNICA ASC
-                OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY";
-        
+        $sql = str_replace('{FROM_WHERE}', $sqlBase, GetSqlFocco::getSql('comissao.produto.buscarSelect'));
+
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
@@ -1038,58 +996,16 @@ class ComissaoCadastroHandler
     private static function converterData(?string $data): ?string
     {
         if (empty($data)) return null;
-        
+
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $data)) {
             return $data;
         }
-        
+
         if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $data, $m)) {
             return "{$m[3]}-{$m[2]}-{$m[1]}";
         }
-        
+
         return null;
-    }
-
-    /**
-     * Buscar item pelo código
-     */
-    private static function buscarItemPorCodigo(\PDO $pdo, string $codItem, int $emprId): ?array
-    {
-        $sql = "SELECT I.ID AS ITEM_ID, IE.ID AS ITEMPR_ID 
-                FROM FOCCO3I.TITENS I
-                LEFT JOIN FOCCO3I.TITENS_EMPR IE ON IE.ITEM_ID = I.ID AND IE.EMPR_ID = :empr_id
-                WHERE I.COD_ITEM = :cod_item
-                FETCH FIRST 1 ROW ONLY";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':empr_id', $emprId, \PDO::PARAM_INT);
-        $stmt->bindValue(':cod_item', $codItem, \PDO::PARAM_STR);
-        $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
-    }
-
-    /**
-     * Buscar centro pelo código e empresa
-     */
-    private static function buscarCentroPorCodigo(\PDO $pdo, string $codCentro, int $emprId): ?array
-    {
-        $sql = "SELECT ID FROM FOCCO3I.TCENTROS_TRAB WHERE COD_CENTRO = :cod_centro AND EMPR_ID = :empr_id FETCH FIRST 1 ROW ONLY";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':cod_centro', $codCentro, \PDO::PARAM_STR);
-        $stmt->bindValue(':empr_id', $emprId, \PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
-    }
-
-    /**
-     * Verificar se uma máscara existe na tabela TMASC_ITEM
-     */
-    private static function verificarMascaraExiste(\PDO $pdo, int $mascaraId): bool
-    {
-        $sql = "SELECT 1 FROM FOCCO3I.TMASC_ITEM WHERE ID = :id FETCH FIRST 1 ROW ONLY";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':id', $mascaraId, \PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch(\PDO::FETCH_ASSOC) ? true : false;
     }
 
     /**
@@ -1132,31 +1048,7 @@ class ComissaoCadastroHandler
      */
     private static function getSqlBaseProdutos(): string
     {
-        return "FROM FOCCO3I.TGRP_CLAS_ITE TGRP_CLAS_ITE,
-                     FOCCO3I.TITENS_ENGENHARIA TITENS_ENGENHARIA,
-                     FOCCO3I.TITENS_ENG_CONF TITENS_ENG_CONF,
-                     FOCCO3I.TEMPRESAS TEMPRESAS,
-                     FOCCO3I.TITENS TITENS,
-                     FOCCO3I.TITENS_EMPR TITENS_EMPR,
-                     FOCCO3I.TMASC_ITEM TMASC_ITEM,
-                     FOCCO3I.TITENS_ESTOQUE TITENS_ESTOQUE,
-                     FOCCO3I.TALMOXARIFADOS TALMOXARIFADOS,
-                     FOCCO3I.TCAD_COD_BARRA TCAD_COD_BARRA,
-                     FOCCO3I.TITENS_CONTABIL TITENS_CONTABIL,
-                     FOCCO3I.TCLAS_FISC TCLAS_FISC
-                WHERE TGRP_CLAS_ITE.ID = TITENS_ESTOQUE.GRP_CLAS_ID
-                  AND TITENS_ENGENHARIA.ID = TITENS_ENG_CONF.ITEG_ID(+)
-                  AND TEMPRESAS.ID = TITENS_EMPR.EMPR_ID
-                  AND TITENS.ID = TITENS_EMPR.ITEM_ID
-                  AND TITENS_EMPR.ID = TITENS_CONTABIL.ITEMPR_ID
-                  AND TITENS_EMPR.ID = TITENS_ESTOQUE.ITEMPR_ID
-                  AND TITENS_EMPR.ID = TMASC_ITEM.ITEMPR_ID(+)
-                  AND TITENS_EMPR.ID = TITENS_ENGENHARIA.ITEMPR_ID(+)
-                  AND TMASC_ITEM.ID = TCAD_COD_BARRA.TMASC_ITEM_ID(+)
-                  AND TMASC_ITEM.ID = TITENS_ENG_CONF.TMASC_ITEM_ID(+)
-                  AND TALMOXARIFADOS.ID = TITENS_ESTOQUE.ALMOX_ID
-                  AND TCLAS_FISC.ID = TITENS_CONTABIL.CLAS_FISC_ID
-                  AND TITENS_ENGENHARIA.TP_ITEM = 'F'";
+        return GetSqlFocco::getSql('comissao.produto.fromWhereBase');
     }
 
     /**

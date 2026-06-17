@@ -3,7 +3,6 @@
 /** @var array    $rotas_permitidas */
 /** @var string   $base */
 /** @var callable $render */
-/** @var array    $empresas */
 $acessoPcp = $is_admin || in_array('pcp', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoPcp) {
     header('Location: ' . $base . 'sem-acesso');
@@ -11,9 +10,9 @@ if (!$acessoPcp) {
 }
 ?>
 <?= $render('header', [
-    'pageTitle'  => 'Relatório de Produção',
+    'pageTitle'  => 'Sequência de Produção — Pillow',
     'showNavbar' => true,
-    'pageActive' => 'pcp-relatorio-producao',
+    'pageActive' => 'pcp-relatorio-pillow',
     'customCSS'  => ['src/css/comissao-dashboard.css'],
     'bodyStyle'  => 'margin:0;padding:0;',
 ]) ?>
@@ -28,15 +27,13 @@ if (!$acessoPcp) {
 /* ── Área de impressão ──────────────────────────── */
 #printArea { display:none; }
 
-/* ── Layout do relatório (ecrã e impressão) ─────── */
+/* ── Layout do relatório ────────────────────────── */
 .pcp-section {
     font-family: Arial, sans-serif;
     font-size: 9pt;
     padding: 10px 14px;
     background: #fff;
 }
-
-/* Cabeçalho do relatório */
 .pcp-report-header {
     display: flex;
     align-items: center;
@@ -65,8 +62,6 @@ if (!$acessoPcp) {
     flex-shrink: 0;
 }
 .pcp-report-header .col-right div { margin-bottom: 2px; }
-
-/* Revisão */
 .pcp-revisao {
     border: 1px solid #000;
     border-top: none;
@@ -75,8 +70,6 @@ if (!$acessoPcp) {
     text-align: right;
     margin-bottom: 0;
 }
-
-/* Título da seção */
 .pcp-section-title {
     background: #002060;
     color: #fff;
@@ -87,8 +80,6 @@ if (!$acessoPcp) {
     margin-top: 6px;
     margin-bottom: 2px;
 }
-
-/* Tabela de dados */
 .pcp-table {
     width: 100%;
     border-collapse: collapse;
@@ -110,63 +101,18 @@ if (!$acessoPcp) {
 }
 .pcp-table td.td-wrap { white-space:normal;word-break:break-word; }
 .pcp-table tr:nth-child(even) td { background: #f2f2f2; }
-.pcp-table tr.subtotal-row td {
-    background: #dce6f1;
-    font-weight: bold;
-    text-align: right;
-}
 .pcp-table tr.total-row td {
     background: #1f3864;
     color: #fff;
     font-weight: bold;
     text-align: right;
 }
-.pcp-table tr.separator-row td {
-    background: #fff;
-    border: none;
-    padding: 4px;
-}
-
-/* Cabeçalho 2 linhas (Robotec / Tap) */
-.pcp-header-wrap{border:1px solid #000}
-.pcp-header-row1{display:flex;align-items:stretch}
-.pcp-header-row1 .col-logo{width:110px;padding:4px 8px;border-right:1px solid #000;flex-shrink:0;display:flex;align-items:center}
-.pcp-header-row1 .col-logo img{width:85px}
-.pcp-header-row1 .col-title{flex:1;text-align:center;font-weight:bold;font-size:11pt;padding:5px;border-right:1px solid #000;display:flex;align-items:center;justify-content:center}
-.pcp-header-row1 .col-right{width:170px;font-size:8pt;padding:3px 6px;flex-shrink:0}
-.pcp-header-row2{display:flex;align-items:stretch;border-top:1px solid #000}
-.pcp-header-row2 .col-logo2{width:110px;border-right:1px solid #000;flex-shrink:0}
-.pcp-header-row2 .col-code{flex:1;text-align:center;font-size:8pt;padding:2px 6px;border-right:1px solid #000;display:flex;align-items:center;justify-content:center}
-.pcp-header-row2 .col-rev{width:170px;font-size:8pt;padding:2px 8px;flex-shrink:0}
-
-/* Tabela robotec */
-.rbt-table{width:100%;border-collapse:collapse;font-size:8pt}
-.rbt-table th{background:#1f3864;color:#fff;border:1px solid #999;padding:2px 4px;text-align:center;font-weight:bold;white-space:nowrap}
-.rbt-table td{border:1px solid #ccc;padding:1px 4px;white-space:nowrap}
-.rbt-table td.td-wrap{white-space:normal;word-break:break-word}
-.rbt-table tr.subtotal-row td{background:#d9d9d9;font-weight:bold;text-align:right;border-top:2px solid #999}
-.rbt-table tr.total-row td{background:#1f3864;color:#fff;font-weight:bold}
-.ord-LISO{background:#f0f8ff}.ord-BORDADO{background:#fff9c4}.ord-MISTO{background:#e3f2fd}
-.ord-MOLA{background:#e8f5e9}.ord-MESA{background:#ede7f6}.ord-COSTURA{background:#fce4ec}.ord-MESA_PL{background:#e8eef8}
-
-/* Tabela tap (Colchão Box / Cabeceiras / Conjugado / Travesseiro) */
-.tap-table{width:100%;border-collapse:collapse;font-size:8pt}
-.tap-table th{background:#1f3864;color:#fff;border:1px solid #999;padding:2px 4px;text-align:center;font-weight:bold;white-space:nowrap}
-.tap-table td{border:1px solid #ccc;padding:1px 4px;white-space:nowrap}
-.tap-table td.td-wrap{white-space:normal;word-break:break-word}
-.tap-table tr.subtotal-row td{background:#d9d9d9;font-weight:bold;border-top:2px solid #999}
-.tap-table tr.total-row td{background:#1f3864;color:#fff;font-weight:bold}
-
-/* Histórico de revisões */
 .pcp-historico {
     margin-top: 10px;
     border: 1px solid #999;
     font-size: 8pt;
 }
-.pcp-historico table {
-    width: 100%;
-    border-collapse: collapse;
-}
+.pcp-historico table { width: 100%; border-collapse: collapse; }
 .pcp-historico th {
     background: #d9d9d9;
     border: 1px solid #999;
@@ -174,12 +120,8 @@ if (!$acessoPcp) {
     text-align: center;
     font-weight: bold;
 }
-.pcp-historico td {
-    border: 1px solid #ccc;
-    padding: 2px 6px;
-}
+.pcp-historico td { border: 1px solid #ccc; padding: 2px 6px; }
 
-/* Prévia na tela */
 #printArea.visible {
     display: block;
     border: 1px solid #dee2e6;
@@ -188,17 +130,12 @@ if (!$acessoPcp) {
     background: #f8f9fa;
     overflow: auto;
 }
-.pcp-section + .pcp-section {
-    border-top: 3px dashed #ccc;
-    margin-top: 16px;
-    padding-top: 16px;
-}
 </style>
 
 <div class="comissao-dashboard-container" style="width:100%;max-width:100%;padding:10px;margin:0;">
 
     <div class="pcp-form-card">
-        <h4 class="mb-3"><i class="bi bi-box-seam"></i> Sequência de Produção</h4>
+        <h4 class="mb-3"><i class="bi bi-layers"></i> Sequência de Produção — PILLOW</h4>
         <div class="row g-3 align-items-end">
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Nº do Lote</label>
@@ -220,4 +157,4 @@ if (!$acessoPcp) {
 
 </div>
 
-<script src="src/js/relatorio-producao.js?v=<?= @filemtime(dirname(__DIR__, 4) . '/public/src/js/relatorio-producao.js') ?: '1' ?>"></script>
+<script src="src/js/relatorio-pillow.js?v=<?= @filemtime(dirname(__DIR__, 4) . '/public/src/js/relatorio-pillow.js') ?: '1' ?>"></script>

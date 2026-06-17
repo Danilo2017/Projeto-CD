@@ -42,9 +42,53 @@ $cargaSub = match(true) {
     default => ''
 };
 $pcpSub = match(true) {
-    $pActive === 'pcp-relatorio-producao' => 'relatorio-producao',
+    $pActive === 'pcp-relatorio-caixote'    => 'relatorio-caixote',
+    $pActive === 'pcp-relatorio-producao'   => 'relatorio-producao',
+    $pActive === 'pcp-relatorio-pillow'     => 'relatorio-pillow',
+    $pActive === 'pcp-relatorio-fpt'        => 'relatorio-fpt',
+    $pActive === 'pcp-relatorio-mesa-faixa' => 'relatorio-mesa-faixa',
+    $pActive === 'pcp-relatorio-optron'     => 'relatorio-optron',
+    $pActive === 'pcp-relatorio-tampo-liso'    => 'relatorio-tampo-liso',
+    $pActive === 'pcp-relatorio-tampo-bordado'      => 'relatorio-tampo-bordado',
+    $pActive === 'pcp-relatorio-tampo-bordado-mesa' => 'relatorio-tampo-bordado-mesa',
+    $pActive === 'pcp-relatorio-manta'              => 'relatorio-manta',
+    $pActive === 'pcp-relatorio-manta-mesa'         => 'relatorio-manta-mesa',
+    $pActive === 'pcp-relatorio-mesa-de-corte'      => 'relatorio-mesa-de-corte',
+    $pActive === 'pcp-relatorio-rolo-bordado'       => 'relatorio-rolo-bordado',
+    $pActive === 'pcp-relatorio-tapecaria'          => 'relatorio-tapecaria',
+    $pActive === 'pcp-relatorio-robotec'            => 'relatorio-robotec',
+    $pActive === 'pcp-relatorio-conjugado'          => 'relatorio-conjugado',
+    $pActive === 'pcp-relatorio-trave-peze'         => 'relatorio-trave-peze',
+    $pActive === 'pcp-relatorio-molas-bordas'       => 'relatorio-molas-bordas',
+    $pActive === 'pcp-relatorio-caixa-box'               => 'relatorio-caixa-box',
+    $pActive === 'pcp-relatorio-robotec-abastecedor'     => 'relatorio-robotec-abastecedor',
     default => ''
 };
+// Subgrupos ativos do PCP para abrir o 2º nível automaticamente
+$pcpToSubGrp = [
+    'relatorio-caixote'             => ['robotec', 'caixote'],
+    'relatorio-producao'            => ['robotec', 'costura', 'caixa-box'],
+    'relatorio-pillow'              => ['costura'],
+    'relatorio-fpt'                 => ['costura'],
+    'relatorio-mesa-faixa'          => ['costura'],
+    'relatorio-optron'              => ['costura'],
+    'relatorio-tampo-liso'          => ['costura'],
+    'relatorio-tampo-bordado'       => ['robotec', 'bordadeira'],
+    'relatorio-manta'               => ['robotec', 'laminacao'],
+    'relatorio-mesa-de-corte'       => ['costura'],
+    'relatorio-rolo-bordado'        => ['costura', 'bordadeira'],
+    'relatorio-molas-bordas'        => ['caixote'],
+    'relatorio-caixa-box'           => ['caixa-box'],
+    'relatorio-robotec-abastecedor' => ['robotec'],
+];
+$pcpSGs      = $pcpToSubGrp[$pcpSub] ?? [];
+$sgRobotec   = in_array('robotec',   $pcpSGs);
+$sgCaixote   = in_array('caixote',   $pcpSGs);
+$sgCostura   = in_array('costura',   $pcpSGs);
+$sgBordadeira= in_array('bordadeira',$pcpSGs);
+$sgLaminacao = in_array('laminacao', $pcpSGs);
+$sgCaixaBox  = in_array('caixa-box', $pcpSGs);
+
 $fatSub = match(true) {
     in_array($pActive, ['faturamento-dashboard', 'faturamento']) => 'dashboard',
     $pActive === 'meta-empresa'                                  => 'metas',
@@ -239,12 +283,127 @@ $userName = $user_login ?? 'Usuário';
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-submenu <?= $activeGroup === 'pcp' ? 'open' : '' ?>">
-                <li>
-                    <a href="<?= $base ?>pcp-relatorio-producao"
-                       class="sidebar-sublink <?= $pcpSub === 'relatorio-producao' ? 'active' : '' ?>">
-                        Rel. Produção
-                    </a>
+
+                <!-- ── ROBOTEC ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $sgRobotec ? 'active open' : '' ?>">
+                        <span>Robotec</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $sgRobotec ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>pcp-relatorio-caixote"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-caixote' ? 'active' : '' ?>">
+                            Seq. Caixote</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-producao"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-producao' ? 'active' : '' ?>">
+                            Seq. Produção</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-tampo-bordado"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-tampo-bordado' ? 'active' : '' ?>">
+                            Seq. Tampo Bordado</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-manta"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-manta' ? 'active' : '' ?>">
+                            Seq. Manta</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-robotec-abastecedor"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-robotec-abastecedor' ? 'active' : '' ?>">
+                            Seq. Robotec Abastecedor</a></li>
+                    </ul>
                 </li>
+
+                <!-- ── CAIXOTE ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $sgCaixote ? 'active open' : '' ?>">
+                        <span>Caixote</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $sgCaixote ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>pcp-relatorio-caixote"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-caixote' ? 'active' : '' ?>">
+                            Seq. Caixote</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-molas-bordas"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-molas-bordas' ? 'active' : '' ?>">
+                            Seq. Molas e Bordas</a></li>
+                    </ul>
+                </li>
+
+                <!-- ── COSTURA ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $sgCostura ? 'active open' : '' ?>">
+                        <span>Costura</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $sgCostura ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>pcp-relatorio-producao"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-producao' ? 'active' : '' ?>">
+                            Seq. Produção</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-pillow"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-pillow' ? 'active' : '' ?>">
+                            Seq. Pillow</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-fpt"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-fpt' ? 'active' : '' ?>">
+                            Seq. FPT</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-mesa-faixa"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-mesa-faixa' ? 'active' : '' ?>">
+                            Seq. Mesa de Faixa</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-optron"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-optron' ? 'active' : '' ?>">
+                            Seq. Optron</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-tampo-liso"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-tampo-liso' ? 'active' : '' ?>">
+                            Seq. Tampo Liso</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-mesa-de-corte"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-mesa-de-corte' ? 'active' : '' ?>">
+                            Seq. Mesa de Corte</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-rolo-bordado"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-rolo-bordado' ? 'active' : '' ?>">
+                            Seq. Rolo Bordado</a></li>
+                    </ul>
+                </li>
+
+                <!-- ── BORDADEIRA ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $sgBordadeira ? 'active open' : '' ?>">
+                        <span>Bordadeira</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $sgBordadeira ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>pcp-relatorio-tampo-bordado"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-tampo-bordado' ? 'active' : '' ?>">
+                            Seq. Tampo Bordado</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-rolo-bordado"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-rolo-bordado' ? 'active' : '' ?>">
+                            Seq. Rolo Bordado</a></li>
+                    </ul>
+                </li>
+
+                <!-- ── LAMINAÇÃO ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $sgLaminacao ? 'active open' : '' ?>">
+                        <span>Laminação</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $sgLaminacao ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>pcp-relatorio-manta"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-manta' ? 'active' : '' ?>">
+                            Seq. Manta</a></li>
+                    </ul>
+                </li>
+
+                <!-- ── CAIXA BOX ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $sgCaixaBox ? 'active open' : '' ?>">
+                        <span>Caixa Box</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $sgCaixaBox ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>pcp-relatorio-producao"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-producao' ? 'active' : '' ?>">
+                            Seq. Produção</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-caixa-box"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-caixa-box' ? 'active' : '' ?>">
+                            Seq. Caixa Box</a></li>
+                    </ul>
+                </li>
+
             </ul>
         </li>
         <?php endif; ?>
@@ -451,7 +610,7 @@ $userName = $user_login ?? 'Usuário';
     max-height: 0; overflow: hidden;
     transition: max-height 0.25s ease;
 }
-.sidebar-submenu.open { max-height: 400px; }
+.sidebar-submenu.open { max-height: 1400px; }
 /* No collapsed mode, submenus ficam ocultos (flyout substitui) */
 .app-sidebar:not(.expanded) .sidebar-submenu { max-height: 0 !important; }
 
@@ -478,6 +637,59 @@ $userName = $user_login ?? 'Usuário';
 .sidebar-sublink:hover::before { background: var(--sb-accent); }
 .sidebar-sublink.active { color: var(--sb-accent); font-weight: 600; }
 .sidebar-sublink.active::before { background: var(--sb-accent); }
+
+/* ─── PCP Subgrupos (2º nível) ─────────── */
+.pcp-subgroup { margin: 0; }
+.pcp-subgroup-btn {
+    display: flex; align-items: center;
+    width: calc(100% - 16px); margin: 1px 8px;
+    height: 34px; border-radius: 8px;
+    border: none; background: none; cursor: pointer;
+    color: #6b7280; white-space: nowrap; overflow: hidden;
+    transition: background 0.15s, color 0.15s;
+    padding: 0 6px 0 46px;
+    font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+.pcp-subgroup-btn > span { flex: 1; text-align: left; }
+.pcp-subgroup-btn .subgrp-chevron {
+    font-size: 0.68rem; flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+.pcp-subgroup-btn.open .subgrp-chevron { transform: rotate(180deg); }
+.pcp-subgroup-btn:hover { background: #f3f4f6; color: var(--sb-accent); }
+.pcp-subgroup-btn.active { color: var(--sb-accent); }
+
+.pcp-sub-submenu {
+    list-style: none; padding: 0; margin: 0;
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.22s ease;
+}
+.pcp-sub-submenu.open { max-height: 600px; }
+
+.pcp-sub-sublink {
+    display: block;
+    padding: 7px 12px 7px 66px;
+    margin: 1px 8px;
+    border-radius: 8px;
+    color: #6b7280; text-decoration: none;
+    font-size: 0.83rem; font-weight: 400;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    position: relative;
+}
+.pcp-sub-sublink::before {
+    content: '';
+    position: absolute;
+    left: 46px; top: 50%; transform: translateY(-50%);
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #e5e7eb;
+    transition: background 0.15s;
+}
+.pcp-sub-sublink:hover { background: #f3f4f6; color: var(--sb-accent); }
+.pcp-sub-sublink:hover::before { background: var(--sb-accent); }
+.pcp-sub-sublink.active { color: var(--sb-accent); font-weight: 600; }
+.pcp-sub-sublink.active::before { background: var(--sb-accent); }
 
 /* ─── Rodapé / Sair ─────────────────────────── */
 .sidebar-bottom {
@@ -572,6 +784,30 @@ body.sidebar-expanded .app-header {
 .sb-flyout-body a:hover::before { background: var(--sb-accent, #2563eb); }
 .sb-flyout-body a.active { color: var(--sb-accent, #2563eb); font-weight: 600; }
 .sb-flyout-body a.active::before { background: var(--sb-accent, #2563eb); }
+.sb-flyout-group-hdr {
+    display: flex; align-items: center;
+    font-size: 0.68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #9ca3af;
+    padding: 7px 10px 3px 12px;
+    margin-top: 2px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+}
+.sb-flyout-group-hdr > span { flex: 1; }
+.sb-flyout-group-hdr:hover { background: #f3f4f6; color: #374151; }
+.sb-fghdr-chev {
+    font-size: 0.62rem; flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+.sb-flyout-group-hdr.open .sb-fghdr-chev { transform: rotate(180deg); }
+.sb-flyout-sublinks {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.22s ease;
+}
+.sb-flyout-sublinks.open { max-height: 400px; }
 
 /* ─── Responsivo ──────────────────────────── */
 @media (max-width: 768px) {
@@ -645,23 +881,64 @@ body.sidebar-expanded .app-header {
     flyout.addEventListener('mouseenter', function () { clearTimeout(flyoutTimer); });
     flyout.addEventListener('mouseleave', function () { flyoutTimer = setTimeout(hideFlyout, 180); });
 
+    /* ── PCP Subgrupos (2º nível) ── */
+    document.querySelectorAll('.pcp-subgroup-btn').forEach(function (btn) {
+        var subMenu = btn.nextElementSibling;
+        btn.addEventListener('click', function () {
+            var isOpen = subMenu.classList.toggle('open');
+            btn.classList.toggle('open', isOpen);
+        });
+    });
+
     /* ── Flyout helpers ── */
     function showFlyout(btn, submenu) {
-        var rect   = btn.getBoundingClientRect();
-        var title  = btn.querySelector('span') ? btn.querySelector('span').textContent.trim() : '';
-        var links  = submenu.querySelectorAll('.sidebar-sublink');
+        var rect  = btn.getBoundingClientRect();
+        var title = btn.querySelector('span') ? btn.querySelector('span').textContent.trim() : '';
 
         flyout.querySelector('.sb-flyout-title').textContent = title;
         var bodyEl = flyout.querySelector('.sb-flyout-body');
         bodyEl.innerHTML = '';
 
-        links.forEach(function (link) {
-            var a = document.createElement('a');
-            a.href = link.href;
-            a.textContent = link.textContent.trim();
-            if (link.classList.contains('active')) a.classList.add('active');
-            bodyEl.appendChild(a);
-        });
+        var subgroups = submenu.querySelectorAll('.pcp-subgroup');
+        if (subgroups.length > 0) {
+            /* 2 níveis: cabeçalho clicável (toggle) + links */
+            subgroups.forEach(function (sg) {
+                var sgBtn    = sg.querySelector('.pcp-subgroup-btn');
+                var label    = sgBtn && sgBtn.querySelector('span') ? sgBtn.querySelector('span').textContent.trim() : '';
+                var hasActive = !!sg.querySelector('.pcp-sub-sublink.active');
+
+                var hdr = document.createElement('div');
+                hdr.className = 'sb-flyout-group-hdr' + (hasActive ? ' open' : '');
+                hdr.innerHTML = '<span>' + label + '</span><i class="bi bi-chevron-down sb-fghdr-chev"></i>';
+
+                var linksWrap = document.createElement('div');
+                linksWrap.className = 'sb-flyout-sublinks' + (hasActive ? ' open' : '');
+
+                sg.querySelectorAll('.pcp-sub-sublink').forEach(function (link) {
+                    var a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.textContent.trim();
+                    if (link.classList.contains('active')) a.classList.add('active');
+                    linksWrap.appendChild(a);
+                });
+
+                hdr.addEventListener('click', function () {
+                    var isOpen = linksWrap.classList.toggle('open');
+                    hdr.classList.toggle('open', isOpen);
+                });
+
+                bodyEl.appendChild(hdr);
+                bodyEl.appendChild(linksWrap);
+            });
+        } else {
+            submenu.querySelectorAll('.sidebar-sublink').forEach(function (link) {
+                var a = document.createElement('a');
+                a.href = link.href;
+                a.textContent = link.textContent.trim();
+                if (link.classList.contains('active')) a.classList.add('active');
+                bodyEl.appendChild(a);
+            });
+        }
 
         flyout.style.display = 'block';
         flyout.style.top     = rect.top + 'px';
