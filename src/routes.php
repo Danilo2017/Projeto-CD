@@ -43,6 +43,8 @@ $router->get('/carga-api-anexo-listar',  'CD\\ProjecaoCargaController@listarAnex
 $router->post('/carga-api-anexo-upload', 'CD\\ProjecaoCargaController@uploadAnexo',  true);
 $router->get('/carga-api-anexo-download','CD\\ProjecaoCargaController@downloadAnexo',true);
 $router->post('/carga-api-anexo-excluir','CD\\ProjecaoCargaController@excluirAnexo', true);
+$router->get('/carga-api-rota-listar',  'CD\\ProjecaoCargaController@listarRota',   true);
+$router->post('/carga-api-rota-salvar', 'CD\\ProjecaoCargaController@salvarRota',   true);
 
 // ========== Rotas do Sistema de Comissão ==========
 
@@ -222,8 +224,48 @@ $router->post('/processo-api-troca-tipo-nf-buscar','Processo\\TrocaTipoNfEntrada
 $router->post('/processo-api-troca-tipo-nf',      'Processo\\TrocaTipoNfEntradaController@executar',    true);
 
 // ========== PCP ==========
-$router->get('/pcp-relatorio-producao',      'PCP\\RelatorioProdController@index',  true);
-$router->post('/pcp-api-relatorio-producao', 'PCP\\RelatorioProdController@buscar', true);
+$router->get('/pcp-relatorio-producao',      'PCP\\RelatorioProdController@index',        true);
+$router->post('/pcp-api-relatorio-producao', 'PCP\\RelatorioProdController@buscar',       true);
+$router->get('/pcp-relatorio-pillow',        'PCP\\RelatorioProdController@indexPillow',  true);
+$router->post('/pcp-api-relatorio-pillow',   'PCP\\RelatorioProdController@buscarPillow', true);
+$router->get('/pcp-relatorio-fpt',            'PCP\\RelatorioProdController@indexFpt',        true);
+$router->post('/pcp-api-relatorio-fpt',       'PCP\\RelatorioProdController@buscarFpt',       true);
+$router->get('/pcp-relatorio-mesa-faixa',     'PCP\\RelatorioProdController@indexMesaFaixa',  true);
+$router->post('/pcp-api-relatorio-mesa-faixa','PCP\\RelatorioProdController@buscarMesaFaixa', true);
+$router->get('/pcp-relatorio-optron',          'PCP\\RelatorioProdController@indexOptron',      true);
+$router->post('/pcp-api-relatorio-optron',     'PCP\\RelatorioProdController@buscarOptron',     true);
+$router->get('/pcp-relatorio-tampo-liso',         'PCP\\RelatorioProdController@indexTampoLiso',    true);
+$router->post('/pcp-api-relatorio-tampo-liso',    'PCP\\RelatorioProdController@buscarTampoLiso',   true);
+$router->get('/pcp-relatorio-tampo-bordado',           'PCP\\RelatorioProdController@indexTampoBordado',     true);
+$router->post('/pcp-api-relatorio-tampo-bordado',      'PCP\\RelatorioProdController@buscarTampoBordado',    true);
+$router->get('/pcp-relatorio-tampo-bordado-mesa',      'PCP\\RelatorioProdController@indexTampoBordadoMesa', true);
+$router->post('/pcp-api-relatorio-tampo-bordado-mesa', 'PCP\\RelatorioProdController@buscarTampoBordadoMesa',true);
+$router->get('/pcp-relatorio-manta',                   'PCP\\RelatorioProdController@indexManta',            true);
+$router->post('/pcp-api-relatorio-manta',              'PCP\\RelatorioProdController@buscarManta',           true);
+$router->get('/pcp-relatorio-manta-mesa',              'PCP\\RelatorioProdController@indexMantaMesa',        true);
+$router->post('/pcp-api-relatorio-manta-mesa',         'PCP\\RelatorioProdController@buscarMantaMesa',       true);
+$router->get('/pcp-relatorio-mesa-de-corte',           'PCP\\RelatorioProdController@indexMesaDeCorte',      true);
+$router->post('/pcp-api-relatorio-mesa-de-corte',      'PCP\\RelatorioProdController@buscarMesaDeCorte',     true);
+$router->get('/pcp-relatorio-bordadeira',              'PCP\\RelatorioProdController@indexBordadeira',       true);
+$router->post('/pcp-api-relatorio-bordadeira',         'PCP\\RelatorioProdController@buscarBordadeira',      true);
+$router->get('/pcp-relatorio-tapecaria',               'PCP\\RelatorioProdController@indexTapecaria',        true);
+$router->post('/pcp-api-relatorio-tapecaria',          'PCP\\RelatorioProdController@buscarTapecaria',       true);
+$router->get('/pcp-relatorio-robotec',                 'PCP\\RelatorioProdController@indexRobotec',          true);
+$router->post('/pcp-api-relatorio-robotec',            'PCP\\RelatorioProdController@buscarRobotec',         true);
+$router->get('/pcp-relatorio-rolo-bordado',            'PCP\\RelatorioProdController@indexRoloBordado',      true);
+$router->post('/pcp-api-relatorio-rolo-bordado',       'PCP\\RelatorioProdController@buscarRoloBordado',     true);
+$router->get('/pcp-relatorio-conjugado',               'PCP\\RelatorioProdController@indexConjugado',        true);
+$router->post('/pcp-api-relatorio-conjugado',          'PCP\\RelatorioProdController@buscarConjugado',       true);
+$router->get('/pcp-relatorio-trave-peze',              'PCP\\RelatorioProdController@indexTravePeze',        true);
+$router->post('/pcp-api-relatorio-trave-peze',         'PCP\\RelatorioProdController@buscarTravePeze',       true);
+$router->get('/pcp-relatorio-molas-bordas',            'PCP\\RelatorioProdController@indexMolasBordas',      true);
+$router->post('/pcp-api-relatorio-molas-bordas',       'PCP\\RelatorioProdController@buscarMolasBordas',     true);
+$router->get('/pcp-relatorio-caixote',                 'PCP\\RelatorioProdController@indexCaixote',          true);
+$router->post('/pcp-api-relatorio-caixote',            'PCP\\RelatorioProdController@buscarCaixote',         true);
+$router->get('/pcp-relatorio-caixa-box',                    'PCP\\RelatorioProdController@indexCaixaBox',              true);
+$router->post('/pcp-api-relatorio-caixa-box',               'PCP\\RelatorioProdController@buscarCaixaBox',             true);
+$router->get('/pcp-relatorio-robotec-abastecedor',          'PCP\\RelatorioProdController@indexRobotecAbastecedor',    true);
+$router->post('/pcp-api-relatorio-robotec-abastecedor',     'PCP\\RelatorioProdController@buscarRobotecAbastecedor',   true);
 
 // ========== Admin - Gerenciamento de SQLs ==========
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);

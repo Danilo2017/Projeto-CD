@@ -109,7 +109,7 @@
         _cargasData = rows;
         const tbody = document.getElementById('tabelaBody');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
             document.getElementById('totalCargas').textContent = '0';
             document.getElementById('totalPendente').textContent = '-';
             document.getElementById('totalFaturado').textContent = '-';
@@ -131,7 +131,9 @@
                 <td class="text-center fw-bold">${fmt(r.NUM_CARGA)}</td>
                 <td>${fmt(r.DT_GERACAO)}</td>
                 <td class="text-truncate" style="max-width:160px" title="${r.DESCRICAO ?? ''}">${fmt(r.DESCRICAO)}</td>
-                <td class="text-truncate small" style="max-width:200px" title="${r.ROTA ?? ''}">${fmt(r.ROTA)}</td>
+                <td class="text-truncate small" style="max-width:200px;cursor:pointer"
+                    title="${r.ROTA ? r.ROTA + ' — clique para editar sequência' : 'Clique para editar sequência'}"
+                    onclick="abrirRota(${r.NUM_CARGA})">${fmt(r.ROTA)} <i class="bi bi-pencil-fill text-muted" style="font-size:0.6rem;opacity:.6"></i></td>
                 <td class="text-end">${fmt(r.CUBAGEM)}</td>
                 <td class="text-end">${fmtValor(r.VALOR_PENDENTE)}</td>
                 <td class="text-end">${fmtValor(r.VALOR_FATURADO)}</td>
@@ -150,6 +152,7 @@
                     ${r.PLACAS && r.FROTA ? `<div class="text-muted" style="font-size:0.7rem">${r.FROTA}</div>` : ''}
                 </td>
                 <td class="text-center">${r.SITUACAO_CAMINHAO ? badgeSitCaminhao(r.SITUACAO_CAMINHAO) : '<span class="text-muted small">-</span>'}</td>
+                <td class="text-center small">${fmt(r.DOCA)}</td>
                 <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
                         <i class="bi bi-pencil-fill"></i>
@@ -189,6 +192,7 @@
         document.getElementById('fldSituacaoCaminhao').value = r.SITUACAO_CAMINHAO || '';
         document.getElementById('fldMotorista').value        = r.MOTORISTA         || '';
         document.getElementById('fldContato').value        = r.CONTATO        || '';
+        document.getElementById('fldDoca').value           = r.DOCA           || '';
         document.getElementById('fldNumDocs').value        = r.NUM_DOCS       || '';
         document.getElementById('fldObservacoes').value    = r.OBSERVACOES    || '';
 
@@ -215,6 +219,7 @@
             situacao_caminhao:  document.getElementById('fldSituacaoCaminhao').value,
             motorista:          document.getElementById('fldMotorista').value,
             contato:         document.getElementById('fldContato').value,
+            doca:            document.getElementById('fldDoca').value,
             num_docs:        document.getElementById('fldNumDocs').value,
             observacoes:     document.getElementById('fldObservacoes').value,
         };
@@ -239,6 +244,7 @@
                 r.SITUACAO_CAMINHAO = payload.situacao_caminhao || null;
                 r.MOTORISTA         = payload.motorista         || null;
                 r.CONTATO         = payload.contato         || null;
+                r.DOCA            = payload.doca            || null;
                 r.NUM_DOCS        = payload.num_docs        || null;
                 r.OBSERVACOES     = payload.observacoes     || null;
             }
@@ -300,6 +306,7 @@
             ['FROTA',              'FROTA'],
             ['TIPO_VEICULO',       'TIPO VEÍCULO'],
             ['CONTATO',            'CONTATO'],
+            ['DOCA',               'DOCA'],
             ['NUM_DOCS',           'Nº DOCUMENTOS'],
             ['OBSERVACOES',        'OBSERVAÇÕES'],
             ['POS_PLC',            'POS. PLC'],
@@ -468,6 +475,89 @@
         }
 
         window.open(url, '_blank', 'noopener');
+    };
+
+    /* ── Modal Sequência de Rota ─────────────────────── */
+    let _rotaState = { plcId: null, numCarga: null, rows: [] };
+
+    window.abrirRota = async function (numCarga) {
+        _rotaState = { plcId: null, numCarga, rows: [] };
+        document.getElementById('modalRotaTitulo').innerHTML =
+            `<i class="bi bi-geo-alt-fill"></i> Sequência — Carga #${numCarga}`;
+        const div = document.getElementById('rotaLista');
+        div.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalRota')).show();
+
+        try {
+            const data = await fetchJson(`carga-api-rota-listar?num_carga=${numCarga}`);
+            if (data.error) { div.innerHTML = `<div class="text-danger p-2">${data.error}</div>`; return; }
+            if (!data.data?.length) {
+                div.innerHTML = '<div class="text-muted text-center p-3">Nenhum pedido encontrado nesta carga.</div>';
+                return;
+            }
+            _rotaState.plcId = data.data[0].PLC_ID;
+            _rotaState.rows  = data.data;
+            _renderRotaLista();
+        } catch (e) {
+            div.innerHTML = '<div class="text-danger p-2">Erro ao carregar rota.</div>';
+        }
+    };
+
+    function _renderRotaLista() {
+        const rows = _rotaState.rows;
+        document.getElementById('rotaLista').innerHTML = `
+        <p class="text-muted small px-2 mb-1">Digite a sequência de entrega de cada pedido. Pedidos com o mesmo número serão entregues juntos.</p>
+        <table class="table table-sm table-bordered mb-0">
+            <thead class="table-secondary">
+                <tr>
+                    <th class="text-center" style="width:64px">Seq</th>
+                    <th>Pedido</th>
+                    <th>Cidade / UF</th>
+                    <th class="text-end">Cubagem</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows.map((r, i) => `
+                <tr>
+                    <td class="text-center p-1">
+                        <input type="number" min="1"
+                               class="form-control form-control-sm text-center fw-bold p-0"
+                               style="width:54px;margin:auto"
+                               data-idx="${i}"
+                               value="${r.SEQ ?? (i + 1)}">
+                    </td>
+                    <td>${r.NUM_PEDIDO ?? '-'}</td>
+                    <td>${r.CIDADE} - ${r.UF}</td>
+                    <td class="text-end small">${r.CUBAGEM ?? '-'}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+    }
+
+    window.salvarSequenciaRota = async function () {
+        const btn = document.getElementById('btnSalvarRota');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        try {
+            const inputs = document.querySelectorAll('#rotaLista input[data-idx]');
+            const sequencias = _rotaState.rows.map((r, i) => ({
+                pdv_id: r.PDV_ID,
+                seq:    parseInt(inputs[i]?.value || (i + 1), 10),
+            }));
+            const data = await fetchJson('carga-api-rota-salvar', {
+                plc_id:     _rotaState.plcId,
+                sequencias,
+            });
+            if (data.error) throw new Error(data.error);
+            toast('Sequência salva com sucesso.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalRota')).hide();
+        } catch (e) {
+            toast(e.message || 'Erro ao salvar sequência.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar Sequência';
+        }
     };
 
     /* ── Init ─────────────────────────────────────────── */

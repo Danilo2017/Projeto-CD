@@ -63,11 +63,12 @@ if (!$acessoCarga) {
                     <th style="min-width:130px">MOTORISTA</th>
                     <th class="text-center" style="width:115px;min-width:115px">PLACA</th>
                     <th class="text-center">SIT. VEÍCULO</th>
+                    <th class="text-center">DOCA</th>
                     <th class="text-center">AÇÕES</th>
                 </tr>
             </thead>
             <tbody id="tabelaBody">
-                <tr><td colspan="14" class="text-center py-4">
+                <tr><td colspan="15" class="text-center py-4">
                     <div class="spinner-border spinner-border-sm"></div> Carregando...
                 </td></tr>
             </tbody>
@@ -134,7 +135,11 @@ if (!$acessoCarga) {
                         <label class="form-label fw-semibold">Contato</label>
                         <input type="text" id="fldContato" class="form-control form-control-sm" placeholder="Telefone / WhatsApp">
                     </div>
-                    <div class="col-md-12">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Doca</label>
+                        <input type="text" id="fldDoca" class="form-control form-control-sm" placeholder="Ex: D1, D2">
+                    </div>
+                    <div class="col-md-9">
                         <label class="form-label fw-semibold">Nº Documentos</label>
                         <input type="text" id="fldNumDocs" class="form-control form-control-sm" placeholder="Números separados por vírgula">
                     </div>
@@ -273,6 +278,27 @@ if (!$acessoCarga) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Modal Sequência de Rota ═══ -->
+<div class="modal fade" id="modalRota" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background:#0d6efd">
+                <h5 class="modal-title" id="modalRotaTitulo"><i class="bi bi-geo-alt-fill"></i> Sequência da Rota</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2" id="rotaLista">
+                <div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                <button id="btnSalvarRota" type="button" class="btn btn-primary btn-sm" onclick="salvarSequenciaRota()">
+                    <i class="bi bi-check-lg"></i> Salvar Sequência
+                </button>
             </div>
         </div>
     </div>

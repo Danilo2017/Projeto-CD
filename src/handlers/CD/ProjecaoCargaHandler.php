@@ -69,4 +69,21 @@ class ProjecaoCargaHandler
         $log = ProjecaoCarga::listarLog((int) $dados['empr_id'], (int) $dados['num_carga']);
         return ['success' => true, 'data' => $log];
     }
+
+    public static function listarRota(array $dados): array
+    {
+        Controller::verificarCamposVazios($dados, ['empr_id', 'num_carga']);
+        $rows = ProjecaoCarga::listarRota((int) $dados['empr_id'], (int) $dados['num_carga']);
+        return ['success' => true, 'data' => $rows];
+    }
+
+    public static function salvarRota(array $dados): array
+    {
+        Controller::verificarCamposVazios($dados, ['plc_id', 'sequencias']);
+        if (!is_array($dados['sequencias']) || empty($dados['sequencias'])) {
+            throw new \Exception('Nenhuma sequência informada.', 400);
+        }
+        ProjecaoCarga::salvarSequenciaRota((int) $dados['plc_id'], $dados['sequencias']);
+        return ['success' => true];
+    }
 }

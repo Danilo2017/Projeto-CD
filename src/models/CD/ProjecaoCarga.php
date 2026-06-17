@@ -3,13 +3,14 @@
 namespace src\models\CD;
 
 use core\Database;
+use src\utils\GetSqlFocco;
 
 class ProjecaoCarga
 {
     private static array $campos = [
         'DT_CARREGAMENTO', 'OBSERVACOES', 'NUM_DOCS', 'SITUACAO_CARGA',
         'FROTA', 'PLACAS', 'TIPO_VEICULO', 'MOTORISTA', 'CONTATO', 'SITUACAO',
-        'SITUACAO_CAMINHAO',
+        'SITUACAO_CAMINHAO', 'DOCA',
     ];
 
     public static function listar(int $emprId, string $dataFiltro = '', string $wmsSchema = 'FOCCOWMS14A'): array
@@ -88,9 +89,7 @@ class ProjecaoCarga
 
         foreach ($logs as $log) {
             $pdo->prepare(
-                'INSERT INTO FOCCO3I.TGAZIN_CARGA_AGEND_LOG
-                 (EMPR_ID, NUM_CARGA, CAMPO, VALOR_ANTES, VALOR_DEPOIS, USUARIO, DT_ALTERACAO)
-                 VALUES (:e, :c, :campo, :antes, :depois, :usuario, SYSDATE)'
+                GetSqlFocco::getSql('cd.carga.log.inserir')
             )->execute([
                 ':e'       => $emprId,
                 ':c'       => $numCarga,
@@ -166,10 +165,7 @@ class ProjecaoCarga
     public static function salvarAnexo(int $emprId, int $numCarga, string $nomeOrig, string $mimeType, int $tamanho, string $conteudo, string $usuario): int
     {
         $conn = self::oci8Conn();
-        $sql  = "INSERT INTO FOCCO3I.TGAZIN_CARGA_ANEXO
-                    (EMPR_ID, NUM_CARGA, NOME_ORIG, MIME_TYPE, TAMANHO, CONTEUDO, USUARIO)
-                 VALUES (:empr_id, :num_carga, :nome_orig, :mime_type, :tamanho, EMPTY_BLOB(), :usuario)
-                 RETURNING ID, CONTEUDO INTO :ret_id, :blob";
+        $sql  = GetSqlFocco::getSql('cd.carga.anexo.inserir');
 
         $stmt  = oci_parse($conn, $sql);
         $blob  = oci_new_descriptor($conn, OCI_D_LOB);
@@ -198,13 +194,7 @@ class ProjecaoCarga
     public static function listarAnexos(int $emprId, int $numCarga): array
     {
         $conn = self::oci8Conn();
-        $stmt = oci_parse($conn,
-            "SELECT ID, NOME_ORIG, MIME_TYPE, TAMANHO, USUARIO,
-                    TO_CHAR(DT_CADASTRO,'DD/MM/YYYY HH24:MI') AS DT_CADASTRO
-             FROM FOCCO3I.TGAZIN_CARGA_ANEXO
-             WHERE EMPR_ID = :empr_id AND NUM_CARGA = :num_carga
-             ORDER BY DT_CADASTRO DESC"
-        );
+        $stmt = oci_parse($conn, GetSqlFocco::getSql('cd.carga.anexo.listar'));
         oci_bind_by_name($stmt, ':empr_id',   $emprId);
         oci_bind_by_name($stmt, ':num_carga', $numCarga);
         oci_execute($stmt);
@@ -222,11 +212,7 @@ class ProjecaoCarga
     public static function downloadAnexo(int $emprId, int $id): ?array
     {
         $conn = self::oci8Conn();
-        $stmt = oci_parse($conn,
-            "SELECT NOME_ORIG, MIME_TYPE, CONTEUDO
-             FROM FOCCO3I.TGAZIN_CARGA_ANEXO
-             WHERE ID = :id AND EMPR_ID = :empr_id"
-        );
+        $stmt = oci_parse($conn, GetSqlFocco::getSql('cd.carga.anexo.download'));
         oci_bind_by_name($stmt, ':id',      $id);
         oci_bind_by_name($stmt, ':empr_id', $emprId);
         oci_execute($stmt);
@@ -245,12 +231,39 @@ class ProjecaoCarga
         return ['NOME_ORIG' => $row['NOME_ORIG'], 'MIME_TYPE' => $row['MIME_TYPE'], 'CONTEUDO' => $conteudo];
     }
 
+    public static function listarRota(int $emprId, int $numCarga): array
+    {
+        $result = Database::switchParams('focco', [
+            'empr_id'   => $emprId,
+            'num_carga' => $numCarga,
+        ], 'cd.carga.rota.listar', true);
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
+
+    public static function salvarSequenciaRota(int $plcId, array $sequencias): void
+    {
+        $pdo  = Database::getInstance('focco');
+        $sql  = GetSqlFocco::getSql('cd.carga.rota.salvarSeq');
+        $pdo->beginTransaction();
+        try {
+            $stmt = $pdo->prepare($sql);
+            foreach ($sequencias as $idx => $item) {
+                $pdvId   = (int) $item['pdv_id'];
+                $novaSeq = isset($item['seq']) ? (int) $item['seq'] : $idx + 1;
+                $stmt->execute([':nova_seq' => $novaSeq, ':plc_id' => $plcId, ':pdv_id' => $pdvId]);
+            }
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
     public static function excluirAnexo(int $emprId, int $id): void
     {
         $conn = self::oci8Conn();
-        $stmt = oci_parse($conn,
-            "DELETE FROM FOCCO3I.TGAZIN_CARGA_ANEXO WHERE ID = :id AND EMPR_ID = :empr_id"
-        );
+        $stmt = oci_parse($conn, GetSqlFocco::getSql('cd.carga.anexo.excluir'));
         oci_bind_by_name($stmt, ':id',      $id);
         oci_bind_by_name($stmt, ':empr_id', $emprId);
         oci_execute($stmt);

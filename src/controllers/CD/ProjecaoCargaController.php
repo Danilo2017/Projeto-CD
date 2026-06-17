@@ -144,4 +144,32 @@ class ProjecaoCargaController extends Controller
             self::response(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function listarRota(): void
+    {
+        try {
+            $numCarga = (int) ($_GET['num_carga'] ?? 0);
+            if ($numCarga <= 0) { self::response(['error' => 'num_carga obrigatório.'], 400); return; }
+            $result = ProjecaoCargaHandler::listarRota([
+                'empr_id'   => $this->emprIdSessao(),
+                'num_carga' => $numCarga,
+            ]);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
+    public function salvarRota(): void
+    {
+        try {
+            $dados = self::getBody() ?? [];
+            $result = ProjecaoCargaHandler::salvarRota($dados);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
 }
