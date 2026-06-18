@@ -28,6 +28,19 @@ class FaturamentoProgramacaoController extends ctrl
         }
     }
 
+    public function resumoDashboard()
+    {
+        try {
+            $resultado = FaturamentoProgramacaoHandler::resumoDashboard();
+            self::response($resultado, 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function ocupacao()
     {
         try {

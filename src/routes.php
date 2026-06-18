@@ -194,6 +194,7 @@ $router->get('/faturamento-api-vlr-faltante-carga', 'Faturamento\\FaturamentoDas
 // ========== Programação de Pedidos ==========
 $router->get('/faturamento-programacao', 'Faturamento\\FaturamentoProgramacaoController@index', true);
 $router->get('/faturamento-api-programacao', 'Faturamento\\FaturamentoProgramacaoController@listar', true);
+$router->get('/faturamento-api-programacao-resumo', 'Faturamento\\FaturamentoProgramacaoController@resumoDashboard', true);
 $router->get('/faturamento-api-ocupacao', 'Faturamento\\FaturamentoProgramacaoController@ocupacao', true);
 
 // ========== Transferência de Pedidos ==========

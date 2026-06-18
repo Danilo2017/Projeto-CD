@@ -208,33 +208,23 @@ function buscarDadosPedidos() {
  */
 async function buscarProgramacaoResumo() {
     try {
-        const r = await fetch('/faturamento-api-programacao');
+        const r = await fetch('/faturamento-api-programacao-resumo');
         const d = await r.json();
-        if (!d.success || !d.data) return null;
+        if (!d.success) return null;
 
-        const hoje      = new Date();
-        const proximo   = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        const hoje     = new Date();
+        const proximo  = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        const mesLabel     = hoje.toLocaleString('pt-BR', { month: 'long' });
+        const proxMesLabel = proximo.toLocaleString('pt-BR', { month: 'long' });
 
-        const mesLabel      = hoje.toLocaleString('pt-BR', { month: 'long' });
-        const proxMesLabel  = proximo.toLocaleString('pt-BR', { month: 'long' });
-
-        const agendaMesAtual = '01/' + String(hoje.getMonth() + 1).padStart(2, '0') + '/' + hoje.getFullYear();
-        const agendaProxMes  = '01/' + String(proximo.getMonth() + 1).padStart(2, '0') + '/' + proximo.getFullYear();
-
-        let libMes = 0, proxMes = 0, semAgenda = 0;
-        const libMesEmp = {};
-        d.data.forEach(function(row) {
-            const val    = parseFloat(String(row.PDV_VALOR_PENDENTE || 0).replace(/,/g, ''));
-            const emprId = String(row.EMPR_ID || '');
-            if (row.AGENDA === agendaMesAtual) {
-                libMes += val;
-                if (emprId) libMesEmp[emprId] = (libMesEmp[emprId] || 0) + val;
-            }
-            if (row.AGENDA === agendaProxMes)                proxMes   += val;
-            if (!row.AGENDA || row.AGENDA === 'SEM AGENDA') semAgenda += val;
-        });
-
-        return { libMes, proxMes, semAgenda, mesLabel, proxMesLabel, libMesEmp };
+        return {
+            libMes:    d.lib_mes    || 0,
+            proxMes:   d.prox_mes   || 0,
+            semAgenda: d.sem_agenda || 0,
+            mesLabel,
+            proxMesLabel,
+            libMesEmp: d.lib_mes_emp || {},
+        };
     } catch {
         return null;
     }

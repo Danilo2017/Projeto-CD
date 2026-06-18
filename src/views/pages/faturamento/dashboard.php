@@ -25,7 +25,7 @@ if (!$acessoFaturamento) {
     <!-- Header -->
     <header class="faturamento-header">
         <div class="faturamento-logo">
-            <img src="https://systemcolchoes.blob.core.windows.net/site-gazin-colchoes/prod/Logo_Gazin_6a2b1ee6aa.png" alt="Gazin Colchões" onerror="this.style.display='none'">
+            <img src="https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png" alt="Gazin Colchões" onerror="this.style.display='none'">
         </div>
         <div class="faturamento-title-section">
             <h1 class="faturamento-title">FATURAMENTO INDÚSTRIAS</h1>
