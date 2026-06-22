@@ -18,18 +18,21 @@
     function fmt(v)    { return (v === null || v === undefined || v === '') ? '' : v; }
     function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '' : (n === 0 ? '0' : n); }
 
-    /* ── Renderiza uma seção (SEM PILLOW ou COM PILLOW) ─── */
-    function renderSecao(rows, titulo, numLote, dataLote) {
+    /* ── Renderiza uma seção ────────────────────────────── */
+    // getKeys(row) → { outerKey, grupoKey }
+    //   Quando outerKey muda → separador cinza grosso entre grupos principais
+    //   Quando só grupoKey muda → separador fino (pula linha entre subgrupos)
+    function renderSecao(rows, titulo, numLote, dataLote, getKeys) {
         if (rows.length === 0) return '';
 
-        // Ordenação feita no servidor (handler PHP); não re-sortear aqui.
         let totalGeral = 0;
         let subtotal   = 0;
+        let outerAtual = null;
         let grupoAtual = null;
         let corpo      = '';
         const buf      = [];
 
-        function flushGrupo() {
+        function flushGrupo(outerMudou) {
             if (buf.length === 0) return;
             for (const linha of buf) corpo += linha;
             if (buf.length > 1) {
@@ -40,19 +43,22 @@
                 <td colspan="7"></td>
             </tr>`;
             }
-            corpo += `<tr class="separator-row"><td colspan="15"></td></tr>`;
+            if (outerMudou) {
+                corpo += `<tr class="separator-row" style="height:8px"><td colspan="15" style="background:#b8b8b8"></td></tr>`;
+            } else {
+                corpo += `<tr class="separator-row"><td colspan="15"></td></tr>`;
+            }
             buf.length = 0;
             subtotal   = 0;
         }
 
         for (const r of rows) {
-            const largura  = parseInt(r.LARGURA_COLCHAO) || 0;
-            const altEps   = parseInt(r.ALT_EPS) || 0;
-            const grupoKey = `${largura}_${altEps}`;
+            const { outerKey, grupoKey } = getKeys(r);
             const qtde     = parseFloat(r.QTDE || 0);
 
             if (grupoKey !== grupoAtual) {
-                flushGrupo();
+                if (grupoAtual !== null) flushGrupo(outerKey !== outerAtual);
+                outerAtual = outerKey;
                 grupoAtual = grupoKey;
             }
 
@@ -78,7 +84,7 @@
                 <td class="text-center">${fmt(r.TECIDO)}</td>
             </tr>`);
         }
-        flushGrupo();
+        flushGrupo(false);
 
         corpo += `
         <tr class="total-row">
@@ -152,9 +158,24 @@ body{font-family:Arial,sans-serif;font-size:8pt;background:#fff}
 .pcp-report-header .col-right div{margin-bottom:2px}
 .pcp-revisao{border:1px solid #000;border-top:none;padding:2px 8px;font-size:8pt;text-align:right}
 .pcp-section-title{background:#002060;color:#fff;text-align:center;font-weight:bold;font-size:12pt;padding:5px;margin-top:6px;margin-bottom:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.pcp-table{width:100%;border-collapse:collapse;font-size:7.5pt}
-.pcp-table th{background:#1f3864;color:#fff;border:1px solid #999;padding:2px 3px;text-align:center;font-weight:bold;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.pcp-table td{border:1px solid #ccc;padding:1px 3px;white-space:nowrap}
+.pcp-table{width:100%;border-collapse:collapse;font-size:7pt;table-layout:fixed}
+.pcp-table th{background:#1f3864;color:#fff;border:1px solid #999;padding:1px 2px;text-align:center;font-weight:bold;white-space:normal;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pcp-table td{border:1px solid #ccc;padding:1px 2px;white-space:normal;word-break:break-word}
+.pcp-table th:nth-child(1),.pcp-table td:nth-child(1){width:6.5%}
+.pcp-table th:nth-child(2),.pcp-table td:nth-child(2){width:4.5%}
+.pcp-table th:nth-child(3),.pcp-table td:nth-child(3){width:3.5%}
+.pcp-table th:nth-child(4),.pcp-table td:nth-child(4){width:3.5%}
+.pcp-table th:nth-child(5),.pcp-table td:nth-child(5){width:13%;white-space:normal;word-break:break-word}
+.pcp-table th:nth-child(6),.pcp-table td:nth-child(6){width:17.5%;white-space:normal;word-break:break-word}
+.pcp-table th:nth-child(7),.pcp-table td:nth-child(7){width:3%}
+.pcp-table th:nth-child(8),.pcp-table td:nth-child(8){width:3%}
+.pcp-table th:nth-child(9),.pcp-table td:nth-child(9){width:3.5%}
+.pcp-table th:nth-child(10),.pcp-table td:nth-child(10){width:3.5%}
+.pcp-table th:nth-child(11),.pcp-table td:nth-child(11){width:5%}
+.pcp-table th:nth-child(12),.pcp-table td:nth-child(12){width:6.5%}
+.pcp-table th:nth-child(13),.pcp-table td:nth-child(13){width:4%}
+.pcp-table th:nth-child(14),.pcp-table td:nth-child(14){width:2.5%}
+.pcp-table th:nth-child(15),.pcp-table td:nth-child(15){width:10%;white-space:normal;word-break:break-word}
 .pcp-table tr:nth-child(even) td{background:#f2f2f2;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pcp-table tr.subtotal-row td{background:#dce6f1;font-weight:bold;border:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pcp-table tr.separator-row td{border:none;padding:2px;background:#fff}
@@ -215,13 +236,42 @@ body{font-family:Arial,sans-serif;font-size:8pt;background:#fff}
                 const rowsCom     = secoes.com_pillow || [];
                 const rowsMesa    = secoes.mesa       || [];
                 const rowsConj    = secoes.conjugado  || [];
+                const ordPeso = { 'MOLA': 1, 'MOLA_PL': 2, 'MESA': 3, 'MESA_PL': 4 };
                 const rowsRobotec = [...rowsSem, ...rowsCom, ...rowsMesa];
+                // Ordem: ORD primeiro (MOLA → MOLA_PL → MESA), depois LARGURA, depois ALT_EPS (0 por último)
+                rowsRobotec.sort((a, b) => {
+                    const pA = ordPeso[a.ORD] || 99;
+                    const pB = ordPeso[b.ORD] || 99;
+                    if (pA !== pB) return pA - pB;
+                    const larA = parseInt(a.LARGURA_COLCHAO) || 0;
+                    const larB = parseInt(b.LARGURA_COLCHAO) || 0;
+                    if (larA !== larB) return larA - larB;
+                    const epsA = parseInt(a.ALT_EPS) || 0;
+                    const epsB = parseInt(b.ALT_EPS) || 0;
+                    if (epsA === 0 && epsB !== 0) return 1;
+                    if (epsA !== 0 && epsB === 0) return -1;
+                    return epsA - epsB;
+                });
 
-                let html = renderSecao(rowsRobotec, 'CAIXOTE ROBOTEC',    numLote, dt);
-                html    += renderSecao(rowsSem,     'CAIXOTE SEM PILLOW', numLote, dt);
-                html    += renderSecao(rowsCom,     'CAIXOTE COM PILLOW', numLote, dt);
-                html    += renderSecao(rowsMesa,    'CAIXOTE MESA',       numLote, dt);
-                html    += renderSecao(rowsConj,    'CAIXOTE CONJUGADO',  numLote, dt);
+                // ROBOTEC: outer = ORD+LARGURA, inner = ORD+LARGURA+ALTEPS
+                const kRobotec = r => {
+                    const ord = r.ORD || '';
+                    const lar = parseInt(r.LARGURA_COLCHAO) || 0;
+                    const eps = parseInt(r.ALT_EPS) || 0;
+                    return { outerKey: `${ord}_${lar}`, grupoKey: `${ord}_${lar}_${eps}` };
+                };
+                // Demais seções: outer = LARGURA, inner = LARGURA+ALTEPS
+                const kLarEps = r => {
+                    const lar = parseInt(r.LARGURA_COLCHAO) || 0;
+                    const eps = parseInt(r.ALT_EPS) || 0;
+                    return { outerKey: `${lar}`, grupoKey: `${lar}_${eps}` };
+                };
+
+                let html = renderSecao(rowsRobotec, 'CAIXOTE ROBOTEC',    numLote, dt, kRobotec);
+                html    += renderSecao(rowsSem,     'CAIXOTE SEM PILLOW', numLote, dt, kLarEps);
+                html    += renderSecao(rowsCom,     'CAIXOTE COM PILLOW', numLote, dt, kLarEps);
+                html    += renderSecao(rowsMesa,    'CAIXOTE MESA',       numLote, dt, kLarEps);
+                html    += renderSecao(rowsConj,    'CAIXOTE CONJUGADO',  numLote, dt, kLarEps);
 
                 if (!html.trim()) {
                     statusMsg.innerHTML = '<span class="text-warning">Nenhum dado encontrado para este lote.</span>';
