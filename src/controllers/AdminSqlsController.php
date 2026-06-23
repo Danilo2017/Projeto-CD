@@ -195,6 +195,121 @@ class AdminSqlsController extends ctrl
         }
     }
 
+    /** TEMPORÁRIO — remover após execução */
+    public function tmpInsertVerticalEspuma(): void
+    {
+        $idsql = 'pcp.relatorioProd.verticalEspuma';
+        $sql   = "SELECT TABLES.ORD                 ORD,
+       TORDENS.NUM_LOTE_PRO           LOTE,
+       TABLES.NUM_ORDEM               NUM_ORDEM,
+       TABLES.DESCICAO                DESCICAO,
+       TITENS.DESC_TECNICA            DESC_TECNICA,
+       TMASC_ITEM.MASCARA             MASCARA,
+       SUM(TDEMANDAS.QTDE)            QTDE
+  FROM TITENS_PLANEJAMENTO,
+       TORDENS,
+       TABLE(GAZIN_UTIL_RRP.GAZIN_COLCHOES_ESPECIAIS(
+               PI_EMPR_ID  => TORDENS.EMPR_ID,
+               PI_LOTE     => TORDENS.NUM_LOTE_PRO,
+               PI_ORDEM_ID => TORDENS.ID,
+               PI_ORDEM    => ROWNUM)) TABLES,
+       TDEMANDAS,
+       TITENS_EMPR,
+       TITENS,
+       TMASC_ITEM
+ WHERE TITENS_PLANEJAMENTO.ID = TDEMANDAS.ITPL_ID
+   AND TORDENS.ID             = TDEMANDAS.ORDEM_ID
+   AND TITENS_EMPR.ID         = TITENS_PLANEJAMENTO.ITEMPR_ID
+   AND TITENS.ID              = TITENS_EMPR.ITEM_ID
+   AND TMASC_ITEM.ID(+)       = TDEMANDAS.TMASC_ITEM_ID
+   AND TORDENS.EMPR_ID        = :empr_id
+   AND TORDENS.NUM_LOTE_PRO   = :num_lote
+   AND TITENS.DESC_TECNICA    LIKE 'MANTA%'
+GROUP BY TABLES.ORD,
+         TORDENS.NUM_LOTE_PRO,
+         TABLES.NUM_ORDEM,
+         TABLES.DESCICAO,
+         TITENS.DESC_TECNICA,
+         TMASC_ITEM.MASCARA
+ORDER BY MIN(TABLES.ORDEM) ASC";
+
+        $novoSql = "SELECT TABLES.ORD                       ORD,
+       TORDENS.NUM_LOTE_PRO               LOTE,
+       TORDENS.NUM_ORDEM                  NUM_ORDEM,
+       TABLES.DESC_TECNICA                DESCRICAO,
+       TABLES.MASCARA                     MASCARA,
+       TABLES.QTDE_OF                     QTDE,
+       TITENS.COD_ITEM                    COD_ITEM,
+       TITENS.DESC_TECNICA                DESC_TECNICA,
+       TMASC_ITEM.MASCARA                 MASCARA_ITEM
+  FROM TITENS_PLANEJAMENTO TITENS_PLANEJAMENTO,
+       TORDENS TORDENS,
+       TABLE(GAZIN_UTIL_RRP.GAZIN_COLCHOES_ESPECIAIS(PI_EMPR_ID=>TORDENS.EMPR_ID,PI_LOTE=>TORDENS.NUM_LOTE_PRO,PI_ORDEM_ID=>TORDENS.ID,PI_ORDEM=>ROWNUM)) TABLES,
+       TDEMANDAS TDEMANDAS,
+       TITENS_EMPR TITENS_EMPR,
+       TITENS TITENS,
+       TMASC_ITEM TMASC_ITEM
+ WHERE TITENS_PLANEJAMENTO.ID = TDEMANDAS.ITPL_ID
+   AND TORDENS.ID             = TDEMANDAS.ORDEM_ID
+   AND TITENS_EMPR.ID         = TITENS_PLANEJAMENTO.ITEMPR_ID
+   AND TITENS.ID              = TITENS_EMPR.ITEM_ID
+   AND TMASC_ITEM.ID(+)       = TDEMANDAS.TMASC_ITEM_ID
+   AND TORDENS.EMPR_ID        = :empr_id
+   AND TORDENS.NUM_LOTE_PRO   = :num_lote
+   AND TITENS.DESC_TECNICA    LIKE 'MANTA%'
+ORDER BY TABLES.ORDEM ASC";
+
+        try {
+            $pdo = \core\Database::getInstance('focco');
+
+            // 1. Lê o que está no Oracle agora
+            $sel = $pdo->prepare("SELECT DBMS_LOB.SUBSTR(sql, 300, 1) atual FROM focco3i.gazin_sqls WHERE idsql = :idsql");
+            $sel->execute([':idsql' => $idsql]);
+            $sqlAtual = $sel->fetchColumn();
+
+            // 2. UPDATE no Oracle
+            $pdo->beginTransaction();
+            $upd = $pdo->prepare("UPDATE focco3i.gazin_sqls SET sql = :sql WHERE idsql = :idsql");
+            $upd->bindParam(':idsql', $idsql,    \PDO::PARAM_STR);
+            $upd->bindParam(':sql',   $novoSql,  \PDO::PARAM_STR);
+            $upd->execute();
+            $rowsUpdated = $upd->rowCount();
+            $pdo->commit();
+
+            // 3. Apaga TODOS os arquivos do cache de SQL do Focco (força releitura)
+            $cacheDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'focco_sql_cache';
+            $deleted  = [];
+            $failed   = [];
+            if (is_dir($cacheDir)) {
+                foreach (glob($cacheDir . DIRECTORY_SEPARATOR . '*.sql') ?: [] as $f) {
+                    if (unlink($f)) {
+                        $deleted[] = basename($f);
+                    } else {
+                        $failed[] = basename($f);
+                    }
+                }
+            }
+
+            // 4. Lê de volta para confirmar o que ficou no Oracle
+            $sel2 = $pdo->prepare("SELECT DBMS_LOB.SUBSTR(sql, 300, 1) novo FROM focco3i.gazin_sqls WHERE idsql = :idsql");
+            $sel2->execute([':idsql' => $idsql]);
+            $sqlNovo = $sel2->fetchColumn();
+
+            self::response([
+                'ok'           => true,
+                'rows_updated' => $rowsUpdated,
+                'sql_antes'    => substr($sqlAtual ?: '', 0, 200),
+                'sql_depois'   => substr($sqlNovo  ?: '', 0, 200),
+                'cache_deleted'=> $deleted,
+                'cache_failed' => $failed,
+                'cache_dir'    => $cacheDir,
+            ], 200);
+        } catch (\Throwable $e) {
+            if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+            self::response(['ok' => false, 'msg' => $e->getMessage()], 500);
+        }
+    }
+
     /**
      * Listar histórico de alterações de um SQL
      */
