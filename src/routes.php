@@ -267,6 +267,15 @@ $router->get('/pcp-relatorio-caixa-box',                    'PCP\\RelatorioProdC
 $router->post('/pcp-api-relatorio-caixa-box',               'PCP\\RelatorioProdController@buscarCaixaBox',             true);
 $router->get('/pcp-relatorio-robotec-abastecedor',          'PCP\\RelatorioProdController@indexRobotecAbastecedor',    true);
 $router->post('/pcp-api-relatorio-robotec-abastecedor',     'PCP\\RelatorioProdController@buscarRobotecAbastecedor',   true);
+$router->get('/pcp-relatorio-vertical-espuma',              'PCP\\RelatorioProdController@indexVerticalEspuma',        true);
+$router->post('/pcp-api-relatorio-vertical-espuma',         'PCP\\RelatorioProdController@buscarVerticalEspuma',       true);
+$router->get('/pcp-relatorio-horizontal-espuma',            'PCP\\RelatorioProdController@indexHorizontalEspuma',      true);
+$router->post('/pcp-api-relatorio-horizontal-espuma',       'PCP\\RelatorioProdController@buscarHorizontalEspuma',     true);
+$router->get('/pcp-resumo-lote',                            'PCP\\RelatorioProdController@indexResumoDeLote',          true);
+$router->post('/pcp-api-resumo-lote',                       'PCP\\RelatorioProdController@buscarResumoDeLote',         true);
+
+// TEMPORÁRIO — remover após inserção do SQL verticalEspuma
+$router->get('/tmp-insert-vertical-espuma', 'AdminSqlsController@tmpInsertVerticalEspuma', true);
 
 // ========== Admin - Gerenciamento de SQLs ==========
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);

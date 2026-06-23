@@ -62,6 +62,9 @@ $pcpSub = match(true) {
     $pActive === 'pcp-relatorio-molas-bordas'       => 'relatorio-molas-bordas',
     $pActive === 'pcp-relatorio-caixa-box'               => 'relatorio-caixa-box',
     $pActive === 'pcp-relatorio-robotec-abastecedor'     => 'relatorio-robotec-abastecedor',
+    $pActive === 'pcp-relatorio-vertical-espuma'         => 'relatorio-vertical-espuma',
+    $pActive === 'pcp-relatorio-horizontal-espuma'       => 'relatorio-horizontal-espuma',
+    $pActive === 'pcp-resumo-lote'                       => 'resumo-lote',
     default => ''
 };
 // Subgrupos ativos do PCP para abrir o 2º nível automaticamente
@@ -75,6 +78,8 @@ $pcpToSubGrp = [
     'relatorio-tampo-liso'          => ['costura'],
     'relatorio-tampo-bordado'       => ['robotec', 'bordadeira'],
     'relatorio-manta'               => ['robotec', 'laminacao'],
+    'relatorio-vertical-espuma'     => ['laminacao'],
+    'relatorio-horizontal-espuma'   => ['laminacao'],
     'relatorio-mesa-de-corte'       => ['costura'],
     'relatorio-rolo-bordado'        => ['costura', 'bordadeira'],
     'relatorio-molas-bordas'        => ['caixote'],
@@ -284,6 +289,13 @@ $userName = $user_login ?? 'Usuário';
             </button>
             <ul class="sidebar-submenu <?= $activeGroup === 'pcp' ? 'open' : '' ?>">
 
+                <li>
+                    <a href="<?= $base ?>pcp-resumo-lote"
+                       class="sidebar-sublink <?= $pcpSub === 'resumo-lote' ? 'active' : '' ?>">
+                        <i class="bi bi-clipboard-data"></i> Resumo do Lote
+                    </a>
+                </li>
+
                 <!-- ── ROBOTEC ── -->
                 <li class="pcp-subgroup">
                     <button class="pcp-subgroup-btn <?= $sgRobotec ? 'active open' : '' ?>">
@@ -385,6 +397,12 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>pcp-relatorio-manta"
                                class="pcp-sub-sublink <?= $pcpSub === 'relatorio-manta' ? 'active' : '' ?>">
                             Seq. Manta</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-vertical-espuma"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-vertical-espuma' ? 'active' : '' ?>">
+                            Seq. Vertical Espuma</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-horizontal-espuma"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-horizontal-espuma' ? 'active' : '' ?>">
+                            Seq. Horizontal Espuma</a></li>
                     </ul>
                 </li>
 
@@ -901,6 +919,15 @@ body.sidebar-expanded .app-header {
 
         var subgroups = submenu.querySelectorAll('.pcp-subgroup');
         if (subgroups.length > 0) {
+            /* Links diretos (sidebar-sublink) antes dos subgrupos */
+            submenu.querySelectorAll(':scope > li > .sidebar-sublink').forEach(function (link) {
+                var a = document.createElement('a');
+                a.href = link.href;
+                a.textContent = link.textContent.trim();
+                if (link.classList.contains('active')) a.classList.add('active');
+                bodyEl.appendChild(a);
+            });
+
             /* 2 níveis: cabeçalho clicável (toggle) + links */
             subgroups.forEach(function (sg) {
                 var sgBtn    = sg.querySelector('.pcp-subgroup-btn');

@@ -533,4 +533,64 @@ class RelatorioProdController extends Controller
             self::response(['error' => $e->getMessage()], $code ?: 500);
         }
     }
+
+    public function indexVerticalEspuma(): void
+    {
+        $this->render('pcp/relatorio-vertical-espuma', []);
+    }
+
+    public function buscarVerticalEspuma(): void
+    {
+        try {
+            $body    = self::getBody() ?? [];
+            $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = $this->emprIdSessao();
+            if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
+            $result = RelatorioProdHandler::buscarVerticalEspuma($emprId, $numLote);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
+    public function indexResumoDeLote(): void
+    {
+        $this->render('pcp/resumo-lote', []);
+    }
+
+    public function buscarResumoDeLote(): void
+    {
+        try {
+            $body    = self::getBody() ?? [];
+            $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = $this->emprIdSessao();
+            if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
+            $result = RelatorioProdHandler::buscarResumoDeLote($emprId, $numLote);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
+    public function indexHorizontalEspuma(): void
+    {
+        $this->render('pcp/relatorio-horizontal-espuma', []);
+    }
+
+    public function buscarHorizontalEspuma(): void
+    {
+        try {
+            $body    = self::getBody() ?? [];
+            $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = $this->emprIdSessao();
+            if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
+            $result = RelatorioProdHandler::buscarHorizontalEspuma($emprId, $numLote);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
 }

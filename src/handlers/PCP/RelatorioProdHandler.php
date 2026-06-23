@@ -315,6 +315,178 @@ class RelatorioProdHandler
         });
     }
 
+    public static function buscarVerticalEspuma(int $emprId, int $numLote): array
+    {
+        return self::cached("pcp.verticalEspuma.v6.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $rows     = RelatorioProd::buscarVerticalEspuma($emprId, $numLote);
+            $dataLote = RelatorioProd::buscarDataLote($emprId, $numLote);
+            return ['success' => true, 'rows' => $rows, 'data_lote' => $dataLote];
+        });
+    }
+
+    public static function buscarHorizontalEspuma(int $emprId, int $numLote): array
+    {
+        return self::cached("pcp.horizontalEspuma.v2.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $rows     = RelatorioProd::buscarHorizontalEspuma($emprId, $numLote);
+            $dataLote = RelatorioProd::buscarDataLote($emprId, $numLote);
+            return ['success' => true, 'rows' => $rows, 'data_lote' => $dataLote];
+        });
+    }
+
+    public static function buscarResumoDeLote(int $emprId, int $numLote): array
+    {
+        return self::cached("pcp.resumoDeLote.v1.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $robotecRows    = RelatorioProd::buscarRobotec($emprId, $numLote);
+            $tapRows        = RelatorioProd::buscarTapecaria($emprId, $numLote);
+            $conjRows       = RelatorioProd::buscarConjugado($emprId, $numLote);
+            $prodRows       = RelatorioProd::buscar($emprId, $numLote);
+            $pillowRows     = RelatorioProd::buscarPillow($emprId, $numLote);
+            $fptRows        = RelatorioProd::buscarFpt($emprId, $numLote);
+            $optronRows     = RelatorioProd::buscarOptron($emprId, $numLote);
+            $travePezeRows  = RelatorioProd::buscarTravePeze($emprId, $numLote);
+            $mcCaixaBoxRows = RelatorioProd::buscarMesaCorteCaixaBox($emprId, $numLote);
+            $mcCaixoteRows  = RelatorioProd::buscarMesaCorteCaixote($emprId, $numLote);
+            $brdRows        = RelatorioProd::buscarBordadeira($emprId, $numLote);
+            $dataLote       = RelatorioProd::buscarDataLote($emprId, $numLote);
+
+            // ── COLCHÕES (da robotec: ORD determina o tipo) ──────────────
+            $colMesa = $colMola = $colEspuma = $colchonete = 0.0;
+            foreach ($robotecRows as $r) {
+                $qtde = (float) ($r['QTDE'] ?? 0);
+                $ord  = strtoupper(trim($r['ORD'] ?? ''));
+                $desc = strtoupper($r['DESCICAO'] ?? '');
+                if ($ord === 'MESA_PL' || $ord === 'MESA') {
+                    $colMesa += $qtde;
+                } elseif (str_contains($desc, 'COLCHONETE')) {
+                    $colchonete += $qtde;
+                } elseif ($ord === 'MOLA' || str_contains($desc, 'MOLA')) {
+                    $colMola += $qtde;
+                } else {
+                    $colEspuma += $qtde;
+                }
+            }
+
+            // ── TAPEÇARIA ────────────────────────────────────────────────
+            $tapBase = $tapAux = $tapCabec = 0.0;
+            foreach ($tapRows as $r) {
+                $qtde = (float) ($r['QTDE'] ?? 0);
+                $desc = strtoupper($r['DESCICAO'] ?? '');
+                if (str_starts_with($desc, 'COLCHAO BOX')) {
+                    $tapBase += $qtde;
+                } elseif (str_starts_with($desc, 'CABECEIRA')) {
+                    $tapCabec += $qtde;
+                } else {
+                    $tapAux += $qtde;
+                }
+            }
+            $tapConj = $tapCnjEsp = $tapCnjMol = 0.0;
+            foreach ($conjRows as $r) {
+                $qtde = (float) ($r['QTDE'] ?? 0);
+                $desc = strtoupper($r['DESCICAO'] ?? '');
+                if (str_contains($desc, 'ESPUMA')) {
+                    $tapCnjEsp += $qtde;
+                } elseif (str_contains($desc, 'MOLA')) {
+                    $tapCnjMol += $qtde;
+                } else {
+                    $tapConj += $qtde;
+                }
+            }
+            $tapConjTotal = $tapConj + $tapCnjEsp + $tapCnjMol;
+
+            // ── CAIXOTE (classifica pelo mesmo critério do handler de caixote) ──
+            $cxColchao = $cxConjugado = $cxPillow = $cxMesa = 0.0;
+            foreach ($prodRows as $r) {
+                $ord    = strtoupper(trim($r['ORD'] ?? ''));
+                $alt    = (float) ($r['ALT']     ?? 0);
+                $altMol = (float) ($r['ALT_MOLA'] ?? 0);
+                $qtde   = (float) ($r['QTDE']    ?? 0);
+                if ($ord === 'TRAVE_PEZE') continue;
+                if ($ord === 'CON_BAS_AU') {
+                    $cxConjugado += $qtde;
+                } elseif ($altMol >= 150) {
+                    $cxMesa += $qtde;
+                } elseif ($alt > 0) {
+                    $cxColchao += $qtde;
+                    $cxPillow  += $qtde;
+                } else {
+                    $cxColchao += $qtde;
+                }
+            }
+
+            // ── COSTURA (FAIXA) ──────────────────────────────────────────
+            $cstPillow    = (float) array_sum(array_column($pillowRows,    'QTDE_OF'));
+            $cstFptQtde   = (float) array_sum(array_column($fptRows,       'QTDE'));
+            $cstFptLinear = (float) array_sum(array_column($fptRows,       'LINEAR'));
+            $cstOptQtde   = (float) array_sum(array_column($optronRows,    'QTDE'));
+            $cstOptLinear = (float) array_sum(array_column($optronRows,    'LINEAR'));
+            $cstDiversos  = (float) array_sum(array_column($travePezeRows, 'QTDE'));
+
+            // ── MESA DE CORTE ─────────────────────────────────────────────
+            $mcCaixaBox = (float) array_sum(array_column($mcCaixaBoxRows, 'QTDE_OF'));
+            $mcCaixote  = (float) array_sum(array_column($mcCaixoteRows,  'QTDE_OF'));
+
+            // ── BORDADEIRA (P1 vs P2/P3 pelo campo TANQUE) ────────────────
+            $brd01 = $brd02 = 0.0;
+            foreach ($brdRows as $r) {
+                $tanque = trim($r['TANQUE'] ?? '');
+                $linear = (float) ($r['LINEAR'] ?? 0);
+                if ($tanque === '' || preg_match('/P1/i', $tanque)) {
+                    $brd01 += $linear;
+                } else {
+                    $brd02 += $linear;
+                }
+            }
+
+            return [
+                'success'    => true,
+                'data_lote'  => $dataLote,
+                'colchoes'   => [
+                    'col_mesa'   => (int) $colMesa,
+                    'col_mola'   => (int) $colMola,
+                    'col_espuma' => (int) $colEspuma,
+                    'colchonete' => (int) $colchonete,
+                    'total'      => (int) ($colMesa + $colMola + $colEspuma + $colchonete),
+                ],
+                'tapecaria'  => [
+                    'base'        => (int) $tapBase,
+                    'conjugado'   => (int) $tapConjTotal,
+                    'conj_espuma' => (int) $tapCnjEsp,
+                    'conj_mola'   => (int) $tapCnjMol,
+                    'aux_auxiliar'=> (int) $tapAux,
+                    'cabeceira'   => (int) $tapCabec,
+                    'total'       => (int) ($tapBase + $tapConjTotal + $tapAux + $tapCabec),
+                ],
+                'caixote'    => [
+                    'c_colchao'   => (int) $cxColchao,
+                    'c_conjugado' => (int) $cxConjugado,
+                    'c_pillow'    => (int) $cxPillow,
+                    'c_mesa'      => (int) $cxMesa,
+                    'mola_bonnel' => 0,
+                    'total'       => (int) ($cxColchao + $cxConjugado),
+                ],
+                'costura'    => [
+                    'pillow'       => (int) $cstPillow,
+                    'fpt_linear'   => round($cstFptLinear, 2),
+                    'fpt_qtde'     => (int) $cstFptQtde,
+                    'optron_linear'=> round($cstOptLinear, 2),
+                    'optron_qtde'  => (int) $cstOptQtde,
+                    'diversos'     => (int) $cstDiversos,
+                    'total'        => (int) ($cstPillow + $cstFptQtde + $cstOptQtde + $cstDiversos),
+                ],
+                'mesa_corte' => [
+                    'caixa_box' => (int) $mcCaixaBox,
+                    'caixote'   => (int) $mcCaixote,
+                    'total'     => (int) ($mcCaixaBox + $mcCaixote),
+                ],
+                'bordadeira' => [
+                    'brd01' => round($brd01, 2),
+                    'brd02' => round($brd02, 2),
+                    'total' => round($brd01 + $brd02, 2),
+                ],
+            ];
+        });
+    }
+
     public static function listarEmpresas(): array
     {
         return RelatorioProd::listarEmpresas();
