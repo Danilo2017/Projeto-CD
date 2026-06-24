@@ -88,4 +88,21 @@ class ProjecaoCargaHandler
         ProjecaoCarga::salvarSequenciaRota((int) $dados['plc_id'], $dados['sequencias']);
         return ['success' => true];
     }
+
+    public static function listarItens(array $dados): array
+    {
+        Controller::verificarCamposVazios($dados, ['empr_id', 'num_carga']);
+        $itens = ProjecaoCarga::listarItens((int) $dados['empr_id'], (int) $dados['num_carga']);
+        return ['success' => true, 'data' => $itens];
+    }
+
+    public static function listarItensExpedicao(array $dados): array
+    {
+        Controller::verificarCamposVazios($dados, ['num_carga']);
+        $itens = ProjecaoCarga::listarItensExpedicao(
+            (int) $dados['num_carga'],
+            $dados['wms_schema'] ?? 'FOCCOWMS14A'
+        );
+        return ['success' => true, 'data' => $itens];
+    }
 }

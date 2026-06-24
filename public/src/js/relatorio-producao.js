@@ -89,7 +89,7 @@
             if (curLar !== null && (lar !== curLar || ord !== curOrd)) {
                 corpo += `<tr class="subtotal-row"><td colspan="10"></td><td>${subQtde}</td></tr>`;
                 subQtde = 0;
-                if (ord !== curOrd) corpo += `<tr><td colspan="11" style="padding:0;border:none;height:4px;background:#fff"></td></tr>`;
+                corpo += `<tr><td colspan="11" style="padding:0;border:none;height:4px;background:#fff"></td></tr>`;
             }
             curLar = lar; curOrd = ord; subQtde += q; grandTotal += q;
             const cls = ORD_CLASS[fmt(r.ORD)] || '';

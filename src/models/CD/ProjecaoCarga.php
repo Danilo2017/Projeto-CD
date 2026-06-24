@@ -361,4 +361,85 @@ ORDER BY C.POS_PLC ASC, C.CARGA DESC";
         oci_free_statement($stmt);
         oci_close($conn);
     }
+
+    public static function listarItens(int $emprId, int $numCarga): array
+    {
+        $sql = "SELECT TITENS.COD_ITEM                    COD_ITEM,
+       TITENS.DESC_TECNICA                DESC_TECNICA,
+       TMASC_ITEM.ID                      ID,
+       TMASC_ITEM.MASCARA                 MASCARA,
+       SUM(TITENS_PLC.QTDE)               QTDE_CARGA,
+       MAX(MAN_EST_RETORNA_SALDO_ITEM(TITENS_EMPR.EMPR_ID, TITENS.ID, 998, SYSDATE, TMASC_ITEM.ID, NULL, NULL, NULL, 1, 0)) ESTOQUE_998,
+       MAX(MAN_EST_RETORNA_SALDO_ITEM(TITENS_EMPR.EMPR_ID, TITENS.ID,  90, SYSDATE, TMASC_ITEM.ID, NULL, NULL, NULL, 1, 0)) ESTOQUE_90,
+       MAX(MAN_EST_RETORNA_SALDO_ITEM(TITENS_EMPR.EMPR_ID, TITENS.ID, 997, SYSDATE, TMASC_ITEM.ID, NULL, NULL, NULL, 1, 0)) ESTOQUE_997,
+       NULL                               G_TOTAL_GERAL
+  FROM TITENS_ESTOQUE        TITENS_ESTOQUE,
+       TITENS_PDV             TITENS_PDV,
+       TITENS_COMERCIAL       TITENS_COMERCIAL,
+       TITENS_EMPR            TITENS_EMPR,
+       TITENS                 TITENS,
+       TITENS_PLC             TITENS_PLC,
+       TMASC_ITEM             TMASC_ITEM,
+       TITENS_PLANEJAMENTO    TITENS_PLANEJAMENTO,
+       TALMOXARIFADOS         TALMOXARIFADOS,
+       TCARGAS                TCARGAS
+ WHERE TITENS_PDV.ID          = TITENS_PLC.ITPDV_ID
+   AND TITENS_COMERCIAL.ID    = TITENS_PDV.ITCM_ID
+   AND TITENS_EMPR.ID         = TITENS_PLANEJAMENTO.ITEMPR_ID
+   AND TITENS_EMPR.ID         = TITENS_COMERCIAL.ITEMPR_ID
+   AND TITENS_EMPR.ID         = TITENS_ESTOQUE.ITEMPR_ID
+   AND TITENS.ID              = TITENS_EMPR.ITEM_ID
+   AND TMASC_ITEM.ID(+)       = TITENS_PDV.TMASC_ITEM_ID
+   AND TALMOXARIFADOS.ID      = TITENS_ESTOQUE.ALMOX_ID
+   AND TCARGAS.ID             = TITENS_PLC.PLC_ID
+   AND TCARGAS.EMPR_ID        = :empr_id
+   AND TCARGAS.CARGA          = :num_carga
+ GROUP BY TITENS.COD_ITEM,
+          TITENS.DESC_TECNICA,
+          TMASC_ITEM.ID,
+          TMASC_ITEM.MASCARA";
+
+        $result = Database::switchParams('focco', [
+            'empr_id'   => $emprId,
+            'num_carga' => $numCarga,
+        ], null, true, true, null, $sql);
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
+
+    public static function listarItensExpedicao(int $numCarga, string $wmsSchema = 'FOCCOWMS14A'): array
+    {
+        if (!$wmsSchema) $wmsSchema = 'FOCCOWMS14A';
+
+        $sql = "SELECT ws.NUM_CARGA,
+       CASE ws.SITUACAO_WMS
+           WHEN '1' THEN 'Importada WMS'
+           WHEN '3' THEN 'Em Separação'
+           WHEN '6' THEN 'Encerrada'
+           WHEN '9' THEN 'Excluída'
+           ELSE 'Desconhecida'
+       END AS DESCRICAO_STATUS,
+       pe.NUM_PEDIDO,
+       i.CODIGO,
+       i.DESCRICAO,
+       lpe.QTDE,
+       lpe.QTDE_EXECUTADA,
+       lpe.QTDE_EXECUTADA_ORIGINAL AS QTDE_DISTRIBUIDA,
+       NVL(lpe.QTDE / NULLIF(lpe.QTDE_EXECUTADA_ORIGINAL,0),0)*100 AS PERCENTUAL
+  FROM :wms_schema.WMS_CARGAS ws,
+       :wms_schema.PEDIDOS_ERP pe,
+       :wms_schema.LINHAS_PEDIDOS_ERP lpe,
+       :wms_schema.ITEM i
+ WHERE i.CODIGO      = lpe.ITEM
+   AND lpe.PEDIDO_ID = pe.ID
+   AND pe.CARGA_ID   = ws.ID
+   AND ws.NUM_CARGA  = :num_carga";
+
+        $result = Database::switchParams('focco', [
+            'wms_schema' => $wmsSchema,
+            'num_carga'  => $numCarga,
+        ], null, true, true, null, $sql);
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
 }

@@ -45,6 +45,8 @@ $router->get('/carga-api-anexo-download','CD\\ProjecaoCargaController@downloadAn
 $router->post('/carga-api-anexo-excluir','CD\\ProjecaoCargaController@excluirAnexo', true);
 $router->get('/carga-api-rota-listar',  'CD\\ProjecaoCargaController@listarRota',   true);
 $router->post('/carga-api-rota-salvar', 'CD\\ProjecaoCargaController@salvarRota',   true);
+$router->get('/carga-api-itens',           'CD\\ProjecaoCargaController@listarItens',          true);
+$router->get('/carga-api-itens-expedicao', 'CD\\ProjecaoCargaController@listarItensExpedicao', true);
 
 // ========== Rotas do Sistema de Comissão ==========
 

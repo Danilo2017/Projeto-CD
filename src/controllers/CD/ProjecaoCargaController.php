@@ -175,4 +175,40 @@ class ProjecaoCargaController extends Controller
             self::response(['error' => $e->getMessage()], $code ?: 500);
         }
     }
+
+    public function listarItens(): void
+    {
+        try {
+            $numCarga = (int) ($_GET['num_carga'] ?? 0);
+            if ($numCarga <= 0) throw new \Exception('Número da carga é obrigatório.', 400);
+            $result = ProjecaoCargaHandler::listarItens([
+                'empr_id'   => $this->emprIdSessao(),
+                'num_carga' => $numCarga,
+            ]);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
+    public function listarItensExpedicao(): void
+    {
+        try {
+            $numCarga = (int) ($_GET['num_carga'] ?? 0);
+            if ($numCarga <= 0) throw new \Exception('Número da carga é obrigatório.', 400);
+            $codEmp    = $_SESSION['empresa']['codigo'] ?? '';
+            $wmsSchema = (ctype_digit((string)$codEmp) && $codEmp > 0)
+                            ? 'FOCCOWMS' . $codEmp . 'A'
+                            : 'FOCCOWMS14A';
+            $result = ProjecaoCargaHandler::listarItensExpedicao([
+                'num_carga'  => $numCarga,
+                'wms_schema' => $wmsSchema,
+            ]);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
 }

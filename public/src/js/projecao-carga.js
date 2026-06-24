@@ -154,7 +154,9 @@
             const rowClass   = isFaturada ? 'table-success' : '';
             return `
             <tr data-carga="${r.NUM_CARGA}" data-pos="${r.POS_PLC}" class="${rowClass}">
-                <td class="text-center fw-bold">${fmt(r.NUM_CARGA)}</td>
+                <td class="text-center fw-bold">${r.STATUS_WMS === 'Encerrada'
+                    ? `<a href="javascript:void(0)" class="text-decoration-none" onclick="abrirItensCarga(${r.NUM_CARGA})" title="Ver itens da carga">${fmt(r.NUM_CARGA)}</a>`
+                    : fmt(r.NUM_CARGA)}</td>
                 <td>${fmt(r.DT_GERACAO)}</td>
                 <td class="text-truncate" style="max-width:160px" title="${r.DESCRICAO ?? ''}">${fmt(r.DESCRICAO)}</td>
                 <td class="text-truncate small" style="max-width:200px;cursor:pointer"
@@ -168,7 +170,9 @@
                     ${isFaturada ? badgePosPLC(r.POS_PLC) : badgeSituacao(r.SITUACAO)}
                     ${r.SITUACAO_CARGA ? `<div class="text-muted text-truncate" style="font-size:0.7rem;max-width:110px;margin:0 auto" title="${r.SITUACAO_CARGA}">${r.SITUACAO_CARGA}</div>` : ''}
                 </td>
-                <td class="text-center">${badgeWms(r.STATUS_WMS)}</td>
+                <td class="text-center">${r.STATUS_WMS === 'Encerrada'
+                    ? `<a href="javascript:void(0)" class="text-decoration-none" onclick="abrirExpedicaoCarga(${r.NUM_CARGA})" title="Ver itens da expedição">${badgeWms(r.STATUS_WMS)}</a>`
+                    : badgeWms(r.STATUS_WMS)}</td>
                 <td style="max-width:160px">
                     <div class="text-truncate" title="${r.MOTORISTA ?? ''}">${fmt(r.MOTORISTA)}</div>
                     ${r.CONTATO ? `<div class="text-muted text-truncate" style="font-size:0.7rem" title="${r.CONTATO}">${r.CONTATO}</div>` : ''}
@@ -583,6 +587,75 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar Sequência';
+        }
+    };
+
+    /* ── Modal Itens da Carga (Expedição Encerrada) ─── */
+    window.abrirItensCarga = async function (numCarga) {
+        document.getElementById('modalItensTitulo').textContent = `Itens — Carga #${numCarga}`;
+        const tbody = document.getElementById('itensBody');
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalItens')).show();
+
+        try {
+            const data = await fetchJson(`carga-api-itens?num_carga=${numCarga}`);
+            if (data.error) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-3">${data.error}</td></tr>`;
+                return;
+            }
+            if (!data.data?.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Nenhum item encontrado.</td></tr>';
+                return;
+            }
+            const fmtN = v => { const n = parseFloat(v); return isNaN(n) ? '-' : n.toLocaleString('pt-BR'); };
+            tbody.innerHTML = data.data.map(r => `
+                <tr>
+                    <td class="text-center">${fmt(r.COD_ITEM)}</td>
+                    <td>${fmt(r.DESC_TECNICA)}</td>
+                    <td class="small text-muted">${fmt(r.MASCARA)}</td>
+                    <td class="text-center fw-bold">${fmtN(r.QTDE_CARGA)}</td>
+                    <td class="text-center">${fmtN(r.ESTOQUE_998)}</td>
+                    <td class="text-center">${fmtN(r.ESTOQUE_90)}</td>
+                    <td class="text-center">${fmtN(r.ESTOQUE_997)}</td>
+                </tr>`).join('');
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-3">Erro ao carregar itens.</td></tr>`;
+        }
+    };
+
+    /* ── Modal Expedição WMS (Encerrada) ─────────────── */
+    window.abrirExpedicaoCarga = async function (numCarga) {
+        document.getElementById('modalExpedicaoTitulo').textContent = `Expedição — Carga #${numCarga}`;
+        const tbody = document.getElementById('expedicaoBody');
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalExpedicao')).show();
+
+        try {
+            const data = await fetchJson(`carga-api-itens-expedicao?num_carga=${numCarga}`);
+            if (data.error) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-danger text-center py-3">${data.error}</td></tr>`;
+                return;
+            }
+            if (!data.data?.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">Nenhum item encontrado.</td></tr>';
+                return;
+            }
+            const fmtN   = v => { const n = parseFloat(v); return isNaN(n) ? '-' : n.toLocaleString('pt-BR'); };
+            const fmtPct = v => { const n = parseFloat(v); return isNaN(n) ? '-' : n.toFixed(1) + '%'; };
+            tbody.innerHTML = data.data.map(r => `
+                <tr>
+                    <td class="text-center">${fmt(r.NUM_CARGA)}</td>
+                    <td><span class="badge bg-success">${fmt(r.DESCRICAO_STATUS)}</span></td>
+                    <td class="text-center">${fmt(r.NUM_PEDIDO)}</td>
+                    <td class="text-center">${fmt(r.CODIGO)}</td>
+                    <td>${fmt(r.DESCRICAO)}</td>
+                    <td class="text-center">${fmtN(r.QTDE)}</td>
+                    <td class="text-center">${fmtN(r.QTDE_EXECUTADA)}</td>
+                    <td class="text-center">${fmtN(r.QTDE_DISTRIBUIDA)}</td>
+                    <td class="text-center">${fmtPct(r.PERCENTUAL)}</td>
+                </tr>`).join('');
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-danger text-center py-3">Erro ao carregar itens de expedição.</td></tr>`;
         }
     };
 

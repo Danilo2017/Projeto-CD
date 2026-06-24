@@ -237,8 +237,9 @@ class RelatorioProdHandler
             $rows     = RelatorioProd::buscarRobotec($emprId, $numLote);
             $dataLote = RelatorioProd::buscarDataLote($emprId, $numLote);
 
-            $linhaRows = array_values(array_filter($rows, fn($r) => ($r['ORD'] ?? '') !== 'MESA_PL'));
-            $mesaRows  = array_values(array_filter($rows, fn($r) => ($r['ORD'] ?? '') === 'MESA_PL'));
+            $mesaOrds  = ['MESA_PL', 'MESA'];
+            $linhaRows = array_values(array_filter($rows, fn($r) => !in_array($r['ORD'] ?? '', $mesaOrds, true)));
+            $mesaRows  = array_values(array_filter($rows, fn($r) =>  in_array($r['ORD'] ?? '', $mesaOrds, true)));
 
             return [
                 'success'    => true,

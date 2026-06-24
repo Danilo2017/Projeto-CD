@@ -314,6 +314,74 @@ if (!$acessoCarga) {
     </div>
 </div>
 
+<!-- ═══ Modal Itens da Carga ═══ -->
+<div class="modal fade" id="modalItens" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background:#198754">
+                <h5 class="modal-title" id="modalItensTitulo"><i class="bi bi-box-seam"></i> Itens da Carga</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-sm table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">CÓD. ITEM</th>
+                            <th>DESCRIÇÃO</th>
+                            <th>MÁSCARA</th>
+                            <th class="text-center">QTDE CARGA</th>
+                            <th class="text-center">EST. 998</th>
+                            <th class="text-center">EST. 90</th>
+                            <th class="text-center">EST. 997</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itensBody">
+                        <tr><td colspan="7" class="text-center text-muted py-3">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Modal Expedição WMS ═══ -->
+<div class="modal fade" id="modalExpedicao" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background:#0d6efd">
+                <h5 class="modal-title" id="modalExpedicaoTitulo"><i class="bi bi-truck"></i> Expedição</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-sm table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">Nº CARGA</th>
+                            <th>STATUS</th>
+                            <th class="text-center">PEDIDO</th>
+                            <th class="text-center">CÓDIGO</th>
+                            <th>DESCRIÇÃO</th>
+                            <th class="text-center">QTDE</th>
+                            <th class="text-center">QTDE EXEC.</th>
+                            <th class="text-center">QTDE DIST.</th>
+                            <th class="text-center">%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expedicaoBody">
+                        <tr><td colspan="9" class="text-center text-muted py-3">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
     <div id="toastProjecao" class="toast align-items-center text-white border-0 bg-danger" role="alert">
