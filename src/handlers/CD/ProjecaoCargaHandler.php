@@ -15,10 +15,12 @@ class ProjecaoCargaHandler
     public static function listar(array $dados): array
     {
         Controller::verificarCamposVazios($dados, ['empr_id']);
+        $hoje       = date('Y-m-d');
         $emprId     = (int) $dados['empr_id'];
-        $dataFiltro = $dados['data_filtro'] ?? date('Y-m-d');
+        $dataInicio = $dados['data_inicio'] ?? $hoje;
+        $dataFim    = $dados['data_fim']    ?? $hoje;
         $wmsSchema  = $dados['wms_schema']  ?? 'FOCCOWMS14A';
-        $lista      = ProjecaoCarga::listar($emprId, $dataFiltro, $wmsSchema);
+        $lista      = ProjecaoCarga::listar($emprId, $dataInicio, $dataFim, $wmsSchema);
 
         // Auto-transição: FT/FP sem status → AGUARDANDO DOCUMENTAÇÃO
         $erroTransicao = null;

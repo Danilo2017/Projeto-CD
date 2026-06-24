@@ -23,9 +23,19 @@ if (!$acessoCarga) {
     <div class="dashboard-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-truck-flatbed"></i> Projeção de Carga</h4>
         <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="input-group input-group-sm" style="width:260px;">
+                <span class="input-group-text"><i class="bi bi-funnel"></i></span>
+                <input type="text" id="inputFiltro" class="form-control form-control-sm"
+                       placeholder="Carga, descrição, rota, data...">
+                <button class="btn btn-sm btn-outline-secondary" id="btnLimparFiltro" title="Limpar filtro">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
             <div class="input-group input-group-sm" style="width:auto;">
                 <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                <input type="date" id="inputDataFiltro" class="form-control form-control-sm" style="width:145px;">
+                <input type="date" id="inputDataInicio" class="form-control form-control-sm" style="width:145px;" title="Data início">
+                <span class="input-group-text">até</span>
+                <input type="date" id="inputDataFim" class="form-control form-control-sm" style="width:145px;" title="Data fim">
                 <button id="btnAtualizar" class="btn btn-sm btn-primary" title="Buscar">
                     <i class="bi bi-search"></i> Buscar
                 </button>

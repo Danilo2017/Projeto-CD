@@ -81,7 +81,16 @@
     }
 
     function dataFiltroAtual() {
-        return document.getElementById('inputDataFiltro')?.value || new Date().toISOString().slice(0, 10);
+        const hoje = (() => {
+            const d = new Date();
+            return d.getFullYear() + '-'
+                + String(d.getMonth() + 1).padStart(2, '0') + '-'
+                + String(d.getDate()).padStart(2, '0');
+        })();
+        return {
+            inicio: document.getElementById('inputDataInicio')?.value || hoje,
+            fim:    document.getElementById('inputDataFim')?.value    || hoje,
+        };
     }
 
     /* ── Carregar lista ───────────────────────────────── */
@@ -93,7 +102,8 @@
             '<tr><td colspan="14" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
 
         try {
-            const data = await fetchJson('carga-api-listar', { data_filtro: dataFiltroAtual() });
+            const df   = dataFiltroAtual();
+            const data = await fetchJson('carga-api-listar', { data_inicio: df.inicio, data_fim: df.fim });
             if (data.error) { toast(data.error); return; }
             if (data._transicao_erro) console.warn('[transição] erro ao gravar status:', data._transicao_erro);
             renderTabela(data.data || []);
@@ -105,8 +115,24 @@
         }
     }
 
-    function renderTabela(rows) {
-        _cargasData = rows;
+    function filtroAtual() {
+        return (document.getElementById('inputFiltro')?.value || '').toLowerCase().trim();
+    }
+
+    function aplicarFiltro() {
+        const q = filtroAtual();
+        if (!q) { renderTabela(_cargasData); return; }
+        const filtrados = _cargasData.filter(r =>
+            String(r.NUM_CARGA  ?? '').toLowerCase().includes(q) ||
+            String(r.DESCRICAO  ?? '').toLowerCase().includes(q) ||
+            String(r.ROTA       ?? '').toLowerCase().includes(q) ||
+            String(r.DT_GERACAO ?? '').toLowerCase().includes(q)
+        );
+        renderTabela(filtrados, true);
+    }
+
+    function renderTabela(rows, filtrado = false) {
+        if (!filtrado) _cargasData = rows;
         const tbody = document.getElementById('tabelaBody');
         if (!rows.length) {
             tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
@@ -567,9 +593,16 @@
         const _dataHoje = _h.getFullYear() + '-'
             + String(_h.getMonth() + 1).padStart(2, '0') + '-'
             + String(_h.getDate()).padStart(2, '0');
-        document.getElementById('inputDataFiltro').value = _dataHoje;
+        document.getElementById('inputDataInicio').value = _dataHoje;
+        document.getElementById('inputDataFim').value    = _dataHoje;
 
         document.getElementById('btnAtualizar').addEventListener('click', carregarLista);
+
+        document.getElementById('inputFiltro').addEventListener('input', aplicarFiltro);
+        document.getElementById('btnLimparFiltro').addEventListener('click', function () {
+            document.getElementById('inputFiltro').value = '';
+            aplicarFiltro();
+        });
 
         // Preencher situacao select
         const selSit = document.getElementById('fldSituacao');
