@@ -68,7 +68,12 @@ if (!$acessoComissao) {
         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="desmarcarTodos()">
             <i class="bi bi-square"></i> Desmarcar Todos
         </button>
-        <div class="ms-auto" style="min-width: 280px;">
+        <div class="ms-auto" style="min-width: 260px;">
+            <input type="text" id="filtroAptIds" class="form-control form-control-sm"
+                   placeholder="Filtrar por Apt. ID (separados por vírgula)..."
+                   oninput="filtrarTabela()">
+        </div>
+        <div style="min-width: 280px;">
             <input type="text" id="filtroProduto" class="form-control form-control-sm"
                    placeholder="Filtrar por produto, código ou máscara..."
                    oninput="filtrarTabela()">
@@ -77,9 +82,14 @@ if (!$acessoComissao) {
 
     <!-- Tabela de Apontamentos -->
     <div class="card">
-        <div class="card-header bg-warning text-dark">
-            <strong><i class="bi bi-exclamation-triangle"></i> Apontamentos Sem Recurso</strong>
-            <span id="totalRegistros" class="badge bg-dark ms-2">0</span>
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <div>
+                <strong><i class="bi bi-exclamation-triangle"></i> Apontamentos Sem Recurso</strong>
+                <span id="totalRegistros" class="badge bg-dark ms-2">0</span>
+            </div>
+            <button type="button" class="btn btn-success btn-sm" onclick="downloadExcel()" title="Exportar para Excel">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </button>
         </div>
         <div class="card-body p-0">
             <table class="table table-striped table-hover mb-0" id="tabelaApontamentos">
@@ -212,13 +222,19 @@ function buscarApontamentos() {
         });
 }
 
-function renderizarTabela() {
-    const tbody = document.getElementById('tabelaBody');
-    const filtroTxt = (document.getElementById('filtroProduto')?.value || '').trim().toLowerCase();
+function getListaFiltrada() {
+    const filtroTxt   = (document.getElementById('filtroProduto')?.value || '').trim().toLowerCase();
+    const filtroIdsRaw = (document.getElementById('filtroAptIds')?.value || '').trim();
+    const filtroIds = filtroIdsRaw
+        ? filtroIdsRaw.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
 
     let lista = apontamentos;
+    if (filtroIds.length) {
+        lista = lista.filter(ap => filtroIds.includes(String(ap.APONTAMENTO_ID)));
+    }
     if (filtroTxt) {
-        lista = apontamentos.filter(ap => {
+        lista = lista.filter(ap => {
             const alvo = [
                 ap.COD_ITEM,
                 ap.DESC_ITEM,
@@ -229,8 +245,14 @@ function renderizarTabela() {
             return alvo.indexOf(filtroTxt) !== -1;
         });
     }
+    return lista;
+}
 
-    document.getElementById('totalRegistros').textContent = lista.length + (filtroTxt ? ' / ' + apontamentos.length : '');
+function renderizarTabela() {
+    const tbody = document.getElementById('tabelaBody');
+    const lista = getListaFiltrada();
+    const filtroAtivo = lista.length !== apontamentos.length;
+    document.getElementById('totalRegistros').textContent = lista.length + (filtroAtivo ? ' / ' + apontamentos.length : '');
     document.getElementById('acoesLote').style.display = apontamentos.length > 0 ? 'flex' : 'none';
 
     if (!apontamentos.length) {
@@ -319,7 +341,7 @@ function toggleItem(id) {
 
 function toggleTodos() {
     const checked = document.getElementById('checkTodos').checked;
-    selecionados = checked ? apontamentos.map(a => a.APONTAMENTO_ID) : [];
+    selecionados = checked ? getListaFiltrada().map(a => a.APONTAMENTO_ID) : [];
     document.querySelectorAll('.checkItem').forEach(cb => cb.checked = checked);
     atualizarContador();
 }
@@ -365,6 +387,47 @@ function vincularIndividual(apontamentoId) {
         console.error(err);
         alert('Erro ao vincular recurso');
     });
+}
+
+function downloadExcel() {
+    if (!apontamentos.length) {
+        alert('Nenhum dado para exportar.');
+        return;
+    }
+
+    const cols = [
+        ['APONTAMENTO_ID', 'APT. ID'],
+        ['COD_ITEM',       'CÓD. ITEM'],
+        ['DESC_ITEM',      'PRODUTO'],
+        ['MASCARA',        'MÁSCARA'],
+        ['ID_MASCARA',     'ID MÁSCARA'],
+        ['COD_CENTRO',     'CENTRO'],
+        ['DT_APONT',       'DATA'],
+        ['QUANTIDADE',     'QTD'],
+    ];
+
+    const esc = v => {
+        if (v === null || v === undefined || v === '') return '';
+        const s = String(v).replaceAll('"', '""');
+        return /[;"\n\r]/.test(s) ? `"${s}"` : s;
+    };
+
+    const linhas = [
+        cols.map(([, label]) => esc(label)).join(';'),
+        ...apontamentos.map(ap => cols.map(([key]) => {
+            if (key === 'DT_APONT') return esc(ap.DT_APONT_FMT || formatarData(ap.DATA_APONTAMENTO));
+            return esc(ap[key]);
+        }).join(';')),
+    ];
+
+    const blob = new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+        href:     url,
+        download: `apontamentos_sem_recurso_${document.getElementById('filtroDataInicio').value || 'export'}.csv`,
+    });
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function vincularLote() {

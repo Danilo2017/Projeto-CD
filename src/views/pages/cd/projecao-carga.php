@@ -74,11 +74,12 @@ if (!$acessoCarga) {
                     <th class="text-center" style="width:115px;min-width:115px">PLACA</th>
                     <th class="text-center">SIT. VEÍCULO</th>
                     <th class="text-center">DOCA</th>
+                    <th class="text-center">CANHOTO</th>
                     <th class="text-center">AÇÕES</th>
                 </tr>
             </thead>
             <tbody id="tabelaBody">
-                <tr><td colspan="15" class="text-center py-4">
+                <tr><td colspan="16" class="text-center py-4">
                     <div class="spinner-border spinner-border-sm"></div> Carregando...
                 </td></tr>
             </tbody>
@@ -150,8 +151,16 @@ if (!$acessoCarga) {
                         <input type="text" id="fldDoca" class="form-control form-control-sm" placeholder="Ex: D1, D2">
                     </div>
                     <div class="col-md-9">
-                        <label class="form-label fw-semibold">Nº Documentos</label>
-                        <input type="text" id="fldNumDocs" class="form-control form-control-sm" placeholder="Números separados por vírgula">
+                        <label class="form-label fw-semibold">Canhoto NF</label>
+                        <input type="hidden" id="fldNumDocs" value="NAO">
+                        <div class="btn-group" role="group">
+                            <button type="button" id="btnCanhotoSim" class="btn btn-outline-success btn-sm py-0 px-2" style="font-size:0.78rem" onclick="setCanhoto('SIM')">
+                                <i class="bi bi-check-circle"></i> Sim
+                            </button>
+                            <button type="button" id="btnCanhotoNao" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:0.78rem" onclick="setCanhoto('NAO')">
+                                <i class="bi bi-x-circle"></i> Não
+                            </button>
+                        </div>
                     </div>
                     <div class="col-md-12">
                         <label class="form-label fw-semibold">Observações</label>
@@ -333,10 +342,11 @@ if (!$acessoCarga) {
                             <th class="text-center">EST. 998</th>
                             <th class="text-center">EST. 90</th>
                             <th class="text-center">EST. 997</th>
+                            <th class="text-center">% ATEND.</th>
                         </tr>
                     </thead>
                     <tbody id="itensBody">
-                        <tr><td colspan="7" class="text-center text-muted py-3">Carregando...</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-3">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>

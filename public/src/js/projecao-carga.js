@@ -6,13 +6,18 @@
 
     let carregandoLista = false;
     let _cargasData     = [];
+    let _filtroTimer    = null;
+
+    /* ── Cache de elementos DOM ───────────────────────── */
+    let elTbody = null, elTotalCargas = null, elTotalPend = null, elTotalFat = null;
 
     /* ── Helpers ─────────────────────────────────────── */
+    const _fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
     function fmt(v) { return v ?? '-'; }
     function fmtValor(v) {
         const n = parseFloat(v);
-        if (isNaN(n)) return '-';
-        return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        return isNaN(n) ? '-' : _fmtBRL.format(n);
     }
     function badgeSituacao(sit) {
         const cores = {
@@ -54,6 +59,11 @@
             ? 'background-color:#fd7e14;font-size:0.65rem;white-space:normal;max-width:110px'
             : 'font-size:0.65rem;white-space:normal;max-width:110px';
         return `<span class="badge ${cls}" style="${style}">${sit}</span>`;
+    }
+    function badgeCanhoto(val) {
+        return val === 'SIM'
+            ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Sim</span>'
+            : '<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Não</span>';
     }
     function badgePosPLC(pos) {
         if (!pos || pos === 'PE') return '';
@@ -99,7 +109,7 @@
         carregandoLista = true;
         document.getElementById('btnAtualizar').disabled = true;
         document.getElementById('tabelaBody').innerHTML =
-            '<tr><td colspan="14" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
+            '<tr><td colspan="16" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
 
         try {
             const df   = dataFiltroAtual();
@@ -133,25 +143,27 @@
 
     function renderTabela(rows, filtrado = false) {
         if (!filtrado) _cargasData = rows;
-        const tbody = document.getElementById('tabelaBody');
+        const tbody = elTbody || document.getElementById('tabelaBody');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
-            document.getElementById('totalCargas').textContent = '0';
-            document.getElementById('totalPendente').textContent = '-';
-            document.getElementById('totalFaturado').textContent = '-';
+            tbody.innerHTML = '<tr><td colspan="16" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
+            (elTotalCargas || document.getElementById('totalCargas')).textContent = '0';
+            (elTotalPend   || document.getElementById('totalPendente')).textContent = '-';
+            (elTotalFat    || document.getElementById('totalFaturado')).textContent = '-';
             return;
         }
-        document.getElementById('totalCargas').textContent = rows.length;
+        (elTotalCargas || document.getElementById('totalCargas')).textContent = rows.length;
 
-        const sumPend = rows.reduce((s, r) => s + (parseFloat(r.VALOR_PENDENTE) || 0), 0);
-        const sumFat  = rows.reduce((s, r) => s + (parseFloat(r.VALOR_FATURADO)  || 0), 0);
-        const fmt2    = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        document.getElementById('totalPendente').textContent = fmt2(sumPend);
-        document.getElementById('totalFaturado').textContent = fmt2(sumFat);
+        const [sumPend, sumFat] = rows.reduce(
+            ([p, f], r) => [p + (parseFloat(r.VALOR_PENDENTE) || 0), f + (parseFloat(r.VALOR_FATURADO) || 0)],
+            [0, 0]
+        );
+        (elTotalPend || document.getElementById('totalPendente')).textContent = _fmtBRL.format(sumPend);
+        (elTotalFat  || document.getElementById('totalFaturado')).textContent = _fmtBRL.format(sumFat);
 
         tbody.innerHTML = rows.map(r => {
-            const isFaturada = r.POS_PLC === 'FT' || r.POS_PLC === 'FP';
-            const rowClass   = isFaturada ? 'table-success' : '';
+            const isFaturada  = r.POS_PLC === 'FT' || r.POS_PLC === 'FP';
+            const temObs      = !isFaturada && r.OBSERVACOES && r.OBSERVACOES.trim() !== '';
+            const rowClass    = isFaturada ? 'table-success' : (temObs ? 'table-warning' : '');
             return `
             <tr data-carga="${r.NUM_CARGA}" data-pos="${r.POS_PLC}" class="${rowClass}">
                 <td class="text-center fw-bold">${r.STATUS_WMS === 'Encerrada'
@@ -183,6 +195,7 @@
                 </td>
                 <td class="text-center">${r.SITUACAO_CAMINHAO ? badgeSitCaminhao(r.SITUACAO_CAMINHAO) : '<span class="text-muted small">-</span>'}</td>
                 <td class="text-center small">${fmt(r.DOCA)}</td>
+                <td class="text-center" style="cursor:pointer" onclick="toggleCanhoto(${r.NUM_CARGA})" title="Clique para alternar">${badgeCanhoto(r.NUM_DOCS)}</td>
                 <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-warning py-0 px-2 me-1" onclick="abrirModal(${r.NUM_CARGA})" title="Editar">
                         <i class="bi bi-pencil-fill"></i>
@@ -204,6 +217,51 @@
         }).join('');
     }
 
+    /* ── Toggle Canhoto NF ────────────────────────────── */
+    window.setCanhoto = function (val) {
+        document.getElementById('fldNumDocs').value = val;
+        const btnSim = document.getElementById('btnCanhotoSim');
+        const btnNao = document.getElementById('btnCanhotoNao');
+        btnSim.classList.toggle('btn-success',         val === 'SIM');
+        btnSim.classList.toggle('btn-outline-success', val !== 'SIM');
+        btnNao.classList.toggle('btn-danger',          val === 'NAO');
+        btnNao.classList.toggle('btn-outline-danger',  val !== 'NAO');
+    };
+
+    /* ── Toggle rápido do Canhoto na tabela ───────────── */
+    window.toggleCanhoto = async function (numCarga) {
+        const idx = _cargasData.findIndex(x => x.NUM_CARGA == numCarga);
+        if (idx === -1) return;
+        const r = _cargasData[idx];
+        const novoValor = r.NUM_DOCS === 'SIM' ? 'NAO' : 'SIM';
+
+        const payload = {
+            num_carga:          numCarga,
+            dt_carregamento:    r.DT_CARREGAMENTO ? r.DT_CARREGAMENTO.split('/').reverse().join('-') : null,
+            situacao:           r.SITUACAO          || 'PENDENTE',
+            situacao_carga:     r.SITUACAO_CARGA    || '',
+            frota:              r.FROTA             || '',
+            placas:             r.PLACAS            || '',
+            tipo_veiculo:       r.TIPO_VEICULO      || '',
+            situacao_caminhao:  r.SITUACAO_CAMINHAO || '',
+            motorista:          r.MOTORISTA         || '',
+            contato:            r.CONTATO           || '',
+            doca:               r.DOCA              || '',
+            num_docs:           novoValor,
+            observacoes:        r.OBSERVACOES       || '',
+        };
+
+        try {
+            const data = await fetchJson('carga-api-salvar', payload);
+            if (data.error) { toast(data.error); return; }
+            r.NUM_DOCS = novoValor;
+            renderTabela(_cargasData);
+            toast(`Canhoto marcado como ${novoValor === 'SIM' ? 'entregue' : 'não entregue'}.`, 'success');
+        } catch (e) {
+            toast('Erro ao atualizar canhoto.');
+        }
+    };
+
     /* ── Modal Editar ────────────────────────────────── */
     window.abrirModal = function (numCarga) {
         const r      = _cargasData.find(x => x.NUM_CARGA == numCarga) || {};
@@ -223,7 +281,7 @@
         document.getElementById('fldMotorista').value        = r.MOTORISTA         || '';
         document.getElementById('fldContato').value        = r.CONTATO        || '';
         document.getElementById('fldDoca').value           = r.DOCA           || '';
-        document.getElementById('fldNumDocs').value        = r.NUM_DOCS       || '';
+        setCanhoto(r.NUM_DOCS === 'SIM' ? 'SIM' : 'NAO');
         document.getElementById('fldObservacoes').value    = r.OBSERVACOES    || '';
 
         const grpSituacao = document.getElementById('fldSituacao').closest('.col-md-4');
@@ -337,7 +395,7 @@
             ['TIPO_VEICULO',       'TIPO VEÍCULO'],
             ['CONTATO',            'CONTATO'],
             ['DOCA',               'DOCA'],
-            ['NUM_DOCS',           'Nº DOCUMENTOS'],
+            ['NUM_DOCS',           'CANHOTO NF'],
             ['OBSERVACOES',        'OBSERVAÇÕES'],
             ['POS_PLC',            'POS. PLC'],
         ];
@@ -364,7 +422,7 @@
         const url  = URL.createObjectURL(blob);
         const a    = Object.assign(document.createElement('a'), {
             href:     url,
-            download: `cargas_${document.getElementById('inputDataFiltro').value || 'export'}.csv`,
+            download: `cargas_${document.getElementById('inputDataInicio')?.value || 'export'}.csv`,
         });
         a.click();
         URL.revokeObjectURL(url);
@@ -600,15 +658,22 @@
         try {
             const data = await fetchJson(`carga-api-itens?num_carga=${numCarga}`);
             if (data.error) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-3">${data.error}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center py-3">${data.error}</td></tr>`;
                 return;
             }
             if (!data.data?.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Nenhum item encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">Nenhum item encontrado.</td></tr>';
                 return;
             }
             const fmtN = v => { const n = parseFloat(v); return isNaN(n) ? '-' : n.toLocaleString('pt-BR'); };
-            tbody.innerHTML = data.data.map(r => `
+            tbody.innerHTML = data.data.map(r => {
+                const qtde  = parseFloat(r.QTDE_CARGA)   || 0;
+                const est98 = parseFloat(r.ESTOQUE_998)  || 0;
+                const pct   = qtde > 0 ? Math.min((est98 / qtde) * 100, 100) : 0;
+                const pctCls = pct >= 100 ? 'text-success fw-bold'
+                             : pct >= 50  ? 'text-warning fw-bold'
+                             : 'text-danger fw-bold';
+                return `
                 <tr>
                     <td class="text-center">${fmt(r.COD_ITEM)}</td>
                     <td>${fmt(r.DESC_TECNICA)}</td>
@@ -617,9 +682,11 @@
                     <td class="text-center">${fmtN(r.ESTOQUE_998)}</td>
                     <td class="text-center">${fmtN(r.ESTOQUE_90)}</td>
                     <td class="text-center">${fmtN(r.ESTOQUE_997)}</td>
-                </tr>`).join('');
+                    <td class="text-center ${pctCls}">${qtde > 0 ? pct.toFixed(1) + '%' : '-'}</td>
+                </tr>`;
+            }).join('');
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-3">Erro ao carregar itens.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center py-3">Erro ao carregar itens.</td></tr>`;
         }
     };
 
@@ -661,6 +728,12 @@
 
     /* ── Init ─────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
+        // Cache dos elementos DOM usados em renderTabela
+        elTbody      = document.getElementById('tabelaBody');
+        elTotalCargas = document.getElementById('totalCargas');
+        elTotalPend  = document.getElementById('totalPendente');
+        elTotalFat   = document.getElementById('totalFaturado');
+
         // Data padrão: hoje no fuso local (toISOString usa UTC e pode dar dia errado)
         const _h = new Date();
         const _dataHoje = _h.getFullYear() + '-'
@@ -671,8 +744,12 @@
 
         document.getElementById('btnAtualizar').addEventListener('click', carregarLista);
 
-        document.getElementById('inputFiltro').addEventListener('input', aplicarFiltro);
+        document.getElementById('inputFiltro').addEventListener('input', function () {
+            clearTimeout(_filtroTimer);
+            _filtroTimer = setTimeout(aplicarFiltro, 200);
+        });
         document.getElementById('btnLimparFiltro').addEventListener('click', function () {
+            clearTimeout(_filtroTimer);
             document.getElementById('inputFiltro').value = '';
             aplicarFiltro();
         });
@@ -687,7 +764,7 @@
 
         // Aguarda clique do usuário — não carrega automaticamente
         document.getElementById('tabelaBody').innerHTML =
-            '<tr><td colspan="14" class="text-center text-muted py-5">'
+            '<tr><td colspan="16" class="text-center text-muted py-5">'
             + '<i class="bi bi-search me-2"></i>Selecione a data e clique em <strong>Buscar</strong>.'
             + '</td></tr>';
     });

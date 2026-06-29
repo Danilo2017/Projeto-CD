@@ -25,7 +25,7 @@ class Database
 
         switch ($db) {
             case 'focco':
-                $tns = "(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = " . Config::FOCCO_HOST . ")(PORT = " . Config::FOCCO_PORT . ")))(CONNECT_DATA = (SERVICE_NAME = " . Config::FOCCO_DATABASE . ")))";
+                $tns = "(DESCRIPTION = (CONNECT_TIMEOUT = 5)(RETRY_COUNT = 1)(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = " . Config::FOCCO_HOST . ")(PORT = " . Config::FOCCO_PORT . ")))(CONNECT_DATA = (SERVICE_NAME = " . Config::FOCCO_DATABASE . ")))";
                 $username = Config::FOCCO_USER;
                 $password = Config::FOCCO_PASS;
                 $cx = "oci:dbname=" . $tns . ";charset=AL32UTF8";
