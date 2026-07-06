@@ -226,6 +226,11 @@ $router->get('/processo-api-tipos-nf-ent',        'Processo\\TrocaTipoNfEntradaC
 $router->post('/processo-api-troca-tipo-nf-buscar','Processo\\TrocaTipoNfEntradaController@buscarNf',   true);
 $router->post('/processo-api-troca-tipo-nf',      'Processo\\TrocaTipoNfEntradaController@executar',    true);
 
+$router->get('/processo-transferencia-estoque',          'Processo\\TransferenciaEstoqueController@index',              true);
+$router->get('/processo-api-transf-almox',               'Processo\\TransferenciaEstoqueController@listarAlmoxarifados',true);
+$router->post('/processo-api-transf-saldo',              'Processo\\TransferenciaEstoqueController@buscarSaldo',        true);
+$router->post('/processo-api-transf-executar',           'Processo\\TransferenciaEstoqueController@executar',           true);
+
 // ========== PCP ==========
 $router->get('/pcp-relatorio-producao',      'PCP\\RelatorioProdController@index',        true);
 $router->post('/pcp-api-relatorio-producao', 'PCP\\RelatorioProdController@buscar',       true);

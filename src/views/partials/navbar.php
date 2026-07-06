@@ -105,8 +105,9 @@ $pedidosSub = match(true) {
     default => ''
 };
 $processoSub = match(true) {
-    $pActive === 'processo-troca-almox'    => 'troca-almox',
-    $pActive === 'processo-troca-tipo-nf'  => 'troca-tipo-nf',
+    $pActive === 'processo-troca-almox'           => 'troca-almox',
+    $pActive === 'processo-troca-tipo-nf'         => 'troca-tipo-nf',
+    $pActive === 'processo-transferencia-estoque' => 'transferencia-estoque',
     default => ''
 };
 
@@ -256,6 +257,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>processo-troca-tipo-nf"
                        class="sidebar-sublink <?= $processoSub === 'troca-tipo-nf' ? 'active' : '' ?>">
                         Troca Tipo NF Ent.
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>processo-transferencia-estoque"
+                       class="sidebar-sublink <?= $processoSub === 'transferencia-estoque' ? 'active' : '' ?>">
+                        Transferência de Estoque
                     </a>
                 </li>
             </ul>
