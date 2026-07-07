@@ -236,8 +236,8 @@ body{font-family:Arial,sans-serif;font-size:8pt;background:#fff}
                 const rowsCom     = secoes.com_pillow || [];
                 const rowsMesa    = secoes.mesa       || [];
                 const rowsConj    = secoes.conjugado  || [];
-                const ordPeso = { 'MOLA': 1, 'MOLA_PL': 2, 'MESA': 3, 'MESA_PL': 4 };
-                const rowsRobotec = [...rowsSem, ...rowsCom, ...rowsMesa];
+                const ordPeso = { 'MOLA': 1, 'MOLA_PL': 2 };
+                const rowsRobotec = [...rowsSem, ...rowsCom];
                 // Ordem: ORD primeiro (MOLA → MOLA_PL → MESA), depois LARGURA, depois ALT_EPS (0 por último)
                 rowsRobotec.sort((a, b) => {
                     const pA = ordPeso[a.ORD] || 99;

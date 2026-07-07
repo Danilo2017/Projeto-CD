@@ -33,6 +33,8 @@ class RelatorioProdHandler
 
                 if ($ord === 'CON_BAS_AU') {
                     $secoes['conjugado'][] = $row;
+                } elseif (in_array($ord, ['MESA', 'MESA_PL'], true)) {
+                    $secoes['mesa'][] = $row;
                 } elseif ($alt <= 0) {
                     $secoes['sem_pillow'][] = $row;
                 } elseif ($altMola >= 150) {
