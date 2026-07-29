@@ -258,15 +258,12 @@ class PontuacaoProduto
 
         $sql = "INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
             (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB,
-             PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ID_USUARIO, ATIVO)
+             PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO)
         VALUES
             ($novoId, $emprId, $itemId, $itemprId, $mascaraId, $centroId,
-             :pontos_up, TO_DATE(:dt_ini, 'YYYY-MM-DD'), $dtFimFrag, $usuarioId, 'S')";
+             $pontosUp, TO_DATE('$dtIni', 'YYYY-MM-DD'), $dtFimFrag, 'S')";
 
-        $result = Database::switchParams('focco', [
-            'pontos_up' => $pontosUp,
-            'dt_ini'    => $dtIni,
-        ], null, true, true, null, $sql);
+        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return $novoId;
     }
@@ -283,18 +280,16 @@ class PontuacaoProduto
         $usuarioId = !empty($dados['id_usuario']) ? intval($dados['id_usuario']) : 'NULL';
         $dtIni     = str_replace("'", "''", $dados['dt_vigencia_ini']);
 
-        $sql = "UPDATE FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
-        SET PONTOS_UP        = :pontos_up,
-            DT_VIGENCIA_INI  = TO_DATE(:dt_ini, 'YYYY-MM-DD'),
-            DT_VIGENCIA_FIM  = $dtFimFrag,
-            ID_USUARIO       = $usuarioId
-        WHERE ID_PONTUACAO = :id";
+        $pontosUp = floatval($dados['pontos_up']);
+        $idInt    = intval($id);
 
-        $result = Database::switchParams('focco', [
-            'pontos_up' => floatval($dados['pontos_up']),
-            'dt_ini'    => $dtIni,
-            'id'        => intval($id),
-        ], null, true, true, null, $sql);
+        $sql = "UPDATE FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
+        SET PONTOS_UP        = $pontosUp,
+            DT_VIGENCIA_INI  = TO_DATE('$dtIni', 'YYYY-MM-DD'),
+            DT_VIGENCIA_FIM  = $dtFimFrag
+        WHERE ID_PONTUACAO = $idInt";
+
+        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return true;
     }
@@ -308,7 +303,7 @@ class PontuacaoProduto
         $atvVal    = $ativo === 'S' ? 'S' : 'N';
 
         $sql = "UPDATE FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
-        SET ATIVO = '$atvVal', ID_USUARIO = $usuarioId
+        SET ATIVO = '$atvVal'
         WHERE ID_PONTUACAO = :id";
 
         $result = Database::switchParams('focco', ['id' => intval($id)], null, true, true, null, $sql);
