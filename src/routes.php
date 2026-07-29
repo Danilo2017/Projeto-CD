@@ -88,6 +88,7 @@ $router->post('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@s
 $router->put('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@atualizarPontuacao', true);
 $router->delete('/comissao-api-pontuacao', 'Comissao\\ComissaoCadastroController@excluirPontuacao', true);
 $router->post('/comissao-api-pontuacao-importar', 'Comissao\\ComissaoCadastroController@importarPontuacoes', true);
+$router->get('/comissao-api-relatorio-itens', 'Comissao\\ComissaoCadastroController@relatorioItens', true);
 
 // APIs de Cadastro - Faixas
 $router->get('/comissao-api-faixas', 'Comissao\\ComissaoCadastroController@listarFaixas', true);

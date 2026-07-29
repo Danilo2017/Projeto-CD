@@ -7,6 +7,8 @@ let centrosCache = [];
 let centrosCustoCache = [];
 // Cache da última listagem (para exportação Excel)
 let vinculosListaAtual = [];
+// Dados pendentes para preencher o modal de edição após shown.bs.modal
+let pendingEditData = null;
 
 $(document).ready(function() {
     carregarFuncionarios();
@@ -15,9 +17,29 @@ $(document).ready(function() {
     carregarCentrosCusto();
     carregarVinculos();
 
-    // Inicializar Select2 do modal quando abrir
+    // Inicializar Select2 do modal quando abrir e aplicar dados de edição pendentes
     $('#modalVinculo').on('shown.bs.modal', function() {
         inicializarSelect2Modal();
+        if (pendingEditData) {
+            const d = pendingEditData;
+            pendingEditData = null;
+            select2EnsureOption('#funcionario_id', d.funcionarioId, d.funcionarioText);
+            $('#funcionario_id').val(d.funcionarioId).trigger('change');
+            if (d.recursoId) {
+                select2EnsureOption('#recurso_id', d.recursoId, d.recursoText);
+                $('#recurso_id').val(d.recursoId).trigger('change');
+            } else {
+                $('#recurso_id').val('').trigger('change');
+            }
+            select2EnsureOption('#centro_id', d.centroId, d.centroText);
+            $('#centro_id').val(d.centroId).trigger('change');
+            if (d.ccId) {
+                select2EnsureOption('#cc_id', d.ccId, d.ccText);
+                $('#cc_id').val(d.ccId).trigger('change');
+            } else {
+                $('#cc_id').val('').trigger('change');
+            }
+        }
     });
 
     // Event delegation — funciona mesmo após DataTables re-renderizar
@@ -26,10 +48,14 @@ $(document).ready(function() {
         editarVinculo(
             b.data('id'),
             b.data('func'),
+            decodeURIComponent(b.attr('data-func-text') || ''),
             b.data('rec') || null,
+            decodeURIComponent(b.attr('data-rec-text') || ''),
             b.data('centro'),
+            decodeURIComponent(b.attr('data-centro-text') || ''),
             b.data('tipo'),
-            b.data('cc') || null
+            b.data('cc') || null,
+            decodeURIComponent(b.attr('data-cc-text') || '')
         );
     });
 
@@ -292,30 +318,24 @@ function salvarVinculo() {
     });
 }
 
-function editarVinculo(id, funcionarioId, recursoId, centroId, tipoVinculo, ccId) {
+// Garante que o option com o ID existe no select antes de setá-lo no Select2
+function select2EnsureOption(selector, id, text) {
+    if (!id) return;
+    const $s = $(selector);
+    if ($s.find('option[value="' + id + '"]').length === 0) {
+        $s.append(new Option(text || id, id, false, false));
+    }
+}
+
+function editarVinculo(id, funcionarioId, funcionarioText, recursoId, recursoText, centroId, centroText, tipoVinculo, ccId, ccText) {
     $('#vinculoId').val(id);
     $('#tipo_vinculo').val(tipoVinculo || 'N');
     toggleRecursoObrigatorio();
     $('#modalVinculoTitulo').html('<i class="bi bi-pencil"></i> Editar Vínculo');
-    
-    // Abrir modal e depois setar valores do Select2
+
+    pendingEditData = { funcionarioId, funcionarioText, recursoId, recursoText, centroId, centroText, ccId, ccText };
+
     $('#modalVinculo').modal('show');
-    
-    // Aguardar modal abrir para setar valores do Select2
-    setTimeout(function() {
-        if ($('#funcionario_id').data('select2')) {
-            $('#funcionario_id').val(funcionarioId).trigger('change');
-        }
-        if ($('#recurso_id').data('select2')) {
-            $('#recurso_id').val(recursoId).trigger('change');
-        }
-        if ($('#centro_id').data('select2')) {
-            $('#centro_id').val(centroId).trigger('change');
-        }
-        if ($('#cc_id').data('select2')) {
-            $('#cc_id').val(ccId || '').trigger('change');
-        }
-    }, 300);
 }
 
 function excluirVinculo(id) {
@@ -371,10 +391,14 @@ function carregarVinculos() {
                 acoes += '<button class="btn btn-sm btn-primary btn-editar-vinculo"'
                     + ' data-id="' + v.ID_VINCULO + '"'
                     + ' data-func="' + v.ID_FUNCIONARIO + '"'
+                    + ' data-func-text="' + encodeURIComponent(funcLabel) + '"'
                     + ' data-rec="' + (v.ID_RECURSO || '') + '"'
+                    + ' data-rec-text="' + encodeURIComponent(v.ID_RECURSO ? (v.COD_MAQUINA ? v.COD_MAQUINA + ' - ' + v.RECURSO_DESCRICAO : v.RECURSO_DESCRICAO) : '') + '"'
                     + ' data-centro="' + v.ID_CENTRO_TRAB + '"'
+                    + ' data-centro-text="' + encodeURIComponent(centroLabel) + '"'
                     + ' data-tipo="' + tipoVinculo + '"'
                     + ' data-cc="' + (v.ID_EMP_CC || '') + '"'
+                    + ' data-cc-text="' + encodeURIComponent(v.ID_EMP_CC && v.COD_CC ? v.COD_CC + ' - ' + (v.CC_DESCRICAO || '') : '') + '"'
                     + ' title="Editar"><i class="bi bi-pencil"></i></button>';
                 acoes += '<button class="btn btn-sm btn-danger btn-excluir-vinculo"'
                     + ' data-id="' + v.ID_VINCULO + '"'

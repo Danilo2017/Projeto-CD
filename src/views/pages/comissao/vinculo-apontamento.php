@@ -102,13 +102,14 @@ if (!$acessoComissao) {
                         <th>Centro</th>
                         <th>Data</th>
                         <th>Qtd</th>
+                        <th>UEP</th>
                         <th width="200">Recurso</th>
                         <th width="70">Ação</th>
                     </tr>
                 </thead>
                 <tbody id="tabelaBody">
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
+                        <td colspan="10" class="text-center text-muted py-4">
                             Clique em "Buscar" para carregar apontamentos
                         </td>
                     </tr>
@@ -204,7 +205,7 @@ function buscarApontamentos() {
     const dataFim = document.getElementById('filtroDataFim').value;
     
     const tbody = document.getElementById('tabelaBody');
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4"><i class="bi bi-hourglass-split"></i> Carregando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><i class="bi bi-hourglass-split"></i> Carregando...</td></tr>';
     
     let url = `/comissao-api-apontamentos-sem-recurso?empr_id=${emprId}&dt_inicio=${dataInicio}&dt_fim=${dataFim}`;
     if (centroId) url += `&centro_trab_id=${centroId}`;
@@ -217,7 +218,7 @@ function buscarApontamentos() {
             renderizarTabela();
         })
         .catch(err => {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">Erro ao carregar dados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">Erro ao carregar dados</td></tr>';
             console.error(err);
         });
 }
@@ -256,12 +257,12 @@ function renderizarTabela() {
     document.getElementById('acoesLote').style.display = apontamentos.length > 0 ? 'flex' : 'none';
 
     if (!apontamentos.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-success py-4"><i class="bi bi-check-circle"></i> Nenhum apontamento sem recurso encontrado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-success py-4"><i class="bi bi-check-circle"></i> Nenhum apontamento sem recurso encontrado</td></tr>';
         return;
     }
 
     if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-search"></i> Nenhum apontamento corresponde ao filtro</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4"><i class="bi bi-search"></i> Nenhum apontamento corresponde ao filtro</td></tr>';
         return;
     }
 
@@ -278,7 +279,8 @@ function renderizarTabela() {
                 <td>${ap.MASCARA || '-'} <small class="text-muted">(${ap.ID_MASCARA || '-'})</small></td>
                 <td>${ap.COD_CENTRO || ''}</td>
                 <td>${dataFmt}</td>
-                <td class="text-center">${ap.QUANTIDADE}</td>
+                <td class="text-center">${Number(ap.QUANTIDADE).toLocaleString('pt-BR')}</td>
+                <td class="text-end text-nowrap">${ap.PONTOS_UP != null ? Number(ap.PONTOS_UP).toLocaleString('pt-BR', {minimumFractionDigits:4, maximumFractionDigits:4}) : '<span class="text-muted">—</span>'}</td>
                 <td style="min-width: 280px;">
                     <select class="form-select form-select-sm select-recurso" id="rec_${ap.APONTAMENTO_ID}" style="width: 100%;">
                         <option value="">Selecione</option>
@@ -404,6 +406,7 @@ function downloadExcel() {
         ['COD_CENTRO',     'CENTRO'],
         ['DT_APONT',       'DATA'],
         ['QUANTIDADE',     'QTD'],
+        ['PONTOS_UP',      'UEP'],
     ];
 
     const esc = v => {
@@ -415,7 +418,11 @@ function downloadExcel() {
     const linhas = [
         cols.map(([, label]) => esc(label)).join(';'),
         ...apontamentos.map(ap => cols.map(([key]) => {
-            if (key === 'DT_APONT') return esc(ap.DT_APONT_FMT || formatarData(ap.DATA_APONTAMENTO));
+            if (key === 'DT_APONT')   return esc(ap.DT_APONT_FMT || formatarData(ap.DATA_APONTAMENTO));
+            if (key === 'QUANTIDADE') return esc(Number(ap.QUANTIDADE).toLocaleString('pt-BR'));
+            if (key === 'PONTOS_UP')  return ap.PONTOS_UP != null
+                ? esc(Number(ap.PONTOS_UP).toLocaleString('pt-BR', {minimumFractionDigits:4, maximumFractionDigits:4}))
+                : '';
             return esc(ap[key]);
         }).join(';')),
     ];

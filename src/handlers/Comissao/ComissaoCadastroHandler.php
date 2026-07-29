@@ -837,11 +837,32 @@ class ComissaoCadastroHandler
     // ==================== VÍNCULO DE APONTAMENTOS ====================
 
     /**
-     * Listar apontamentos sem recurso
+     * Listar apontamentos sem recurso, enriquecidos com PONTOS_UP da pontuação vigente
      */
     public static function listarApontamentosSemRecurso(array $filtros): array
     {
-        return VinculoApontamento::listarApontamentosSemRecurso($filtros);
+        $apontamentos = VinculoApontamento::listarApontamentosSemRecurso($filtros);
+        if (empty($apontamentos)) return $apontamentos;
+
+        // Carrega mapa de pontuações vigentes (ID_MASCARA e COD_ITEM) em uma única query
+        $emprId = !empty($filtros['id_empr']) ? (int)$filtros['id_empr'] : null;
+        $mapa   = PontuacaoProduto::mapaVigentes($emprId);
+
+        foreach ($apontamentos as &$apt) {
+            $idMascara = !empty($apt['ID_MASCARA']) ? 'M:' . (int)$apt['ID_MASCARA'] : null;
+            $codItem   = !empty($apt['COD_ITEM'])   ? 'C:' . $apt['COD_ITEM']        : null;
+
+            if ($idMascara && isset($mapa[$idMascara])) {
+                $apt['PONTOS_UP'] = $mapa[$idMascara];
+            } elseif ($codItem && isset($mapa[$codItem])) {
+                $apt['PONTOS_UP'] = $mapa[$codItem];
+            } else {
+                $apt['PONTOS_UP'] = null;
+            }
+        }
+        unset($apt);
+
+        return $apontamentos;
     }
 
     /**

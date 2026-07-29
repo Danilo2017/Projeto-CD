@@ -881,10 +881,93 @@ function baixarModeloCSV() {
     const cabecalho = 'COD_ITEM;ID_MASCARA;COD_CENTRO;PONTOS_UP;DT_VIGENCIA_INI;DT_VIGENCIA_FIM';
     const exemplo = '700027;56062;11.012.1;1;01/01/2026;30/12/2099';
     const conteudo = '\uFEFF' + cabecalho + '\n' + exemplo + '\n';
-    
+
     const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'modelo_pontuacao.csv';
     link.click();
+}
+
+// ==================== RELAT\u00D3RIO DE ITENS ====================
+
+function gerarRelatorioItens() {
+    const codItem   = (document.getElementById('filtroRelCodItem')?.value   || '').trim();
+    const idMascara = (document.getElementById('filtroRelIdMascara')?.value || '').trim();
+
+    const status = document.getElementById('relatorioItensStatus');
+    const btn    = document.getElementById('btnGerarRelatorio');
+
+    status.style.display = 'block';
+    status.innerHTML = '<div class="alert alert-info py-2 mb-0"><i class="bi bi-hourglass-split"></i> Buscando dados, aguarde...</div>';
+    btn.disabled = true;
+
+    const params = new URLSearchParams();
+    if (codItem)   params.append('cod_item',   codItem);
+    if (idMascara) params.append('id_mascara', idMascara);
+
+    const url = '/comissao-api-relatorio-itens' + (params.toString() ? '?' + params.toString() : '');
+
+    fetch(url)
+        .then(r => r.json())
+        .then(resp => {
+            if (!resp.success) {
+                status.innerHTML = '<div class="alert alert-danger py-2 mb-0">' + (resp.error || 'Erro ao buscar dados') + '</div>';
+                return;
+            }
+            if (!resp.data || resp.data.length === 0) {
+                status.innerHTML = '<div class="alert alert-warning py-2 mb-0">Nenhum item encontrado com os filtros informados.</div>';
+                return;
+            }
+            status.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="bi bi-check-circle"></i> ' + resp.total + ' registros encontrados. Gerando Excel...</div>';
+            exportarRelatorioItensExcel(resp.data);
+        })
+        .catch(() => {
+            status.innerHTML = '<div class="alert alert-danger py-2 mb-0">Erro de comunica\u00E7\u00E3o com o servidor.</div>';
+        })
+        .finally(() => {
+            btn.disabled = false;
+        });
+}
+
+function exportarRelatorioItensExcel(dados) {
+    if (typeof XLSX === 'undefined') {
+        alert('Biblioteca de exporta\u00E7\u00E3o Excel n\u00E3o carregou. Recarregue a p\u00E1gina.');
+        return;
+    }
+
+    const colunas = [
+        { key: 'EMPR_ID',       label: 'Empresa' },
+        { key: 'COD_ITEM',      label: 'C\u00F3digo Item' },
+        { key: 'DESC_TECNICA',  label: 'Descri\u00E7\u00E3o' },
+        { key: 'MASCARA',       label: 'M\u00E1scara' },
+        { key: 'TMASC_ITEM_ID', label: 'ID M\u00E1scara' },
+        { key: 'UEP',           label: 'UEP' },
+        { key: 'TANQUE',        label: 'Tanque' },
+        { key: 'COD_TANQUE',    label: 'C\u00F3d. Tanque' },
+    ];
+
+    const rows = dados.map(d => {
+        const row = {};
+        colunas.forEach(c => {
+            let val = d[c.key] ?? '';
+            if (c.key === 'UEP' && val !== '') {
+                const num = parseFloat(val);
+                if (!isNaN(num)) val = num;
+            }
+            row[c.label] = val;
+        });
+        return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [
+        {wch:8},{wch:14},{wch:45},{wch:25},{wch:12},{wch:12},{wch:30},{wch:14}
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Itens');
+
+    const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    XLSX.writeFile(wb, 'relatorio_itens_' + stamp + '.xlsx');
 }

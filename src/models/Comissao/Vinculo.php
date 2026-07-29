@@ -179,28 +179,35 @@ class Vinculo
      */
     public static function atualizar($id, $idCentroTrab, $idRecurso = null, $tipoVinculo = 'N', $idEmpCc = null)
     {
-        $params = [
-            'id' => intval($id),
-            'id_centro_trab' => intval($idCentroTrab),
-            'id_recurso' => $idRecurso !== null ? intval($idRecurso) : 'NULL',
-            'tipo_vinculo' => "'" . ($tipoVinculo === 'A' ? 'A' : 'N') . "'",
-            'id_emp_cc' => $idEmpCc !== null && $idEmpCc !== '' ? intval($idEmpCc) : 'NULL',
-        ];
+        $tvVal     = $tipoVinculo === 'A' ? 'A' : 'N';
+        $idRecFrag = $idRecurso !== null ? intval($idRecurso) : 'NULL';
+        $idCcFrag  = ($idEmpCc !== null && $idEmpCc !== '') ? intval($idEmpCc) : 'NULL';
 
-        $result = Database::switchParams('focco', $params, 'comissao.vinculo.atualizarComCc', true, true);
-        if (empty($result['error'])) {
-            self::$colunaCcCache = true;
-            return true;
+        // Tenta com CC; fallback sem CC se coluna não existir
+        $temCc = self::verificarColunaCc();
+        if ($temCc) {
+            $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC
+                    SET ID_CENTRO_TRAB = :id_centro_trab,
+                        ID_RECURSO     = $idRecFrag,
+                        TIPO_VINCULO   = :tipo_vinculo,
+                        ID_EMP_CC      = $idCcFrag
+                    WHERE ID = :id";
+        } else {
+            $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC
+                    SET ID_CENTRO_TRAB = :id_centro_trab,
+                        ID_RECURSO     = $idRecFrag,
+                        TIPO_VINCULO   = :tipo_vinculo
+                    WHERE ID = :id";
         }
-        if (self::erroColunaInvalida($result['error'])) {
-            self::$colunaCcCache = false;
-            $resultFallback = Database::switchParams('focco', $params, 'comissao.vinculo.atualizarSemCc', true, true);
-            if (empty($resultFallback['error'])) {
-                return true;
-            }
-            throw new \Exception('Erro Oracle (sem ID_EMP_CC): ' . $resultFallback['error']);
-        }
-        throw new \Exception('Erro Oracle: ' . $result['error']);
+
+        $result = Database::switchParams('focco', [
+            'id'             => intval($id),
+            'id_centro_trab' => intval($idCentroTrab),
+            'tipo_vinculo'   => $tvVal,
+        ], null, true, true, null, $sql);
+
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return true;
     }
 
     /**
@@ -219,13 +226,16 @@ class Vinculo
      */
     public static function alterarStatus($id, $ativo)
     {
-        $params = [
-            'id'   => intval($id),
-            'ativo' => $ativo === 'S' ? 'S' : 'N',
-        ];
+        $atvVal = $ativo === 'S' ? 'S' : 'N';
 
-        $result = Database::switchParams('focco', $params, 'comissao.vinculo.alterarStatus', true);
-        return !$result['error'];
+        $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET ATIVO = :ativo WHERE ID = :id";
+        $result = Database::switchParams('focco', [
+            'id'   => intval($id),
+            'ativo' => $atvVal,
+        ], null, true, true, null, $sql);
+
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return true;
     }
 
     /**

@@ -55,6 +55,9 @@ if (!$acessoComissao) {
                 <button type="button" class="btn btn-outline-success btn-sm ms-2" onclick="exportarExcel()">
                     <i class="bi bi-file-earmark-excel"></i> Exportar Excel
                 </button>
+                <button type="button" class="btn btn-outline-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#modalRelatorioItens">
+                    <i class="bi bi-table"></i> Relatório Itens
+                </button>
             </div>
         </div>
     </div>
@@ -192,6 +195,39 @@ if (!$acessoComissao) {
         </div>
     </div>
 </div>
+
+    <!-- Modal Relatório de Itens -->
+    <div class="modal fade" id="modalRelatorioItens" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-table"></i> Relatório de Itens Fabricados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Filtre por código(s) do item e/ou ID da máscara. Deixe em branco para gerar todos os itens da empresa.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Código do Item <small class="text-muted">(separe múltiplos por vírgula)</small></label>
+                        <input type="text" id="filtroRelCodItem" class="form-control" placeholder="Ex.: 16342, 700027, 800100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ID Máscara</label>
+                        <input type="number" id="filtroRelIdMascara" class="form-control" placeholder="Ex.: 42" min="1">
+                    </div>
+                    <div id="relatorioItensStatus" class="mt-2" style="display:none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnGerarRelatorio" onclick="gerarRelatorioItens()">
+                        <i class="bi bi-file-earmark-excel"></i> Gerar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- SheetJS para exportação Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <?= $render('footer', [
     'customJS' => ['src/js/comissao-pontuacao.js']

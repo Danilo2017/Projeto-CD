@@ -1041,6 +1041,28 @@ class ComissaoCadastroController extends ctrl
         }
     }
 
+    /**
+     * Relatório de itens fabricados com UEP (API)
+     */
+    public function relatorioItens()
+    {
+        try {
+            $emprId    = (int)($_SESSION['empresa']['id'] ?? 15);
+            $codItens  = !empty($_GET['cod_item'])   ? trim($_GET['cod_item'])   : null;
+            $idMascara = !empty($_GET['id_mascara'])  ? (int)$_GET['id_mascara'] : null;
+
+            $dados = \src\models\Comissao\PontuacaoProduto::relatorioItens($emprId, $codItens, $idMascara);
+
+            self::response([
+                'success' => true,
+                'data'    => $dados,
+                'total'   => count($dados)
+            ], 200);
+        } catch (\Throwable $e) {
+            self::response(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
     // ==================== FALTAS DE FUNCIONÁRIOS ====================
 
     /**
