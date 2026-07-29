@@ -36,34 +36,51 @@ class ApontamentoProducao
             return;
         }
 
-        $result = Database::switchParams('focco', [], 'comissao.apontamento.cachePontuacao', true);
+        $hoje = date('Y-m-d');
+        $sql  = "SELECT PP.ID_PONTUACAO,
+                        PP.ID_EMPR,
+                        PP.ITEM_ID,
+                        PP.ID_ITEMPR,
+                        PP.ID_MASCARA,
+                        PP.ID_CENTRO_TRAB,
+                        PP.PONTOS_UP
+                   FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
+                  WHERE PP.ATIVO = 'S'
+                    AND PP.DT_VIGENCIA_INI <= TO_DATE(:hoje,  'YYYY-MM-DD')
+                    AND (PP.DT_VIGENCIA_FIM IS NULL
+                         OR PP.DT_VIGENCIA_FIM >= TO_DATE(:hoje2, 'YYYY-MM-DD'))";
+
+        $result     = Database::switchParams('focco', ['hoje' => $hoje, 'hoje2' => $hoje], null, true, true, null, $sql);
         $pontuacoes = $result['retorno'] ?? [];
-        
-        // Indexar por chaves para acesso O(1), incluindo ID_EMPR
+
         self::$cachePontuacao = [
-            'por_item' => [],
-            'por_itempr' => [],
-            'por_mascara' => []
+            'por_item'    => [],
+            'por_itempr'  => [],
+            'por_mascara' => [],
         ];
-        
+
         foreach ($pontuacoes as $p) {
-            $emprId = $p['ID_EMPR'] ?? '0';
+            $emprId   = $p['ID_EMPR']        ?? '0';
             $centroId = $p['ID_CENTRO_TRAB'] ?? '0';
-            
-            if ($p['ITEM_ID']) {
-                // Chave completa: item + centro + empresa
+
+            // Índice por ITEM_ID (sempre populado, independente de máscara)
+            if (!empty($p['ITEM_ID'])) {
                 $key = $p['ITEM_ID'] . '_' . $centroId . '_' . $emprId;
                 if (!isset(self::$cachePontuacao['por_item'][$key])) {
                     self::$cachePontuacao['por_item'][$key] = $p;
                 }
             }
-            if ($p['ID_ITEMPR']) {
+
+            // Índice por ID_ITEMPR
+            if (!empty($p['ID_ITEMPR'])) {
                 $key = $p['ID_ITEMPR'] . '_' . $emprId;
                 if (!isset(self::$cachePontuacao['por_itempr'][$key])) {
                     self::$cachePontuacao['por_itempr'][$key] = $p;
                 }
             }
-            if ($p['ID_MASCARA']) {
+
+            // Índice por ID_MASCARA (só quando máscara existe)
+            if (!empty($p['ID_MASCARA'])) {
                 $key = $p['ID_MASCARA'] . '_' . $centroId . '_' . $emprId;
                 if (!isset(self::$cachePontuacao['por_mascara'][$key])) {
                     self::$cachePontuacao['por_mascara'][$key] = $p;
