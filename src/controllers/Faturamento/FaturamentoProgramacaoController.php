@@ -4,6 +4,8 @@ namespace src\controllers\Faturamento;
 
 use \core\Controller as ctrl;
 use src\handlers\Faturamento\FaturamentoProgramacaoHandler;
+use src\utils\DashboardCache;
+use src\utils\GetSqlFocco;
 
 class FaturamentoProgramacaoController extends ctrl
 {
@@ -52,5 +54,17 @@ class FaturamentoProgramacaoController extends ctrl
                 'error'   => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function flushCache()
+    {
+        GetSqlFocco::invalidar('faturamento.programacao.listar');
+        GetSqlFocco::invalidar('faturamento.programacao.tanques');
+        GetSqlFocco::invalidar('faturamento.programacao.dias-uteis');
+        DashboardCache::forget('programacao.listar');
+        DashboardCache::forget('programacao.ocupacao');
+        $mes = (new \DateTime())->format('Y-m');
+        DashboardCache::forget('programacao.resumo_dashboard_' . $mes);
+        self::response(['success' => true, 'message' => 'Cache limpo com sucesso.'], 200);
     }
 }

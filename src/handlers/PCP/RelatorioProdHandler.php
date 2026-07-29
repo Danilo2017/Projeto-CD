@@ -336,6 +336,22 @@ class RelatorioProdHandler
         });
     }
 
+    public static function buscarPcpMolas(int $numLote): array
+    {
+        return self::cached("pcp.pcpMolas.{$numLote}", function () use ($numLote) {
+            $rows = RelatorioProd::buscarPcpMolas($numLote);
+            return ['success' => true, 'rows' => $rows];
+        });
+    }
+
+    public static function buscarPcpCordao(int $numLote): array
+    {
+        return self::cached("pcp.pcpCordao.{$numLote}", function () use ($numLote) {
+            $rows = RelatorioProd::buscarPcpCordao($numLote);
+            return ['success' => true, 'rows' => $rows];
+        });
+    }
+
     public static function buscarResumoDeLote(int $emprId, int $numLote): array
     {
         return self::cached("pcp.resumoDeLote.v1.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {

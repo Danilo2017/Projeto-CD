@@ -132,7 +132,12 @@ if (!$acesso) {
         <div class="card shadow-sm">
             <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-check2-circle me-1"></i> Resultado da Transferência</span>
-                <span id="resumoResultado" class="fw-normal text-muted small"></span>
+                <div class="d-flex align-items-center gap-3">
+                    <span id="resumoResultado" class="fw-normal text-muted small"></span>
+                    <button id="btnExcelResultado" class="btn btn-sm btn-success" onclick="downloadExcelResultado()">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                    </button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

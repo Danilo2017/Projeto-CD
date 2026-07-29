@@ -10,6 +10,7 @@
 
     /* ── Cache de elementos DOM ───────────────────────── */
     let elTbody = null, elTotalCargas = null, elTotalPend = null, elTotalFat = null;
+    let elTotalComVeiculo = null, elTotalEncHoje = null;
 
     /* ── Helpers ─────────────────────────────────────── */
     const _fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -146,19 +147,40 @@
         const tbody = elTbody || document.getElementById('tabelaBody');
         if (!rows.length) {
             tbody.innerHTML = '<tr><td colspan="16" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
-            (elTotalCargas || document.getElementById('totalCargas')).textContent = '0';
-            (elTotalPend   || document.getElementById('totalPendente')).textContent = '-';
-            (elTotalFat    || document.getElementById('totalFaturado')).textContent = '-';
+            (elTotalCargas     || document.getElementById('totalCargas')).textContent = '0';
+            (elTotalPend       || document.getElementById('totalPendente')).textContent = '-';
+            (elTotalFat        || document.getElementById('totalFaturado')).textContent = '-';
+            (elTotalComVeiculo || document.getElementById('totalComVeiculo')).textContent = '0';
+            (elTotalEncHoje    || document.getElementById('totalEncerradasHoje')).textContent = '0';
             return;
         }
         (elTotalCargas || document.getElementById('totalCargas')).textContent = rows.length;
 
-        const [sumPend, sumFat] = rows.reduce(
-            ([p, f], r) => [p + (parseFloat(r.VALOR_PENDENTE) || 0), f + (parseFloat(r.VALOR_FATURADO) || 0)],
-            [0, 0]
+        const _dtFim = document.getElementById('inputDataFim')?.value;
+        let _hoje;
+        if (_dtFim) {
+            const [_y, _m, _d] = _dtFim.split('-');
+            _hoje = `${_d}/${_m}/${_y}`;
+        } else {
+            const _hj = new Date();
+            _hoje = String(_hj.getDate()).padStart(2,'0') + '/'
+                + String(_hj.getMonth()+1).padStart(2,'0') + '/'
+                + _hj.getFullYear();
+        }
+
+        const [sumPend, sumFat, cntVeiculo, cntEncHoje] = rows.reduce(
+            ([p, f, v, e], r) => [
+                p + (parseFloat(r.VALOR_PENDENTE) || 0),
+                f + (parseFloat(r.VALOR_FATURADO)  || 0),
+                v + (r.MOTORISTA && r.MOTORISTA.trim() && r.DT_GERACAO === _hoje ? 1 : 0),
+                e + (r.STATUS_WMS === 'Encerrada'      && r.DT_GERACAO === _hoje ? 1 : 0),
+            ],
+            [0, 0, 0, 0]
         );
-        (elTotalPend || document.getElementById('totalPendente')).textContent = _fmtBRL.format(sumPend);
-        (elTotalFat  || document.getElementById('totalFaturado')).textContent = _fmtBRL.format(sumFat);
+        (elTotalPend       || document.getElementById('totalPendente')).textContent = _fmtBRL.format(sumPend);
+        (elTotalFat        || document.getElementById('totalFaturado')).textContent = _fmtBRL.format(sumFat);
+        (elTotalComVeiculo || document.getElementById('totalComVeiculo')).textContent = cntVeiculo;
+        (elTotalEncHoje    || document.getElementById('totalEncerradasHoje')).textContent = cntEncHoje;
 
         tbody.innerHTML = rows.map(r => {
             const isFaturada  = r.POS_PLC === 'FT' || r.POS_PLC === 'FP';
@@ -729,10 +751,12 @@
     /* ── Init ─────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
         // Cache dos elementos DOM usados em renderTabela
-        elTbody      = document.getElementById('tabelaBody');
-        elTotalCargas = document.getElementById('totalCargas');
-        elTotalPend  = document.getElementById('totalPendente');
-        elTotalFat   = document.getElementById('totalFaturado');
+        elTbody           = document.getElementById('tabelaBody');
+        elTotalCargas     = document.getElementById('totalCargas');
+        elTotalPend       = document.getElementById('totalPendente');
+        elTotalFat        = document.getElementById('totalFaturado');
+        elTotalComVeiculo = document.getElementById('totalComVeiculo');
+        elTotalEncHoje    = document.getElementById('totalEncerradasHoje');
 
         // Data padrão: hoje no fuso local (toISOString usa UTC e pode dar dia errado)
         const _h = new Date();

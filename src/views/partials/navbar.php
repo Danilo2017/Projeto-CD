@@ -60,6 +60,8 @@ $pcpSub = match(true) {
     $pActive === 'pcp-relatorio-conjugado'          => 'relatorio-conjugado',
     $pActive === 'pcp-relatorio-trave-peze'         => 'relatorio-trave-peze',
     $pActive === 'pcp-relatorio-molas-bordas'       => 'relatorio-molas-bordas',
+    $pActive === 'pcp-relatorio-pcp-molas'          => 'relatorio-pcp-molas',
+    $pActive === 'pcp-relatorio-pcp-cordao'         => 'relatorio-pcp-cordao',
     $pActive === 'pcp-relatorio-caixa-box'               => 'relatorio-caixa-box',
     $pActive === 'pcp-relatorio-robotec-abastecedor'     => 'relatorio-robotec-abastecedor',
     $pActive === 'pcp-relatorio-vertical-espuma'         => 'relatorio-vertical-espuma',
@@ -83,6 +85,8 @@ $pcpToSubGrp = [
     'relatorio-mesa-de-corte'       => ['costura'],
     'relatorio-rolo-bordado'        => ['costura', 'bordadeira'],
     'relatorio-molas-bordas'        => ['caixote'],
+    'relatorio-pcp-molas'           => ['pcp-molas'],
+    'relatorio-pcp-cordao'          => ['pcp-molas'],
     'relatorio-caixa-box'           => ['caixa-box'],
     'relatorio-robotec-abastecedor' => ['robotec'],
 ];
@@ -93,6 +97,7 @@ $sgCostura   = in_array('costura',   $pcpSGs);
 $sgBordadeira= in_array('bordadeira',$pcpSGs);
 $sgLaminacao = in_array('laminacao', $pcpSGs);
 $sgCaixaBox  = in_array('caixa-box', $pcpSGs);
+$sgPcpMolas  = in_array('pcp-molas', $pcpSGs);
 
 $fatSub = match(true) {
     in_array($pActive, ['faturamento-dashboard', 'faturamento']) => 'dashboard',
@@ -106,6 +111,7 @@ $pedidosSub = match(true) {
 };
 $processoSub = match(true) {
     $pActive === 'processo-troca-almox'           => 'troca-almox',
+    $pActive === 'processo-troca-almox-carga'     => 'troca-almox-carga',
     $pActive === 'processo-troca-tipo-nf'         => 'troca-tipo-nf',
     $pActive === 'processo-transferencia-estoque' => 'transferencia-estoque',
     default => ''
@@ -251,6 +257,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>processo-troca-almox"
                        class="sidebar-sublink <?= $processoSub === 'troca-almox' ? 'active' : '' ?>">
                         Troca Almox.
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>processo-troca-almox-carga"
+                       class="sidebar-sublink <?= $processoSub === 'troca-almox-carga' ? 'active' : '' ?>">
+                        Troca Almox. Carga
                     </a>
                 </li>
                 <li>
@@ -410,6 +422,22 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>pcp-relatorio-horizontal-espuma"
                                class="pcp-sub-sublink <?= $pcpSub === 'relatorio-horizontal-espuma' ? 'active' : '' ?>">
                             Seq. Horizontal Espuma</a></li>
+                    </ul>
+                </li>
+
+                <!-- ── PCP MOLAS ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $sgPcpMolas ? 'active open' : '' ?>">
+                        <span>PCP Molas</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $sgPcpMolas ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>pcp-relatorio-pcp-molas"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-pcp-molas' ? 'active' : '' ?>">
+                            Qtde de Molinhas</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-pcp-cordao"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-pcp-cordao' ? 'active' : '' ?>">
+                            Qtde de Cordão de Molas</a></li>
                     </ul>
                 </li>
 

@@ -44,10 +44,16 @@ if (!$acessoCarga) {
                 <strong id="totalCargas">0</strong> cargas
             </span>
             <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 fs-6">
-                Pendente: <strong id="totalPendente">-</strong>
+                PENDENTE: <strong id="totalPendente">-</strong>
             </span>
-            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fs-6">
-                Faturado: <strong id="totalFaturado">-</strong>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 fs-6">
+                FATURADO: <strong id="totalFaturado">-</strong>
+            </span>
+            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 fs-6" title="Cargas com veículo alocado">
+                <i class="bi bi-truck me-1"></i>C/ VEÍCULO: <strong id="totalComVeiculo">0</strong>
+            </span>
+            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2 fs-6" title="Cargas encerradas no dia">
+                <i class="bi bi-check2-circle me-1"></i>ENCERRADAS HOJE: <strong id="totalEncerradasHoje">0</strong>
             </span>
             <button class="btn btn-sm btn-success" onclick="downloadExcel()" title="Exportar para Excel">
                 <i class="bi bi-file-earmark-excel"></i> Excel

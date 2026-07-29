@@ -10,7 +10,8 @@
     const txtNumeros       = document.getElementById('txtNumeros');
     const btnBuscar        = document.getElementById('btnBuscar');
 
-    let pedidoMap = {}; // id → num_pedido, montado na busca e usado no resultado
+    let pedidoMap      = {}; // id → num_pedido, montado na busca e usado no resultado
+    let ultimosResultados = []; // guarda para export Excel
     const secaoPedidos     = document.getElementById('secaoPedidos');
     const tabelaPedidos    = document.getElementById('tabelaPedidos');
     const totalPedidos     = document.getElementById('totalPedidos');
@@ -171,6 +172,7 @@
                 if (data.error) { toast(data.error); return; }
 
                 const resultados = data.resultados || [];
+                ultimosResultados = resultados;
                 resumoResultado.textContent = data.sucessos + ' ok / ' + data.erros + ' erro(s)';
 
                 resultados.forEach(function (res) {
@@ -201,6 +203,37 @@
             })
             .finally(function () { setLoading(btnTransferir, false); });
     });
+
+    // ── Export Excel ───────────────────────────────────────────
+    window.downloadExcelResultado = function () {
+        if (!ultimosResultados.length) { toast('Nenhum resultado para exportar.', 'warning'); return; }
+
+        const linhas = [
+            ['PEDIDO ORIGINAL', 'STATUS', 'PEDIDO DESTINO', 'DETALHE'],
+            ...ultimosResultados.map(function (res) {
+                return [
+                    pedidoMap[res.pdv_id_orig] || res.pdv_id_orig,
+                    res.sucesso ? 'Sucesso' : 'Erro',
+                    res.num_pedido_dest || '',
+                    res.erro || '',
+                ];
+            })
+        ];
+
+        const csv = linhas.map(function (row) {
+            return row.map(function (v) {
+                const s = String(v === null || v === undefined ? '' : v).replace(/"/g, '""');
+                return '"' + s + '"';
+            }).join(';');
+        }).join('\r\n');
+
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'transferencia_pedidos.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    };
 
     // ── Escape HTML básico ─────────────────────────────────────
     function htmlEscape(str) {

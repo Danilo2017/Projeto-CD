@@ -198,6 +198,7 @@ $router->get('/faturamento-programacao', 'Faturamento\\FaturamentoProgramacaoCon
 $router->get('/faturamento-api-programacao', 'Faturamento\\FaturamentoProgramacaoController@listar', true);
 $router->get('/faturamento-api-programacao-resumo', 'Faturamento\\FaturamentoProgramacaoController@resumoDashboard', true);
 $router->get('/faturamento-api-ocupacao', 'Faturamento\\FaturamentoProgramacaoController@ocupacao', true);
+$router->get('/faturamento-api-programacao-flush', 'Faturamento\\FaturamentoProgramacaoController@flushCache', true);
 
 // ========== Transferência de Pedidos ==========
 $router->get('/pedidos-transferencia', 'Faturamento\\TransferenciaPedidoController@index', true);
@@ -220,6 +221,10 @@ $router->get('/processo-troca-almox',            'Processo\\TrocaAlmoxarifadoCon
 $router->get('/processo-api-almoxarifados',      'Processo\\TrocaAlmoxarifadoController@listarAlmoxarifados', true);
 $router->post('/processo-api-troca-almox-ordens','Processo\\TrocaAlmoxarifadoController@buscarOrdens',        true);
 $router->post('/processo-api-troca-almox',       'Processo\\TrocaAlmoxarifadoController@executar',            true);
+
+$router->get('/processo-troca-almox-carga',              'Processo\\TrocaAlmoxCargaController@index',            true);
+$router->post('/processo-api-troca-almox-carga-buscar', 'Processo\\TrocaAlmoxCargaController@buscarItensCarga', true);
+$router->post('/processo-api-troca-almox-carga',        'Processo\\TrocaAlmoxCargaController@executar',         true);
 
 $router->get('/processo-troca-tipo-nf',           'Processo\\TrocaTipoNfEntradaController@index',       true);
 $router->get('/processo-api-tipos-nf-ent',        'Processo\\TrocaTipoNfEntradaController@listarTipos', true);
@@ -280,6 +285,10 @@ $router->get('/pcp-relatorio-horizontal-espuma',            'PCP\\RelatorioProdC
 $router->post('/pcp-api-relatorio-horizontal-espuma',       'PCP\\RelatorioProdController@buscarHorizontalEspuma',     true);
 $router->get('/pcp-resumo-lote',                            'PCP\\RelatorioProdController@indexResumoDeLote',          true);
 $router->post('/pcp-api-resumo-lote',                       'PCP\\RelatorioProdController@buscarResumoDeLote',         true);
+$router->get('/pcp-relatorio-pcp-molas',                    'PCP\\RelatorioProdController@indexPcpMolas',              true);
+$router->post('/pcp-api-relatorio-pcp-molas',               'PCP\\RelatorioProdController@buscarPcpMolas',             true);
+$router->get('/pcp-relatorio-pcp-cordao',                   'PCP\\RelatorioProdController@indexPcpCordao',             true);
+$router->post('/pcp-api-relatorio-pcp-cordao',              'PCP\\RelatorioProdController@buscarPcpCordao',            true);
 
 // TEMPORÁRIO — remover após inserção do SQL verticalEspuma
 $router->get('/tmp-insert-vertical-espuma', 'AdminSqlsController@tmpInsertVerticalEspuma', true);
