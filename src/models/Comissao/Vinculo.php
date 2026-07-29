@@ -220,8 +220,8 @@ class Vinculo
     public static function alterarStatus($id, $ativo)
     {
         $params = [
-            'id' => intval($id),
-            'ativo' => "'" . ($ativo ? 'S' : 'N') . "'",
+            'id'   => intval($id),
+            'ativo' => $ativo === 'S' ? 'S' : 'N',
         ];
 
         $result = Database::switchParams('focco', $params, 'comissao.vinculo.alterarStatus', true);

@@ -14,10 +14,41 @@ $(document).ready(function() {
     carregarCentros();
     carregarCentrosCusto();
     carregarVinculos();
-    
+
     // Inicializar Select2 do modal quando abrir
     $('#modalVinculo').on('shown.bs.modal', function() {
         inicializarSelect2Modal();
+    });
+
+    // Event delegation — funciona mesmo após DataTables re-renderizar
+    $(document).on('click', '.btn-editar-vinculo', function() {
+        const b = $(this);
+        editarVinculo(
+            b.data('id'),
+            b.data('func'),
+            b.data('rec') || null,
+            b.data('centro'),
+            b.data('tipo'),
+            b.data('cc') || null
+        );
+    });
+
+    $(document).on('click', '.btn-excluir-vinculo', function() {
+        excluirVinculo($(this).data('id'));
+    });
+
+    $(document).on('click', '.btn-toggle-vinculo', function() {
+        toggleVinculo($(this).data('id'), $(this).data('ativo'));
+    });
+
+    $(document).on('click', '.btn-apoio-vinculo', function() {
+        const b = $(this);
+        abrirDiasApoio(
+            b.data('id'),
+            decodeURIComponent(b.data('func-nome')),
+            decodeURIComponent(b.data('centro-nome')),
+            b.data('centro-id')
+        );
     });
 });
 
@@ -337,18 +368,33 @@ function carregarVinculos() {
                     ? '<span class="badge bg-success">Ativo</span>'
                     : '<span class="badge bg-danger">Inativo</span>';
                 let acoes = '<div class="d-flex gap-1 flex-wrap">';
-                acoes += '<button class="btn btn-sm btn-primary" onclick="editarVinculo(' + v.ID_VINCULO + ', ' + v.ID_FUNCIONARIO + ', ' + (v.ID_RECURSO || 'null') + ', ' + v.ID_CENTRO_TRAB + ', \'' + tipoVinculo + '\', ' + (v.ID_EMP_CC || 'null') + ')" title="Editar"><i class="bi bi-pencil"></i></button>';
-                acoes += '<button class="btn btn-sm btn-danger" onclick="excluirVinculo(' + v.ID_VINCULO + ')" title="Excluir"><i class="bi bi-trash"></i></button>';
+                acoes += '<button class="btn btn-sm btn-primary btn-editar-vinculo"'
+                    + ' data-id="' + v.ID_VINCULO + '"'
+                    + ' data-func="' + v.ID_FUNCIONARIO + '"'
+                    + ' data-rec="' + (v.ID_RECURSO || '') + '"'
+                    + ' data-centro="' + v.ID_CENTRO_TRAB + '"'
+                    + ' data-tipo="' + tipoVinculo + '"'
+                    + ' data-cc="' + (v.ID_EMP_CC || '') + '"'
+                    + ' title="Editar"><i class="bi bi-pencil"></i></button>';
+                acoes += '<button class="btn btn-sm btn-danger btn-excluir-vinculo"'
+                    + ' data-id="' + v.ID_VINCULO + '"'
+                    + ' title="Excluir"><i class="bi bi-trash"></i></button>';
                 if (v.ATIVO === 'S') {
-                    acoes += '<button class="btn btn-sm btn-warning" onclick="toggleVinculo(' + v.ID_VINCULO + ', \'N\')" title="Inativar"><i class="bi bi-x-circle"></i></button>';
+                    acoes += '<button class="btn btn-sm btn-warning btn-toggle-vinculo"'
+                        + ' data-id="' + v.ID_VINCULO + '" data-ativo="N"'
+                        + ' title="Inativar"><i class="bi bi-x-circle"></i></button>';
                 } else {
-                    acoes += '<button class="btn btn-sm btn-success" onclick="toggleVinculo(' + v.ID_VINCULO + ', \'S\')" title="Ativar"><i class="bi bi-check-circle"></i></button>';
+                    acoes += '<button class="btn btn-sm btn-success btn-toggle-vinculo"'
+                        + ' data-id="' + v.ID_VINCULO + '" data-ativo="S"'
+                        + ' title="Ativar"><i class="bi bi-check-circle"></i></button>';
                 }
-                // Botão de dias de apoio apenas para vínculos tipo Normal
                 if (tipoVinculo === 'N') {
-                    let funcNome = funcLabel.replace(/'/g, "\\'");
-                    let centroNome = centroLabel.replace(/'/g, "\\'");
-                    acoes += '<button class="btn btn-sm btn-info" onclick="abrirDiasApoio(' + v.ID_VINCULO + ', \'' + funcNome + '\', \'' + centroNome + '\', ' + v.ID_CENTRO_TRAB + ')" title="Configurar Dias de Apoio"><i class="bi bi-calendar-event"></i></button>';
+                    acoes += '<button class="btn btn-sm btn-info btn-apoio-vinculo"'
+                        + ' data-id="' + v.ID_VINCULO + '"'
+                        + ' data-func-nome="' + encodeURIComponent(funcLabel) + '"'
+                        + ' data-centro-nome="' + encodeURIComponent(centroLabel) + '"'
+                        + ' data-centro-id="' + v.ID_CENTRO_TRAB + '"'
+                        + ' title="Configurar Dias de Apoio"><i class="bi bi-calendar-event"></i></button>';
                 }
                 acoes += '</div>';
                 html += '<tr>';
