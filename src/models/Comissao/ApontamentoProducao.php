@@ -36,28 +36,35 @@ class ApontamentoProducao
             return;
         }
 
-        $hoje = date('Y-m-d');
-        $sql  = "SELECT PP.ID_PONTUACAO,
-                        PP.ID_EMPR,
-                        PP.ITEM_ID,
-                        PP.ID_ITEMPR,
-                        PP.ID_MASCARA,
-                        PP.ID_CENTRO_TRAB,
-                        PP.PONTOS_UP
-                   FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
-                  WHERE PP.ATIVO = 'S'
-                    AND PP.DT_VIGENCIA_INI <= TO_DATE(:hoje,  'YYYY-MM-DD')
-                    AND (PP.DT_VIGENCIA_FIM IS NULL
-                         OR PP.DT_VIGENCIA_FIM >= TO_DATE(:hoje2, 'YYYY-MM-DD'))";
-
-        $result     = Database::switchParams('focco', ['hoje' => $hoje, 'hoje2' => $hoje], null, true, true, null, $sql);
-        $pontuacoes = $result['retorno'] ?? [];
-
+        // Inicializa antes da query para que erros não deixem cache null
         self::$cachePontuacao = [
             'por_item'    => [],
             'por_itempr'  => [],
             'por_mascara' => [],
         ];
+
+        try {
+            $hoje = date('Y-m-d');
+            $sql  = "SELECT PP.ID_PONTUACAO,
+                            PP.ID_EMPR,
+                            PP.ITEM_ID,
+                            PP.ID_ITEMPR,
+                            PP.ID_MASCARA,
+                            PP.ID_CENTRO_TRAB,
+                            PP.PONTOS_UP
+                       FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
+                      WHERE PP.ATIVO = 'S'
+                        AND PP.DT_VIGENCIA_INI <= TO_DATE(:hoje,  'YYYY-MM-DD')
+                        AND (PP.DT_VIGENCIA_FIM IS NULL
+                             OR PP.DT_VIGENCIA_FIM >= TO_DATE(:hoje2, 'YYYY-MM-DD'))";
+
+            $result     = Database::switchParams('focco', ['hoje' => $hoje, 'hoje2' => $hoje], null, true, true, null, $sql);
+            $pontuacoes = $result['retorno'] ?? [];
+        } catch (\Throwable $e) {
+            // Fallback: tenta via chave Oracle
+            $result     = Database::switchParams('focco', [], 'comissao.apontamento.cachePontuacao', true);
+            $pontuacoes = $result['retorno'] ?? [];
+        }
 
         foreach ($pontuacoes as $p) {
             $emprId   = $p['ID_EMPR']        ?? '0';
