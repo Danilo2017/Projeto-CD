@@ -79,51 +79,12 @@ class ApontamentoProducao
     private static function buscarPontuacaoCache(int $itemId, ?int $itemprId = null, ?int $mascaraId = null, ?int $centroTrabId = null, ?int $emprId = null): ?array
     {
         self::carregarCachePontuacao();
-        
+
         $centroKey = $centroTrabId ?? '0';
         $emprKey = $emprId ?? '0';
-        
-        // Busca por ITEM_ID com prioridade: mais específico primeiro
-        // 1. item + centro específico + empresa específica
-        if ($emprId && $centroTrabId) {
-            $key = $itemId . '_' . $centroKey . '_' . $emprKey;
-            if (isset(self::$cachePontuacao['por_item'][$key])) {
-                return self::$cachePontuacao['por_item'][$key];
-            }
-        }
-        // 2. item + centro específico + qualquer empresa (ID_EMPR IS NULL)
-        if ($centroTrabId) {
-            $key = $itemId . '_' . $centroKey . '_0';
-            if (isset(self::$cachePontuacao['por_item'][$key])) {
-                return self::$cachePontuacao['por_item'][$key];
-            }
-        }
-        // 3. item + qualquer centro + empresa específica
-        if ($emprId) {
-            $key = $itemId . '_0_' . $emprKey;
-            if (isset(self::$cachePontuacao['por_item'][$key])) {
-                return self::$cachePontuacao['por_item'][$key];
-            }
-        }
-        // 4. item + qualquer centro + qualquer empresa (totalmente genérico)
-        $key = $itemId . '_0_0';
-        if (isset(self::$cachePontuacao['por_item'][$key])) {
-            return self::$cachePontuacao['por_item'][$key];
-        }
-        
-        // Busca por ID_ITEMPR (já é por empresa, pois TITENS_EMPR é por filial)
-        if ($itemprId) {
-            // Com empresa específica
-            if ($emprId && isset(self::$cachePontuacao['por_itempr'][$itemprId . '_' . $emprKey])) {
-                return self::$cachePontuacao['por_itempr'][$itemprId . '_' . $emprKey];
-            }
-            // Sem empresa (genérico)
-            if (isset(self::$cachePontuacao['por_itempr'][$itemprId . '_0'])) {
-                return self::$cachePontuacao['por_itempr'][$itemprId . '_0'];
-            }
-        }
-        
-        // Busca por ID_MASCARA
+
+        // Quando há máscara específica, prioriza por máscara (mais preciso)
+        // antes de cair no genérico por item
         if ($mascaraId) {
             if ($emprId && $centroTrabId && isset(self::$cachePontuacao['por_mascara'][$mascaraId . '_' . $centroKey . '_' . $emprKey])) {
                 return self::$cachePontuacao['por_mascara'][$mascaraId . '_' . $centroKey . '_' . $emprKey];
@@ -138,7 +99,41 @@ class ApontamentoProducao
                 return self::$cachePontuacao['por_mascara'][$mascaraId . '_0_0'];
             }
         }
-        
+
+        // Fallback: busca por ITEM_ID (genérico, sem distinção de máscara)
+        if ($emprId && $centroTrabId) {
+            $key = $itemId . '_' . $centroKey . '_' . $emprKey;
+            if (isset(self::$cachePontuacao['por_item'][$key])) {
+                return self::$cachePontuacao['por_item'][$key];
+            }
+        }
+        if ($centroTrabId) {
+            $key = $itemId . '_' . $centroKey . '_0';
+            if (isset(self::$cachePontuacao['por_item'][$key])) {
+                return self::$cachePontuacao['por_item'][$key];
+            }
+        }
+        if ($emprId) {
+            $key = $itemId . '_0_' . $emprKey;
+            if (isset(self::$cachePontuacao['por_item'][$key])) {
+                return self::$cachePontuacao['por_item'][$key];
+            }
+        }
+        $key = $itemId . '_0_0';
+        if (isset(self::$cachePontuacao['por_item'][$key])) {
+            return self::$cachePontuacao['por_item'][$key];
+        }
+
+        // Busca por ID_ITEMPR
+        if ($itemprId) {
+            if ($emprId && isset(self::$cachePontuacao['por_itempr'][$itemprId . '_' . $emprKey])) {
+                return self::$cachePontuacao['por_itempr'][$itemprId . '_' . $emprKey];
+            }
+            if (isset(self::$cachePontuacao['por_itempr'][$itemprId . '_0'])) {
+                return self::$cachePontuacao['por_itempr'][$itemprId . '_0'];
+            }
+        }
+
         return null;
     }
 
