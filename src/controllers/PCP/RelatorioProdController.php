@@ -604,8 +604,9 @@ class RelatorioProdController extends Controller
         try {
             $body    = self::getBody() ?? [];
             $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = $this->emprIdSessao();
             if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
-            $result = RelatorioProdHandler::buscarPcpMolas($numLote);
+            $result = RelatorioProdHandler::buscarPcpMolas($emprId, $numLote);
             self::response($result, 200);
         } catch (\Exception $e) {
             $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
@@ -623,8 +624,9 @@ class RelatorioProdController extends Controller
         try {
             $body    = self::getBody() ?? [];
             $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = $this->emprIdSessao();
             if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
-            $result = RelatorioProdHandler::buscarPcpCordao($numLote);
+            $result = RelatorioProdHandler::buscarPcpCordao($emprId, $numLote);
             self::response($result, 200);
         } catch (\Exception $e) {
             $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;

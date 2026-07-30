@@ -336,18 +336,18 @@ class RelatorioProdHandler
         });
     }
 
-    public static function buscarPcpMolas(int $numLote): array
+    public static function buscarPcpMolas(int $emprId, int $numLote): array
     {
-        return self::cached("pcp.pcpMolas.{$numLote}", function () use ($numLote) {
-            $rows = RelatorioProd::buscarPcpMolas($numLote);
+        return self::cached("pcp.pcpMolas.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $rows = RelatorioProd::buscarPcpMolas($emprId, $numLote);
             return ['success' => true, 'rows' => $rows];
         });
     }
 
-    public static function buscarPcpCordao(int $numLote): array
+    public static function buscarPcpCordao(int $emprId, int $numLote): array
     {
-        return self::cached("pcp.pcpCordao.{$numLote}", function () use ($numLote) {
-            $rows = RelatorioProd::buscarPcpCordao($numLote);
+        return self::cached("pcp.pcpCordao.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $rows = RelatorioProd::buscarPcpCordao($emprId, $numLote);
             return ['success' => true, 'rows' => $rows];
         });
     }

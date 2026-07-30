@@ -249,7 +249,7 @@ ORDER BY NVL(TO_NUMBER(REGEXP_SUBSTR(TMASC_ITEM.MASCARA, '[^#]+', 1, 2)), 9999) 
         return is_array($result['retorno']) ? $result['retorno'] : [];
     }
 
-    public static function buscarPcpMolas(int $numLote): array
+    public static function buscarPcpMolas(int $emprId, int $numLote): array
     {
         $sql = "SELECT DISTINCT
     TEMPRESAS.COD_EMP||'-'||TEMPRESAS.RAZAO_SOCIAL EMPRESA,
@@ -281,7 +281,7 @@ WHERE TGAZIN_ADMIN_TANQUE_MOLA.PAI_ITEMPR_ID(+) = TITENS_EMPR.ID
   AND TITENS.ID = TITENS_EMPR.ITEM_ID
   AND TMASC_ITEM.ID = TDEMANDAS_FAN.TMASC_ITEM_ID(+)
   AND TMASC_ITEM.ID(+) = TORDENS.TMASC_ITEM_ID
-  AND TEMPRESAS.COD_EMP = 16
+  AND TORDENS.EMPR_ID = $emprId
   AND TGAZIN_ADMIN_TANQUE_MOLA.DESC_TECNICA LIKE '%MOLA ENSACADA INDIVIDUALMENTE%'
   AND TORDENS.NUM_LOTE_PRO = :num_lote
   AND TCENTROS_TRAB.COD_CENTRO IN ('15.007.1','15.014.1')
@@ -299,7 +299,7 @@ ORDER BY TO_CHAR(TORDENS.DT_INICIAL, 'DD/MM/RR') ASC,
         return is_array($result['retorno']) ? $result['retorno'] : [];
     }
 
-    public static function buscarPcpCordao(int $numLote): array
+    public static function buscarPcpCordao(int $emprId, int $numLote): array
     {
         $sql = "SELECT DISTINCT
     TEMPRESAS.COD_EMP||'-'||TEMPRESAS.RAZAO_SOCIAL EMPRESA,
@@ -341,7 +341,7 @@ WHERE TGAZIN_ADMIN_TANQUE_MOLA.PAI_ITEMPR_ID(+) = TITENS_EMPR.ID
   AND TITENS.ID = TITENS_EMPR.ITEM_ID
   AND TMASC_ITEM.ID = TDEMANDAS_FAN.TMASC_ITEM_ID(+)
   AND TMASC_ITEM.ID(+) = TORDENS.TMASC_ITEM_ID
-  AND TEMPRESAS.COD_EMP = 16
+  AND TORDENS.EMPR_ID = $emprId
   AND TGAZIN_ADMIN_TANQUE_MOLA.DESC_TECNICA LIKE '%CORDAO%'
   AND TORDENS.NUM_LOTE_PRO = :num_lote
   AND TCENTROS_TRAB.COD_CENTRO IN ('15.007.1','15.014.1')
