@@ -646,8 +646,10 @@ class ComissaoRelatorioHandler
                 return strcmp($b['DATA_APONTAMENTO'], $a['DATA_APONTAMENTO']);
             });
         } else {
-            // FUNCIONÁRIO NORMAL: Buscar pontos por dia (apontamentos individuais)
-            $diario = ApontamentoProducao::pontosPorDiaFuncionario($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
+            // FUNCIONÁRIO NORMAL: usa o mesmo cache PHP do Relatório Diário
+            // (pontosPorDiaBatch aplica buscarPontuacaoCache com prioridade de máscara correta)
+            $pontosBatch = ApontamentoProducao::pontosPorDiaBatch($dataInicio, $dataFim, [$funcionarioId], $emprIdApontamentos, $centroTrabId);
+            $diario = $pontosBatch[$funcionarioId] ?? [];
         }
 
         // =============================================

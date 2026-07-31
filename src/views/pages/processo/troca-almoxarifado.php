@@ -69,7 +69,7 @@ if (!$acesso) {
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0">
+                    <table id="tabelaOrdens" class="table table-hover table-sm mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th style="width:40px;">
@@ -125,7 +125,7 @@ if (!$acesso) {
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
+                    <table id="tabelaResultados" class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Nº Ordem</th>

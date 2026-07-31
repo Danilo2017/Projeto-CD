@@ -227,6 +227,11 @@ $router->get('/processo-troca-almox-carga',              'Processo\\TrocaAlmoxCa
 $router->post('/processo-api-troca-almox-carga-buscar', 'Processo\\TrocaAlmoxCargaController@buscarItensCarga', true);
 $router->post('/processo-api-troca-almox-carga',        'Processo\\TrocaAlmoxCargaController@executar',         true);
 
+$router->get('/processo-troca-almox-pedido',                    'Processo\\TrocaAlmoxPedidoController@index',            true);
+$router->post('/processo-api-troca-almox-pedido-buscar-itens',  'Processo\\TrocaAlmoxPedidoController@buscarItensPedido', true);
+$router->post('/processo-api-troca-almox-pedido-buscar-almox',  'Processo\\TrocaAlmoxPedidoController@buscarAlmoxarifado', true);
+$router->post('/processo-api-troca-almox-pedido',               'Processo\\TrocaAlmoxPedidoController@executar',         true);
+
 $router->get('/processo-troca-tipo-nf',           'Processo\\TrocaTipoNfEntradaController@index',       true);
 $router->get('/processo-api-tipos-nf-ent',        'Processo\\TrocaTipoNfEntradaController@listarTipos', true);
 $router->post('/processo-api-troca-tipo-nf-buscar','Processo\\TrocaTipoNfEntradaController@buscarNf',   true);

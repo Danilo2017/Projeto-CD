@@ -112,6 +112,7 @@ $pedidosSub = match(true) {
 $processoSub = match(true) {
     $pActive === 'processo-troca-almox'           => 'troca-almox',
     $pActive === 'processo-troca-almox-carga'     => 'troca-almox-carga',
+    $pActive === 'processo-troca-almox-pedido'    => 'troca-almox-pedido',
     $pActive === 'processo-troca-tipo-nf'         => 'troca-tipo-nf',
     $pActive === 'processo-transferencia-estoque' => 'transferencia-estoque',
     default => ''
@@ -263,6 +264,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>processo-troca-almox-carga"
                        class="sidebar-sublink <?= $processoSub === 'troca-almox-carga' ? 'active' : '' ?>">
                         Troca Almox. Carga
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>processo-troca-almox-pedido"
+                       class="sidebar-sublink <?= $processoSub === 'troca-almox-pedido' ? 'active' : '' ?>">
+                        Troca Almox. Ordem
                     </a>
                 </li>
                 <li>
