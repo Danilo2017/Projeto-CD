@@ -293,6 +293,9 @@ $router->get('/pcp-resumo-lote',                            'PCP\\RelatorioProdC
 $router->post('/pcp-api-resumo-lote',                       'PCP\\RelatorioProdController@buscarResumoDeLote',         true);
 $router->get('/pcp-relatorio-pcp-molas',                    'PCP\\RelatorioProdController@indexPcpMolas',              true);
 $router->post('/pcp-api-relatorio-pcp-molas',               'PCP\\RelatorioProdController@buscarPcpMolas',             true);
+
+$router->get('/pcp-relatorio-pcp-tampo',                    'PCP\\RelatorioProdController@indexPcpTampo',              true);
+$router->post('/pcp-api-relatorio-pcp-tampo',               'PCP\\RelatorioProdController@buscarPcpTampo',             true);
 $router->get('/pcp-relatorio-pcp-cordao',                   'PCP\\RelatorioProdController@indexPcpCordao',             true);
 $router->post('/pcp-api-relatorio-pcp-cordao',              'PCP\\RelatorioProdController@buscarPcpCordao',            true);
 

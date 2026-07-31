@@ -352,6 +352,14 @@ class RelatorioProdHandler
         });
     }
 
+    public static function buscarPcpTampo(int $emprId, int $numLote): array
+    {
+        return self::cached("pcp.pcpTampo.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $rows = RelatorioProd::buscarPcpTampo($emprId, $numLote);
+            return ['success' => true, 'rows' => $rows];
+        });
+    }
+
     public static function buscarResumoDeLote(int $emprId, int $numLote): array
     {
         return self::cached("pcp.resumoDeLote.v1.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {

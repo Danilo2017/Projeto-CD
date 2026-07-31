@@ -359,6 +359,63 @@ ORDER BY TO_CHAR(TORDENS.DT_INICIAL, 'DD/MM/RR') ASC,
         return is_array($result['retorno']) ? $result['retorno'] : [];
     }
 
+    public static function buscarPcpTampo(int $emprId, int $numLote): array
+    {
+        $sql = "SELECT
+    TORDENS.NUM_LOTE_PRO                              NUM_LOTE_PRO,
+    TORDENS.NUM_ORDEM                                 NUM_ORDEM,
+    TO_CHAR(TORDENS.DT_INICIAL, 'DD/MM/RR')           DT_INICIAL,
+    TITENS.COD_ITEM                                   COD_ITEM,
+    TITENS.DESC_TECNICA                               DESC_TECNICA,
+    TMASC_ITEM.MASCARA                                MASCARA,
+    TORDENS.QTDE                                      QTDE_OF,
+    TGAZIN_ADMIN_TANQUE_MOLA.COD_ITEM                 COD_ITEM_TAMPO,
+    TGAZIN_ADMIN_TANQUE_MOLA.DESC_TECNICA             DESC_TAMPO,
+    TMASC_ITEM1.MASCARA                               MASCARA_TAMPO,
+    TORDENS.QTDE * TGAZIN_ADMIN_TANQUE_MOLA.QTDE_TOT  TOTAL_TAMPO,
+    NULL                                              G_TOTAL_GERAL
+  FROM TCENTROS_TRAB,
+       TEMPRESAS,
+       TORDENS,
+       TITENS_PLANEJAMENTO,
+       TITENS_EMPR,
+       TITENS,
+       TMASC_ITEM,
+       TMASC_ITEM TMASC_ITEM1,
+       TORDENS_ROT,
+       TDEMANDAS_FAN,
+       TGAZIN_ADMIN_TANQUE_MOLA
+ WHERE TGAZIN_ADMIN_TANQUE_MOLA.PAI_ITEMPR_ID(+) = TITENS_EMPR.ID
+   AND TCENTROS_TRAB.ID                           = TORDENS_ROT.CENTR_TRAB_ID
+   AND TEMPRESAS.ID                               = TORDENS.EMPR_ID
+   AND TMASC_ITEM1.ID(+)                          = TGAZIN_ADMIN_TANQUE_MOLA.TMASC_ITEM_ID
+   AND TORDENS.ID                                 = TDEMANDAS_FAN.ORDEM_ID(+)
+   AND TORDENS.ID                                 = TORDENS_ROT.ORDEM_ID
+   AND TITENS_PLANEJAMENTO.ID                     = TDEMANDAS_FAN.ITPL_ID(+)
+   AND TITENS_PLANEJAMENTO.ID                     = TORDENS.ITPL_ID
+   AND TITENS_EMPR.ID                             = TITENS_PLANEJAMENTO.ITEMPR_ID
+   AND TITENS.ID                                  = TITENS_EMPR.ITEM_ID
+   AND TMASC_ITEM.ID                              = TDEMANDAS_FAN.TMASC_ITEM_ID(+)
+   AND TMASC_ITEM.ID(+)                           = TORDENS.TMASC_ITEM_ID
+   AND TORDENS.EMPR_ID                            = $emprId
+   AND TGAZIN_ADMIN_TANQUE_MOLA.DESC_TECNICA      LIKE '%TAMPO%'
+   AND TGAZIN_ADMIN_TANQUE_MOLA.DESC_TECNICA      NOT LIKE '%FANTASMA%'
+   AND TORDENS.NUM_LOTE_PRO                       = :num_lote
+   AND TCENTROS_TRAB.COD_CENTRO                   IN ('15.007.1','15.014.1')
+ORDER BY TO_CHAR(TORDENS.DT_INICIAL, 'DD/MM/RR') ASC,
+         TITENS.COD_ITEM ASC,
+         TORDENS.NUM_ORDEM ASC";
+
+        $result = Database::switchParams('focco', [
+            'num_lote' => $numLote,
+        ], null, true, true, null, $sql);
+
+        if (!empty($result['error'])) {
+            throw new \Exception($result['error']);
+        }
+        return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
+
     public static function listarEmpresas(): array
     {
         $result = Database::switchParams('focco', [], 'acesso.empresa.listar', true);
