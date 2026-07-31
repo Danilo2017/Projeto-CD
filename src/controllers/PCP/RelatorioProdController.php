@@ -653,4 +653,24 @@ class RelatorioProdController extends Controller
             self::response(['error' => $e->getMessage()], $code ?: 500);
         }
     }
+
+    public function indexPcpBordaAco(): void
+    {
+        $this->render('pcp/relatorio-pcp-borda-aco', []);
+    }
+
+    public function buscarPcpBordaAco(): void
+    {
+        try {
+            $body    = self::getBody() ?? [];
+            $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = $this->emprIdSessao();
+            if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
+            $result = RelatorioProdHandler::buscarPcpBordaAco($emprId, $numLote);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
 }

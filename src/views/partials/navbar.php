@@ -62,6 +62,7 @@ $pcpSub = match(true) {
     $pActive === 'pcp-relatorio-molas-bordas'       => 'relatorio-molas-bordas',
     $pActive === 'pcp-relatorio-pcp-molas'          => 'relatorio-pcp-molas',
     $pActive === 'pcp-relatorio-pcp-tampo'          => 'relatorio-pcp-tampo',
+    $pActive === 'pcp-relatorio-pcp-borda-aco'      => 'relatorio-pcp-borda-aco',
     $pActive === 'pcp-relatorio-pcp-cordao'         => 'relatorio-pcp-cordao',
     $pActive === 'pcp-relatorio-caixa-box'               => 'relatorio-caixa-box',
     $pActive === 'pcp-relatorio-robotec-abastecedor'     => 'relatorio-robotec-abastecedor',
@@ -89,6 +90,7 @@ $pcpToSubGrp = [
     'relatorio-pcp-molas'           => ['pcp-molas'],
     'relatorio-pcp-cordao'          => ['pcp-molas'],
     'relatorio-pcp-tampo'           => ['pcp-molas'],
+    'relatorio-pcp-borda-aco'       => ['pcp-molas'],
     'relatorio-caixa-box'           => ['caixa-box'],
     'relatorio-robotec-abastecedor' => ['robotec'],
 ];
@@ -450,6 +452,9 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>pcp-relatorio-pcp-tampo"
                                class="pcp-sub-sublink <?= $pcpSub === 'relatorio-pcp-tampo' ? 'active' : '' ?>">
                             Qtde de Tampo</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-pcp-borda-aco"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-pcp-borda-aco' ? 'active' : '' ?>">
+                            Borda de Aço</a></li>
                     </ul>
                 </li>
 
