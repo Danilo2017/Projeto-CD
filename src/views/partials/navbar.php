@@ -63,6 +63,7 @@ $pcpSub = match(true) {
     $pActive === 'pcp-relatorio-pcp-molas'          => 'relatorio-pcp-molas',
     $pActive === 'pcp-relatorio-pcp-tampo'          => 'relatorio-pcp-tampo',
     $pActive === 'pcp-relatorio-pcp-borda-aco'      => 'relatorio-pcp-borda-aco',
+    $pActive === 'pcp-relatorio-pcp-expedicao-rolo' => 'relatorio-pcp-expedicao-rolo',
     $pActive === 'pcp-relatorio-pcp-cordao'         => 'relatorio-pcp-cordao',
     $pActive === 'pcp-relatorio-caixa-box'               => 'relatorio-caixa-box',
     $pActive === 'pcp-relatorio-robotec-abastecedor'     => 'relatorio-robotec-abastecedor',
@@ -91,6 +92,7 @@ $pcpToSubGrp = [
     'relatorio-pcp-cordao'          => ['pcp-molas'],
     'relatorio-pcp-tampo'           => ['pcp-molas'],
     'relatorio-pcp-borda-aco'       => ['pcp-molas'],
+    'relatorio-pcp-expedicao-rolo'  => ['pcp-molas'],
     'relatorio-caixa-box'           => ['caixa-box'],
     'relatorio-robotec-abastecedor' => ['robotec'],
 ];
@@ -455,6 +457,9 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>pcp-relatorio-pcp-borda-aco"
                                class="pcp-sub-sublink <?= $pcpSub === 'relatorio-pcp-borda-aco' ? 'active' : '' ?>">
                             Borda de Aço</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-pcp-expedicao-rolo"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-pcp-expedicao-rolo' ? 'active' : '' ?>">
+                            Expd. Qtde de Rolo</a></li>
                     </ul>
                 </li>
 

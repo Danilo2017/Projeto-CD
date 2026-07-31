@@ -296,8 +296,10 @@ $router->post('/pcp-api-relatorio-pcp-molas',               'PCP\\RelatorioProdC
 
 $router->get('/pcp-relatorio-pcp-tampo',                    'PCP\\RelatorioProdController@indexPcpTampo',              true);
 $router->get('/pcp-relatorio-pcp-borda-aco',               'PCP\\RelatorioProdController@indexPcpBordaAco',           true);
+$router->get('/pcp-relatorio-pcp-expedicao-rolo',          'PCP\\RelatorioProdController@indexPcpExpedicaoRolo',      true);
 $router->post('/pcp-api-relatorio-pcp-tampo',               'PCP\\RelatorioProdController@buscarPcpTampo',             true);
 $router->post('/pcp-api-relatorio-pcp-borda-aco',          'PCP\\RelatorioProdController@buscarPcpBordaAco',          true);
+$router->post('/pcp-api-relatorio-pcp-expedicao-rolo',     'PCP\\RelatorioProdController@buscarPcpExpedicaoRolo',     true);
 $router->get('/pcp-relatorio-pcp-cordao',                   'PCP\\RelatorioProdController@indexPcpCordao',             true);
 $router->post('/pcp-api-relatorio-pcp-cordao',              'PCP\\RelatorioProdController@buscarPcpCordao',            true);
 

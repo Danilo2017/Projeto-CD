@@ -360,6 +360,14 @@ class RelatorioProdHandler
         });
     }
 
+    public static function buscarPcpExpedicaoRolo(int $emprId, int $numLote): array
+    {
+        return self::cached("pcp.pcpExpedicaoRolo.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $rows = RelatorioProd::buscarPcpExpedicaoRolo($emprId, $numLote);
+            return ['success' => true, 'rows' => $rows];
+        });
+    }
+
     public static function buscarPcpBordaAco(int $emprId, int $numLote): array
     {
         return self::cached("pcp.pcpBordaAco.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
