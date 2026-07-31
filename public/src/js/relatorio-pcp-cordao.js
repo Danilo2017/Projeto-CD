@@ -3,6 +3,7 @@
 
     const HISTORICO = [
         { data: '27/07/2026', alteracao: 'Elaboração Inicial' },
+        { data: '31/07/2026', alteracao: 'Adicionada seção de detalhe por ordem' },
     ];
 
     const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
@@ -14,7 +15,7 @@
                d.getFullYear();
     }
 
-    function fmt(v) { return (v === null || v === undefined || v === '') ? '' : v; }
+    function fmt(v)  { return (v === null || v === undefined || v === '') ? '' : v; }
     function fmtN(v) { const n = parseFloat(v); return isNaN(n) ? '' : n.toLocaleString('pt-BR'); }
 
     function cabecalho(hoje) {
@@ -25,7 +26,7 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO CORDÃO MOLAS — PCP MOLAS</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pm-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${hoje}</div>
+    <div class="pm-revisao">REVISÃO-02 &nbsp;&nbsp; DATA: ${hoje}</div>
 </div>`;
     }
 
@@ -45,7 +46,27 @@
             return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
         }
 
-        // Agrupa por CÓD. CORDÃO + MÁSCARA CORDÃO, soma TOTAL_MOLINHA
+        const titulo = `CORDÃO DE MOLAS — LOTE ${numLote}`;
+
+        // ── SEÇÃO 1: DETALHE POR ORDEM ──────────────────────────────
+        let corpoDetalhe = '';
+        for (const r of rows) {
+            corpoDetalhe += `
+<tr>
+    <td style="text-align:center">${fmt(r.NUM_ORDEM)}</td>
+    <td style="text-align:center">${fmt(r.DT_INICIAL)}</td>
+    <td>${fmt(r.COD_ITEM)}</td>
+    <td class="td-wrap">${fmt(r.DESC_TECNICA)}</td>
+    <td class="td-wrap">${fmt(r.MASCARA)}</td>
+    <td style="text-align:center">${fmtN(r.QTDE_OF)}</td>
+    <td>${fmt(r.COD_ITEM_CORDAO)}</td>
+    <td class="td-wrap">${fmt(r.DESC_CORDAO)}</td>
+    <td class="td-wrap">${fmt(r.MASCARA_CORDAO)}</td>
+    <td style="text-align:center;font-weight:bold">${fmtN(r.TOTAL_MOLINHA)}</td>
+</tr>`;
+        }
+
+        // ── SEÇÃO 2: AGRUPADO POR CORDÃO ────────────────────────────
         const mapaGrupos = new Map();
         for (const r of rows) {
             const chave = `${r.COD_ITEM_CORDAO}||${r.MASCARA_CORDAO}`;
@@ -60,32 +81,50 @@
             mapaGrupos.get(chave).TOTAL += parseFloat(r.TOTAL_MOLINHA) || 0;
         }
 
-        let corpo      = '';
+        let corpoAgrup = '';
         let grandTotal = 0;
-
         for (const g of mapaGrupos.values()) {
             grandTotal += g.TOTAL;
-            corpo += `
+            corpoAgrup += `
 <tr>
     <td>${fmt(g.COD_ITEM_CORDAO)}</td>
     <td class="td-wrap">${fmt(g.DESC_CORDAO)}</td>
-    <td class="text-center">${fmt(g.MASCARA_CORDAO)}</td>
-    <td class="text-center fw-bold">${fmtN(g.TOTAL)}</td>
+    <td style="text-align:center">${fmt(g.MASCARA_CORDAO)}</td>
+    <td style="text-align:center;font-weight:bold">${fmtN(g.TOTAL)}</td>
 </tr>`;
         }
-
-        corpo += `
+        corpoAgrup += `
 <tr class="total-row">
     <td colspan="3" style="text-align:right;padding-right:8px">TOTAL GERAL DE CORDÕES:</td>
     <td style="text-align:center">${fmtN(grandTotal)}</td>
 </tr>`;
 
-        const titulo = `CORDÃO DE MOLAS — LOTE ${numLote}`;
-
         return `
 <div class="pm-section">
     ${cabecalho(hoje)}
-    <div class="pm-section-title">${titulo}</div>
+
+    <div class="pm-section-title">${titulo} — DETALHE POR ORDEM</div>
+    <div style="overflow-x:auto">
+    <table class="pm-table">
+        <thead>
+            <tr>
+                <th>Nº ORDEM</th>
+                <th>DT. INI</th>
+                <th>CÓD. ITEM</th>
+                <th>DESCRIÇÃO</th>
+                <th>MÁSCARA</th>
+                <th>QTDE OF</th>
+                <th>CÓD. CORDÃO</th>
+                <th>DESC. CORDÃO</th>
+                <th>MÁSCARA CORDÃO</th>
+                <th>TOTAL CORDÕES</th>
+            </tr>
+        </thead>
+        <tbody>${corpoDetalhe}</tbody>
+    </table>
+    </div>
+
+    <div class="pm-section-title" style="margin-top:14px">${titulo} — AGRUPADO POR CORDÃO</div>
     <div style="overflow-x:auto">
     <table class="pm-table">
         <thead>
@@ -96,9 +135,10 @@
                 <th>TOTAL CORDÕES</th>
             </tr>
         </thead>
-        <tbody>${corpo}</tbody>
+        <tbody>${corpoAgrup}</tbody>
     </table>
     </div>
+
     ${historico()}
 </div>`;
     }
@@ -129,8 +169,6 @@ body{font-family:Arial,sans-serif;font-size:7.5pt;background:#fff}
 .pm-historico table{width:100%;border-collapse:collapse}
 .pm-historico th{background:#d9d9d9;border:1px solid #999;padding:2px 4px;text-align:center;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pm-historico td{border:1px solid #ccc;padding:2px 4px}
-.text-center{text-align:center}
-.fw-bold{font-weight:bold}
 @page{size:A4 landscape;margin:6mm}
 @media print{
   .pm-section{page-break-after:always;padding:8px 12px}
