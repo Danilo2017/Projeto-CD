@@ -67,14 +67,4 @@ class InativacaoPrecoController extends Controller
         }
     }
 
-    public function processarInativacao(): void
-    {
-        try {
-            $dados = ['empr_id' => $this->emprIdSessao()];
-            self::response(InativacaoPrecoHandler::processarInativacao($dados), 200);
-        } catch (\Exception $e) {
-            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
-            self::response(['error' => $e->getMessage()], $code ?: 500);
-        }
-    }
 }

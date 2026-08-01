@@ -309,7 +309,6 @@ $router->post('/pd-api-buscar-itens',          'PD\\InativacaoPrecoController@bu
 $router->get('/pd-api-listar-cadastros',       'PD\\InativacaoPrecoController@listarCadastros',    true);
 $router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@cadastrarItens',     true);
 $router->post('/pd-api-excluir-item',          'PD\\InativacaoPrecoController@excluirItem',        true);
-$router->post('/pd-api-processar-inativacao',  'PD\\InativacaoPrecoController@processarInativacao',true);
 
 // TEMPORÁRIO — remover após inserção do SQL verticalEspuma
 $router->get('/tmp-insert-vertical-espuma', 'AdminSqlsController@tmpInsertVerticalEspuma', true);

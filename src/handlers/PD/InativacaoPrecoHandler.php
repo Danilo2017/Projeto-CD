@@ -27,6 +27,7 @@ class InativacaoPrecoHandler
         return ['success' => true, 'rows' => $rows, 'total' => count($rows)];
     }
 
+    // Ao cadastrar: inativa imediatamente + registra para monitoramento do job
     public static function cadastrarItens(array $dados): array
     {
         $emprId = (int) ($dados['empr_id'] ?? 0);
@@ -35,8 +36,8 @@ class InativacaoPrecoHandler
         if ($emprId <= 0) throw new \Exception('Empresa inválida.', 400);
         if (empty($itens) || !is_array($itens)) throw new \Exception('Nenhum item selecionado.', 400);
 
-        $inseridos  = 0;
-        $duplicados = 0;
+        $inativados = 0;
+        $erros      = [];
 
         foreach ($itens as $item) {
             $codItem     = (int) ($item['cod_item']      ?? 0);
@@ -46,19 +47,30 @@ class InativacaoPrecoHandler
 
             if ($codItem <= 0 || $tmascItemId <= 0) continue;
 
-            if (InativacaoPreco::verificarExistencia($emprId, $codItem, $tmascItemId)) {
-                $duplicados++;
-                continue;
-            }
+            try {
+                // 1. Inativa agora nas tabelas de preço
+                InativacaoPreco::inativarItemPreco($emprId, $codItem, $tmascItemId);
+                $inativados++;
 
-            InativacaoPreco::cadastrarItem($emprId, $codItem, $tmascItemId, $descTecnica, $mascara);
-            $inseridos++;
+                // 2. Registra na tabela de monitoramento (silencioso se tabela não existir)
+                InativacaoPreco::registrarMonitoramento($emprId, $codItem, $tmascItemId, $descTecnica, $mascara);
+            } catch (\Exception $e) {
+                $erros[] = "Item {$codItem} / Máscara {$tmascItemId}: " . $e->getMessage();
+            }
         }
 
-        $msg = "Cadastrado(s): {$inseridos} item(ns).";
-        if ($duplicados > 0) $msg .= " Já existia(m): {$duplicados}.";
+        // Commit único após todos os UPDATEs
+        InativacaoPreco::commit();
 
-        return ['success' => true, 'inseridos' => $inseridos, 'duplicados' => $duplicados, 'message' => $msg];
+        $msg = "Inativação executada para {$inativados} item(ns).";
+        if (!empty($erros)) $msg .= ' Atenção: ' . implode('; ', $erros);
+
+        return [
+            'success'    => true,
+            'inativados' => $inativados,
+            'erros'      => $erros,
+            'message'    => $msg,
+        ];
     }
 
     public static function excluirItem(array $dados): array
@@ -70,15 +82,6 @@ class InativacaoPrecoHandler
         if ($id <= 0)     throw new \Exception('ID inválido.', 400);
 
         InativacaoPreco::excluirItem($id, $emprId);
-        return ['success' => true, 'message' => 'Item removido da fila de inativação.'];
-    }
-
-    public static function processarInativacao(array $dados): array
-    {
-        $emprId = (int) ($dados['empr_id'] ?? 0);
-        if ($emprId <= 0) throw new \Exception('Empresa inválida.', 400);
-
-        $qtd = InativacaoPreco::processarInativacao($emprId);
-        return ['success' => true, 'message' => "Inativação executada. Registros de preço atualizados."];
+        return ['success' => true, 'message' => 'Item removido do monitoramento.'];
     }
 }

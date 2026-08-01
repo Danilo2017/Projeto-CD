@@ -5,9 +5,9 @@
 
     async function post(url, body) {
         const res = await fetch(url, {
-            method: 'POST',
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body:    JSON.stringify(body),
         });
         return res.json();
     }
@@ -17,57 +17,54 @@
         return res.json();
     }
 
-    // ── FILA ──────────────────────────────────────────────────────
-    async function carregarFila() {
-        const tbody      = document.getElementById('tbodyFila');
-        const badge      = document.getElementById('badgeFila');
-        const btnProc    = document.getElementById('btnProcessar');
-        const msgFila    = document.getElementById('msgFila');
+    // ── HISTÓRICO ─────────────────────────────────────────────────
+    async function carregarHistorico() {
+        const tbody   = document.getElementById('tbodyFila');
+        const badge   = document.getElementById('badgeFila');
+        const msgFila = document.getElementById('msgFila');
         msgFila.innerHTML = '';
 
         try {
             const data = await get('pd-api-listar-cadastros');
-            if (data.error) { tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">${data.error}</td></tr>`; return; }
+            if (data.error) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Histórico indisponível.</td></tr>';
+                return;
+            }
 
             const rows = data.rows || [];
             badge.textContent = rows.length;
 
-            const pendentes = rows.filter(r => String(r.SIT) === '1');
-            btnProc.style.display = pendentes.length > 0 ? '' : 'none';
-
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Nenhum item na fila.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Nenhum registro ainda.</td></tr>';
                 return;
             }
 
             tbody.innerHTML = rows.map(r => {
-                const pendente = String(r.SIT) === '1';
-                const badge    = pendente
-                    ? '<span class="badge bg-warning text-dark">Pendente</span>'
-                    : '<span class="badge bg-success">Processado</span>';
-                const btnExcl  = pendente
-                    ? `<button class="btn btn-xs btn-danger btn-sm" onclick="removerItem(${r.ID})"><i class="bi bi-trash"></i></button>`
-                    : '';
+                const validado = String(r.SIT) === '0';
+                const statusBadge = validado
+                    ? '<span class="badge bg-success">Validado pelo Job</span>'
+                    : '<span class="badge bg-warning text-dark">Aguardando Job</span>';
+                const btnExcl = `<button class="btn btn-xs btn-sm btn-outline-danger" onclick="removerItem(${r.ID})" title="Remover"><i class="bi bi-trash"></i></button>`;
                 return `<tr>
                     <td>${r.COD_ITEM ?? ''}</td>
                     <td class="text-wrap">${r.DESC_TECNICA ?? ''}</td>
                     <td>${r.MASCARA ?? ''}</td>
                     <td>${r.DT_CADASTRO ?? ''}</td>
-                    <td>${badge}</td>
+                    <td>${statusBadge}</td>
                     <td class="text-center">${btnExcl}</td>
                 </tr>`;
             }).join('');
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Erro: ${e.message}</td></tr>`;
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Histórico indisponível.</td></tr>';
         }
     }
 
     window.removerItem = async function (id) {
-        if (!confirm('Remover este item da fila?')) return;
+        if (!confirm('Remover este registro do histórico?')) return;
         try {
             const data = await post('pd-api-excluir-item', { empr_id: emprId(), id });
             if (data.error) { alert(data.error); return; }
-            carregarFila();
+            carregarHistorico();
         } catch (e) {
             alert('Erro: ' + e.message);
         }
@@ -103,9 +100,10 @@
 
             tbody.innerHTML = rows.map(r => `<tr>
                 <td><input type="checkbox" class="chk-item"
-                    data-cod="${r.COD_ITEM}" data-id="${r.TMASC_ITEM_ID}"
-                    data-desc="${(r.DESC_TECNICA||'').replace(/"/g,'&quot;')}"
-                    data-masc="${(r.MASCARA||'').replace(/"/g,'&quot;')}"></td>
+                    data-cod="${r.COD_ITEM}"
+                    data-id="${r.TMASC_ITEM_ID}"
+                    data-desc="${(r.DESC_TECNICA || '').replace(/"/g, '&quot;')}"
+                    data-masc="${(r.MASCARA || '').replace(/"/g, '&quot;')}"></td>
                 <td>${r.EMPR_ID ?? ''}</td>
                 <td>${r.COD_ITEM ?? ''}</td>
                 <td>${r.TMASC_ITEM_ID ?? ''}</td>
@@ -124,7 +122,7 @@
         }
     });
 
-    // selecionar todos
+    // Selecionar todos
     document.getElementById('chkTodos').addEventListener('change', function () {
         document.querySelectorAll('.chk-item').forEach(c => c.checked = this.checked);
         atualizarBtnCadastrar();
@@ -144,7 +142,7 @@
         document.getElementById('btnCadastrar').disabled = sel === 0;
     }
 
-    // ── CADASTRAR ─────────────────────────────────────────────────
+    // ── INATIVAR (ao cadastrar, inativa imediatamente) ────────────
     document.getElementById('btnCadastrar').addEventListener('click', async function () {
         const selecionados = [...document.querySelectorAll('.chk-item:checked')].map(c => ({
             cod_item:      parseInt(c.dataset.cod, 10),
@@ -155,57 +153,41 @@
 
         if (selecionados.length === 0) { alert('Selecione ao menos um item.'); return; }
 
+        if (!confirm(`Inativar ${selecionados.length} item(ns) nas tabelas de preço agora?`)) return;
+
+        const msgEl = document.getElementById('msgBusca');
         this.disabled = true;
-        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Cadastrando...';
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Inativando...';
+        msgEl.innerHTML = '';
 
         try {
             const data = await post('pd-api-cadastrar-itens', { empr_id: emprId(), itens: selecionados });
 
-            if (data.error) { alert(data.error); return; }
-
-            document.getElementById('msgBusca').innerHTML =
-                `<span class="text-success"><i class="bi bi-check-circle"></i> ${data.message}</span>`;
-
-            carregarFila();
-        } catch (e) {
-            alert('Erro: ' + e.message);
-        } finally {
-            this.disabled = false;
-            this.innerHTML = '<i class="bi bi-plus-circle"></i> Cadastrar Selecionados';
-        }
-    });
-
-    // ── PROCESSAR INATIVAÇÃO ──────────────────────────────────────
-    document.getElementById('btnProcessar').addEventListener('click', async function () {
-        if (!confirm('Executar a inativação de preço para todos os itens pendentes?\n\nEssa ação irá setar SIT=0 e PRECO=0 nas tabelas de preço.')) return;
-
-        const msgFila = document.getElementById('msgFila');
-        this.disabled = true;
-        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
-        msgFila.innerHTML = '';
-
-        try {
-            const data = await post('pd-api-processar-inativacao', { empr_id: emprId() });
-
             if (data.error) {
-                msgFila.innerHTML = `<div class="alert alert-danger py-2 mb-2">${data.error}</div>`;
+                msgEl.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ${data.error}</span>`;
                 return;
             }
 
-            msgFila.innerHTML = `<div class="alert alert-success py-2 mb-2"><i class="bi bi-check-circle"></i> ${data.message}</div>`;
-            carregarFila();
+            const tipo = data.erros && data.erros.length > 0 ? 'warning' : 'success';
+            const icone = tipo === 'success' ? 'check-circle' : 'exclamation-triangle';
+            msgEl.innerHTML = `<span class="text-${tipo}"><i class="bi bi-${icone}"></i> ${data.message}</span>`;
+
+            // Desmarca todos
+            document.querySelectorAll('.chk-item').forEach(c => c.checked = false);
+            document.getElementById('chkTodos').checked = false;
+            atualizarBtnCadastrar();
+
+            carregarHistorico();
 
         } catch (e) {
-            msgFila.innerHTML = `<div class="alert alert-danger py-2 mb-2">Erro: ${e.message}</div>`;
+            msgEl.innerHTML = `<span class="text-danger">Erro: ${e.message}</span>`;
         } finally {
             this.disabled = false;
-            this.innerHTML = '<i class="bi bi-play-fill"></i> Executar Inativação';
+            this.innerHTML = '<i class="bi bi-slash-circle"></i> Inativar Selecionados';
         }
     });
 
-    // ── RECARREGAR ────────────────────────────────────────────────
-    document.getElementById('btnRecarregar').addEventListener('click', carregarFila);
+    document.getElementById('btnRecarregar').addEventListener('click', carregarHistorico);
 
-    // Carrega a fila ao abrir
-    carregarFila();
+    carregarHistorico();
 })();

@@ -45,11 +45,11 @@ if (!$acessoPd) {
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <span class="fw-semibold">Itens encontrados:</span>
                     <span id="badgeBusca" class="badge bg-secondary">0</span>
-                    <button id="btnSelecionarTodos" class="btn btn-xs btn-outline-secondary btn-sm ms-auto">
+                    <button id="btnSelecionarTodos" class="btn btn-sm btn-outline-secondary ms-auto">
                         Selecionar Todos
                     </button>
                     <button id="btnCadastrar" class="btn btn-sm btn-success" disabled>
-                        <i class="bi bi-plus-circle"></i> Cadastrar Selecionados
+                        <i class="bi bi-slash-circle"></i> Inativar Selecionados
                     </button>
                 </div>
                 <div style="overflow-x:auto;max-height:320px;overflow-y:auto;">
@@ -71,15 +71,12 @@ if (!$acessoPd) {
         </div>
     </div>
 
-    <!-- ── Itens Cadastrados ───────────────────────────────────── -->
+    <!-- ── Histórico de Inativações ───────────────────────────── -->
     <div class="card shadow-sm">
         <div class="card-header bg-info text-white fw-semibold py-2 d-flex align-items-center gap-2">
-            <i class="bi bi-list-check"></i> Fila de Inativação
+            <i class="bi bi-list-check"></i> Histórico de Inativações
             <span id="badgeFila" class="badge bg-white text-dark ms-1">0</span>
-            <button id="btnProcessar" class="btn btn-sm btn-warning ms-auto" style="display:none;">
-                <i class="bi bi-play-fill"></i> Executar Inativação
-            </button>
-            <button id="btnRecarregar" class="btn btn-sm btn-outline-light">
+            <button id="btnRecarregar" class="btn btn-sm btn-outline-light ms-auto">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>
@@ -92,8 +89,8 @@ if (!$acessoPd) {
                             <th>Cód. Item</th>
                             <th>Descrição</th>
                             <th>Máscara</th>
-                            <th>Cadastrado em</th>
-                            <th>Status</th>
+                            <th>Inativado em</th>
+                            <th>Status Job</th>
                             <th style="width:60px"></th>
                         </tr>
                     </thead>
