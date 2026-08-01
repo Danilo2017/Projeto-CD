@@ -303,6 +303,14 @@ $router->post('/pcp-api-relatorio-pcp-expedicao-rolo',     'PCP\\RelatorioProdCo
 $router->get('/pcp-relatorio-pcp-cordao',                   'PCP\\RelatorioProdController@indexPcpCordao',             true);
 $router->post('/pcp-api-relatorio-pcp-cordao',              'PCP\\RelatorioProdController@buscarPcpCordao',            true);
 
+// ========== Rotas do P&D ==========
+$router->get('/pd-inativacao-preco',          'PD\\InativacaoPrecoController@index',              true);
+$router->post('/pd-api-buscar-itens',          'PD\\InativacaoPrecoController@buscarItens',        true);
+$router->get('/pd-api-listar-cadastros',       'PD\\InativacaoPrecoController@listarCadastros',    true);
+$router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@cadastrarItens',     true);
+$router->post('/pd-api-excluir-item',          'PD\\InativacaoPrecoController@excluirItem',        true);
+$router->post('/pd-api-processar-inativacao',  'PD\\InativacaoPrecoController@processarInativacao',true);
+
 // TEMPORÁRIO — remover após inserção do SQL verticalEspuma
 $router->get('/tmp-insert-vertical-espuma', 'AdminSqlsController@tmpInsertVerticalEspuma', true);
 

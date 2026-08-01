@@ -12,6 +12,7 @@ $acessoPedidos     = $is_admin || in_array('pedidos',     $rotas_permitidas) || 
 $acessoProcesso    = $is_admin || in_array('processo',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoCarga       = $is_admin || in_array('carga',       $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoPd          = $is_admin || in_array('pd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
@@ -22,6 +23,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'processo-')                                                           => 'processo',
     str_starts_with($pActive, 'carga-')                                                              => 'carga',
     str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
+    str_starts_with($pActive, 'pd-')                                                                => 'pd',
     $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
@@ -121,6 +123,11 @@ $processoSub = match(true) {
     $pActive === 'processo-troca-almox-pedido'    => 'troca-almox-pedido',
     $pActive === 'processo-troca-tipo-nf'         => 'troca-tipo-nf',
     $pActive === 'processo-transferencia-estoque' => 'transferencia-estoque',
+    default => ''
+};
+
+$pdSub = match(true) {
+    $pActive === 'pd-inativacao-preco' => 'inativacao-preco',
     default => ''
 };
 
@@ -479,6 +486,24 @@ $userName = $user_login ?? 'Usuário';
                     </ul>
                 </li>
 
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoPd): ?>
+        <li class="sidebar-group" id="grpPd">
+            <button class="sidebar-group-btn <?= $activeGroup === 'pd' ? 'active open' : '' ?>">
+                <i class="bi bi-flask"></i>
+                <span>P&amp;D</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'pd' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>pd-inativacao-preco"
+                       class="sidebar-sublink <?= $pdSub === 'inativacao-preco' ? 'active' : '' ?>">
+                        Inativação de Preço
+                    </a>
+                </li>
             </ul>
         </li>
         <?php endif; ?>
