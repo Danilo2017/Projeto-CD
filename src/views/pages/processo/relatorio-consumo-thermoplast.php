@@ -19,7 +19,7 @@ if (!$acessoProcesso) {
 
 <style>
 .rel-card { background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:18px 22px;margin-bottom:14px; }
-.filial-header { background:#343a40;color:#fff;font-weight:700;padding:5px 12px;border-radius:6px 6px 0 0;font-size:.85rem;letter-spacing:.04em; }
+.filial-header { background:#1f3864;color:#fff;font-weight:700;padding:5px 12px;border-radius:6px 6px 0 0;font-size:.85rem;letter-spacing:.04em; }
 .filial-block { margin-bottom:18px; }
 .filial-block table { width:100%;border-collapse:collapse;font-size:.82rem; }
 .filial-block th { background:#e9ecef;color:#212529;padding:4px 8px;border:1px solid #ced4da;text-align:center;white-space:nowrap; }
@@ -27,7 +27,7 @@ if (!$acessoProcesso) {
 .filial-block td.td-num { text-align:right;font-variant-numeric:tabular-nums; }
 .filial-block td.td-desc { text-align:left;white-space:normal; }
 .row-subtotal td { background:#e9ecef;font-weight:700; }
-.row-total td { background:#343a40;color:#fff;font-weight:700; }
+.row-total td { background:#1f3864;color:#fff;font-weight:700; }
 #printArea { display:none; }
 #printArea.visible { display:block; }
 @media print {

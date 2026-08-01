@@ -26,7 +26,7 @@ if (!$acessoProcesso) {
 .dem-table td { padding:3px 8px;border:1px solid #dee2e6;text-align:right; }
 .dem-table td.col-left { text-align:left;white-space:normal; }
 .dem-table td.td-zero { color:#bbb; }
-.row-total td { background:#343a40;color:#fff;font-weight:700; }
+.row-total td { background:#1f3864;color:#fff;font-weight:700; }
 #printArea { display:none; }
 #printArea.visible { display:block; }
 @media print {

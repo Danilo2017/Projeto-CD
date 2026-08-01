@@ -19,16 +19,16 @@ if (!$acessoProcesso) {
 
 <style>
 .rel-card { background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:18px 22px;margin-bottom:14px; }
-.filial-header { background:#343a40;color:#fff;font-weight:700;padding:5px 12px;border-radius:6px 6px 0 0;font-size:.85rem;letter-spacing:.04em; }
+.filial-header { background:#1f3864;color:#fff;font-weight:700;padding:5px 12px;border-radius:6px 6px 0 0;font-size:.85rem;letter-spacing:.04em; }
 .filial-block { margin-bottom:18px; }
 .filial-block table { width:100%;border-collapse:collapse;font-size:.82rem; }
 .filial-block th { background:#e9ecef;color:#212529;padding:4px 10px;border:1px solid #ced4da;text-align:center;white-space:nowrap; }
 .filial-block td { padding:3px 10px;border:1px solid #dee2e6; }
 .filial-block td.td-num { text-align:right;font-variant-numeric:tabular-nums; }
 .row-subtotal td { background:#e9ecef;font-weight:700; }
-.row-total td { background:#343a40;color:#fff;font-weight:700; }
-.badge-tab { cursor:pointer;padding:6px 18px;border-radius:20px;border:2px solid #343a40;color:#343a40;background:#fff;font-size:.8rem;font-weight:600;transition:.15s; }
-.badge-tab.active { background:#343a40;color:#fff; }
+.row-total td { background:#1f3864;color:#fff;font-weight:700; }
+.badge-tab { cursor:pointer;padding:6px 18px;border-radius:20px;border:2px solid #1f3864;color:#1f3864;background:#fff;font-size:.8rem;font-weight:600;transition:.15s; }
+.badge-tab.active { background:#1f3864;color:#fff; }
 .var-pos { color:#198754;font-weight:600; }
 .var-neg { color:#dc3545;font-weight:600; }
 #printArea { display:none; }

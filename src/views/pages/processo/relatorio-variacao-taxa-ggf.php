@@ -26,9 +26,9 @@ if (!$acessoProcesso) {
 .ggf-table td { padding:3px 8px;border:1px solid #dee2e6;text-align:right; }
 .ggf-table td.col-left { text-align:left;white-space:normal; }
 .ggf-table td.td-zero { color:#bbb; }
-.row-tipo td { background:#343a40;color:#fff;font-weight:700;text-align:left; }
+.row-tipo td { background:#1f3864;color:#fff;font-weight:700;text-align:left; }
 .row-subtotal td { background:#e9ecef;font-weight:700; }
-.row-total td { background:#343a40;color:#fff;font-weight:700; }
+.row-total td { background:#1f3864;color:#fff;font-weight:700; }
 #printArea { display:none; }
 #printArea.visible { display:block; }
 @media print {
