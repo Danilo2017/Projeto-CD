@@ -263,7 +263,7 @@ if (!$acessoProcesso) {
             totQtde += fd.qtde; totCusto += fd.custo; totVar += fd.var;
 
             html += `<tr data-click="filial" data-filial="${filial}"
-                         style="cursor:pointer;font-weight:700;"
+                         style="cursor:pointer;background:#1f3864;color:#fff;font-weight:700;"
                          title="Duplo clique para ver as famílias">
                 <td>Filial ${filial}
                     <span style="opacity:.65;font-size:.72rem;margin-left:6px;">${Object.keys(fd.familias).length} família(s)</span>
