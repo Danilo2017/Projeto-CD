@@ -118,13 +118,20 @@ $pedidosSub = match(true) {
     default => ''
 };
 $processoSub = match(true) {
-    $pActive === 'processo-troca-almox'           => 'troca-almox',
-    $pActive === 'processo-troca-almox-carga'     => 'troca-almox-carga',
-    $pActive === 'processo-troca-almox-pedido'    => 'troca-almox-pedido',
-    $pActive === 'processo-troca-tipo-nf'         => 'troca-tipo-nf',
-    $pActive === 'processo-transferencia-estoque' => 'transferencia-estoque',
+    $pActive === 'processo-troca-almox'              => 'troca-almox',
+    $pActive === 'processo-troca-almox-carga'        => 'troca-almox-carga',
+    $pActive === 'processo-troca-almox-pedido'       => 'troca-almox-pedido',
+    $pActive === 'processo-troca-tipo-nf'            => 'troca-tipo-nf',
+    $pActive === 'processo-transferencia-estoque'    => 'transferencia-estoque',
+    $pActive === 'processo-relatorio-mov-estoque'                 => 'relatorio-mov-estoque',
+    $pActive === 'processo-relatorio-mov-estoque-refugo'          => 'relatorio-mov-estoque-refugo',
+    $pActive === 'processo-relatorio-mov-estoque-variacao-custo'  => 'relatorio-mov-estoque-variacao-custo',
+    $pActive === 'processo-relatorio-variacao-taxa-ggf'           => 'relatorio-variacao-taxa-ggf',
+    $pActive === 'processo-relatorio-consumo-thermoplast'         => 'relatorio-consumo-thermoplast',
+    $pActive === 'processo-relatorio-consumo-demanda-espuma'      => 'relatorio-consumo-demanda-espuma',
     default => ''
 };
+$processoRelSgAtivo = str_starts_with($processoSub, 'relatorio-');
 
 $pdSub = match(true) {
     $pActive === 'pd-inativacao-preco' => 'inativacao-preco',
@@ -297,6 +304,35 @@ $userName = $user_login ?? 'Usuário';
                         Transferência de Estoque
                     </a>
                 </li>
+
+                <!-- ── Relatórios ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $processoRelSgAtivo ? 'active open' : '' ?>">
+                        <span>Relatórios</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $processoRelSgAtivo ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>processo-relatorio-mov-estoque"
+                               class="pcp-sub-sublink <?= $processoSub === 'relatorio-mov-estoque' ? 'active' : '' ?>">
+                            Mov. de Estoque Rateio</a></li>
+                        <li><a href="<?= $base ?>processo-relatorio-mov-estoque-refugo"
+                               class="pcp-sub-sublink <?= $processoSub === 'relatorio-mov-estoque-refugo' ? 'active' : '' ?>">
+                            Mov. de Estoque Refugo</a></li>
+                        <li><a href="<?= $base ?>processo-relatorio-mov-estoque-variacao-custo"
+                               class="pcp-sub-sublink <?= $processoSub === 'relatorio-mov-estoque-variacao-custo' ? 'active' : '' ?>">
+                            Mov. de Estoque Var. Custo</a></li>
+                        <li><a href="<?= $base ?>processo-relatorio-variacao-taxa-ggf"
+                               class="pcp-sub-sublink <?= $processoSub === 'relatorio-variacao-taxa-ggf' ? 'active' : '' ?>">
+                            Variação Taxa GGF</a></li>
+                        <li><a href="<?= $base ?>processo-relatorio-consumo-thermoplast"
+                               class="pcp-sub-sublink <?= $processoSub === 'relatorio-consumo-thermoplast' ? 'active' : '' ?>">
+                            Consumo de Thermoplast</a></li>
+                        <li><a href="<?= $base ?>processo-relatorio-consumo-demanda-espuma"
+                               class="pcp-sub-sublink <?= $processoSub === 'relatorio-consumo-demanda-espuma' ? 'active' : '' ?>">
+                            Consumo Demanda Espuma</a></li>
+                    </ul>
+                </li>
+
             </ul>
         </li>
         <?php endif; ?>
@@ -493,7 +529,7 @@ $userName = $user_login ?? 'Usuário';
         <?php if ($acessoPd): ?>
         <li class="sidebar-group" id="grpPd">
             <button class="sidebar-group-btn <?= $activeGroup === 'pd' ? 'active open' : '' ?>">
-                <i class="bi bi-flask"></i>
+                <i class="bi bi-lightbulb"></i>
                 <span>P&amp;D</span>
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>

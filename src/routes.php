@@ -242,6 +242,24 @@ $router->get('/processo-api-transf-almox',               'Processo\\Transferenci
 $router->post('/processo-api-transf-saldo',              'Processo\\TransferenciaEstoqueController@buscarSaldo',        true);
 $router->post('/processo-api-transf-executar',           'Processo\\TransferenciaEstoqueController@executar',           true);
 
+$router->get('/processo-relatorio-mov-estoque',              'Processo\\MovEstoqueRelatorioController@index',        true);
+$router->post('/processo-api-relatorio-mov-estoque',         'Processo\\MovEstoqueRelatorioController@listar',       true);
+
+$router->get('/processo-relatorio-mov-estoque-refugo',              'Processo\\MovEstoqueRefugoPerdaController@index',         true);
+$router->post('/processo-api-relatorio-mov-estoque-refugo',         'Processo\\MovEstoqueRefugoPerdaController@listar',        true);
+
+$router->get('/processo-relatorio-mov-estoque-variacao-custo',      'Processo\\MovEstoqueVariacaoCustoController@index',       true);
+$router->post('/processo-api-relatorio-mov-estoque-variacao-custo', 'Processo\\MovEstoqueVariacaoCustoController@listar',      true);
+
+$router->get('/processo-relatorio-variacao-taxa-ggf',               'Processo\\VariacaoTaxaGgfController@index',               true);
+$router->post('/processo-api-relatorio-variacao-taxa-ggf',          'Processo\\VariacaoTaxaGgfController@listar',              true);
+
+$router->get('/processo-relatorio-consumo-thermoplast',             'Processo\\ConsumoThermoplastController@index',            true);
+$router->post('/processo-api-relatorio-consumo-thermoplast',        'Processo\\ConsumoThermoplastController@listar',           true);
+
+$router->get('/processo-relatorio-consumo-demanda-espuma',          'Processo\\ConsumoDemandaEspumaController@index',          true);
+$router->post('/processo-api-relatorio-consumo-demanda-espuma',     'Processo\\ConsumoDemandaEspumaController@listar',         true);
+
 // ========== PCP ==========
 $router->get('/pcp-relatorio-producao',      'PCP\\RelatorioProdController@index',        true);
 $router->post('/pcp-api-relatorio-producao', 'PCP\\RelatorioProdController@buscar',       true);
@@ -305,6 +323,8 @@ $router->post('/pcp-api-relatorio-pcp-cordao',              'PCP\\RelatorioProdC
 
 // ========== Rotas do P&D ==========
 $router->get('/pd-inativacao-preco',          'PD\\InativacaoPrecoController@index',              true);
+$router->get('/pd-api-listar-filiais',         'PD\\InativacaoPrecoController@listarFiliais',         true);
+$router->post('/pd-api-pedidos-pendentes',     'PD\\InativacaoPrecoController@buscarPedidosPendentes', true);
 $router->post('/pd-api-buscar-itens',          'PD\\InativacaoPrecoController@buscarItens',        true);
 $router->get('/pd-api-listar-cadastros',       'PD\\InativacaoPrecoController@listarCadastros',    true);
 $router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@cadastrarItens',     true);
