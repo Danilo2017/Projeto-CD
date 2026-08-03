@@ -6,6 +6,12 @@ use core\Database;
 
 class VariacaoNfe
 {
+    public static function listarEmpresas(): array
+    {
+        $result = Database::switchParams('focco', [], 'acesso.empresa.listar', true);
+        return $result['retorno'] ?? [];
+    }
+
     public static function listar(string $dtIni, string $dtFim, int $codEmp): array
     {
         $dtIni  = preg_replace('/[^0-9\/]/', '', $dtIni);

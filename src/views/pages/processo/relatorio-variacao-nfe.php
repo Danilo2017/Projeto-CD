@@ -54,16 +54,13 @@ if (!$acessoProcesso) {
             </div>
             <div class="col-auto">
                 <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Empresa</label>
-                <select id="inpEmpresa" class="form-control form-control-sm" style="max-width:160px;">
-                    <option value="1">Empresa 1</option>
-                    <option value="2">Empresa 2</option>
-                    <option value="3">Empresa 3</option>
-                    <option value="4">Empresa 4</option>
-                    <option value="5">Empresa 5</option>
-                    <option value="13">Empresa 13</option>
-                    <option value="14">Empresa 14</option>
-                    <option value="15">Empresa 15</option>
-                    <option value="16">Empresa 16</option>
+                <select id="inpEmpresa" class="form-select form-select-sm" style="min-width:260px;">
+                    <option value="">Selecione...</option>
+                    <?php foreach ($empresas as $emp): ?>
+                        <option value="<?= intval($emp['CODIGO']) ?>">
+                            FL <?= htmlspecialchars($emp['CODIGO']) ?> — <?= htmlspecialchars($emp['RAZAO_SOCIAL']) ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-auto">
@@ -225,9 +222,10 @@ if (!$acessoProcesso) {
     btnGerar.addEventListener('click', async function () {
         const dtIniIso = document.getElementById('inpDtIni').value;
         const dtFimIso = document.getElementById('inpDtFim').value;
-        const codEmp   = parseInt(document.getElementById('inpEmpresa').value) || 1;
+        const codEmp   = parseInt(document.getElementById('inpEmpresa').value) || 0;
 
         if (!dtIniIso || !dtFimIso) { alert('Informe as datas de início e fim.'); return; }
+        if (!codEmp) { alert('Selecione a empresa.'); return; }
 
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';

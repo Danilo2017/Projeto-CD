@@ -9,7 +9,8 @@ class VariacaoNfeController extends Controller
 {
     public function index(): void
     {
-        $this->render('processo/relatorio-variacao-nfe', []);
+        $empresas = \src\models\Processo\VariacaoNfe::listarEmpresas();
+        $this->render('processo/relatorio-variacao-nfe', compact('empresas'));
     }
 
     public function listar(): void
