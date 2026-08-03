@@ -129,6 +129,7 @@ $processoSub = match(true) {
     $pActive === 'processo-relatorio-variacao-taxa-ggf'           => 'relatorio-variacao-taxa-ggf',
     $pActive === 'processo-relatorio-consumo-thermoplast'         => 'relatorio-consumo-thermoplast',
     $pActive === 'processo-relatorio-consumo-demanda-espuma'      => 'relatorio-consumo-demanda-espuma',
+    $pActive === 'processo-relatorio-variacao-nfe'              => 'relatorio-variacao-nfe',
     default => ''
 };
 $processoRelSgAtivo = str_starts_with($processoSub, 'relatorio-');
@@ -330,6 +331,9 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>processo-relatorio-consumo-demanda-espuma"
                                class="pcp-sub-sublink <?= $processoSub === 'relatorio-consumo-demanda-espuma' ? 'active' : '' ?>">
                             Consumo Demanda Espuma</a></li>
+                        <li><a href="<?= $base ?>processo-relatorio-variacao-nfe"
+                               class="pcp-sub-sublink <?= $processoSub === 'relatorio-variacao-nfe' ? 'active' : '' ?>">
+                            Variação NFE</a></li>
                     </ul>
                 </li>
 

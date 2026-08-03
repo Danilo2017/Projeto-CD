@@ -260,6 +260,9 @@ $router->post('/processo-api-relatorio-consumo-thermoplast',        'Processo\\C
 $router->get('/processo-relatorio-consumo-demanda-espuma',          'Processo\\ConsumoDemandaEspumaController@index',          true);
 $router->post('/processo-api-relatorio-consumo-demanda-espuma',     'Processo\\ConsumoDemandaEspumaController@listar',         true);
 
+$router->get('/processo-relatorio-variacao-nfe',                    'Processo\\VariacaoNfeController@index',                   true);
+$router->post('/processo-api-relatorio-variacao-nfe',               'Processo\\VariacaoNfeController@listar',                  true);
+
 // ========== PCP ==========
 $router->get('/pcp-relatorio-producao',      'PCP\\RelatorioProdController@index',        true);
 $router->post('/pcp-api-relatorio-producao', 'PCP\\RelatorioProdController@buscar',       true);
