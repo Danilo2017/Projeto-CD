@@ -3,6 +3,7 @@
 /** @var array    $rotas_permitidas */
 /** @var string   $base */
 /** @var callable $render */
+/** @var array    $empresas */
 $acessoProcesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoProcesso) {
     header('Location: ' . $base . 'sem-acesso');
@@ -54,7 +55,7 @@ if (!$acessoProcesso) {
             </div>
             <div class="col-auto">
                 <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Empresa</label>
-                <select id="inpEmpresa" class="form-control form-control-sm" style="max-width:160px;font-size:.8rem;">
+                <select id="inpEmpresa" class="form-select" style="max-width:160px;font-size:.8rem;height:31px;padding-top:.25rem;padding-bottom:.25rem;">
                     <option value="">Selecione...</option>
                     <?php foreach ($empresas as $emp): ?>
                         <option value="<?= intval($emp['CODIGO']) ?>">
