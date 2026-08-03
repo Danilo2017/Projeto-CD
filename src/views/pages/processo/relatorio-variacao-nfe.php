@@ -54,7 +54,7 @@ if (!$acessoProcesso) {
             </div>
             <div class="col-auto">
                 <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Empresa</label>
-                <select id="inpEmpresa" class="form-control form-control-sm" style="max-width:160px;">
+                <select id="inpEmpresa" class="form-control form-control-sm" style="max-width:160px;font-size:.8rem;">
                     <option value="">Selecione...</option>
                     <?php foreach ($empresas as $emp): ?>
                         <option value="<?= intval($emp['CODIGO']) ?>">
