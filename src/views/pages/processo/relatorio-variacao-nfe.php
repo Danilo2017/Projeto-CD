@@ -54,7 +54,17 @@ if (!$acessoProcesso) {
             </div>
             <div class="col-auto">
                 <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Empresa</label>
-                <input type="number" id="inpEmpresa" class="form-control form-control-sm" value="1" min="1" style="max-width:80px;">
+                <select id="inpEmpresa" class="form-select form-select-sm" style="max-width:160px;">
+                    <option value="1">Empresa 1</option>
+                    <option value="2">Empresa 2</option>
+                    <option value="3">Empresa 3</option>
+                    <option value="4">Empresa 4</option>
+                    <option value="5">Empresa 5</option>
+                    <option value="13">Empresa 13</option>
+                    <option value="14">Empresa 14</option>
+                    <option value="15">Empresa 15</option>
+                    <option value="16">Empresa 16</option>
+                </select>
             </div>
             <div class="col-auto">
                 <button id="btnGerar" class="btn btn-sm btn-primary">
