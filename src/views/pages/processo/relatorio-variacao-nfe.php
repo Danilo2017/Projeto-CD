@@ -201,13 +201,13 @@ if (!$acessoProcesso) {
             r.DESC_TECNICA ?? '',
             r.NOTA_ANTERIOR ?? '',
             fmtData(r.DATA_ANTERIOR),
-            parseFloat(r.QTDE_ANTERIOR ?? 0).toFixed(4),
-            parseFloat(r.VALOR_ANTERIOR ?? 0).toFixed(2),
+            fmt4(r.QTDE_ANTERIOR),
+            fmt2(r.VALOR_ANTERIOR),
             r.NOTA_ATUAL ?? '',
             fmtData(r.DATA_ATUAL),
-            parseFloat(r.QTDE_ATUAL ?? 0).toFixed(4),
-            parseFloat(r.VALOR_ATUAL ?? 0).toFixed(2),
-            parseFloat(r.PERC_VARIACAO ?? 0).toFixed(2) + '%',
+            fmt4(r.QTDE_ATUAL),
+            fmt2(r.VALOR_ATUAL),
+            parseFloat(r.PERC_VARIACAO ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%',
         ]);
 
         const csv = [
