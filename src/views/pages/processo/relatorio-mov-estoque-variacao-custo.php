@@ -420,7 +420,13 @@ if (!$acessoProcesso) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dt_ini: isoParaBr(dtIniIso), dt_fim: isoParaBr(dtFimIso) }),
             });
-            const data = await res.json();
+            const rawText = await res.text();
+            let data;
+            try { data = JSON.parse(rawText); }
+            catch (parseErr) {
+                msgEl.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Erro do servidor:<br><pre style="font-size:.7rem;max-height:200px;overflow:auto;">${rawText.substring(0, 2000)}</pre></span>`;
+                return;
+            }
 
             if (data.error) {
                 msgEl.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ${data.error}</span>`;
