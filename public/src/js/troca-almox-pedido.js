@@ -1,6 +1,6 @@
 'use strict';
 
-const hEmprId        = document.getElementById('hEmprId');
+const selEmpresa     = document.getElementById('selEmpresa');
 const txtNumeros     = document.getElementById('txtNumeros');
 const btnBuscar      = document.getElementById('btnBuscar');
 const secaoItens     = document.getElementById('secaoItens');
@@ -53,10 +53,10 @@ function parseNumeros(txt) {
     )];
 }
 
-/* ── Carregar almoxarifados da empresa da sessão ─────── */
+/* ── Carregar almoxarifados da empresa selecionada ──── */
 async function carregarAlmoxarifados() {
-    const emprId = hEmprId.value;
-    if (!emprId) return;
+    const emprId = selEmpresa.value;
+    if (!emprId) { almoxarifados = []; return; }
     try {
         const data = await fetchJson(`processo-api-almoxarifados?empr_id=${emprId}`);
         almoxarifados = data ?? [];
@@ -65,7 +65,12 @@ async function carregarAlmoxarifados() {
     }
 }
 
-carregarAlmoxarifados();
+selEmpresa.addEventListener('change', () => {
+    limparAlmox();
+    secaoItens.classList.add('d-none');
+    secaoResultado.classList.add('d-none');
+    carregarAlmoxarifados();
+});
 
 /* ── Validar cód. almoxarifado ao digitar ───────────── */
 inpCodAlmox.addEventListener('input', () => {
@@ -87,7 +92,9 @@ inpCodAlmox.addEventListener('input', () => {
 
 /* ── Buscar itens ────────────────────────────────────── */
 btnBuscar.addEventListener('click', async () => {
+    const emprId     = parseInt(selEmpresa.value, 10);
     const numPedidos = parseNumeros(txtNumeros.value);
+    if (!emprId)          { alert('Selecione a empresa.'); return; }
     if (!numPedidos.length) { alert('Informe ao menos um número de pedido.'); return; }
 
     setLoading(btnBuscar, true, '<i class="bi bi-search me-1"></i> Buscar Itens');
@@ -101,7 +108,7 @@ btnBuscar.addEventListener('click', async () => {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
-                empr_id:     parseInt(hEmprId.value, 10),
+                empr_id:     emprId,
                 num_pedidos: numPedidos,
             }),
         });
@@ -153,7 +160,7 @@ btnTrocar.addEventListener('click', async () => {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
-                empr_id:       parseInt(hEmprId.value, 10),
+                empr_id:       parseInt(selEmpresa.value, 10),
                 num_pedidos:   numPedidosAtual,
                 almox_dest_id: parseInt(almoxDestId, 10),
             }),

@@ -4,7 +4,7 @@
  * @var array    $rotas_permitidas
  * @var string   $base
  * @var callable $render
- * @var int      $emprId
+ * @var array    $empresas
  */
 $acesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acesso) {
@@ -13,7 +13,7 @@ if (!$acesso) {
 }
 ?>
 <?= $render('header', [
-    'pageTitle'  => 'Troca de Almoxarifado por Ordem',
+    'pageTitle'  => 'Troca de Almoxarifado por Pedido',
     'showNavbar' => true,
     'pageActive' => 'processo-troca-almox-pedido',
     'customCSS'  => [],
@@ -23,32 +23,42 @@ if (!$acesso) {
 
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h4 class="mb-0 fw-bold">
-            <i class="bi bi-box-arrow-in-right me-2 text-primary"></i>Troca de Almoxarifado por Ordem
+            <i class="bi bi-box-arrow-in-right me-2 text-primary"></i>Troca de Almoxarifado por Pedido
         </h4>
     </div>
 
     <!-- Busca -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white fw-semibold">
-            <i class="bi bi-search me-1"></i> Buscar Itens das Ordens
+            <i class="bi bi-search me-1"></i> Buscar Itens dos Pedidos
         </div>
         <div class="card-body">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
+                    <label class="form-label fw-semibold">Empresa</label>
+                    <select id="selEmpresa" class="form-select">
+                        <option value="">Selecione...</option>
+                        <?php foreach ($empresas as $emp): ?>
+                            <option value="<?= intval($emp['ID']) ?>">
+                                FL <?= htmlspecialchars($emp['CODIGO']) ?> — <?= htmlspecialchars($emp['RAZAO_SOCIAL']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">
-                        Nº das Ordens
+                        Nº dos Pedidos
                         <small class="text-muted fw-normal">(separados por vírgula ou linha)</small>
                     </label>
                     <textarea id="txtNumeros" class="form-control" rows="2"
                               placeholder="Ex: 3638, 3639, 3640"></textarea>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <button id="btnBuscar" class="btn btn-primary w-100">
                         <i class="bi bi-search me-1"></i> Buscar Itens
                     </button>
                 </div>
             </div>
-            <input type="hidden" id="hEmprId" value="<?= intval($emprId) ?>">
         </div>
     </div>
 
@@ -61,7 +71,7 @@ if (!$acesso) {
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table id="tabelaItensOrdem" class="table table-hover table-sm mb-0">
+                    <table id="tabelaItensPedido" class="table table-hover table-sm mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Pedido</th>

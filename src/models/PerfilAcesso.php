@@ -22,7 +22,59 @@ class PerfilAcesso
     public static function listarPerfisAtivos()
     {
         $result = Database::switchParams('focco', [], 'acesso.perfil.listarAtivos', true);
-        return $result['retorno'] ?? [];
+        $perfis = $result['retorno'] ?? [];
+
+        $temPD = false;
+        foreach ($perfis as $p) {
+            if (strtoupper($p['NOME'] ?? '') === 'P&D') { $temPD = true; break; }
+        }
+        if (!$temPD) {
+            $pd = self::garantirPerfilPD();
+            if ($pd !== null) {
+                $perfis[] = $pd;
+            }
+        }
+
+        return $perfis;
+    }
+
+    private static function garantirPerfilPD(): ?array
+    {
+        try {
+            // Verifica se já existe usando switchParams (padrão do projeto)
+            $chkSql = "SELECT ID FROM TGAZIN_PERFIL_ACESSO WHERE NOME = 'P&D'";
+            $chk    = Database::switchParams('focco', [], null, true, false, null, $chkSql);
+            $existing = $chk['retorno'][0] ?? null;
+
+            if ($existing) {
+                return ['ID_PERFIL' => (int)$existing['ID'], 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
+            }
+
+            // Próximo ID
+            $idSql  = "SELECT NVL(MAX(ID),80)+20 NX FROM TGAZIN_PERFIL_ACESSO";
+            $idRes  = Database::switchParams('focco', [], null, true, false, null, $idSql);
+            $novoId = (int)($idRes['retorno'][0]['NX'] ?? 101);
+
+            // INSERT perfil — padrão do projeto: switchParams + exec('COMMIT')
+            $sqlA = "INSERT INTO TGAZIN_PERFIL_ACESSO (ID, NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ($novoId, 'P&D', 'Acesso ao módulo P&D', 'S', SYSDATE)";
+            $resA = Database::switchParams('focco', [], null, true, false, null, $sqlA);
+            if (!empty($resA['error'])) {
+                return ['ID_PERFIL' => $novoId, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
+            }
+
+            // INSERT rota
+            $sqlR = "INSERT INTO TGAZIN_PERFIL_ROTA (ID, PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                     VALUES ($novoId, $novoId, 'pd', SYSDATE)";
+            Database::switchParams('focco', [], null, true, false, null, $sqlR);
+
+            // Commit explícito (padrão Oracle OCI neste projeto)
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     // ==================== USUÁRIOS X PERFIS ====================

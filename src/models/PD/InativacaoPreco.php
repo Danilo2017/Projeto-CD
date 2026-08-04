@@ -76,26 +76,85 @@ ORDER BY TI.MASCARA ASC";
                 VALUES (SEQ_TGAZIN_PD_INATIV.NEXTVAL, $emprId, $codItem, $tmascItemId,
                         '$descSafe', '$mascaraSafe', SYSDATE, 1)";
             Database::switchParams('focco', [], null, true, true, null, $sql);
-        } catch (\Exception $e) {
+        } catch (\Exception $_) {
             // Tabela não existe ainda — o job funcionará quando ela for criada
         }
     }
 
     // Listagem para exibição na tela — retorna [] silenciosamente se tabela não existir
+    // QTD_ATIVOS: conta preços SIT=1 em TPRECOSVEN_IT (0 = inativo confirmado, >0 = reativado)
     public static function listarCadastros(int $emprId): array
     {
         try {
-            $sql = "SELECT ID, EMPR_ID, COD_ITEM, TMASC_ITEM_ID, DESC_TECNICA, MASCARA,
-                       TO_CHAR(DT_CADASTRO, 'DD/MM/YYYY HH24:MI') DT_CADASTRO,
-                       SIT
-                  FROM TGAZIN_PD_INATIV_PRECO
-                 WHERE EMPR_ID = $emprId
-                 ORDER BY DT_CADASTRO DESC, COD_ITEM ASC";
+            $sql = "SELECT T.ID,
+                          T.EMPR_ID,
+                          T.COD_ITEM,
+                          T.TMASC_ITEM_ID,
+                          T.DESC_TECNICA,
+                          T.MASCARA,
+                          TO_CHAR(T.DT_CADASTRO, 'DD/MM/YYYY HH24:MI') DT_CADASTRO,
+                          T.SIT,
+                          (SELECT COUNT(1)
+                             FROM TPRECOSVEN_IT PI
+                            WHERE PI.SIT           = 1
+                              AND PI.TMASC_ITEM_ID = T.TMASC_ITEM_ID
+                              AND PI.ITCM_ID IN (
+                                  SELECT TC.ID
+                                    FROM TITENS_COMERCIAL TC,
+                                         TITENS_EMPR TE,
+                                         TITENS TI
+                                   WHERE TC.ITEMPR_ID = TE.ID
+                                     AND TE.ITEM_ID   = TI.ID
+                                     AND TE.EMPR_ID   = T.EMPR_ID
+                                     AND TI.COD_ITEM  = T.COD_ITEM
+                              )
+                          ) QTD_ATIVOS
+                     FROM TGAZIN_PD_INATIV_PRECO T
+                    WHERE T.EMPR_ID = $emprId
+                    ORDER BY T.DT_CADASTRO DESC, T.COD_ITEM ASC";
 
             $result = Database::switchParams('focco', [], null, true, true, null, $sql);
             if (!empty($result['error'])) return [];
             return is_array($result['retorno']) ? $result['retorno'] : [];
-        } catch (\Exception $e) {
+        } catch (\Exception $_) {
+            return [];
+        }
+    }
+
+    // Pedidos com saldo para a máscara — exibidos ao clicar no status
+    public static function buscarPedidosPendentes(int $tmascItemId): array
+    {
+        $sql = "SELECT tv.EMPR_ID,
+                       TO_CHAR(tv.DT_GERACAO, 'DD/MM/YYYY') DT_GERACAO,
+                       tv.NUM_PEDIDO,
+                       tv.SIT_PDV,
+                       tv.SIT_FAT,
+                       tv.SIT_FAT_COM,
+                       tv.SIT_FAT_FIN,
+                       tv.SIT_PDV_COM
+                  FROM TITENS_PDV tp,
+                       TPEDIDOS_VENDA tv
+                 WHERE tp.PDV_ID        = tv.ID
+                   AND tp.TMASC_ITEM_ID = $tmascItemId
+                   AND tp.QTDE_SLDO    <> 0
+                 GROUP BY tv.EMPR_ID, tv.NUM_PEDIDO, tv.SIT_PDV, tv.SIT_FAT,
+                          tv.SIT_FAT_COM, tv.SIT_FAT_FIN, tv.SIT_PDV_COM, tv.DT_GERACAO
+                 ORDER BY tv.DT_GERACAO";
+
+        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
+
+    // Filiais disponíveis para seleção na tela
+    public static function listarFiliais(): array
+    {
+        try {
+            $sql = "SELECT DISTINCT EMPR_ID FROM TITENS_EMPR ORDER BY EMPR_ID";
+            $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+            if (!empty($result['error'])) return [];
+            return is_array($result['retorno']) ? $result['retorno'] : [];
+        } catch (\Exception $_) {
             return [];
         }
     }

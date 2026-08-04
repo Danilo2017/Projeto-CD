@@ -16,8 +16,8 @@ class TrocaAlmoxPedidoController extends Controller
 
     public function index(): void
     {
-        $emprId = $this->emprIdSessao();
-        $this->render('processo/troca-almox-pedido', compact('emprId'));
+        $empresas = \src\models\Processo\TrocaAlmoxPedido::listarEmpresas();
+        $this->render('processo/troca-almox-pedido', compact('empresas'));
     }
 
     public function buscarItensPedido(): void

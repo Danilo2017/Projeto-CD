@@ -290,7 +290,7 @@ $userName = $user_login ?? 'Usuário';
                 <li>
                     <a href="<?= $base ?>processo-troca-almox-pedido"
                        class="sidebar-sublink <?= $processoSub === 'troca-almox-pedido' ? 'active' : '' ?>">
-                        Troca Almox. Ordem
+                        Troca Almox. Pedido
                     </a>
                 </li>
                 <li>

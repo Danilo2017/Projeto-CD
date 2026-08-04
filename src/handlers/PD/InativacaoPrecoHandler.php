@@ -73,6 +73,21 @@ class InativacaoPrecoHandler
         ];
     }
 
+    public static function buscarPedidosPendentes(array $dados): array
+    {
+        $tmascId = (int) ($dados['tmasc_item_id'] ?? 0);
+        if ($tmascId <= 0) throw new \Exception('Máscara inválida.', 400);
+
+        $rows = InativacaoPreco::buscarPedidosPendentes($tmascId);
+        return ['success' => true, 'rows' => $rows, 'total' => count($rows)];
+    }
+
+    public static function listarFiliais(): array
+    {
+        $rows = InativacaoPreco::listarFiliais();
+        return ['success' => true, 'rows' => $rows];
+    }
+
     public static function excluirItem(array $dados): array
     {
         $emprId = (int) ($dados['empr_id'] ?? 0);

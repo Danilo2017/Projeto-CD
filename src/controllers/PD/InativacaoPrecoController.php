@@ -20,11 +20,31 @@ class InativacaoPrecoController extends Controller
         $this->render('pd/inativacao-preco', ['emprId' => $emprId]);
     }
 
+    public function buscarPedidosPendentes(): void
+    {
+        try {
+            $body  = self::getBody() ?? [];
+            self::response(InativacaoPrecoHandler::buscarPedidosPendentes($body), 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
+    public function listarFiliais(): void
+    {
+        try {
+            self::response(InativacaoPrecoHandler::listarFiliais(), 200);
+        } catch (\Exception $e) {
+            self::response(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function buscarItens(): void
     {
         try {
             $body  = self::getBody() ?? [];
-            $dados = array_merge($body, ['empr_id' => $this->emprIdSessao()]);
+            $dados = array_merge(['empr_id' => $this->emprIdSessao()], $body);
             self::response(InativacaoPrecoHandler::buscarItens($dados), 200);
         } catch (\Exception $e) {
             $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
@@ -35,8 +55,9 @@ class InativacaoPrecoController extends Controller
     public function listarCadastros(): void
     {
         try {
-            $dados = ['empr_id' => $this->emprIdSessao()];
-            self::response(InativacaoPrecoHandler::listarCadastros($dados), 200);
+            $emprId = (int) ($_GET['empr_id'] ?? 0);
+            if ($emprId <= 0) $emprId = $this->emprIdSessao();
+            self::response(InativacaoPrecoHandler::listarCadastros(['empr_id' => $emprId]), 200);
         } catch (\Exception $e) {
             $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
             self::response(['error' => $e->getMessage()], $code ?: 500);
@@ -47,7 +68,7 @@ class InativacaoPrecoController extends Controller
     {
         try {
             $body  = self::getBody() ?? [];
-            $dados = array_merge($body, ['empr_id' => $this->emprIdSessao()]);
+            $dados = array_merge(['empr_id' => $this->emprIdSessao()], $body);
             self::response(InativacaoPrecoHandler::cadastrarItens($dados), 200);
         } catch (\Exception $e) {
             $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
@@ -59,7 +80,7 @@ class InativacaoPrecoController extends Controller
     {
         try {
             $body  = self::getBody() ?? [];
-            $dados = array_merge($body, ['empr_id' => $this->emprIdSessao()]);
+            $dados = array_merge(['empr_id' => $this->emprIdSessao()], $body);
             self::response(InativacaoPrecoHandler::excluirItem($dados), 200);
         } catch (\Exception $e) {
             $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
