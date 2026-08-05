@@ -2,16 +2,10 @@
     'use strict';
 
     const HISTORICO = [
-        { data: '24/10/2024', alteracao: 'Elaboração Inicial' },
-        { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
+        { data: '05/08/2026', alteracao: 'Elaboração Inicial' },
     ];
 
     const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-
-    // CON_BAS_AU → CONJUGADO; qualquer outro → ROBOTEC
-    function getCategoria(ord) {
-        return (ord === 'CON_BAS_AU') ? 'CONJUGADO' : 'ROBOTEC';
-    }
 
     function dataHoje() {
         const d = new Date();
@@ -21,87 +15,38 @@
     }
 
     function fmt(v) { return (v === null || v === undefined || v === '') ? '' : v; }
-    function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '' : (n === 0 ? '0' : n); }
     function fmtDecimal(v) { const n = parseFloat(v); return isNaN(n) ? '' : n.toFixed(2).replace('.', ','); }
 
-    /* ── Renderiza relatório FPT ─────────────────── */
-    function renderFpt(rows, numLote, dataLote, pillowLinear) {
+    /* ── Renderiza relatório Disco de Corte ────────── */
+    function renderDiscoCorte(rows, numLote, dataLote) {
         if (!rows || rows.length === 0) {
             return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
         }
 
         const hoje = dataHoje();
 
-        let linearRobotec   = 0;
-        let linearConjugado = 0;
-        let totalQtde       = 0;
+        let totalLinear = 0;
+        let totalFatia  = 0;
 
         let corpoTabela = '';
         for (const r of rows) {
-            const qtde   = parseFloat(r.QTDE   || 0);
-            const linear = parseFloat(r.LINEAR || 0);
-            totalQtde += qtde;
-
-            if (getCategoria(fmt(r.ORD)) === 'CONJUGADO') {
-                linearConjugado += linear;
-            } else {
-                linearRobotec += linear;
-            }
+            totalLinear += parseFloat(r.LINEAR || 0);
+            totalFatia  += parseFloat(r.FATIA  || 0);
 
             corpoTabela += `
             <tr>
-                <td>${fmt(r.ORD)}</td>
-                <td>${fmt(r.ITEM)}</td>
-                <td class="td-wrap">${fmt(r.DESCICAO)}</td>
-                <td class="text-center">${fmtNum(r.QTDE)}</td>
-                <td class="text-center">${fmtNum(r.ALT_FAIXA_ACABADA)}</td>
-                <td class="td-wrap">${fmt(r.COD_FITILHO)}</td>
+                <td class="td-wrap">${fmt(r.COD_ITEM_TECIDO)}</td>
+                <td class="text-center">${fmt(r.ALTURA_FAIXA)}</td>
                 <td class="text-center">${fmtDecimal(r.LINEAR)}</td>
-                <td class="text-center">${fmtNum(r.ALT_FAIXA)}</td>
                 <td class="text-center">${fmtDecimal(r.FATIA)}</td>
-                <td class="text-center">${fmt(r.COD_ITEM_TECIDO)}</td>
             </tr>`;
         }
 
-        const linPillow   = parseFloat(pillowLinear || 0);
-        const linRobotec  = linearRobotec / 2;   // ROBOTEC = soma ÷ 2
-        const linFpt      = linearRobotec + linearConjugado;
-        const linTotal    = linRobotec + linearConjugado + linPillow;
-
-        // Linha de subtotal dos dados FPT (QTDE + LINEAR bruto)
-        corpoTabela += `
-        <tr class="subtotal-row">
-            <td colspan="3"></td>
-            <td style="text-align:center">${totalQtde}</td>
-            <td colspan="2"></td>
-            <td style="text-align:center">${fmtDecimal(linFpt)}</td>
-            <td colspan="3"></td>
-        </tr>`;
-
-        // Resumo por categoria
-        corpoTabela += `
-        <tr class="subtotal-row">
-            <td colspan="6" style="text-align:right;font-weight:bold">ROBOTEC:</td>
-            <td style="text-align:center">${fmtDecimal(linRobotec)}</td>
-            <td colspan="3"></td>
-        </tr>
-        <tr class="subtotal-row">
-            <td colspan="6" style="text-align:right;font-weight:bold">CONJUGADO:</td>
-            <td style="text-align:center">${fmtDecimal(linearConjugado)}</td>
-            <td colspan="3"></td>
-        </tr>
-        <tr class="subtotal-row">
-            <td colspan="6" style="text-align:right;font-weight:bold">PILLOW:</td>
-            <td style="text-align:center">${fmtDecimal(linPillow)}</td>
-            <td colspan="3"></td>
-        </tr>`;
-
-        // Total geral
         corpoTabela += `
         <tr class="total-row">
-            <td colspan="6" style="text-align:right">TOTAL:</td>
-            <td style="text-align:center">${fmtDecimal(linTotal)}</td>
-            <td colspan="3"></td>
+            <td colspan="2" style="text-align:right">TOTAL:</td>
+            <td style="text-align:center">${fmtDecimal(totalLinear)}</td>
+            <td style="text-align:center">${fmtDecimal(totalFatia)}</td>
         </tr>`;
 
         return `
@@ -119,23 +64,17 @@
     <div class="pcp-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${hoje}</div>
 
     <div class="pcp-section-title">
-        FPT - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
+        DISCO DE CORTE - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
     </div>
 
     <div style="overflow-x:auto">
     <table class="pcp-table">
         <thead>
             <tr>
-                <th>ORD</th>
-                <th>CODIGO</th>
-                <th>DESCRIÇÃO</th>
-                <th>QTDE</th>
-                <th>ALT FAIXA<br>ACABADA</th>
-                <th>COD FITILHO</th>
-                <th>LINEAR</th>
-                <th>ALT FAIXA</th>
-                <th>FATIA</th>
                 <th>COD ITEM TECIDO</th>
+                <th>ALTURA FAIXA</th>
+                <th>LINEAR</th>
+                <th>FATIA</th>
             </tr>
         </thead>
         <tbody>${corpoTabela}</tbody>
@@ -161,7 +100,7 @@
         const w = window.open('', '_blank');
         w.document.write(`<!DOCTYPE html><html><head>
 <meta charset="utf-8">
-<title>Sequência de Produção — FPT</title>
+<title>Seq. Disco de Corte</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
@@ -178,13 +117,12 @@ body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
 .pcp-table th{background:#1f3864;color:#fff;border:1px solid #999;padding:3px 4px;text-align:center;font-weight:bold;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pcp-table td{border:1px solid #ccc;padding:2px 4px;white-space:nowrap}
 .pcp-table tr:nth-child(even) td{background:#f2f2f2;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.pcp-table tr.subtotal-row td{background:#dce6f1;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pcp-table tr.total-row td{background:#1f3864;color:#fff;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pcp-historico{margin-top:10px;border:1px solid #999;font-size:8pt}
 .pcp-historico table{width:100%;border-collapse:collapse}
 .pcp-historico th{background:#d9d9d9;border:1px solid #999;padding:2px 6px;text-align:center;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pcp-historico td{border:1px solid #ccc;padding:2px 6px}
-@page{size:A4 landscape;margin:8mm}
+@page{size:A4 portrait;margin:8mm}
 @media screen{
   body{background:#6c757d;padding:24px}
   .pcp-section{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);border-radius:3px;margin-bottom:32px;padding:18px 20px}
@@ -221,7 +159,7 @@ body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
             printArea.innerHTML = '';
 
             try {
-                const res  = await fetch('pcp-api-relatorio-fpt', {
+                const res  = await fetch('pcp-api-relatorio-disco-de-corte', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ num_lote: parseInt(numLote) }),
@@ -233,7 +171,7 @@ body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
                     return;
                 }
 
-                printArea.innerHTML = renderFpt(data.fpt_rows || [], numLote, data.data_lote || '', data.pillow_linear || 0);
+                printArea.innerHTML = renderDiscoCorte(data.rows || [], numLote, data.data_lote || '');
                 printArea.className = 'visible';
                 btnImprimir.style.display = '';
 

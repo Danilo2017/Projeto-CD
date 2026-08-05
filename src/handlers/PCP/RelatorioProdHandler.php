@@ -267,6 +267,15 @@ class RelatorioProdHandler
         });
     }
 
+    public static function buscarDiscoCorte(int $emprId, int $numLote): array
+    {
+        return self::cached("pcp.discoCorte.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
+            $rows     = RelatorioProd::buscarDiscoCorte($emprId, $numLote);
+            $dataLote = RelatorioProd::buscarDataLote($emprId, $numLote);
+            return ['success' => true, 'rows' => $rows, 'data_lote' => $dataLote];
+        });
+    }
+
     public static function buscarConjugado(int $emprId, int $numLote): array
     {
         return self::cached("pcp.conjugado.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {

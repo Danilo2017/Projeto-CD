@@ -24,15 +24,22 @@ class PerfilAcesso
         $result = Database::switchParams('focco', [], 'acesso.perfil.listarAtivos', true);
         $perfis = $result['retorno'] ?? [];
 
-        $temPD = false;
+        $temPD         = false;
+        $temQualidade  = false;
         foreach ($perfis as $p) {
-            if (strtoupper($p['NOME'] ?? '') === 'P&D') { $temPD = true; break; }
+            $nome = strtoupper($p['NOME'] ?? '');
+            if ($nome === 'P&D')       $temPD        = true;
+            if ($nome === 'QUALIDADE') $temQualidade = true;
         }
+
         if (!$temPD) {
             $pd = self::garantirPerfilPD();
-            if ($pd !== null) {
-                $perfis[] = $pd;
-            }
+            if ($pd !== null) $perfis[] = $pd;
+        }
+
+        if (!$temQualidade) {
+            $q = self::garantirPerfilQualidade();
+            if ($q !== null) $perfis[] = $q;
         }
 
         return $perfis;
@@ -72,6 +79,42 @@ class PerfilAcesso
             Database::getInstance('focco')->exec('COMMIT');
 
             return ['ID_PERFIL' => $novoId, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private static function garantirPerfilQualidade(): ?array
+    {
+        try {
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'QUALIDADE'");
+            $existing = $chk['retorno'][0] ?? null;
+
+            if ($existing) {
+                return ['ID_PERFIL' => (int)$existing['ID_PERFIL'], 'NOME' => 'Qualidade', 'DESCRICAO' => 'Acesso ao módulo Qualidade'];
+            }
+
+            /* ID_PERFIL e ID_ROTA são IDENTITY — Oracle gera automaticamente */
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('Qualidade', 'Acesso ao modulo Qualidade', 'S', SYSDATE)");
+            if (!empty($resA['error'])) {
+                return null;
+            }
+
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'QUALIDADE'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
+
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'qualidade', SYSDATE)");
+
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId, 'NOME' => 'Qualidade', 'DESCRICAO' => 'Acesso ao modulo Qualidade'];
         } catch (\Throwable $e) {
             return null;
         }

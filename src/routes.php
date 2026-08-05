@@ -294,6 +294,8 @@ $router->get('/pcp-relatorio-robotec',                 'PCP\\RelatorioProdContro
 $router->post('/pcp-api-relatorio-robotec',            'PCP\\RelatorioProdController@buscarRobotec',         true);
 $router->get('/pcp-relatorio-rolo-bordado',            'PCP\\RelatorioProdController@indexRoloBordado',      true);
 $router->post('/pcp-api-relatorio-rolo-bordado',       'PCP\\RelatorioProdController@buscarRoloBordado',     true);
+$router->get('/pcp-relatorio-disco-de-corte',          'PCP\\RelatorioProdController@indexDiscoCorte',       true);
+$router->post('/pcp-api-relatorio-disco-de-corte',     'PCP\\RelatorioProdController@buscarDiscoCorte',      true);
 $router->get('/pcp-relatorio-conjugado',               'PCP\\RelatorioProdController@indexConjugado',        true);
 $router->post('/pcp-api-relatorio-conjugado',          'PCP\\RelatorioProdController@buscarConjugado',       true);
 $router->get('/pcp-relatorio-trave-peze',              'PCP\\RelatorioProdController@indexTravePeze',        true);
@@ -332,6 +334,14 @@ $router->post('/pd-api-buscar-itens',          'PD\\InativacaoPrecoController@bu
 $router->get('/pd-api-listar-cadastros',       'PD\\InativacaoPrecoController@listarCadastros',    true);
 $router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@cadastrarItens',     true);
 $router->post('/pd-api-excluir-item',          'PD\\InativacaoPrecoController@excluirItem',        true);
+
+// ========== Rotas de Qualidade ==========
+$router->get('/qualidade-rastreabilidade-costura',              'Qualidade\\RastreabilidadeController@indexCostura',      true);
+$router->post('/qualidade-api-rastreabilidade-costura',         'Qualidade\\RastreabilidadeController@buscarCostura',     true);
+$router->get('/qualidade-rastreabilidade-tampo-bordado',        'Qualidade\\RastreabilidadeController@indexTampoBordado',   true);
+$router->post('/qualidade-api-rastreabilidade-tampo-bordado',   'Qualidade\\RastreabilidadeController@buscarTampoBordado',  true);
+$router->get('/qualidade-rastreabilidade-linha-montagem',       'Qualidade\\RastreabilidadeController@indexLinhaMontagem',  true);
+$router->post('/qualidade-api-rastreabilidade-linha-montagem',  'Qualidade\\RastreabilidadeController@buscarLinhaMontagem', true);
 
 // TEMPORÁRIO — remover após inserção do SQL verticalEspuma
 $router->get('/tmp-insert-vertical-espuma', 'AdminSqlsController@tmpInsertVerticalEspuma', true);

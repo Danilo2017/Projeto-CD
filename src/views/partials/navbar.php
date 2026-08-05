@@ -13,6 +13,7 @@ $acessoProcesso    = $is_admin || in_array('processo',    $rotas_permitidas) || 
 $acessoCarga       = $is_admin || in_array('carga',       $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPd          = $is_admin || in_array('pd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoQualidade   = $is_admin || in_array('qualidade',   $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
@@ -24,6 +25,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'carga-')                                                              => 'carga',
     str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
     str_starts_with($pActive, 'pd-')                                                                => 'pd',
+    str_starts_with($pActive, 'qualidade-')                                                         => 'qualidade',
     $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
@@ -57,6 +59,7 @@ $pcpSub = match(true) {
     $pActive === 'pcp-relatorio-manta-mesa'         => 'relatorio-manta-mesa',
     $pActive === 'pcp-relatorio-mesa-de-corte'      => 'relatorio-mesa-de-corte',
     $pActive === 'pcp-relatorio-rolo-bordado'       => 'relatorio-rolo-bordado',
+    $pActive === 'pcp-relatorio-disco-de-corte'    => 'relatorio-disco-de-corte',
     $pActive === 'pcp-relatorio-tapecaria'          => 'relatorio-tapecaria',
     $pActive === 'pcp-relatorio-robotec'            => 'relatorio-robotec',
     $pActive === 'pcp-relatorio-conjugado'          => 'relatorio-conjugado',
@@ -89,6 +92,7 @@ $pcpToSubGrp = [
     'relatorio-horizontal-espuma'   => ['laminacao'],
     'relatorio-mesa-de-corte'       => ['costura'],
     'relatorio-rolo-bordado'        => ['costura', 'bordadeira'],
+    'relatorio-disco-de-corte'     => ['costura'],
     'relatorio-molas-bordas'        => ['caixote'],
     'relatorio-pcp-molas'           => ['pcp-molas'],
     'relatorio-pcp-cordao'          => ['pcp-molas'],
@@ -138,6 +142,14 @@ $pdSub = match(true) {
     $pActive === 'pd-inativacao-preco' => 'inativacao-preco',
     default => ''
 };
+
+$qualidadeSub = match(true) {
+    $pActive === 'qualidade-rastreabilidade-costura'         => 'rastreabilidade-costura',
+    $pActive === 'qualidade-rastreabilidade-tampo-bordado'  => 'rastreabilidade-tampo-bordado',
+    $pActive === 'qualidade-rastreabilidade-linha-montagem' => 'rastreabilidade-linha-montagem',
+    default => ''
+};
+$qualidadeRastrSgAtivo = str_starts_with($qualidadeSub, 'rastreabilidade-');
 
 $userName = $user_login ?? 'Usuário';
 ?>
@@ -447,6 +459,9 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>pcp-relatorio-rolo-bordado"
                                class="pcp-sub-sublink <?= $pcpSub === 'relatorio-rolo-bordado' ? 'active' : '' ?>">
                             Seq. Rolo Bordado</a></li>
+                        <li><a href="<?= $base ?>pcp-relatorio-disco-de-corte"
+                               class="pcp-sub-sublink <?= $pcpSub === 'relatorio-disco-de-corte' ? 'active' : '' ?>">
+                            Seq. Disco de Corte</a></li>
                     </ul>
                 </li>
 
@@ -544,6 +559,38 @@ $userName = $user_login ?? 'Usuário';
                         Inativação de Preço
                     </a>
                 </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoQualidade): ?>
+        <li class="sidebar-group" id="grpQualidade">
+            <button class="sidebar-group-btn <?= $activeGroup === 'qualidade' ? 'active open' : '' ?>">
+                <i class="bi bi-shield-check"></i>
+                <span>Qualidade</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'qualidade' ? 'open' : '' ?>">
+
+                <!-- ── Rastreabilidade ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $qualidadeRastrSgAtivo ? 'active open' : '' ?>">
+                        <span>Rastreabilidade</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $qualidadeRastrSgAtivo ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-costura"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-costura' ? 'active' : '' ?>">
+                            Tampo Liso</a></li>
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-tampo-bordado"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-tampo-bordado' ? 'active' : '' ?>">
+                            Tampo Bordado</a></li>
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-linha-montagem"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-linha-montagem' ? 'active' : '' ?>">
+                            Linha de Montagem</a></li>
+                    </ul>
+                </li>
+
             </ul>
         </li>
         <?php endif; ?>

@@ -161,6 +161,11 @@ class RelatorioProd
         return self::executar('pcp.relatorioProd.roloBordadoDetalhe', $emprId, $numLote);
     }
 
+    public static function buscarDiscoCorte(int $emprId, int $numLote): array
+    {
+        return self::executar('pcp.relatorioProd.discoCorte', $emprId, $numLote);
+    }
+
     public static function buscarVerticalEspuma(int $emprId, int $numLote): array
     {
         $sql = "SELECT TABLES.ORD                       ORD,
