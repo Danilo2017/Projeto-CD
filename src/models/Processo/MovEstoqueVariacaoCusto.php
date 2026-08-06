@@ -6,12 +6,15 @@ use core\Database;
 
 class MovEstoqueVariacaoCusto
 {
-    public static function listar(string $dtIni, string $dtFim, string $dtIniAnt, string $dtFimAnt): array
+    public static function listar(string $dtIni, string $dtFim, string $dtIniAnt, string $dtFimAnt, int $emprId = 0): array
     {
         $dtIni    = preg_replace('/[^0-9\/]/', '', $dtIni);
         $dtFim    = preg_replace('/[^0-9\/]/', '', $dtFim);
         $dtIniAnt = preg_replace('/[^0-9\/]/', '', $dtIniAnt);
         $dtFimAnt = preg_replace('/[^0-9\/]/', '', $dtFimAnt);
+        $emprId   = (int) $emprId;
+
+        $filtroEmpr = $emprId > 0 ? "AND VW.EMPR_ID = $emprId" : '';
 
         $sql = "
 SELECT VW.EMPR_ID                                                               EMPR_ID,
@@ -41,7 +44,9 @@ SELECT VW.EMPR_ID                                                               
  WHERE TGRP_CLAS_ITE.ID          = TITENS_ESTOQUE.GRP_CLAS_ID
    AND TITENS_ESTOQUE.ID         = VW.ITESTQ_ID
    AND VW.DESC_MOV_ESTQ         IN ('ENTREGA PRODUCAO PLANEJADA','REQUISICAO PLANEJADA')
+   AND VW.DT BETWEEN TO_DATE('$dtIniAnt','DD/MM/RRRR') AND TO_DATE('$dtFim','DD/MM/RRRR')
    AND TGRP_CLAS_ITE.COD_GRP_ITE LIKE '10.%'
+   $filtroEmpr
 GROUP BY VW.EMPR_ID,
          VW.COD_ITEM,
          VW.ITEM || ' - ' || VW.MASCARA,

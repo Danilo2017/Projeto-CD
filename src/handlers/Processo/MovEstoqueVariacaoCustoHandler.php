@@ -6,7 +6,7 @@ use src\models\Processo\MovEstoqueVariacaoCusto;
 
 class MovEstoqueVariacaoCustoHandler
 {
-    public static function listar(array $dados): array
+    public static function listar(array $dados, int $emprId = 0): array
     {
         $dtIni = trim((string) ($dados['dt_ini'] ?? ''));
         $dtFim = trim((string) ($dados['dt_fim'] ?? ''));
@@ -18,7 +18,7 @@ class MovEstoqueVariacaoCustoHandler
         $dtIniAnt = (clone $base)->modify('first day of previous month')->format('d/m/Y');
         $dtFimAnt = (clone $base)->modify('last day of previous month')->format('d/m/Y');
 
-        $rows = MovEstoqueVariacaoCusto::listar($dtIni, $dtFim, $dtIniAnt, $dtFimAnt);
+        $rows = MovEstoqueVariacaoCusto::listar($dtIni, $dtFim, $dtIniAnt, $dtFimAnt, $emprId);
 
         return [
             'success'    => true,
