@@ -147,9 +147,14 @@ $qualidadeSub = match(true) {
     $pActive === 'qualidade-rastreabilidade-costura'         => 'rastreabilidade-costura',
     $pActive === 'qualidade-rastreabilidade-tampo-bordado'  => 'rastreabilidade-tampo-bordado',
     $pActive === 'qualidade-rastreabilidade-linha-montagem' => 'rastreabilidade-linha-montagem',
+    $pActive === 'qualidade-rastreabilidade-molas'          => 'rastreabilidade-molas',
+    $pActive === 'qualidade-rastreabilidade-cordao-molas'  => 'rastreabilidade-cordao-molas',
+    $pActive === 'qualidade-rastreabilidade-borda-molas'   => 'rastreabilidade-borda-molas',
+    $pActive === 'qualidade-rastreabilidade-fixacao-borda' => 'rastreabilidade-fixacao-borda',
     default => ''
 };
-$qualidadeRastrSgAtivo = str_starts_with($qualidadeSub, 'rastreabilidade-');
+$qualidadeRastrSgAtivo     = in_array($qualidadeSub, ['rastreabilidade-costura','rastreabilidade-tampo-bordado','rastreabilidade-linha-montagem']);
+$qualidadeRastrMolaSgAtivo = in_array($qualidadeSub, ['rastreabilidade-molas','rastreabilidade-cordao-molas','rastreabilidade-borda-molas','rastreabilidade-fixacao-borda']);
 
 $userName = $user_login ?? 'Usuário';
 ?>
@@ -588,6 +593,28 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>qualidade-rastreabilidade-linha-montagem"
                                class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-linha-montagem' ? 'active' : '' ?>">
                             Linha de Montagem</a></li>
+                    </ul>
+                </li>
+
+                <!-- ── RASTREABILIDADE MOLA ── -->
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $qualidadeRastrMolaSgAtivo ? 'active open' : '' ?>">
+                        <span>Rastreabilidade Mola</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= $qualidadeRastrMolaSgAtivo ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-molas"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-molas' ? 'active' : '' ?>">
+                            Fabricação Molinhas</a></li>
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-cordao-molas"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-cordao-molas' ? 'active' : '' ?>">
+                            Cordão de Molas</a></li>
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-borda-molas"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-borda-molas' ? 'active' : '' ?>">
+                            Borda de Aço</a></li>
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-fixacao-borda"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-fixacao-borda' ? 'active' : '' ?>">
+                            Fixação de Borda</a></li>
                     </ul>
                 </li>
 

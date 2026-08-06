@@ -4,6 +4,7 @@ namespace src\handlers\Qualidade;
 
 use src\models\Qualidade\RastreabilidadeTampoBordado;
 use src\models\Qualidade\RastreabilidadeLinhaMontagem;
+use src\models\Qualidade\RastreabilidadeMolas;
 
 class RastreabilidadeHandler
 {
@@ -23,6 +24,18 @@ class RastreabilidadeHandler
     {
         $rows     = RastreabilidadeLinhaMontagem::buscar($emprId, $numLote);
         $dataLote = RastreabilidadeLinhaMontagem::buscarDataLote($emprId, $numLote);
+
+        return [
+            'success'   => true,
+            'rows'      => $rows,
+            'data_lote' => $dataLote,
+        ];
+    }
+
+    public static function buscarMolas(int $emprId, int $numLote): array
+    {
+        $rows     = RastreabilidadeMolas::buscar($emprId, $numLote);
+        $dataLote = RastreabilidadeMolas::buscarDataLote($emprId, $numLote);
 
         return [
             'success'   => true,
