@@ -74,9 +74,39 @@ class RastreabilidadeController extends Controller
         $this->render('qualidade/rastreabilidade-cordao-molas', []);
     }
 
+    public function buscarCordaoMolas(): void
+    {
+        try {
+            $body    = self::getBody() ?? [];
+            $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = (int) ($_SESSION['empresa']['id'] ?? 0);
+            if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
+            $result = RastreabilidadeHandler::buscarCordaoMolas($emprId, $numLote);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
     public function indexBordaMolas(): void
     {
         $this->render('qualidade/rastreabilidade-borda-molas', []);
+    }
+
+    public function buscarBordaMolas(): void
+    {
+        try {
+            $body    = self::getBody() ?? [];
+            $numLote = (int) ($body['num_lote'] ?? 0);
+            $emprId  = (int) ($_SESSION['empresa']['id'] ?? 0);
+            if ($numLote <= 0) throw new \Exception('Número do lote é obrigatório.', 400);
+            $result = RastreabilidadeHandler::buscarBordaMolas($emprId, $numLote);
+            self::response($result, 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
     }
 
     public function indexFixacaoBorda(): void

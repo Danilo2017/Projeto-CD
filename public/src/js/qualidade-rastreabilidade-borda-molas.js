@@ -158,7 +158,7 @@ body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
             printArea.innerHTML = '';
 
             try {
-                const res  = await fetch('pcp-api-relatorio-pcp-borda-aco', {
+                const res  = await fetch('qualidade-api-rastreabilidade-borda-molas', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ num_lote: parseInt(numLote) }),

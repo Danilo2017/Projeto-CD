@@ -345,8 +345,11 @@ $router->post('/qualidade-api-rastreabilidade-linha-montagem',  'Qualidade\\Rast
 $router->get('/qualidade-rastreabilidade-molas',                'Qualidade\\RastreabilidadeController@indexMolas',          true);
 $router->post('/qualidade-api-rastreabilidade-molas',           'Qualidade\\RastreabilidadeController@buscarMolas',         true);
 $router->get('/qualidade-rastreabilidade-cordao-molas',         'Qualidade\\RastreabilidadeController@indexCordaoMolas',    true);
+$router->post('/qualidade-api-rastreabilidade-cordao-molas',    'Qualidade\\RastreabilidadeController@buscarCordaoMolas',   true);
 $router->get('/qualidade-rastreabilidade-borda-molas',          'Qualidade\\RastreabilidadeController@indexBordaMolas',     true);
+$router->post('/qualidade-api-rastreabilidade-borda-molas',     'Qualidade\\RastreabilidadeController@buscarBordaMolas',    true);
 $router->get('/qualidade-rastreabilidade-fixacao-borda',        'Qualidade\\RastreabilidadeController@indexFixacaoBorda',   true);
+$router->post('/qualidade-api-rastreabilidade-fixacao-borda',   'Qualidade\\RastreabilidadeController@buscarBordaMolas',    true);
 
 // TEMPORÁRIO — remover após inserção do SQL verticalEspuma
 $router->get('/tmp-insert-vertical-espuma', 'AdminSqlsController@tmpInsertVerticalEspuma', true);
