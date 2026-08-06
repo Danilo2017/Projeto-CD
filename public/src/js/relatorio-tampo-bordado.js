@@ -280,7 +280,7 @@
     /* ── Renderiza Bordadeira ───────────────────── */
     function isBordP1(row) {
         const t = (row.TANQUE || '').trim();
-        return t === '' || /P1/i.test(t);
+        return /P1/i.test(t);
     }
 
     function tabelaBordadeira(rows, titulo, numLote, dataLote) {
@@ -443,10 +443,45 @@ body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
                 }
 
                 const dt = data.data_lote || '';
+
+                // Bordadeira só fornece a alocação de máquina por COD_ITEM (TANQUE, TECIDO, etc.)
+                const machineMap = new Map();
+                for (const r of (data.bordadeira_rows || [])) {
+                    if (!machineMap.has(r.COD_ITEM)) {
+                        machineMap.set(r.COD_ITEM, {
+                            tanque: r.TANQUE, tecido: r.TECIDO,
+                            bordado: r.BORDADO, linear: r.LINEAR, espessura: r.ESPESSURA,
+                        });
+                    }
+                }
+                // Tampo é a fonte de verdade — agrupa QTDE_TAMPO por COD_ITEM + MASCARA_FAIXA
+                const tampoMap = new Map();
+                for (const r of (data.tampo_rows || [])) {
+                    const key = r.COD_ITEM + '|' + (r.MASCARA_FAIXA || '');
+                    if (!tampoMap.has(key)) {
+                        tampoMap.set(key, { cod: r.COD_ITEM, desc: r.DESC_TECNICA, mascara: r.MASCARA_FAIXA, qty: 0 });
+                    }
+                    tampoMap.get(key).qty += parseFloat(r.QTDE_TAMPO || 0);
+                }
+                // Monta as linhas da bordadeira com qtde do tampo + máquina da bordadeira
+                const bordRows = [];
+                for (const [, info] of tampoMap) {
+                    const m = machineMap.get(info.cod) || {};
+                    bordRows.push({
+                        COD_ITEM: info.cod,  DESC_TECNICA: info.desc,
+                        MASCARA:  info.mascara, QTDE_TAMPO: info.qty,
+                        TANQUE:   m.tanque    || '',
+                        TECIDO:   m.tecido    || '',
+                        BORDADO:  m.bordado   || '',
+                        LINEAR:   m.linear    || 0,
+                        ESPESSURA: m.espessura || '',
+                    });
+                }
+
                 let html = renderTampoBordado(data.tampo_rows || [], numLote, dt);
                 html    += renderTampoBordadoMesa(data.mesa_rows || [], numLote, dt);
                 html    += renderTampoBordadoConj(data.conj_rows || [], numLote, dt);
-                html    += renderBordadeiraSec(data.bordadeira_rows || [], numLote, dt);
+                html    += renderBordadeiraSec(bordRows, numLote, dt);
 
                 if (!html) {
                     statusMsg.innerHTML = '<span class="text-warning">Nenhum dado encontrado para este lote.</span>';
