@@ -74,13 +74,10 @@ class PontuacaoProduto
             $filtroEmpr   = $emprId       ? "AND PP.ID_EMPR = " . intval($emprId) : '';
             $filtroCentro = $centroTrabId ? "AND (PP.ID_CENTRO_TRAB = " . intval($centroTrabId) . " OR PP.ID_CENTRO_TRAB IS NULL)" : '';
 
-            $sql = self::sqlListagem() . "
-            WHERE PP.ATIVO = 'S'
-            $filtroEmpr
-            $filtroCentro
-            ORDER BY PP.ID_PONTUACAO DESC";
-
-            $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+            $result = Database::switchParams('focco', [
+                'filtro_empr'   => $filtroEmpr,
+                'filtro_centro' => $filtroCentro,
+            ], 'comissao.pontuacao.listar_ativas', true);
             if (!empty($result['error'])) throw new \Exception($result['error']);
             return is_array($result['retorno']) ? $result['retorno'] : [];
         } catch (\Exception $e) {
@@ -96,12 +93,9 @@ class PontuacaoProduto
         try {
             $filtroEmpr = $emprId ? "AND PP.ID_EMPR = " . intval($emprId) : '';
 
-            $sql = self::sqlListagem() . "
-            WHERE 1=1
-            $filtroEmpr
-            ORDER BY PP.ID_PONTUACAO DESC";
-
-            $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+            $result = Database::switchParams('focco', [
+                'filtro_empr' => $filtroEmpr,
+            ], 'comissao.pontuacao.listar_todas', true);
             if (!empty($result['error'])) throw new \Exception($result['error']);
             return is_array($result['retorno']) ? $result['retorno'] : [];
         } catch (\Exception $e) {
@@ -115,10 +109,7 @@ class PontuacaoProduto
     public static function buscarPorId($id)
     {
         try {
-            $sql = self::sqlListagem() . "
-            WHERE PP.ID_PONTUACAO = :id";
-
-            $result = Database::switchParams('focco', ['id' => intval($id)], null, true, true, null, $sql);
+            $result = Database::switchParams('focco', ['id' => intval($id)], 'comissao.pontuacao.buscar_por_id', true);
             if (!empty($result['error'])) throw new \Exception($result['error']);
             return $result['retorno'][0] ?? null;
         } catch (\Exception $e) {
@@ -137,21 +128,12 @@ class PontuacaoProduto
                 ? "AND (PP.ID_CENTRO_TRAB = " . intval($centroTrabId) . " OR PP.ID_CENTRO_TRAB IS NULL)"
                 : '';
 
-            $sql = "SELECT PP.ID_PONTUACAO, PP.PONTOS_UP, PP.ID_CENTRO_TRAB, PP.ID_MASCARA, PP.ITEM_ID, PP.ID_ITEMPR
-            FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
-            WHERE PP.ITEM_ID = :item_id
-              AND PP.ATIVO = 'S'
-              AND PP.DT_VIGENCIA_INI <= TO_DATE(:data_ref,  'YYYY-MM-DD')
-              AND (PP.DT_VIGENCIA_FIM IS NULL OR PP.DT_VIGENCIA_FIM >= TO_DATE(:data_ref2, 'YYYY-MM-DD'))
-              $filtroCentro
-            ORDER BY PP.ID_CENTRO_TRAB NULLS LAST
-            FETCH FIRST 1 ROW ONLY";
-
             $result = Database::switchParams('focco', [
-                'item_id'   => intval($itemId),
-                'data_ref'  => $dataRef,
-                'data_ref2' => $dataRef,
-            ], null, true, true, null, $sql);
+                'item_id'       => intval($itemId),
+                'data_ref'      => $dataRef,
+                'data_ref2'     => $dataRef,
+                'filtro_centro' => $filtroCentro,
+            ], 'comissao.pontuacao.buscar_vigente', true);
             if (!empty($result['error'])) throw new \Exception($result['error']);
             return $result['retorno'][0] ?? null;
         } catch (\Exception $e) {
@@ -164,8 +146,7 @@ class PontuacaoProduto
      */
     private static function proximoIdPontuacao()
     {
-        $sql = "SELECT NVL(MAX(ID_PONTUACAO), 0) + 1 AS ID FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO";
-        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+        $result = Database::switchParams('focco', [], 'comissao.pontuacao.proximo_id', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return (int)($result['retorno'][0]['ID'] ?? 1);
     }
@@ -179,15 +160,11 @@ class PontuacaoProduto
         $hoje       = date('Y-m-d');
         $filtroEmpr = $emprId ? "AND PP.ID_EMPR = " . $emprId : '';
 
-        $sql = "SELECT PP.ID_MASCARA, PP.ITEM_ID, TI.COD_ITEM, PP.PONTOS_UP
-        FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
-        LEFT JOIN TITENS TI ON TI.ID = PP.ITEM_ID
-        WHERE PP.ATIVO = 'S'
-          AND PP.DT_VIGENCIA_INI <= TO_DATE(:hoje, 'YYYY-MM-DD')
-          AND (PP.DT_VIGENCIA_FIM IS NULL OR PP.DT_VIGENCIA_FIM >= TO_DATE(:hoje2, 'YYYY-MM-DD'))
-          $filtroEmpr";
-
-        $result = Database::switchParams('focco', ['hoje' => $hoje, 'hoje2' => $hoje], null, true, true, null, $sql);
+        $result = Database::switchParams('focco', [
+            'hoje'        => $hoje,
+            'hoje2'       => $hoje,
+            'filtro_empr' => $filtroEmpr,
+        ], 'comissao.pontuacao.mapa_vigentes', true);
         if (!empty($result['error'])) return [];
 
         $mapa = [];
@@ -220,17 +197,12 @@ class PontuacaoProduto
                 ? "AND PP.ID_CENTRO_TRAB = " . intval($centroTrabId)
                 : "AND PP.ID_CENTRO_TRAB IS NULL";
 
-            $sql = "SELECT PP.ID_PONTUACAO
-            FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
-            WHERE PP.ITEM_ID  = :item_id
-              AND PP.ID_EMPR  = :empr_id
-              $filtroMascara
-              $filtroCentro";
-
             $result = Database::switchParams('focco', [
-                'item_id' => intval($itemId),
-                'empr_id' => intval($emprId),
-            ], null, true, true, null, $sql);
+                'item_id'        => intval($itemId),
+                'empr_id'        => intval($emprId),
+                'filtro_mascara' => $filtroMascara,
+                'filtro_centro'  => $filtroCentro,
+            ], 'comissao.pontuacao.buscar_duplicata', true);
             if (!empty($result['error'])) return null;
             return $result['retorno'][0] ?? null;
         } catch (\Exception $e) {
@@ -243,27 +215,29 @@ class PontuacaoProduto
      */
     public static function inserir($dados)
     {
-        $novoId      = self::proximoIdPontuacao();
-        $emprId      = !empty($dados['empr_id'])       ? intval($dados['empr_id'])       : 'NULL';
-        $itemId      = !empty($dados['item_id'])       ? intval($dados['item_id'])       : 'NULL';
-        $itemprId    = !empty($dados['itempr_id'])     ? intval($dados['itempr_id'])     : 'NULL';
-        $mascaraId   = !empty($dados['mascara_id'])    ? intval($dados['mascara_id'])    : 'NULL';
-        $centroId    = !empty($dados['centro_trab_id'])? intval($dados['centro_trab_id']): 'NULL';
-        $usuarioId   = !empty($dados['id_usuario'])    ? intval($dados['id_usuario'])    : 'NULL';
-        $dtIni       = str_replace("'", "''", $dados['dt_vigencia_ini']);
-        $dtFimFrag   = !empty($dados['dt_vigencia_fim'])
-                     ? "TO_DATE('" . str_replace("'", "''", $dados['dt_vigencia_fim']) . "', 'YYYY-MM-DD')"
-                     : 'NULL';
-        $pontosUp    = floatval($dados['pontos_up']);
+        $novoId    = self::proximoIdPontuacao();
+        $emprId    = !empty($dados['empr_id'])        ? intval($dados['empr_id'])        : 'NULL';
+        $itemId    = !empty($dados['item_id'])        ? intval($dados['item_id'])        : 'NULL';
+        $itemprId  = !empty($dados['itempr_id'])      ? intval($dados['itempr_id'])      : 'NULL';
+        $mascaraId = !empty($dados['mascara_id'])     ? intval($dados['mascara_id'])     : 'NULL';
+        $centroId  = !empty($dados['centro_trab_id']) ? intval($dados['centro_trab_id']) : 'NULL';
+        $dtIni     = $dados['dt_vigencia_ini'];
+        $dtFimFrag = !empty($dados['dt_vigencia_fim'])
+                   ? "TO_DATE('" . str_replace("'", "''", $dados['dt_vigencia_fim']) . "', 'YYYY-MM-DD')"
+                   : 'NULL';
+        $pontosUp  = floatval($dados['pontos_up']);
 
-        $sql = "INSERT INTO FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
-            (ID_PONTUACAO, ID_EMPR, ITEM_ID, ID_ITEMPR, ID_MASCARA, ID_CENTRO_TRAB,
-             PONTOS_UP, DT_VIGENCIA_INI, DT_VIGENCIA_FIM, ATIVO)
-        VALUES
-            ($novoId, $emprId, $itemId, $itemprId, $mascaraId, $centroId,
-             $pontosUp, TO_DATE('$dtIni', 'YYYY-MM-DD'), $dtFimFrag, 'S')";
-
-        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+        $result = Database::switchParams('focco', [
+            'novo_id'     => $novoId,
+            'empr_id'     => $emprId,
+            'item_id'     => $itemId,
+            'itempr_id'   => $itemprId,
+            'mascara_id'  => $mascaraId,
+            'centro_id'   => $centroId,
+            'pontos_up'   => $pontosUp,
+            'dt_ini'      => $dtIni,
+            'dt_fim_frag' => $dtFimFrag,
+        ], 'comissao.pontuacao.inserir', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return $novoId;
     }
@@ -277,19 +251,14 @@ class PontuacaoProduto
         $dtFimFrag = $dtFim
                    ? "TO_DATE('" . str_replace("'", "''", $dtFim) . "', 'YYYY-MM-DD')"
                    : 'NULL';
-        $usuarioId = !empty($dados['id_usuario']) ? intval($dados['id_usuario']) : 'NULL';
-        $dtIni     = str_replace("'", "''", $dados['dt_vigencia_ini']);
+        $pontosUp  = floatval($dados['pontos_up']);
 
-        $pontosUp = floatval($dados['pontos_up']);
-        $idInt    = intval($id);
-
-        $sql = "UPDATE FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
-        SET PONTOS_UP        = $pontosUp,
-            DT_VIGENCIA_INI  = TO_DATE('$dtIni', 'YYYY-MM-DD'),
-            DT_VIGENCIA_FIM  = $dtFimFrag
-        WHERE ID_PONTUACAO = $idInt";
-
-        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+        $result = Database::switchParams('focco', [
+            'pontos_up'   => $pontosUp,
+            'dt_ini'      => $dados['dt_vigencia_ini'],
+            'dt_fim_frag' => $dtFimFrag,
+            'id'          => intval($id),
+        ], 'comissao.pontuacao.atualizar', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return true;
     }
@@ -299,14 +268,12 @@ class PontuacaoProduto
      */
     public static function alterarStatus($id, $ativo, $idUsuario = null)
     {
-        $usuarioId = $idUsuario !== null ? intval($idUsuario) : 'NULL';
-        $atvVal    = $ativo === 'S' ? 'S' : 'N';
+        $atvVal = $ativo === 'S' ? 'S' : 'N';
 
-        $sql = "UPDATE FOCCO3I.TGAZIN_PONTUACAO_PRODUTO
-        SET ATIVO = '$atvVal'
-        WHERE ID_PONTUACAO = :id";
-
-        $result = Database::switchParams('focco', ['id' => intval($id)], null, true, true, null, $sql);
+        $result = Database::switchParams('focco', [
+            'ativo' => $atvVal,
+            'id'    => intval($id),
+        ], 'comissao.pontuacao.alterar_status', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return true;
     }
@@ -335,40 +302,11 @@ class PontuacaoProduto
         }
         $filtroMascara = $idMascara ? "AND TMASC_ITEM.ID = " . $idMascara : '';
 
-        $sql = "SELECT DISTINCT
-               TITENS_EMPR.EMPR_ID,
-               TITENS.COD_ITEM,
-               TITENS.DESC_TECNICA,
-               TMASC_ITEM.MASCARA,
-               TMASC_ITEM.ID TMASC_ITEM_ID,
-               NVL(TITENS_PLAN_CONF.UEP, TITENS_PLANEJAMENTO.UEP) UEP,
-               (SELECT DESCRICAO  FROM TTANQUES WHERE ID = NVL(TITENS_PLAN_CONF.TANQUE_ID, TITENS_PLANEJAMENTO.TANQUE_ID)) TANQUE,
-               (SELECT COD_TANQUE FROM TTANQUES WHERE ID = NVL(TITENS_PLAN_CONF.TANQUE_ID, TITENS_PLANEJAMENTO.TANQUE_ID)) COD_TANQUE
-          FROM TITENS_EMPR TITENS_EMPR,
-               TITENS TITENS,
-               TMASC_ITEM TMASC_ITEM,
-               TITENS_PLANEJAMENTO TITENS_PLANEJAMENTO,
-               TITENS_PLAN_CONF TITENS_PLAN_CONF,
-               TGRP_CLAS_ITE TGRP_CLAS_ITE,
-               TITENS_COMERCIAL TITENS_COMERCIAL,
-               TGRP_CLAS_ITE TGRP_CLAS_ITE1,
-               TCLAS_AGRUP_METAS TCLAS_AGRUP_METAS,
-               TAGRUP_METAS TAGRUP_METAS
-         WHERE TITENS_EMPR.ID = TITENS_COMERCIAL.ITEMPR_ID
-           AND TITENS_EMPR.ID = TITENS_PLANEJAMENTO.ITEMPR_ID
-           AND TITENS.ID = TITENS_EMPR.ITEM_ID
-           AND TMASC_ITEM.ID(+) = TITENS_PLAN_CONF.TMASC_ITEM_ID
-           AND TITENS_PLANEJAMENTO.ID = TITENS_PLAN_CONF.ITPL_ID(+)
-           AND TGRP_CLAS_ITE.ID = TITENS_PLANEJAMENTO.GRP_CLAS_ID
-           AND TGRP_CLAS_ITE1.ID = TCLAS_AGRUP_METAS.GRP_CLAS_ID(+)
-           AND TGRP_CLAS_ITE1.ID = TITENS_COMERCIAL.GRP_CLAS_ID
-           AND TAGRUP_METAS.ID(+) = TCLAS_AGRUP_METAS.TAGRUP_MET_ID
-           AND TITENS_EMPR.EMPR_ID = $emprId
-           $filtroItem
-           $filtroMascara
-        ORDER BY TITENS.COD_ITEM DESC";
-
-        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
+        $result = Database::switchParams('focco', [
+            'empr_id'        => $emprId,
+            'filtro_item'    => $filtroItem,
+            'filtro_mascara' => $filtroMascara,
+        ], 'comissao.pontuacao.relatorio_itens', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return is_array($result['retorno']) ? $result['retorno'] : [];
     }

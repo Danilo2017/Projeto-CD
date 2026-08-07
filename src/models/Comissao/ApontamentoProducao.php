@@ -42,21 +42,8 @@ class ApontamentoProducao
             'por_mascara' => [],
         ];
 
-        $hoje = date('Y-m-d');
-        $sql  = "SELECT PP.ID_PONTUACAO, PP.ID_EMPR, PP.ITEM_ID, PP.ID_ITEMPR,
-                        PP.ID_MASCARA, PP.ID_CENTRO_TRAB, PP.PONTOS_UP
-                   FROM FOCCO3I.TGAZIN_PONTUACAO_PRODUTO PP
-                  WHERE PP.ATIVO = 'S'
-                    AND PP.DT_VIGENCIA_INI <= TO_DATE('$hoje', 'YYYY-MM-DD')
-                    AND (PP.DT_VIGENCIA_FIM IS NULL
-                         OR PP.DT_VIGENCIA_FIM >= TO_DATE('$hoje', 'YYYY-MM-DD'))";
-
-        $result = Database::switchParams('focco', [], null, true, true, null, $sql);
-
-        // switchParams não lança exceção — captura internamente e retorna $res['error']
-        if (!empty($result['error']) || !is_array($result['retorno'])) {
-            $result = Database::switchParams('focco', [], 'comissao.apontamento.cachePontuacao', true);
-        }
+        $hoje   = date('Y-m-d');
+        $result = Database::switchParams('focco', ['hoje' => $hoje], 'comissao.apontamento.cache_pontuacao', true);
 
         $pontuacoes = is_array($result['retorno']) ? $result['retorno'] : [];
 

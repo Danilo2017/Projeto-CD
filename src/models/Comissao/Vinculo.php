@@ -184,27 +184,19 @@ class Vinculo
         $idCcFrag  = ($idEmpCc !== null && $idEmpCc !== '') ? intval($idEmpCc) : 'NULL';
 
         // Tenta com CC; fallback sem CC se coluna não existir
-        $temCc = self::verificarColunaCc();
-        if ($temCc) {
-            $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC
-                    SET ID_CENTRO_TRAB = :id_centro_trab,
-                        ID_RECURSO     = $idRecFrag,
-                        TIPO_VINCULO   = :tipo_vinculo,
-                        ID_EMP_CC      = $idCcFrag
-                    WHERE ID = :id";
-        } else {
-            $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC
-                    SET ID_CENTRO_TRAB = :id_centro_trab,
-                        ID_RECURSO     = $idRecFrag,
-                        TIPO_VINCULO   = :tipo_vinculo
-                    WHERE ID = :id";
-        }
-
-        $result = Database::switchParams('focco', [
+        $temCc  = self::verificarColunaCc();
+        $idsql  = $temCc ? 'comissao.vinculo.atualizar_com_cc' : 'comissao.vinculo.atualizar_sem_cc';
+        $params = [
             'id'             => intval($id),
             'id_centro_trab' => intval($idCentroTrab),
             'tipo_vinculo'   => $tvVal,
-        ], null, true, true, null, $sql);
+            'id_recurso'     => $idRecFrag,
+        ];
+        if ($temCc) {
+            $params['id_emp_cc'] = $idCcFrag;
+        }
+
+        $result = Database::switchParams('focco', $params, $idsql, true);
 
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return true;
@@ -228,11 +220,10 @@ class Vinculo
     {
         $atvVal = $ativo === 'S' ? 'S' : 'N';
 
-        $sql = "UPDATE FOCCO3I.TGAZIN_VINC_FUNC SET ATIVO = :ativo WHERE ID = :id";
         $result = Database::switchParams('focco', [
-            'id'   => intval($id),
+            'id'    => intval($id),
             'ativo' => $atvVal,
-        ], null, true, true, null, $sql);
+        ], 'comissao.vinculo.alterar_status', true);
 
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return true;
