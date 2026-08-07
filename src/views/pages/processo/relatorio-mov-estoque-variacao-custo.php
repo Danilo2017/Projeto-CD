@@ -54,6 +54,10 @@ if (!$acessoProcesso) {
                 <input type="date" id="inpDtFim" class="form-control form-control-sm" style="max-width:160px;">
             </div>
             <div class="col-auto">
+                <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Filiais <span class="text-muted fw-normal">(ex: 16, 1, 5)</span></label>
+                <input type="text" id="inpFiliais" class="form-control form-control-sm" style="max-width:200px;" placeholder="Vazio = filial atual">
+            </div>
+            <div class="col-auto">
                 <button id="btnGerar" class="btn btn-sm btn-primary">
                     <i class="bi bi-search"></i> Gerar
                 </button>
@@ -415,10 +419,16 @@ if (!$acessoProcesso) {
         btnExcel.style.display = 'none';
 
         try {
+            const filiaisRaw = document.getElementById('inpFiliais').value;
+            const emprIds = filiaisRaw
+                .split(',')
+                .map(v => parseInt(v.trim(), 10))
+                .filter(n => n > 0);
+
             const res  = await fetch('processo-api-relatorio-mov-estoque-variacao-custo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dt_ini: isoParaBr(dtIniIso), dt_fim: isoParaBr(dtFimIso) }),
+                body: JSON.stringify({ dt_ini: isoParaBr(dtIniIso), dt_fim: isoParaBr(dtFimIso), empr_ids: emprIds }),
             });
             const rawText = await res.text();
             let data;

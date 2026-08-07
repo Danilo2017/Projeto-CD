@@ -6,15 +6,15 @@ use core\Database;
 
 class MovEstoqueVariacaoCusto
 {
-    public static function listar(string $dtIni, string $dtFim, string $dtIniAnt, string $dtFimAnt, int $emprId = 0): array
+    public static function listar(string $dtIni, string $dtFim, string $dtIniAnt, string $dtFimAnt, array $emprIds = []): array
     {
         $dtIni    = preg_replace('/[^0-9\/]/', '', $dtIni);
         $dtFim    = preg_replace('/[^0-9\/]/', '', $dtFim);
         $dtIniAnt = preg_replace('/[^0-9\/]/', '', $dtIniAnt);
         $dtFimAnt = preg_replace('/[^0-9\/]/', '', $dtFimAnt);
-        $emprId   = (int) $emprId;
+        $emprIds  = array_values(array_filter(array_map('intval', $emprIds), fn($id) => $id > 0));
 
-        $filtroEmpr = $emprId > 0 ? "AND VW.EMPR_ID = $emprId" : '';
+        $filtroEmpr = !empty($emprIds) ? 'AND VW.EMPR_ID IN (' . implode(',', $emprIds) . ')' : '';
 
         $sql = "
 SELECT VW.EMPR_ID                                                               EMPR_ID,
