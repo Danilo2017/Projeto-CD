@@ -201,6 +201,12 @@ $router->get('/faturamento-api-programacao-resumo', 'Faturamento\\FaturamentoPro
 $router->get('/faturamento-api-ocupacao', 'Faturamento\\FaturamentoProgramacaoController@ocupacao', true);
 $router->get('/faturamento-api-programacao-flush', 'Faturamento\\FaturamentoProgramacaoController@flushCache', true);
 
+// ========== Eficiência de Pendência por UEP ==========
+$router->get('/faturamento-eficiencia-uep', 'Faturamento\\EficienciaUepController@index', true);
+$router->get('/faturamento-eficiencia-uep-detalhe', 'Faturamento\\EficienciaUepController@paginaDetalhe', true);
+$router->get('/faturamento-api-eficiencia-uep', 'Faturamento\\EficienciaUepController@listar', true);
+$router->get('/faturamento-api-eficiencia-uep-detalhe', 'Faturamento\\EficienciaUepController@detalhe', true);
+
 // ========== Transferência de Pedidos ==========
 $router->get('/pedidos-transferencia', 'Faturamento\\TransferenciaPedidoController@index', true);
 $router->post('/pedidos-api-transferencia-buscar', 'Faturamento\\TransferenciaPedidoController@buscarPedidos', true);

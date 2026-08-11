@@ -19,7 +19,7 @@ $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
     str_starts_with($pActive, 'comissao-') || $pActive === 'comissao'                                => 'comissao',
     str_starts_with($pActive, 'cd-') || in_array($pActive, ['dashboard', 'calendario'])              => 'cd',
-    str_starts_with($pActive, 'faturamento-') || in_array($pActive, ['faturamento', 'meta-empresa']) => 'faturamento',
+    str_starts_with($pActive, 'faturamento-') || in_array($pActive, ['faturamento', 'meta-empresa', 'faturamento-eficiencia-uep']) => 'faturamento',
     str_starts_with($pActive, 'pedidos-')                                                            => 'pedidos',
     str_starts_with($pActive, 'processo-')                                                           => 'processo',
     str_starts_with($pActive, 'carga-')                                                              => 'carga',
@@ -260,6 +260,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>faturamento-programacao"
                        class="sidebar-sublink <?= $fatSub === 'programacao' ? 'active' : '' ?>">
                         Programação
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>faturamento-eficiencia-uep"
+                       class="sidebar-sublink <?= $pActive === 'faturamento-eficiencia-uep' ? 'active' : '' ?>">
+                        Eficiência UEP
                     </a>
                 </li>
             </ul>

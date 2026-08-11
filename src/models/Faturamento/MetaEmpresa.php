@@ -83,6 +83,7 @@ class MetaEmpresa
             ['EMPR_ID' => '13', 'NOME_EMPRESA' => '13 - ELOI MENDES MG'],
             ['EMPR_ID' => '14', 'NOME_EMPRESA' => '14 - ARAGUATINS TO'],
             ['EMPR_ID' => '15', 'NOME_EMPRESA' => '15 - PATOS MINAS MG'],
+            ['EMPR_ID' => '16', 'NOME_EMPRESA' => '16 - PATOS DE MINAS MG'],
         ];
     }
 }
