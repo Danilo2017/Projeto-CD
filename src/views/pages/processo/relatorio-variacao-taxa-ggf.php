@@ -236,7 +236,7 @@ if (!$acessoProcesso) {
             r.TIPO_CC ?? '',
             r.COD ?? '',
             r.CENTRO_CUSTO ?? '',
-            ...EMPS.map(e => parseFloat(r[e.key] ?? 0).toFixed(2)),
+            ...EMPS.map(e => parseFloat(r[e.key] ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})),
         ]);
 
         const csv = [

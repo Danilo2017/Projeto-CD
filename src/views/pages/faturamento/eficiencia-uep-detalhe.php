@@ -20,7 +20,7 @@ $classificacao = trim($_GET['classificacao'] ?? '');
             <i class="bi bi-arrow-left"></i> Voltar
         </a>
         <div style="text-align:center; padding: 0 120px;">
-            <div style="font-size:.8rem;color:#888;">Eficiência de Pendência por UEP</div>
+            <div style="font-size:.8rem;color:#888;">Taxa de Pedidos Pendentes</div>
             <h2 style="margin:0;font-size:1.1rem;font-weight:700;"><?= htmlspecialchars($classificacao) ?></h2>
         </div>
         <button id="btnExcel" class="btn btn-success btn-sm" style="position:absolute;top:0;right:0;">

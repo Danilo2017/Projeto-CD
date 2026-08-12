@@ -11,4 +11,16 @@ class EficienciaUepHandler
         $dados = EficienciaUep::listar();
         return ['success' => true, 'data' => $dados];
     }
+
+    public static function listarTanques(): array
+    {
+        $dados = EficienciaUep::listarTanques();
+        return ['success' => true, 'data' => $dados];
+    }
+
+    public static function listarClassificacoesPorTanque(int $emprId, int $codTanque): array
+    {
+        $dados = EficienciaUep::listarClassificacoesPorTanque($emprId, $codTanque);
+        return ['success' => true, 'data' => $dados];
+    }
 }

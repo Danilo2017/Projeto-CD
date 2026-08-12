@@ -185,8 +185,8 @@ if (!$acessoProcesso) {
         const linhas  = _rows.map(r => [
             r.COD_ITEM     ?? '',
             r.DESC_TECNICA ?? '',
-            ...EMPS.map(e => parseFloat(r[e.key] ?? 0).toFixed(4)),
-            parseFloat(r.KG_REFERENCIA ?? 0).toFixed(2),
+            ...EMPS.map(e => parseFloat(r[e.key] ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:4, maximumFractionDigits:4})),
+            parseFloat(r.KG_REFERENCIA ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
         ]);
 
         const csv = [

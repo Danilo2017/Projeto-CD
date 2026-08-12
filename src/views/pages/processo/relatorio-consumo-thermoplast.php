@@ -205,11 +205,11 @@ if (!$acessoProcesso) {
             r.EMPR_ID      ?? '',
             r.COD_ITEM     ?? '',
             r.DESC_TECNICA ?? '',
-            parseFloat(r.QTDE_ESPUMA         ?? 0).toFixed(2),
-            parseFloat(r.QTDE_THERMOPLAST    ?? 0).toFixed(2),
-            parseFloat(r.MEDIA_THERMOPLAST   ?? 0).toFixed(4),
-            parseFloat(r.PROJETADO_THERMOPLAS  ?? 0).toFixed(2),
-            parseFloat(r.PROJETADO_THERMOPLAS2 ?? 0).toFixed(2),
+            parseFloat(r.QTDE_ESPUMA         ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
+            parseFloat(r.QTDE_THERMOPLAST    ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
+            parseFloat(r.MEDIA_THERMOPLAST   ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:4, maximumFractionDigits:4}),
+            parseFloat(r.PROJETADO_THERMOPLAS  ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
+            parseFloat(r.PROJETADO_THERMOPLAS2 ?? 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
         ]);
 
         const csv = [

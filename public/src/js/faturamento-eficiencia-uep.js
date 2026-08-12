@@ -78,6 +78,73 @@ function renderizar(rows) {
     });
 }
 
+function renderProjecao(tanques) {
+    const projWrap  = document.getElementById('proj-wrap');
+    const projErr   = document.getElementById('proj-error');
+    const projTable = document.getElementById('proj-table-wrap');
+    const tbody     = document.getElementById('proj-tbody');
+
+    projWrap.style.display = 'block';
+
+    if (!tanques || !tanques.length) {
+        projErr.style.display = 'block';
+        projErr.textContent   = 'Nenhum tanque com pedidos pendentes encontrado.';
+        return;
+    }
+
+    // Agrupar por empresa
+    const grupos = new Map();
+    for (const t of tanques) {
+        const id = String(t.EMPR_ID ?? '');
+        if (!grupos.has(id)) grupos.set(id, []);
+        grupos.get(id).push(t);
+    }
+
+    let html = '';
+    let totProj = 0;
+
+    for (const [emprId, tList] of grupos) {
+        const emprNome = EMPRESAS[emprId] || ('Empresa ' + emprId);
+        let subProj = 0;
+
+        html += `<tr style="background:#e8eeff;font-weight:700;">
+            <td colspan="5" style="padding:6px 10px;">${emprNome}</td>
+        </tr>`;
+
+        for (const t of tList) {
+            const capTotal = num(t.CAP_UEP_DIA);
+            const cap      = capTotal * 0.80;
+            const taxa     = num(t.TAXA);
+            const proj     = cap * taxa;
+            subProj       += proj;
+            totProj       += proj;
+            html += `<tr>
+                <td>${emprNome}</td>
+                <td>${t.COD_TANQUE} — ${t.DESC_TANQUE ?? ''}</td>
+                <td style="text-align:right;">${fmtN(cap)} <small style="color:#888;">(80%)</small></td>
+                <td style="text-align:right;">${fmtN(taxa)}</td>
+                <td style="text-align:right;">${fmt(proj)}</td>
+            </tr>`;
+        }
+
+        html += `<tr style="background:#f7f8fa;font-weight:600;border-top:2px solid #dee2e6;">
+            <td colspan="2" style="color:#555;">Total ${emprNome}</td>
+            <td></td><td></td>
+            <td style="text-align:right;">${fmt(subProj)}</td>
+        </tr>
+        <tr><td colspan="5" style="padding:2px;"></td></tr>`;
+    }
+
+    html += `<tr style="background:#1a1a2e;color:#fff;font-weight:700;border-top:3px solid #333;">
+        <td colspan="2" style="padding:8px 10px;">TOTAL GERAL</td>
+        <td colspan="2"></td>
+        <td style="text-align:right;padding:8px;">${fmt(totProj)}</td>
+    </tr>`;
+
+    tbody.innerHTML = html;
+    projTable.style.display = 'block';
+}
+
 function exportarExcel() {
     if (!dadosGlobais.length) return;
 
@@ -113,7 +180,7 @@ function exportarExcel() {
     const blob = new Blob(['﻿' + csv], {type: 'text/csv;charset=utf-8;'});
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = 'eficiencia-uep.csv'; a.click();
+    a.href = url; a.download = 'taxa-pedidos-pendentes.csv'; a.click();
     URL.revokeObjectURL(url);
 }
 
@@ -121,31 +188,46 @@ function carregar() {
     const loading = document.getElementById('uep-loading');
     const wrap    = document.getElementById('uep-wrap');
     const erro    = document.getElementById('uep-error');
+    const projWrap = document.getElementById('proj-wrap');
 
-    loading.style.display = 'block';
-    wrap.style.display    = 'none';
-    erro.style.display    = 'none';
-    dadosGlobais          = [];
+    loading.style.display  = 'block';
+    wrap.style.display     = 'none';
+    erro.style.display     = 'none';
+    projWrap.style.display = 'none';
+    dadosGlobais           = [];
 
-    fetch('/faturamento-api-eficiencia-uep')
-        .then(r => r.json())
-        .then(res => {
-            loading.style.display = 'none';
-            if (!res.success) { erro.style.display='block'; erro.textContent=res.error||'Erro ao carregar'; return; }
-            const rows = res.data || [];
-            if (!rows.length) {
-                wrap.style.display = 'block';
-                document.getElementById('uep-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhum dado encontrado.</td></tr>';
-                return;
-            }
-            dadosGlobais = rows;
-            renderizar(rows);
-        })
-        .catch(e => {
-            loading.style.display = 'none';
-            erro.style.display    = 'block';
-            erro.textContent      = 'Erro de comunicação: ' + e.message;
-        });
+    Promise.all([
+        fetch('/faturamento-api-eficiencia-uep').then(r => r.json()),
+        fetch('/faturamento-api-eficiencia-uep-tanques').then(r => r.json()),
+    ])
+    .then(([resUep, resTanq]) => {
+        loading.style.display = 'none';
+
+        if (!resUep.success) {
+            erro.style.display = 'block';
+            erro.textContent   = resUep.error || 'Erro ao carregar';
+            return;
+        }
+
+        const rows = resUep.data || [];
+        if (!rows.length) {
+            wrap.style.display = 'block';
+            document.getElementById('uep-tbody').innerHTML =
+                '<tr><td colspan="4" style="text-align:center;">Nenhum dado encontrado.</td></tr>';
+            return;
+        }
+
+        dadosGlobais = rows;
+        renderizar(rows);
+
+        document.getElementById('proj-loading').style.display = 'none';
+        renderProjecao(resTanq.success ? (resTanq.data || []) : []);
+    })
+    .catch(e => {
+        loading.style.display = 'none';
+        erro.style.display    = 'block';
+        erro.textContent      = 'Erro de comunicação: ' + e.message;
+    });
 }
 
 document.getElementById('btnAtualizar').addEventListener('click', carregar);

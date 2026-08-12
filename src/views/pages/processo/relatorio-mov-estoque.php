@@ -413,9 +413,9 @@ if (!$acessoProcesso) {
                 const fd = _arvore[filial];
                 Object.keys(fd.familias).sort().forEach(fam => {
                     const f = fd.familias[fam];
-                    linhas.push([filial, fam, f.itens.length, f.deb.toFixed(2), f.cred.toFixed(2), f.mov.toFixed(2)]);
+                    linhas.push([filial, fam, f.itens.length, f.deb.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), f.cred.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), f.mov.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})]);
                 });
-                linhas.push([`Subtotal Filial ${filial}`, '', '', fd.deb.toFixed(2), fd.cred.toFixed(2), fd.mov.toFixed(2)]);
+                linhas.push([`Subtotal Filial ${filial}`, '', '', fd.deb.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), fd.cred.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), fd.mov.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})]);
             });
         } else {
             headers = ['Filial', 'Família', 'Cód. Item', 'Descrição', 'Máscara', 'Débito (E)', 'Crédito (S)', 'Movimento'];
@@ -424,7 +424,7 @@ if (!$acessoProcesso) {
                 const fd = _arvore[filial];
                 Object.keys(fd.familias).sort().forEach(fam => {
                     fd.familias[fam].itens.forEach(it => {
-                        linhas.push([filial, fam, it.cod, it.desc, it.masc, it.deb.toFixed(2), it.cred.toFixed(2), it.mov.toFixed(2)]);
+                        linhas.push([filial, fam, it.cod, it.desc, it.masc, it.deb.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), it.cred.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), it.mov.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})]);
                     });
                 });
             });

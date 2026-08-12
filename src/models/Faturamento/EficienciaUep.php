@@ -13,6 +13,23 @@ class EficienciaUep
         return is_array($result['retorno']) ? $result['retorno'] : [];
     }
 
+    public static function listarTanques(): array
+    {
+        $result = Database::switchParams('focco', [], 'faturamento.eficiencia.uep.tanques', true);
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
+
+    public static function listarClassificacoesPorTanque(int $emprId, int $codTanque): array
+    {
+        $result = Database::switchParams('focco', [
+            'empr_id'    => $emprId,
+            'cod_tanque' => $codTanque,
+        ], 'faturamento.eficiencia.uep.clas-tanque', true);
+        if (!empty($result['error'])) throw new \Exception($result['error']);
+        return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
+
     public static function detalhe(int $emprId, string $classificacao): array
     {
         $classSafe = str_replace("'", "''", $classificacao);

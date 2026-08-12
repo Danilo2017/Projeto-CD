@@ -265,7 +265,13 @@ $userName = $user_login ?? 'Usuário';
                 <li>
                     <a href="<?= $base ?>faturamento-eficiencia-uep"
                        class="sidebar-sublink <?= $pActive === 'faturamento-eficiencia-uep' ? 'active' : '' ?>">
-                        Eficiência UEP
+                        Taxa de Pedidos Pendentes
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>faturamento-analise-tanque"
+                       class="sidebar-sublink <?= $pActive === 'faturamento-analise-tanque' ? 'active' : '' ?>">
+                        Análise por Tanque
                     </a>
                 </li>
             </ul>

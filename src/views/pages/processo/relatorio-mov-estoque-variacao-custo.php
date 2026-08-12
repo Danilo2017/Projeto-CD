@@ -373,9 +373,9 @@ if (!$acessoProcesso) {
                 const fd = _arvore[filial];
                 Object.keys(fd.familias).sort().forEach(fam => {
                     const f = fd.familias[fam];
-                    linhas.push([filial, fam, f.itens.length, f.qtde.toFixed(2), f.custo.toFixed(2), f.var.toFixed(2)]);
+                    linhas.push([filial, fam, f.itens.length, f.qtde.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), f.custo.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), f.var.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})]);
                 });
-                linhas.push([`Subtotal Filial ${filial}`, '', '', fd.qtde.toFixed(2), fd.custo.toFixed(2), fd.var.toFixed(2)]);
+                linhas.push([`Subtotal Filial ${filial}`, '', '', fd.qtde.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), fd.custo.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), fd.var.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})]);
             });
         } else {
             headers = ['Filial', 'Família', 'Cód. Item', 'Descrição', 'Qtde', 'Custo Total', 'Variação'];
@@ -384,7 +384,7 @@ if (!$acessoProcesso) {
                 const fd = _arvore[filial];
                 Object.keys(fd.familias).sort().forEach(fam => {
                     fd.familias[fam].itens.forEach(it => {
-                        linhas.push([filial, fam, it.cod, it.desc, it.qtde.toFixed(2), it.custo.toFixed(2), it.var.toFixed(2)]);
+                        linhas.push([filial, fam, it.cod, it.desc, it.qtde.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), it.custo.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), it.var.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})]);
                     });
                 });
             });
