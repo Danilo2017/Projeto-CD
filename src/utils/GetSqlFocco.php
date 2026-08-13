@@ -44,6 +44,32 @@ class GetSqlFocco
         return $idsql === '' ? '' : self::buscaIdSql($idsql);
     }
 
+    /**
+     * Corrige ORDER BY por alias quando o alias coincide com coluna da função pipelined TABLES,
+     * causando ORA-00960 (ambiguous column naming).
+     * Usa posição numérica em vez de nome de alias.
+     */
+    private static function fixarOrderBy(string $idsql, string $sql): string
+    {
+        // tampoBordado e tampoBordadoMesa: col 16=TECIDO, 17=ESPESSURA
+        if (in_array($idsql, ['pcp.relatorioProd.tampoBordado', 'pcp.relatorioProd.tampoBordadoMesa'])) {
+            return preg_replace(
+                '/ORDER\s+BY\s+ESPESSURA\s+DESC\s*,\s*TECIDO\s+ASC/i',
+                'ORDER BY 17 DESC, 16 ASC',
+                $sql
+            );
+        }
+        // tampoBordadoConj: col 13=TECIDO, 14=ESPESSURA
+        if ($idsql === 'pcp.relatorioProd.tampoBordadoConj') {
+            return preg_replace(
+                '/ORDER\s+BY\s+ESPESSURA\s+DESC\s*,\s*TECIDO\s+ASC/i',
+                'ORDER BY 14 DESC, 13 ASC',
+                $sql
+            );
+        }
+        return $sql;
+    }
+
     public static function buscaIdSql(string $idsql): string
     {
         // 1. In-memory (mesma requisição)
@@ -54,8 +80,9 @@ class GetSqlFocco
         // 2. Arquivo (entre requisições — 12h TTL)
         $fromFile = self::fileGet($idsql);
         if ($fromFile !== null) {
-            self::$cache[$idsql] = $fromFile;
-            return $fromFile;
+            $fixed = self::fixarOrderBy($idsql, $fromFile);
+            self::$cache[$idsql] = $fixed;
+            return $fixed;
         }
 
         // 3. Oracle (só na primeira vez ou após expirar)
@@ -78,7 +105,7 @@ class GetSqlFocco
                 throw new \Exception("SQL vazio para idsql: {$idsql}");
             }
 
-            $sqlTrimmed = trim($sqlEncontrado);
+            $sqlTrimmed = self::fixarOrderBy($idsql, trim($sqlEncontrado));
             self::$cache[$idsql] = $sqlTrimmed;
             self::fileSet($idsql, $sqlTrimmed);
             return $sqlTrimmed;

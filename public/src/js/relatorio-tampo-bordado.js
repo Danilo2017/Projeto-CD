@@ -24,6 +24,12 @@
             return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
         }
 
+        rows = [...rows].sort((a, b) => {
+            const ea = parseFloat(a.ESPESSURA || 0), eb = parseFloat(b.ESPESSURA || 0);
+            if (eb !== ea) return eb - ea;
+            return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
+        });
+
         const hoje = dataHoje();
 
         let totalQtde      = 0;
@@ -49,6 +55,8 @@
                 <td class="td-wrap">${fmt(r.MASCARA_FAIXA)}</td>
                 <td class="text-center">${fmtNum(r.QTDE_TAMPO)}</td>
                 <td class="text-center">${fmt(r.PILLOW)}</td>
+                <td class="text-center">${fmt(r.TECIDO)}</td>
+                <td class="text-center">${fmtNum(r.ESPESSURA)}</td>
             </tr>`;
         }
 
@@ -58,7 +66,7 @@
             <td style="text-align:center">${totalQtde}</td>
             <td colspan="4"></td>
             <td style="text-align:center">${totalQtdeTampo}</td>
-            <td></td>
+            <td colspan="3"></td>
         </tr>`;
 
         return `
@@ -96,6 +104,8 @@
                 <th>MÁSCARA</th>
                 <th>QTDE TAMPO</th>
                 <th>TIPO PILLOW</th>
+                <th>TECIDO</th>
+                <th>ESPESSURA</th>
             </tr>
         </thead>
         <tbody>${corpoTabela}</tbody>
@@ -120,6 +130,12 @@
     function renderTampoBordadoMesa(rows, numLote, dataLote) {
         if (!rows || rows.length === 0) return '';
 
+        rows = [...rows].sort((a, b) => {
+            const ea = parseFloat(a.ESPESSURA || 0), eb = parseFloat(b.ESPESSURA || 0);
+            if (eb !== ea) return eb - ea;
+            return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
+        });
+
         const hoje = dataHoje();
         let totalQtde = 0, totalQtdeTampo = 0, corpoTabela = '';
 
@@ -142,6 +158,8 @@
                 <td class="td-wrap">${fmt(r.MASCARA_FAIXA)}</td>
                 <td class="text-center">${fmtNum(r.QTDE_TAMPO)}</td>
                 <td class="text-center">${fmt(r.PILLOW)}</td>
+                <td class="text-center">${fmt(r.TECIDO)}</td>
+                <td class="text-center">${fmtNum(r.ESPESSURA)}</td>
             </tr>`;
         }
 
@@ -151,7 +169,7 @@
             <td style="text-align:center">${totalQtde}</td>
             <td colspan="4"></td>
             <td style="text-align:center">${totalQtdeTampo}</td>
-            <td></td>
+            <td colspan="3"></td>
         </tr>`;
 
         return `
@@ -172,7 +190,7 @@
                 <th>ORD</th><th>ORDEM</th><th>ITEM</th><th>ID</th>
                 <th>DESCRIÇÃO</th><th>MÁSCARA</th><th>QTDE</th><th>COD ITEM</th>
                 <th>ID</th><th>DESC TECNICA</th><th>MÁSCARA</th>
-                <th>QTDE TAMPO</th><th>TIPO PILLOW</th>
+                <th>QTDE TAMPO</th><th>TIPO PILLOW</th><th>TECIDO</th><th>ESPESSURA</th>
             </tr>
         </thead>
         <tbody>${corpoTabela}</tbody>
@@ -194,6 +212,12 @@
     function renderTampoBordadoConj(rows, numLote, dataLote) {
         if (!rows || rows.length === 0) return '';
 
+        rows = [...rows].sort((a, b) => {
+            const ea = parseFloat(a.ESPESSURA || 0), eb = parseFloat(b.ESPESSURA || 0);
+            if (eb !== ea) return eb - ea;
+            return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
+        });
+
         const hoje = dataHoje();
         let totalQtde = 0, corpoTabela = '';
 
@@ -213,6 +237,8 @@
                 <td class="td-wrap">${fmt(r.MASCARA)}</td>
                 <td class="text-center">${fmtNum(r.QTDE_TAMPO)}</td>
                 <td class="text-center">${fmt(r.PILLOW)}</td>
+                <td class="text-center">${fmt(r.TECIDO)}</td>
+                <td class="text-center">${fmtNum(r.ESPESSURA)}</td>
             </tr>`;
         }
 
@@ -220,7 +246,7 @@
         <tr class="total-row">
             <td colspan="9" style="text-align:right">TOTAL:</td>
             <td style="text-align:center">${totalQtde}</td>
-            <td></td>
+            <td colspan="3"></td>
         </tr>`;
 
         return `
@@ -249,6 +275,8 @@
                 <th>MÁSCARA</th>
                 <th>QTDE TAMPO</th>
                 <th>PILLOW</th>
+                <th>TECIDO</th>
+                <th>ESPESSURA</th>
             </tr>
         </thead>
         <tbody>${corpoTabela}</tbody>
@@ -477,6 +505,13 @@ body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
                         ESPESSURA: m.espessura || '',
                     });
                 }
+
+                bordRows.sort((a, b) => {
+                    const ea = parseFloat(a.ESPESSURA || 0);
+                    const eb = parseFloat(b.ESPESSURA || 0);
+                    if (eb !== ea) return eb - ea;
+                    return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
+                });
 
                 let html = renderTampoBordado(data.tampo_rows || [], numLote, dt);
                 html    += renderTampoBordadoMesa(data.mesa_rows || [], numLote, dt);

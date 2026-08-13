@@ -24,6 +24,12 @@
             return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
         }
 
+        rows = [...rows].sort((a, b) => {
+            const ea = parseFloat(a.ESPESSURA || 0), eb = parseFloat(b.ESPESSURA || 0);
+            if (eb !== ea) return eb - ea;
+            return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
+        });
+
         const hoje = dataHoje();
 
         let totalQtde      = 0;
@@ -49,6 +55,8 @@
                 <td class="td-wrap">${fmt(r.MASCARA_FAIXA)}</td>
                 <td class="text-center">${fmtNum(r.QTDE_TAMPO)}</td>
                 <td class="text-center">${fmt(r.PILLOW)}</td>
+                <td class="text-center">${fmt(r.TECIDO)}</td>
+                <td class="text-center">${fmtNum(r.ESPESSURA)}</td>
             </tr>`;
         }
 
@@ -58,7 +66,7 @@
             <td style="text-align:center">${totalQtde}</td>
             <td colspan="4"></td>
             <td style="text-align:center">${totalQtdeTampo}</td>
-            <td></td>
+            <td colspan="3"></td>
         </tr>`;
 
         return `
@@ -96,6 +104,8 @@
                 <th>MÁSCARA FAIXA</th>
                 <th>QTDE TAMPO</th>
                 <th>TIPO PILLOW</th>
+                <th>TECIDO</th>
+                <th>ESPESSURA</th>
             </tr>
         </thead>
         <tbody>${corpoTabela}</tbody>
