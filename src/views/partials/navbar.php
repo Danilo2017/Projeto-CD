@@ -150,10 +150,11 @@ $qualidadeSub = match(true) {
     $pActive === 'qualidade-rastreabilidade-molas'          => 'rastreabilidade-molas',
     $pActive === 'qualidade-rastreabilidade-cordao-molas'  => 'rastreabilidade-cordao-molas',
     $pActive === 'qualidade-rastreabilidade-borda-molas'   => 'rastreabilidade-borda-molas',
-    $pActive === 'qualidade-rastreabilidade-fixacao-borda' => 'rastreabilidade-fixacao-borda',
+    $pActive === 'qualidade-rastreabilidade-fixacao-borda'   => 'rastreabilidade-fixacao-borda',
+    $pActive === 'qualidade-rastreabilidade-caixote-mola'    => 'rastreabilidade-caixote-mola',
     default => ''
 };
-$qualidadeRastrSgAtivo     = in_array($qualidadeSub, ['rastreabilidade-costura','rastreabilidade-tampo-bordado','rastreabilidade-linha-montagem']);
+$qualidadeRastrSgAtivo     = in_array($qualidadeSub, ['rastreabilidade-costura','rastreabilidade-tampo-bordado','rastreabilidade-linha-montagem','rastreabilidade-caixote-mola']);
 $qualidadeRastrMolaSgAtivo = in_array($qualidadeSub, ['rastreabilidade-molas','rastreabilidade-cordao-molas','rastreabilidade-borda-molas','rastreabilidade-fixacao-borda']);
 
 $userName = $user_login ?? 'Usuário';
@@ -605,6 +606,9 @@ $userName = $user_login ?? 'Usuário';
                         <li><a href="<?= $base ?>qualidade-rastreabilidade-linha-montagem"
                                class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-linha-montagem' ? 'active' : '' ?>">
                             Linha de Montagem</a></li>
+                        <li><a href="<?= $base ?>qualidade-rastreabilidade-caixote-mola"
+                               class="pcp-sub-sublink <?= $qualidadeSub === 'rastreabilidade-caixote-mola' ? 'active' : '' ?>">
+                            Caixote de Mola</a></li>
                     </ul>
                 </li>
 

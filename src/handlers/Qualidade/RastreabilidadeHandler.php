@@ -6,6 +6,7 @@ use src\models\Qualidade\RastreabilidadeTampoBordado;
 use src\models\Qualidade\RastreabilidadeLinhaMontagem;
 use src\models\Qualidade\RastreabilidadeMolas;
 use src\handlers\PCP\RelatorioProdHandler;
+use src\models\PCP\RelatorioProd;
 
 class RastreabilidadeHandler
 {
@@ -46,5 +47,21 @@ class RastreabilidadeHandler
     public static function buscarBordaMolas(int $emprId, int $numLote): array
     {
         return RelatorioProdHandler::buscarPcpBordaAco($emprId, $numLote);
+    }
+
+    public static function buscarCaixoteMola(int $emprId, int $numLote): array
+    {
+        $rows     = RelatorioProd::buscar($emprId, $numLote);
+        $dataLote = RelatorioProd::buscarDataLote($emprId, $numLote);
+
+        $filtrado = array_values(array_filter($rows, function ($row) {
+            return strtoupper(trim($row['ORD'] ?? '')) !== 'TRAVE_PEZE';
+        }));
+
+        return [
+            'success'   => true,
+            'rows'      => $filtrado,
+            'data_lote' => $dataLote,
+        ];
     }
 }
