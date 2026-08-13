@@ -69,11 +69,11 @@ function renderizar(rows) {
         for (const grupoNome of ORDEM_GRUPO) {
             if (!grupos.has(grupoNome)) continue;
             const tanques  = grupos.get(grupoNome);
-            const grpCap   = tanques.reduce((s, t) => s + num(t.CAP_UEP_DIA) * 0.80, 0);
+            const grpCap   = tanques.reduce((s, t) => s + num(t.CAP_UEP_DIA) * 1, 0);
             const grpValor = tanques.reduce((s, t) => s + num(t.VALOR_PENDENTE), 0);
             const grpUep   = tanques.reduce((s, t) => s + num(t.UEP), 0);
             const grpTaxa  = grpUep ? grpValor / grpUep : 0;
-            const grpProj  = tanques.reduce((s, t) => s + num(t.CAP_UEP_DIA) * 0.80 * num(t.TAXA), 0);
+            const grpProj  = tanques.reduce((s, t) => s + num(t.CAP_UEP_DIA) * 1 * num(t.TAXA), 0);
             subEmpr += grpProj;
 
             const grpId = `grp-${emprId}-${grupoNome.replace(/[^a-z0-9]/gi,'')}`;
@@ -88,7 +88,7 @@ function renderizar(rows) {
 
             // Linhas dos tanques (ocultas por padrão)
             for (const t of tanques) {
-                const cap    = num(t.CAP_UEP_DIA) * 0.80;
+                const cap    = num(t.CAP_UEP_DIA) * 1;
                 const taxa   = num(t.TAXA);
                 const proj   = cap * taxa;
                 const tanqId = `tanq-${emprId}-${t.COD_TANQUE}`;
@@ -211,7 +211,7 @@ function renderizar(rows) {
                 for (const r of data.data) {
                     const vp = num(r.VALOR_PENDENTE), up = num(r.UEP);
                     totV += vp; totU += up;
-                    const params = new URLSearchParams({empr_id: emprId, classificacao: r.CLASSIFICACAO ?? ''});
+                    const params = new URLSearchParams({empr_id: emprId, classificacao: r.CLASSIFICACAO ?? '', origem: 'analise-tanque'});
                     html += `<tr class="clas-row" data-pai-tanq="${tanqId}" data-href="/faturamento-eficiencia-uep-detalhe?${params}" style="cursor:pointer;">
                         <td style="padding:5px 10px 5px 50px;color:#1a56db;font-weight:500;user-select:none;">${r.CLASSIFICACAO ?? ''}</td>
                         <td style="text-align:right;">${fmt(vp)}</td>
@@ -274,7 +274,7 @@ function exportarExcel() {
     const linhas = [['Empresa', 'Grupo', 'Tanque', 'Capacidade (80%)', 'Taxa (R$/UEP)', 'Projeção (R$/dia)']];
     for (const t of dadosGlobais) {
         const emprNome = EMPRESAS_AT[String(t.EMPR_ID)] || ('Empresa ' + t.EMPR_ID);
-        const cap = num(t.CAP_UEP_DIA) * 0.80, taxa = num(t.TAXA);
+        const cap = num(t.CAP_UEP_DIA) * 1, taxa = num(t.TAXA);
         linhas.push([emprNome, grupoTanque(t.COD_TANQUE), `${t.COD_TANQUE} — ${t.DESC_TANQUE ?? ''}`, cap, taxa, cap * taxa]);
     }
     const csv = linhas.map(l => l.map(c => {

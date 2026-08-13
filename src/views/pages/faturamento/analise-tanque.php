@@ -32,7 +32,7 @@ if (!$acessoFaturamento) { header('Location: ' . $base . 'sem-acesso'); exit; }
             <thead class="table-dark">
                 <tr>
                     <th>Grupo / Tanque</th>
-                    <th style="text-align:right;">Capacidade (UEP/dia 80%)</th>
+                    <th style="text-align:right;">Capacidade (UEP/dia)</th>
                     <th style="text-align:right;">Taxa (R$/UEP)</th>
                     <th style="text-align:right;">Projeção (R$/dia)</th>
                 </tr>

@@ -6,6 +6,8 @@ if (!$acessoFaturamento) {
 }
 $emprId        = (int) ($_GET['empr_id'] ?? 0);
 $classificacao = trim($_GET['classificacao'] ?? '');
+$origem        = trim($_GET['origem'] ?? '');
+$voltarRota    = $origem === 'analise-tanque' ? 'faturamento-analise-tanque' : 'faturamento-eficiencia-uep';
 ?>
 <?= $render('header', [
     'pageTitle'  => 'Itens — ' . htmlspecialchars($classificacao),
@@ -16,7 +18,7 @@ $classificacao = trim($_GET['classificacao'] ?? '');
 
 <div style="padding: 24px;">
     <div style="position:relative; margin-bottom:20px; min-height:48px;">
-        <a href="<?= $base ?>faturamento-eficiencia-uep" class="btn btn-outline-secondary btn-sm" style="position:absolute;top:0;left:0;">
+        <a href="<?= $base . $voltarRota ?>" class="btn btn-outline-secondary btn-sm" style="position:absolute;top:0;left:0;">
             <i class="bi bi-arrow-left"></i> Voltar
         </a>
         <div style="text-align:center; padding: 0 120px;">
