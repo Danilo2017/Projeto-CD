@@ -23,6 +23,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'pedidos-')                                                            => 'pedidos',
     str_starts_with($pActive, 'processo-')                                                           => 'processo',
     str_starts_with($pActive, 'carga-')                                                              => 'carga',
+    in_array($pActive, ['pcp-apontamento-producao','pcp-apontamento-producao-operacao'])            => 'apontamento',
     str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
     str_starts_with($pActive, 'pd-')                                                                => 'pd',
     str_starts_with($pActive, 'qualidade-')                                                         => 'qualidade',
@@ -75,6 +76,8 @@ $pcpSub = match(true) {
     $pActive === 'pcp-relatorio-vertical-espuma'         => 'relatorio-vertical-espuma',
     $pActive === 'pcp-relatorio-horizontal-espuma'       => 'relatorio-horizontal-espuma',
     $pActive === 'pcp-resumo-lote'                       => 'resumo-lote',
+    $pActive === 'pcp-apontamento-producao'              => 'apontamento-producao',
+    $pActive === 'pcp-apontamento-producao-operacao'     => 'apontamento-producao',
     default => ''
 };
 // Subgrupos ativos do PCP para abrir o 2º nível automaticamente
@@ -563,6 +566,17 @@ $userName = $user_login ?? 'Usuário';
         </li>
         <?php endif; ?>
 
+        <?php if ($acessoPcp): ?>
+        <li class="sidebar-group" id="grpApontamento">
+            <a href="<?= $base ?>pcp-apontamento-producao"
+               class="sidebar-group-btn <?= $activeGroup === 'apontamento' ? 'active' : '' ?>"
+               style="text-decoration:none;display:flex;align-items:center;gap:8px;width:100%">
+                <i class="bi bi-qr-code-scan"></i>
+                <span>Apontamento</span>
+            </a>
+        </li>
+        <?php endif; ?>
+
         <?php if ($acessoPd): ?>
         <li class="sidebar-group" id="grpPd">
             <button class="sidebar-group-btn <?= $activeGroup === 'pd' ? 'active open' : '' ?>">
@@ -663,9 +677,17 @@ $userName = $user_login ?? 'Usuário';
 <!-- ═══════════════════════════════════════
      TOP HEADER
 ═══════════════════════════════════════ -->
+<!-- overlay mobile: fecha a sidebar ao tocar fora -->
+<div id="sbOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1009"></div>
+
 <header class="app-header" id="appHeader">
 
     <div class="app-header-left">
+        <!-- botão hamburguer — visível só no mobile via CSS -->
+        <button id="mobileMenuBtn" aria-label="Menu"
+                style="display:none;background:none;border:none;color:#fff;font-size:22px;padding:0 10px 0 0;cursor:pointer;line-height:1">
+            <i class="bi bi-list"></i>
+        </button>
         <?php if (!empty($pageTitle)): ?>
         <span class="app-header-title"><?= htmlspecialchars($pageTitle) ?></span>
         <?php endif; ?>
@@ -1047,6 +1069,7 @@ body.sidebar-expanded .app-header {
         box-shadow: 4px 0 20px rgba(0,0,0,0.15);
     }
     .app-header { left: 0 !important; }
+    #mobileMenuBtn { display: inline-flex !important; }
 }
 </style>
 
@@ -1192,5 +1215,36 @@ body.sidebar-expanded .app-header {
     function hideFlyout() {
         flyout.style.display = 'none';
     }
+
+    /* ── Hamburguer mobile ── */
+    var mobileBtn = document.getElementById('mobileMenuBtn');
+    var overlay   = document.getElementById('sbOverlay');
+
+    function openMobileSidebar() {
+        sidebar.classList.add('expanded');
+        overlay.style.display = 'block';
+    }
+    function closeMobileSidebar() {
+        sidebar.classList.remove('expanded');
+        overlay.style.display = 'none';
+    }
+    if (mobileBtn) {
+        mobileBtn.addEventListener('click', function () {
+            if (sidebar.classList.contains('expanded')) {
+                closeMobileSidebar();
+            } else {
+                openMobileSidebar();
+            }
+        });
+    }
+    if (overlay) {
+        overlay.addEventListener('click', closeMobileSidebar);
+    }
+    /* Fecha sidebar mobile ao clicar em qualquer link dentro dela */
+    sidebar.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+            if (window.innerWidth <= 768) closeMobileSidebar();
+        });
+    });
 })();
 </script>

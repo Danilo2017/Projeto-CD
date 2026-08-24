@@ -200,6 +200,9 @@ $router->get('/faturamento-api-programacao', 'Faturamento\\FaturamentoProgramaca
 $router->get('/faturamento-api-programacao-resumo', 'Faturamento\\FaturamentoProgramacaoController@resumoDashboard', true);
 $router->get('/faturamento-api-ocupacao', 'Faturamento\\FaturamentoProgramacaoController@ocupacao', true);
 $router->get('/faturamento-api-programacao-flush', 'Faturamento\\FaturamentoProgramacaoController@flushCache', true);
+$router->get('/faturamento-api-programacao-buscar-cliente', 'Faturamento\\FaturamentoProgramacaoController@buscarCliente', true);
+$router->get('/faturamento-api-programacao-listar-clientes', 'Faturamento\\FaturamentoProgramacaoController@listarClientes', true);
+$router->post('/faturamento-api-programacao-incluir-cliente', 'Faturamento\\FaturamentoProgramacaoController@incluirCliente', true);
 
 // ========== Eficiência de Pendência por UEP ==========
 $router->get('/faturamento-eficiencia-uep', 'Faturamento\\EficienciaUepController@index', true);
@@ -335,6 +338,17 @@ $router->post('/pcp-api-relatorio-pcp-borda-aco',          'PCP\\RelatorioProdCo
 $router->post('/pcp-api-relatorio-pcp-expedicao-rolo',     'PCP\\RelatorioProdController@buscarPcpExpedicaoRolo',     true);
 $router->get('/pcp-relatorio-pcp-cordao',                   'PCP\\RelatorioProdController@indexPcpCordao',             true);
 $router->post('/pcp-api-relatorio-pcp-cordao',              'PCP\\RelatorioProdController@buscarPcpCordao',            true);
+
+// ========== Apontamento de Produção ==========
+$router->get('/pcp-apontamento-producao',             'PCP\\ApontamentoProducaoController@index',         true);
+$router->get('/pcp-apontamento-producao-operacao',    'PCP\\ApontamentoProducaoController@operacao',      true);
+$router->post('/pcp-api-apont-iniciar-sessao',        'PCP\\ApontamentoProducaoController@iniciarSessao', true);
+$router->post('/pcp-api-apont-encerrar-sessao',       'PCP\\ApontamentoProducaoController@encerrarSessao',true);
+$router->get('/pcp-api-apont-buscar-codigo',          'PCP\\ApontamentoProducaoController@buscarCodigo',  true);
+$router->post('/pcp-api-apontar',                     'PCP\\ApontamentoProducaoController@apontar',       true);
+$router->get('/pcp-api-apont-ordens',                 'PCP\\ApontamentoProducaoController@listarOrdens',  true);
+$router->get('/pcp-api-apont-sessao',                 'PCP\\ApontamentoProducaoController@sessaoAtual',   true);
+$router->post('/pcp-api-apont-set-maquina',           'PCP\\ApontamentoProducaoController@setMaquina',    true);
 
 // ========== Rotas do P&D ==========
 $router->get('/pd-inativacao-preco',          'PD\\InativacaoPrecoController@index',              true);

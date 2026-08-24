@@ -171,7 +171,7 @@ class Auth extends Controller {
             'processo'   => 'processo-troca-almox',
             'carga'      => 'carga-projecao',
             'permissao'  => 'permissao',
-            'pcp'        => 'pcp-relatorio-producao',
+            'pcp'        => 'pcp-apontamento-producao',
         ];
         
         // Retornar a primeira rota disponível

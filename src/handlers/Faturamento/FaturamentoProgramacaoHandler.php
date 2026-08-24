@@ -2,6 +2,7 @@
 
 namespace src\handlers\Faturamento;
 
+use core\Database;
 use src\models\Faturamento\ProgramacaoPedidos;
 use src\utils\DashboardCache;
 
@@ -121,5 +122,49 @@ class FaturamentoProgramacaoHandler
                 'diasUteis' => $diasUteis,
             ];
         });
+    }
+
+    public static function buscarCliente(int $codCli): ?array
+    {
+        $pdo  = Database::getInstance('focco');
+        $stmt = $pdo->prepare("SELECT COD_CLI, DESCRICAO FROM FOCCO3I.TCLIENTES WHERE COD_CLI = :cod AND ROWNUM = 1");
+        $stmt->execute([':cod' => $codCli]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public static function listarClientesProgramacao(): array
+    {
+        $pdo  = Database::getInstance('focco');
+        $stmt = $pdo->prepare("
+            SELECT c.COD_CLI, c.DESCRICAO, c.TIPO, c.CANAL, c.PROGRAMACAO
+            FROM FOCCO3I.CLIENTES_PROGRAMACAO_V3 c
+            ORDER BY c.DESCRICAO
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public static function salvarCliente(int $codCli, string $descricao, string $tipo, string $canal, string $programacao, bool $editar): void
+    {
+        $pdo = Database::getInstance('focco');
+        if ($editar) {
+            $stmt = $pdo->prepare("
+                UPDATE FOCCO3I.CLIENTES_PROGRAMACAO_V3
+                SET DESCRICAO = :descricao, TIPO = :tipo, CANAL = :canal, PROGRAMACAO = :programacao
+                WHERE COD_CLI = :cod_cli
+            ");
+        } else {
+            $stmt = $pdo->prepare("
+                INSERT INTO FOCCO3I.CLIENTES_PROGRAMACAO_V3 (COD_CLI, DESCRICAO, TIPO, CANAL, PROGRAMACAO)
+                VALUES (:cod_cli, :descricao, :tipo, :canal, :programacao)
+            ");
+        }
+        $stmt->execute([
+            ':cod_cli'     => $codCli,
+            ':descricao'   => $descricao,
+            ':tipo'        => $tipo,
+            ':canal'       => $canal,
+            ':programacao' => $programacao,
+        ]);
     }
 }
