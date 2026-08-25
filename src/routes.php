@@ -340,15 +340,15 @@ $router->get('/pcp-relatorio-pcp-cordao',                   'PCP\\RelatorioProdC
 $router->post('/pcp-api-relatorio-pcp-cordao',              'PCP\\RelatorioProdController@buscarPcpCordao',            true);
 
 // ========== Apontamento de Produção ==========
-$router->get('/pcp-apontamento-producao',             'PCP\\ApontamentoProducaoController@index',         true);
-$router->get('/pcp-apontamento-producao-operacao',    'PCP\\ApontamentoProducaoController@operacao',      true);
-$router->post('/pcp-api-apont-iniciar-sessao',        'PCP\\ApontamentoProducaoController@iniciarSessao', true);
-$router->post('/pcp-api-apont-encerrar-sessao',       'PCP\\ApontamentoProducaoController@encerrarSessao',true);
-$router->get('/pcp-api-apont-buscar-codigo',          'PCP\\ApontamentoProducaoController@buscarCodigo',  true);
-$router->post('/pcp-api-apontar',                     'PCP\\ApontamentoProducaoController@apontar',       true);
-$router->get('/pcp-api-apont-ordens',                 'PCP\\ApontamentoProducaoController@listarOrdens',  true);
-$router->get('/pcp-api-apont-sessao',                 'PCP\\ApontamentoProducaoController@sessaoAtual',   true);
-$router->post('/pcp-api-apont-set-maquina',           'PCP\\ApontamentoProducaoController@setMaquina',    true);
+$router->get('/apontamento-producao',             'PCP\\ApontamentoProducaoController@index',         true);
+$router->get('/apontamento-producao-operacao',    'PCP\\ApontamentoProducaoController@operacao',      true);
+$router->post('/apontamento-api-iniciar-sessao',  'PCP\\ApontamentoProducaoController@iniciarSessao', true);
+$router->post('/apontamento-api-encerrar-sessao', 'PCP\\ApontamentoProducaoController@encerrarSessao',true);
+$router->get('/apontamento-api-buscar-codigo',    'PCP\\ApontamentoProducaoController@buscarCodigo',  true);
+$router->post('/apontamento-api-apontar',         'PCP\\ApontamentoProducaoController@apontar',       true);
+$router->get('/apontamento-api-ordens',           'PCP\\ApontamentoProducaoController@listarOrdens',  true);
+$router->get('/apontamento-api-sessao',           'PCP\\ApontamentoProducaoController@sessaoAtual',   true);
+$router->post('/apontamento-api-set-maquina',     'PCP\\ApontamentoProducaoController@setMaquina',    true);
 
 // ========== Rotas do P&D ==========
 $router->get('/pd-inativacao-preco',          'PD\\InativacaoPrecoController@index',              true);

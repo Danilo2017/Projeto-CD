@@ -54,7 +54,7 @@
         if (!el) return;
         el.innerHTML = '<p style="text-align:center;color:#aaa;font-size:13px;padding:20px">Carregando...</p>';
         try {
-            const r = await fetch(BASE + 'pcp-api-apont-ordens');
+            const r = await fetch(BASE + 'apontamento-api-ordens');
             const d = await r.json();
             if (d.error) { el.innerHTML = `<p style="color:#c62828;font-size:13px;padding:10px">${d.error}</p>`; return; }
             renderOrdens(d.data || []);
@@ -181,7 +181,7 @@
             btnConf.disabled = true;
             btnConf.textContent = 'Buscando…';
             try {
-                const r = await fetch(`${BASE}pcp-api-apont-set-maquina`, {
+                const r = await fetch(`${BASE}apontamento-api-set-maquina`, {
                     method: 'POST',
                     headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({ codigo: cod }),
@@ -238,7 +238,7 @@
 
         try {
             // 1. Resolve o código para OrdemRoteiro
-            const rBusca = await fetch(`${BASE}pcp-api-apont-buscar-codigo?tipo=ordem&codigo=${encodeURIComponent(codigo)}`);
+            const rBusca = await fetch(`${BASE}apontamento-api-buscar-codigo?tipo=ordem&codigo=${encodeURIComponent(codigo)}`);
             const dBusca = await rBusca.json();
 
             if (dBusca.error) {
@@ -255,7 +255,7 @@
             </div>`);
 
             // 2. Faz o apontamento
-            const rApont = await fetch(`${BASE}pcp-api-apontar`, {
+            const rApont = await fetch(`${BASE}apontamento-api-apontar`, {
                 method: 'POST',
                 headers: {'Content-Type':'application/json'},
                 body: JSON.stringify({ ordem_rot_id: ordem.ROT_ID, quantidade: 1, tipo: 'TP', etiq_id: ordem.ETIQ_ID || null, cod_barra: ordem.COD_BARRA_ORD || codigo }),
@@ -310,8 +310,8 @@
 
     window.encerrar = async function () {
         if (!confirm('Encerrar a sessão de apontamento?')) return;
-        await fetch(BASE + 'pcp-api-apont-encerrar-sessao', { method: 'POST' });
-        window.location.href = BASE + 'pcp-apontamento-producao';
+        await fetch(BASE + 'apontamento-api-encerrar-sessao', { method: 'POST' });
+        window.location.href = BASE + 'apontamento-producao';
     };
 
     // ── Init ─────────────────────────────────────────────────────────────────
@@ -322,7 +322,7 @@
 
         // Verifica se sessão já tem máquina vinculada (definida no setup = fixa)
         try {
-            const r = await fetch(BASE + 'pcp-api-apont-sessao');
+            const r = await fetch(BASE + 'apontamento-api-sessao');
             const d = await r.json();
             if (d.ativa && d.sessao && d.sessao.maquina_id > 0) {
                 maquinaVinculada = true;

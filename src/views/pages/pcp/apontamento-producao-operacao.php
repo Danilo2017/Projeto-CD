@@ -1,7 +1,7 @@
 <?php
 /** @var callable $render */
 /** @var string   $base */
-$acesso = $is_admin || in_array('pcp', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acesso = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 
 $sessao = $_SESSION['apont_sessao'] ?? [];
@@ -9,7 +9,7 @@ $sessao = $_SESSION['apont_sessao'] ?? [];
 <?= $render('header', [
     'pageTitle'  => 'Apontamento de Produção',
     'showNavbar' => false,
-    'pageActive' => 'pcp-apontamento-producao',
+    'pageActive' => 'apontamento-producao',
 ]) ?>
 
 <style>

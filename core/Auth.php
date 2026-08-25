@@ -108,7 +108,7 @@ class Auth extends Controller {
         
         // Se o prefixo é igual à URL inteira e não tem hífen, 
         // verificar se é uma rota conhecida de módulo
-        $modulosConhecidos = ['cd', 'comissao', 'permissao', 'faturamento', 'admin', 'pedidos', 'processo', 'carga', 'pcp'];
+        $modulosConhecidos = ['cd', 'comissao', 'permissao', 'faturamento', 'admin', 'pedidos', 'processo', 'carga', 'pcp', 'apontamento'];
 
         if (in_array($prefixo, $modulosConhecidos)) {
             return $prefixo;
@@ -171,7 +171,8 @@ class Auth extends Controller {
             'processo'   => 'processo-troca-almox',
             'carga'      => 'carga-projecao',
             'permissao'  => 'permissao',
-            'pcp'        => 'pcp-apontamento-producao',
+            'pcp'          => 'pcp-relatorio-producao',
+            'apontamento'  => 'apontamento-producao',
         ];
         
         // Retornar a primeira rota disponível

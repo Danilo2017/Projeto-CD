@@ -12,6 +12,7 @@ $acessoPedidos     = $is_admin || in_array('pedidos',     $rotas_permitidas) || 
 $acessoProcesso    = $is_admin || in_array('processo',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoCarga       = $is_admin || in_array('carga',       $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoApontamento = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPd          = $is_admin || in_array('pd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoQualidade   = $is_admin || in_array('qualidade',   $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
@@ -23,7 +24,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'pedidos-')                                                            => 'pedidos',
     str_starts_with($pActive, 'processo-')                                                           => 'processo',
     str_starts_with($pActive, 'carga-')                                                              => 'carga',
-    in_array($pActive, ['pcp-apontamento-producao','pcp-apontamento-producao-operacao'])            => 'apontamento',
+    str_starts_with($pActive, 'apontamento-') || $pActive === 'apontamento-producao'                => 'apontamento',
     str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
     str_starts_with($pActive, 'pd-')                                                                => 'pd',
     str_starts_with($pActive, 'qualidade-')                                                         => 'qualidade',
@@ -566,9 +567,9 @@ $userName = $user_login ?? 'Usuário';
         </li>
         <?php endif; ?>
 
-        <?php if ($acessoPcp): ?>
+        <?php if ($acessoApontamento): ?>
         <li class="sidebar-group" id="grpApontamento">
-            <a href="<?= $base ?>pcp-apontamento-producao"
+            <a href="<?= $base ?>apontamento-producao"
                class="sidebar-group-btn <?= $activeGroup === 'apontamento' ? 'active' : '' ?>"
                style="text-decoration:none;display:flex;align-items:center;gap:8px;width:100%">
                 <i class="bi bi-qr-code-scan"></i>

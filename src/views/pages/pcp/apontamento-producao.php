@@ -1,13 +1,13 @@
 <?php
 /** @var callable $render */
 /** @var string   $base */
-$acesso = $is_admin || in_array('pcp', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acesso = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 ?>
 <?= $render('header', [
     'pageTitle'  => 'Apontamento de Produção',
     'showNavbar' => false,
-    'pageActive' => 'pcp-apontamento-producao',
+    'pageActive' => 'apontamento-producao',
 ]) ?>
 <style>
 .apont-nav{background:#0d47a1;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
@@ -16,7 +16,7 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 .apont-nav-title{font-size:15px;font-weight:600}
 </style>
 <div class="apont-nav">
-    <a href="<?= $base ?>pcp-apontamento-producao" title="Início">&#9776;</a>
+    <a href="<?= $base ?>apontamento-producao" title="Início">&#9776;</a>
     <span class="apont-nav-title">Apontamento de Produção</span>
 </div>
 
@@ -107,7 +107,7 @@ async function resolverCodigo(tipo, inputId, resolvedId, hiddenId) {
     const codigo = input.value.trim();
     if (!codigo) return false;
 
-    const r = await fetch(`${BASE}pcp-api-apont-buscar-codigo?tipo=${tipo}&codigo=${encodeURIComponent(codigo)}`);
+    const r = await fetch(`${BASE}apontamento-api-buscar-codigo?tipo=${tipo}&codigo=${encodeURIComponent(codigo)}`);
     const d = await r.json();
 
     const el = document.getElementById(resolvedId);
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const r = await fetch(`${BASE}pcp-api-apont-iniciar-sessao`, {
+        const r = await fetch(`${BASE}apontamento-api-iniciar-sessao`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({ func_id: +funcId, operacao_id: +opeId, maquina_id: +maqId }),
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        window.location.href = BASE + 'pcp-apontamento-producao-operacao';
+        window.location.href = BASE + 'apontamento-producao-operacao';
     });
 });
 </script>
