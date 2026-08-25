@@ -235,15 +235,18 @@ class PerfilAcesso
             if (!isset($usuarios[$login])) {
                 $usuarios[$login] = [
                     'LOGIN_USUARIO' => $login,
-                    'ATIVO'         => $row['ATIVO'],
+                    'ATIVO'         => 'N',
                     'PERFIS'        => [],
                     'PERFIS_IDS'    => [],
                     'DT_CADASTRO'   => $row['DT_CADASTRO'],
                 ];
             }
 
-            $usuarios[$login]['PERFIS'][]     = $row['PERFIL_NOME'];
-            $usuarios[$login]['PERFIS_IDS'][] = $row['PERFIL_ID'];
+            if ($row['ATIVO'] === 'S') {
+                $usuarios[$login]['ATIVO'] = 'S';
+                $usuarios[$login]['PERFIS'][]     = $row['PERFIL_NOME'];
+                $usuarios[$login]['PERFIS_IDS'][] = $row['PERFIL_ID'];
+            }
         }
 
         return array_values($usuarios);
