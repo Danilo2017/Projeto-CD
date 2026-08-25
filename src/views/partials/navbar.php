@@ -1106,6 +1106,11 @@ body.sidebar-expanded .app-header {
         var submenu = grp.querySelector('.sidebar-submenu');
         var grpId   = grp.id;
 
+        if (!submenu) {
+            /* Grupo sem submenu (link direto): sem flyout nem toggle */
+            return;
+        }
+
         /* Restaurar grupos abertos (sem sobrescrever o que o PHP já marcou como aberto) */
         if (savedGroups[grpId] && !submenu.classList.contains('open')) {
             submenu.classList.add('open');
