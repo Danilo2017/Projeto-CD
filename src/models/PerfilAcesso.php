@@ -26,10 +26,12 @@ class PerfilAcesso
 
         $temPD         = false;
         $temQualidade  = false;
+        $temPCP        = false;
         foreach ($perfis as $p) {
             $nome = strtoupper($p['NOME'] ?? '');
-            if ($nome === 'P&D')       $temPD        = true;
-            if ($nome === 'QUALIDADE') $temQualidade = true;
+            if ($nome === 'P&D')        $temPD        = true;
+            if ($nome === 'QUALIDADE')  $temQualidade = true;
+            if ($nome === 'PCP')        $temPCP       = true;
         }
 
         if (!$temPD) {
@@ -40,6 +42,11 @@ class PerfilAcesso
         if (!$temQualidade) {
             $q = self::garantirPerfilQualidade();
             if ($q !== null) $perfis[] = $q;
+        }
+
+        if (!$temPCP) {
+            $pcp = self::garantirPerfilPCP();
+            if ($pcp !== null) $perfis[] = $pcp;
         }
 
         return $perfis;
@@ -115,6 +122,39 @@ class PerfilAcesso
             Database::getInstance('focco')->exec('COMMIT');
 
             return ['ID_PERFIL' => $novoId, 'NOME' => 'Qualidade', 'DESCRICAO' => 'Acesso ao modulo Qualidade'];
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private static function garantirPerfilPCP(): ?array
+    {
+        try {
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PCP'");
+            $existing = $chk['retorno'][0] ?? null;
+
+            if ($existing) {
+                return ['ID_PERFIL' => (int)$existing['ID_PERFIL'], 'NOME' => 'PCP', 'DESCRICAO' => 'Acesso ao módulo Apontamento PCP'];
+            }
+
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('PCP', 'Acesso ao módulo Apontamento PCP', 'S', SYSDATE)");
+            if (!empty($resA['error'])) return null;
+
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PCP'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
+
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'pcp', SYSDATE)");
+
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId, 'NOME' => 'PCP', 'DESCRICAO' => 'Acesso ao módulo Apontamento PCP'];
         } catch (\Throwable $e) {
             return null;
         }
