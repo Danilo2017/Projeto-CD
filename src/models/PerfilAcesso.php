@@ -27,11 +27,13 @@ class PerfilAcesso
         $temPD           = false;
         $temQualidade    = false;
         $temApontamento  = false;
+        $temPCP          = false;
         foreach ($perfis as $p) {
             $nome = strtoupper($p['NOME'] ?? '');
             if ($nome === 'P&D')          $temPD          = true;
             if ($nome === 'QUALIDADE')    $temQualidade   = true;
             if ($nome === 'APONTAMENTO')  $temApontamento = true;
+            if ($nome === 'PCP')          $temPCP         = true;
         }
 
         if (!$temPD) {
@@ -47,6 +49,11 @@ class PerfilAcesso
         if (!$temApontamento) {
             $ap = self::garantirPerfilApontamento();
             if ($ap !== null) $perfis[] = $ap;
+        }
+
+        if (!$temPCP) {
+            $pcp = self::garantirPerfilPCP();
+            if ($pcp !== null) $perfis[] = $pcp;
         }
 
         return $perfis;
@@ -127,6 +134,39 @@ class PerfilAcesso
         }
     }
 
+    private static function garantirPerfilPCP(): ?array
+    {
+        try {
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PCP'");
+            $existing = $chk['retorno'][0] ?? null;
+            if ($existing) {
+                return ['ID_PERFIL' => (int)$existing['ID_PERFIL'], 'NOME' => 'PCP', 'DESCRICAO' => 'Acesso aos relatorios PCP'];
+            }
+
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('PCP', 'Acesso aos relatorios PCP', 'S', SYSDATE)");
+            if (!empty($resA['error'])) return null;
+
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PCP'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
+
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'pcp', SYSDATE)");
+
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId, 'NOME' => 'PCP', 'DESCRICAO' => 'Acesso aos relatorios PCP'];
+        } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilPCP erro: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     private static function garantirPerfilApontamento(): ?array
     {
         try {
@@ -136,20 +176,6 @@ class PerfilAcesso
             $existing = $chk['retorno'][0] ?? null;
             if ($existing) {
                 return ['ID_PERFIL' => (int)$existing['ID_PERFIL'], 'NOME' => 'Apontamento', 'DESCRICAO' => 'Acesso ao modulo Apontamento PCP'];
-            }
-
-            // Existe ainda como PCP (legado)? Renomeia no banco.
-            $chkPcp = Database::switchParams('focco', [], null, true, false, null,
-                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PCP'");
-            $legado = $chkPcp['retorno'][0] ?? null;
-            if ($legado) {
-                $pcpId = (int)$legado['ID_PERFIL'];
-                Database::switchParams('focco', [], null, true, false, null,
-                    "UPDATE TGAZIN_PERFIL_ACESSO SET NOME = 'Apontamento', DESCRICAO = 'Acesso ao modulo Apontamento PCP' WHERE ID_PERFIL = $pcpId");
-                Database::switchParams('focco', [], null, true, false, null,
-                    "UPDATE TGAZIN_PERFIL_ROTA SET PREFIXO_ROTA = 'apontamento' WHERE PERFIL_ID = $pcpId");
-                Database::getInstance('focco')->exec('COMMIT');
-                return ['ID_PERFIL' => $pcpId, 'NOME' => 'Apontamento', 'DESCRICAO' => 'Acesso ao modulo Apontamento PCP'];
             }
 
             // Nenhum existe — insere novo
