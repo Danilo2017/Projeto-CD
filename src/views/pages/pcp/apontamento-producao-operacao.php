@@ -1,6 +1,8 @@
 <?php
-/** @var callable $render */
+/** @var bool     $is_admin */
+/** @var array    $rotas_permitidas */
 /** @var string   $base */
+/** @var callable $render */
 $acesso = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 
