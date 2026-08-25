@@ -55,7 +55,7 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
             <label>Empresa</label>
             <div style="background:#f0f4ff;border:1px solid #c5cae9;border-radius:6px;padding:8px 12px;font-size:14px;color:#1a237e;font-weight:600">
                 <i class="bi bi-building" style="margin-right:6px"></i>
-                <?= htmlspecialchars(($_SESSION['empresa']['id'] ?? '') . ' — ' . ($_SESSION['empresa']['nome'] ?? '')) ?>
+                <?= htmlspecialchars(($_SESSION['empresa']['id'] ?? '') . ' — ' . ($_SESSION['empresa']['nome_fantasia'] ?? ($_SESSION['empresa']['razao_social'] ?? ''))) ?>
             </div>
         </div>
 
