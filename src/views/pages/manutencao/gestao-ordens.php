@@ -63,12 +63,6 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 
     <!-- Filtros -->
     <div class="man-filters">
-        <div style="flex:1;min-width:220px;max-width:380px">
-            <label>Empresa</label>
-            <select id="selEmpresa" class="form-select form-select-sm">
-                <option value="">Carregando...</option>
-            </select>
-        </div>
         <div>
             <label>Período inicial</label>
             <input type="date" id="dataIni" class="form-control form-control-sm" value="<?= date('Y-m-01') ?>">

@@ -1,37 +1,21 @@
 /* Gestão de Ordens de Manutenção */
 'use strict';
 
-let _emprId   = 0;
+let _emprId   = EMPR_SESS;
 let _dataIni  = '';
 let _dataFim  = '';
-let _modoDetalhe = ''; // 'aberta' | 'atendimento' | 'liberada'
+let _modoDetalhe = ''; // 'aberta' | 'atendimento'
 let _maqId    = 0;
 let _prio     = 0;
-let _ordensSelecionadas = []; // IDs de TORDENS_MAN selecionados no modal
+let _ordensSelecionadas = [];
 
 /* ─── Inicialização ─────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
-    carregarEmpresas().then(function () { carregarTodos(); });
+    carregarTodos();
 });
 
-async function carregarEmpresas() {
-    try {
-        const r = await fetch(BASE + 'manutencao-api-empresas');
-        const d = await r.json();
-        const sel = document.getElementById('selEmpresa');
-        sel.innerHTML = '';
-        (d.data || []).forEach(function (e) {
-            const opt = document.createElement('option');
-            opt.value = e.ID;
-            opt.textContent = 'FL ' + e.CODIGO + ' — ' + e.RAZAO_SOCIAL;
-            if (e.ID == EMPR_SESS) opt.selected = true;
-            sel.appendChild(opt);
-        });
-    } catch (err) { console.error('Empresas:', err); }
-}
-
 function params() {
-    _emprId  = document.getElementById('selEmpresa').value;
+    _emprId  = EMPR_SESS;
     _dataIni = document.getElementById('dataIni').value;
     _dataFim = document.getElementById('dataFim').value;
     return new URLSearchParams({ empr_id: _emprId, data_ini: _dataIni, data_fim: _dataFim });
@@ -83,7 +67,7 @@ async function carregarAtendimento(p) {
     const tb = document.getElementById('tbAtend');
     tb.innerHTML = '<tr><td colspan="3" class="man-empty">Carregando...</td></tr>';
     try {
-        const r = await fetch(BASE + 'manutencao-api-atendimento?' + new URLSearchParams({ empr_id: _emprId }));
+        const r = await fetch(BASE + 'manutencao-api-atendimento?' + new URLSearchParams({ empr_id: EMPR_SESS }));
         const d = await r.json();
         const rows = d.data || [];
         document.getElementById('cntAtend').textContent = rows.length + ' registro(s)';
@@ -305,7 +289,7 @@ function abrirModalOk() {
 
 async function carregarFuncionarios() {
     try {
-        const r = await fetch(BASE + 'manutencao-api-funcionarios?empr_id=' + _emprId);
+        const r = await fetch(BASE + 'manutencao-api-funcionarios?empr_id=' + EMPR_SESS);
         const d = await r.json();
         const sel = document.getElementById('selFuncionario');
         sel.innerHTML = '<option value="">Selecione...</option>';
