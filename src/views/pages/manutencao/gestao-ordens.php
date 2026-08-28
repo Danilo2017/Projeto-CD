@@ -243,9 +243,9 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
     </div>
 </div>
 
-<script src="<?= $base ?>src/js/manutencao-gestao-ordens.js?v=<?= @filemtime(dirname(__DIR__, 4) . '/public/src/js/manutencao-gestao-ordens.js') ?: '1' ?>"></script>
 <script>
-const BASE       = '<?= $base ?>';
-const EMPR_SESS  = <?= (int) ($_SESSION['empresa']['id'] ?? 0) ?>;
+const BASE      = '<?= $base ?>';
+const EMPR_SESS = <?= (int) ($_SESSION['empresa']['id'] ?? 0) ?>;
 </script>
+<script src="<?= $base ?>src/js/manutencao-gestao-ordens.js?v=<?= @filemtime(dirname(__DIR__, 4) . '/public/src/js/manutencao-gestao-ordens.js') ?: '1' ?>"></script>
 <?= $render('footer') ?>
