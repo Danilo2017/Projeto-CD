@@ -359,6 +359,22 @@ $router->get('/pd-api-listar-cadastros',       'PD\\InativacaoPrecoController@li
 $router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@cadastrarItens',     true);
 $router->post('/pd-api-excluir-item',          'PD\\InativacaoPrecoController@excluirItem',        true);
 
+// ========== Rotas de Manutenção ==========
+$router->get('/manutencao-gestao-ordens',           'Manutencao\\ManutencaoController@index',              true);
+$router->get('/manutencao-api-empresas',            'Manutencao\\ManutencaoController@listarEmpresas',     true);
+$router->get('/manutencao-api-aberta',              'Manutencao\\ManutencaoController@listarAberta',       true);
+$router->get('/manutencao-api-detalhar-aberta',     'Manutencao\\ManutencaoController@detalharAberta',     true);
+$router->get('/manutencao-api-atendimento',         'Manutencao\\ManutencaoController@listarAtendimento',  true);
+$router->get('/manutencao-api-detalhar-atendimento','Manutencao\\ManutencaoController@detalharAtendimento',true);
+$router->get('/manutencao-api-liberada',            'Manutencao\\ManutencaoController@listarLiberada',     true);
+$router->get('/manutencao-api-programada',          'Manutencao\\ManutencaoController@listarProgramada',   true);
+$router->get('/manutencao-api-funcionarios',        'Manutencao\\ManutencaoController@listarFuncionarios', true);
+$router->post('/manutencao-api-atender',            'Manutencao\\ManutencaoController@atender',            true);
+$router->post('/manutencao-api-ok',                 'Manutencao\\ManutencaoController@marcarOk',           true);
+$router->post('/manutencao-api-des-ok',             'Manutencao\\ManutencaoController@desmarcarOk',        true);
+$router->post('/manutencao-api-fechar',             'Manutencao\\ManutencaoController@fechar',             true);
+$router->post('/manutencao-api-excluir',            'Manutencao\\ManutencaoController@excluir',            true);
+
 // ========== Rotas de Qualidade ==========
 $router->get('/qualidade-rastreabilidade-costura',              'Qualidade\\RastreabilidadeController@indexCostura',      true);
 $router->post('/qualidade-api-rastreabilidade-costura',         'Qualidade\\RastreabilidadeController@buscarCostura',     true);

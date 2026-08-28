@@ -15,6 +15,7 @@ $acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || 
 $acessoApontamento = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPd          = $is_admin || in_array('pd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoQualidade   = $is_admin || in_array('qualidade',   $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoManutencao  = $is_admin || in_array('manutencao',  $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
@@ -28,6 +29,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
     str_starts_with($pActive, 'pd-')                                                                => 'pd',
     str_starts_with($pActive, 'qualidade-')                                                         => 'qualidade',
+    str_starts_with($pActive, 'manutencao-')                                                        => 'manutencao',
     $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
@@ -649,6 +651,22 @@ $userName = $user_login ?? 'Usuário';
                     </ul>
                 </li>
 
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoManutencao): ?>
+        <li class="sidebar-group" id="grpManutencao">
+            <a class="sidebar-link sidebar-group-toggle <?= $activeGroup === 'manutencao' ? 'active' : '' ?>"
+               data-group="grpManutencao" href="#" data-tooltip="Manutenção">
+                <i class="bi bi-tools"></i>
+                <span>Manutenção</span>
+                <i class="bi bi-chevron-down sidebar-arrow ms-auto"></i>
+            </a>
+            <ul class="sidebar-submenu <?= $activeGroup === 'manutencao' ? 'open' : '' ?>">
+                <li><a href="<?= $base ?>manutencao-gestao-ordens"
+                       class="sidebar-sublink <?= $pActive === 'manutencao-gestao-ordens' ? 'active' : '' ?>">
+                    Gestão de Ordens</a></li>
             </ul>
         </li>
         <?php endif; ?>

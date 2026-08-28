@@ -36,9 +36,19 @@ class PerfilAcesso
             if ($nome === 'PCP')          $temPCP         = true;
         }
 
+        $temManutencao = false;
+        foreach ($perfis as $p) {
+            if (strtoupper($p['NOME'] ?? '') === 'MANUTENÇÃO') $temManutencao = true;
+        }
+
         if (!$temPD) {
             $pd = self::garantirPerfilPD();
             if ($pd !== null) $perfis[] = $pd;
+        }
+
+        if (!$temManutencao) {
+            $m = self::garantirPerfilManutencao();
+            if ($m !== null) $perfis[] = $m;
         }
 
         if (!$temQualidade) {
@@ -102,6 +112,49 @@ class PerfilAcesso
             return ['ID_PERFIL' => $novoId, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
         } catch (\Throwable $e) {
             error_log('[PerfilAcesso] garantirPerfilPD erro: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private static function garantirPerfilManutencao(): ?array
+    {
+        try {
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'MANUTENÇÃO'");
+            $existing = $chk['retorno'][0] ?? null;
+
+            if ($existing) {
+                $id = (int)$existing['ID_PERFIL'];
+                $rotaChk = Database::switchParams('focco', [], null, true, false, null,
+                    "SELECT COUNT(1) AS CNT FROM TGAZIN_PERFIL_ROTA WHERE PERFIL_ID = $id AND PREFIXO_ROTA = 'manutencao'");
+                $cnt = (int)(($rotaChk['retorno'][0] ?? [])['CNT'] ?? 0);
+                if ($cnt === 0) {
+                    Database::switchParams('focco', [], null, true, false, null,
+                        "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                         VALUES ($id, 'manutencao', SYSDATE)");
+                    Database::getInstance('focco')->exec('COMMIT');
+                }
+                return ['ID_PERFIL' => $id, 'NOME' => 'Manutenção', 'DESCRICAO' => 'Acesso ao módulo Manutenção'];
+            }
+
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('Manutenção', 'Acesso ao módulo Manutenção', 'S', SYSDATE)");
+            if (!empty($resA['error'])) return null;
+
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'MANUTENÇÃO'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
+
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'manutencao', SYSDATE)");
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId, 'NOME' => 'Manutenção', 'DESCRICAO' => 'Acesso ao módulo Manutenção'];
+        } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilManutencao erro: ' . $e->getMessage());
             return null;
         }
     }
