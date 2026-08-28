@@ -62,38 +62,46 @@ class PerfilAcesso
     private static function garantirPerfilPD(): ?array
     {
         try {
-            // Verifica se já existe usando switchParams (padrão do projeto)
-            $chkSql = "SELECT ID FROM TGAZIN_PERFIL_ACESSO WHERE NOME = 'P&D'";
-            $chk    = Database::switchParams('focco', [], null, true, false, null, $chkSql);
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'P&D'");
             $existing = $chk['retorno'][0] ?? null;
 
             if ($existing) {
-                return ['ID_PERFIL' => (int)$existing['ID'], 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
+                $id = (int)$existing['ID_PERFIL'];
+
+                // Garante que a rota existe (pode estar faltando de criação anterior com bug)
+                $rotaChk = Database::switchParams('focco', [], null, true, false, null,
+                    "SELECT COUNT(1) AS CNT FROM TGAZIN_PERFIL_ROTA WHERE PERFIL_ID = $id AND PREFIXO_ROTA = 'pd'");
+                $cnt = (int)(($rotaChk['retorno'][0] ?? [])['CNT'] ?? 0);
+                if ($cnt === 0) {
+                    Database::switchParams('focco', [], null, true, false, null,
+                        "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                         VALUES ($id, 'pd', SYSDATE)");
+                    Database::getInstance('focco')->exec('COMMIT');
+                }
+
+                return ['ID_PERFIL' => $id, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
             }
 
-            // Próximo ID
-            $idSql  = "SELECT NVL(MAX(ID),80)+20 NX FROM TGAZIN_PERFIL_ACESSO";
-            $idRes  = Database::switchParams('focco', [], null, true, false, null, $idSql);
-            $novoId = (int)($idRes['retorno'][0]['NX'] ?? 101);
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('P&D', 'Acesso ao módulo P&D', 'S', SYSDATE)");
+            if (!empty($resA['error'])) return null;
 
-            // INSERT perfil — padrão do projeto: switchParams + exec('COMMIT')
-            $sqlA = "INSERT INTO TGAZIN_PERFIL_ACESSO (ID, NOME, DESCRICAO, ATIVO, DT_CADASTRO)
-                     VALUES ($novoId, 'P&D', 'Acesso ao módulo P&D', 'S', SYSDATE)";
-            $resA = Database::switchParams('focco', [], null, true, false, null, $sqlA);
-            if (!empty($resA['error'])) {
-                return ['ID_PERFIL' => $novoId, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
-            }
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'P&D'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
 
-            // INSERT rota
-            $sqlR = "INSERT INTO TGAZIN_PERFIL_ROTA (ID, PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
-                     VALUES ($novoId, $novoId, 'pd', SYSDATE)";
-            Database::switchParams('focco', [], null, true, false, null, $sqlR);
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'pd', SYSDATE)");
 
-            // Commit explícito (padrão Oracle OCI neste projeto)
             Database::getInstance('focco')->exec('COMMIT');
 
             return ['ID_PERFIL' => $novoId, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
         } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilPD erro: ' . $e->getMessage());
             return null;
         }
     }
