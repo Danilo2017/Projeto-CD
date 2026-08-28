@@ -1,7 +1,7 @@
 /* Gestão de Ordens de Manutenção */
 'use strict';
 
-let _emprId   = EMPR_SESS;
+let _emprId   = 0;
 let _dataIni  = '';
 let _dataFim  = '';
 let _modoDetalhe = ''; // 'aberta' | 'atendimento'
@@ -11,6 +11,7 @@ let _ordensSelecionadas = [];
 
 /* ─── Inicialização ─────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
+    _emprId = EMPR_SESS;
     carregarTodos();
 });
 
