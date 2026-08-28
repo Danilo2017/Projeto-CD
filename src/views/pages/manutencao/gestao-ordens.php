@@ -63,9 +63,11 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 
     <!-- Filtros -->
     <div class="man-filters">
-        <div>
+        <div style="flex:1;min-width:220px;max-width:380px">
             <label>Empresa</label>
-            <select id="selEmpresa" class="form-select form-select-sm" style="min-width:200px"></select>
+            <select id="selEmpresa" class="form-select form-select-sm">
+                <option value="">Carregando...</option>
+            </select>
         </div>
         <div>
             <label>Período inicial</label>
@@ -75,12 +77,11 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
             <label>Período final</label>
             <input type="date" id="dataFim" class="form-control form-control-sm" value="<?= date('Y-m-t') ?>">
         </div>
-        <div>
-            <label>&nbsp;</label>
+        <div style="display:flex;align-items:flex-end;gap:4px">
             <button class="btn btn-sm btn-primary" onclick="carregarTodos()">
                 <i class="bi bi-search"></i> Filtrar
             </button>
-            <button class="btn btn-sm btn-outline-secondary ms-1" onclick="carregarTodos()">
+            <button class="btn btn-sm btn-outline-secondary" onclick="carregarTodos()" title="Atualizar">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>

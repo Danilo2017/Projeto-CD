@@ -28,10 +28,7 @@ class OrdemManutencao
 
     public static function listarEmpresas(): array
     {
-        $sql = "SELECT E.ID, E.COD_EMP, E.RAZAO_SOCIAL NOME
-                  FROM FOCCO3I.TEMPRESAS E
-                 ORDER BY E.COD_EMP";
-        $res = Database::switchParams('focco', [], null, true, false, null, $sql);
+        $res = Database::switchParams('focco', [], 'acesso.empresa.listar', true);
         return $res['retorno'] ?: [];
     }
 

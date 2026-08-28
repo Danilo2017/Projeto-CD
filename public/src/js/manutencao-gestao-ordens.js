@@ -23,7 +23,7 @@ async function carregarEmpresas() {
         (d.data || []).forEach(function (e) {
             const opt = document.createElement('option');
             opt.value = e.ID;
-            opt.textContent = e.COD_EMP + ' - ' + e.NOME;
+            opt.textContent = 'FL ' + e.CODIGO + ' — ' + e.RAZAO_SOCIAL;
             if (e.ID == EMPR_SESS) opt.selected = true;
             sel.appendChild(opt);
         });
