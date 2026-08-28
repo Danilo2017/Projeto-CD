@@ -657,12 +657,11 @@ $userName = $user_login ?? 'Usuário';
 
         <?php if ($acessoManutencao): ?>
         <li class="sidebar-group" id="grpManutencao">
-            <a class="sidebar-link sidebar-group-toggle <?= $activeGroup === 'manutencao' ? 'active' : '' ?>"
-               data-group="grpManutencao" href="#" data-tooltip="Manutenção">
+            <button class="sidebar-group-btn <?= $activeGroup === 'manutencao' ? 'active open' : '' ?>">
                 <i class="bi bi-tools"></i>
                 <span>Manutenção</span>
-                <i class="bi bi-chevron-down sidebar-arrow ms-auto"></i>
-            </a>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
             <ul class="sidebar-submenu <?= $activeGroup === 'manutencao' ? 'open' : '' ?>">
                 <li><a href="<?= $base ?>manutencao-gestao-ordens"
                        class="sidebar-sublink <?= $pActive === 'manutencao-gestao-ordens' ? 'active' : '' ?>">
