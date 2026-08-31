@@ -6,7 +6,10 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_CODE     = 'R.14.GEP-07';   // Número do documento para auditoria
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function dataHoje() {
         const d = new Date();
@@ -91,7 +94,11 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${dataHoje()}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${DOC_CODE}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     <div class="pcp-section-title">
         ROBOTEC ABASTECEDOR - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
     </div>
@@ -147,7 +154,10 @@ body{font-family:Arial,sans-serif;font-size:8pt;background:#fff}
 .pcp-report-header .col-title{flex:1;text-align:center;font-weight:bold;font-size:11pt;padding:6px;border-right:1px solid #000}
 .pcp-report-header .col-right{width:170px;font-size:8pt;padding:4px 8px;flex-shrink:0}
 .pcp-report-header .col-right div{margin-bottom:2px}
-.pcp-revisao{border:1px solid #000;border-top:none;padding:2px 8px;font-size:8pt;text-align:right}
+.pcp-revisao{display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt}
+.pcp-revisao .col-logo2{width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px}
+.pcp-revisao .col-code{flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold}
+.pcp-revisao .col-rev{width:170px;flex-shrink:0;text-align:right;padding:2px 8px}
 .pcp-section-title{background:#002060;color:#fff;text-align:center;font-weight:bold;font-size:12pt;padding:5px;margin-top:6px;margin-bottom:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pcp-table{width:100%;border-collapse:collapse;font-size:7pt}
 .pcp-table th{background:#1f3864;color:#fff;border:1px solid #999;padding:2px 3px;text-align:center;font-weight:bold;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}

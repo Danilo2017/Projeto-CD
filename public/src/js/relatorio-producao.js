@@ -6,10 +6,15 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL  = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-    const DOC_RBT   = 'R.14.GEP-02';
-    const DOC_TAP   = 'R.14.GEP-08';
-    const REVISAO   = 'REVISÃO-02';
+    const LOGO_URL      = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_RBT_LINHA = 'R.14.GEP-02';  // Robotec Linha de Montagem
+    const DOC_RBT_MESA  = 'R.14.GEP-03';  // Robotec Mesa
+    const DOC_BOX       = 'R.14.GEP-04';  // Colchão Box
+    const DOC_CAB       = 'R.14.GEP-05';  // Cabeceiras
+    const DOC_TRAV      = 'R.14.GEP-06';  // Travesseiro e Outros
+    const DOC_CONJ      = 'R.14.GEP-04';  // Conjugado
+    const REVISAO       = 'REVISÃO-01';
+    const DATA_REVISAO  = '17/08/2026';   // Data do documento para auditoria
 
     const LARGURA_LABEL = {
         790:  'LARGURA 790',
@@ -52,7 +57,7 @@
     <div class="pcp-header-row2">
         <div class="col-logo2"></div>
         <div class="col-code">${docCode}</div>
-        <div class="col-rev">${REVISAO}&nbsp;&nbsp;DATA: ${hoje}</div>
+        <div class="col-rev">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
     </div>
 </div>`;
     }
@@ -79,7 +84,7 @@
         <th>DENSIDADE</th><th>EP</th><th>CABEÇOTE</th>
     </tr></thead>`;
 
-    function renderRobotec(rows, titulo, numLote, dataLote, hoje) {
+    function renderRobotec(rows, titulo, numLote, dataLote, hoje, docCode) {
         if (!rows || rows.length === 0) return '';
 
         let corpo = '', grandTotal = 0, subQtde = 0, curLar = null, curOrd = null;
@@ -113,7 +118,7 @@
 
         return `
 <div class="pcp-section">
-    ${cabecalho2(DOC_RBT, hoje)}
+    ${cabecalho2(docCode, hoje)}
     <div class="pcp-section-title">${titulo} - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}</div>
     <div style="overflow-x:auto"><table class="rbt-table">${THEAD_RBT}<tbody>${corpo}</tbody></table></div>
     ${historico()}
@@ -167,11 +172,11 @@
         return corpo;
     }
 
-    function renderSecaoTap(rows, titulo, numLote, dataLote, hoje) {
+    function renderSecaoTap(rows, titulo, numLote, dataLote, hoje, docCode) {
         if (!rows || rows.length === 0) return '';
         return `
 <div class="pcp-section">
-    ${cabecalho2(DOC_TAP, hoje)}
+    ${cabecalho2(docCode, hoje)}
     <div class="pcp-section-title">${titulo} - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}</div>
     <div style="overflow-x:auto"><table class="tap-table">${THEAD_TAP}<tbody>${buildCorpoTap(rows)}</tbody></table></div>
     ${historico()}
@@ -204,7 +209,7 @@
 
         return `
 <div class="pcp-section">
-    ${cabecalho2(DOC_TAP, hoje)}
+    ${cabecalho2(DOC_TRAV, hoje)}
     <div class="pcp-section-title">TRAVESSEIRO E OUTROS - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}</div>
     <div style="overflow-x:auto"><table class="tap-table">${THEAD_TAP}<tbody>${corpo}</tbody></table></div>
     ${historico()}
@@ -330,15 +335,15 @@ body{font-family:Arial,sans-serif;font-size:7.5pt;background:#fff}
                 let html = '';
 
                 // 1. Robotec Linha de Montagem + Mesa
-                html += renderRobotec(data.linha_rows || [], 'ROBOTEC LINHA DE MONTAGEM', numL, dt, hoje);
-                html += renderRobotec(data.mesa_rows  || [], 'ROBOTEC MESA',              numL, dt, hoje);
+                html += renderRobotec(data.linha_rows || [], 'ROBOTEC LINHA DE MONTAGEM', numL, dt, hoje, DOC_RBT_LINHA);
+                html += renderRobotec(data.mesa_rows  || [], 'ROBOTEC MESA',              numL, dt, hoje, DOC_RBT_MESA);
 
                 // 2. Colchão Box + Cabeceiras
-                html += renderSecaoTap(data.colchaobox_rows || [], 'COLCHÃO BOX', numL, dt, hoje);
-                html += renderSecaoTap(data.cabeceira_rows  || [], 'CABECEIRAS',  numL, dt, hoje);
+                html += renderSecaoTap(data.colchaobox_rows || [], 'COLCHÃO BOX', numL, dt, hoje, DOC_BOX);
+                html += renderSecaoTap(data.cabeceira_rows  || [], 'CABECEIRAS',  numL, dt, hoje, DOC_CAB);
 
                 // 3. Conjugado
-                html += renderSecaoTap(data.conjugado_rows || [], 'CONJUGADO', numL, dt, hoje);
+                html += renderSecaoTap(data.conjugado_rows || [], 'CONJUGADO', numL, dt, hoje, DOC_CONJ);
 
                 // 4. Travesseiro e Outros
                 html += renderTravesseiro(data.travepeze_rows || [], numL, dt, hoje);

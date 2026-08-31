@@ -6,7 +6,14 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_ROBOTEC  = 'R.14.GEP-08';  // Caixote Robotec
+    const DOC_SEM      = 'R.14.GEP-09';  // Caixote Sem Pillow
+    const DOC_COM      = 'R.14.GEP-10';  // Caixote Com Pillow
+    const DOC_MESA     = 'R.14.GEP-11';  // Caixote Mesa
+    const DOC_CONJ     = 'R.14.GEP-12';  // Caixote Conjugado
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function dataHoje() {
         const d = new Date();
@@ -22,7 +29,7 @@
     // getKeys(row) → { outerKey, grupoKey }
     //   Quando outerKey muda → separador cinza grosso entre grupos principais
     //   Quando só grupoKey muda → separador fino (pula linha entre subgrupos)
-    function renderSecao(rows, titulo, numLote, dataLote, getKeys) {
+    function renderSecao(rows, titulo, numLote, dataLote, getKeys, docCode) {
         if (rows.length === 0) return '';
 
         let totalGeral = 0;
@@ -102,7 +109,11 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${dataHoje()}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${docCode}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     <div class="pcp-section-title">${cabecalho}</div>
     <div style="overflow-x:auto">
     <table class="pcp-table">
@@ -267,11 +278,11 @@ body{font-family:Arial,sans-serif;font-size:8pt;background:#fff}
                     return { outerKey: `${lar}`, grupoKey: `${lar}_${eps}` };
                 };
 
-                let html = renderSecao(rowsRobotec, 'CAIXOTE ROBOTEC',    numLote, dt, kRobotec);
-                html    += renderSecao(rowsSem,     'CAIXOTE SEM PILLOW', numLote, dt, kLarEps);
-                html    += renderSecao(rowsCom,     'CAIXOTE COM PILLOW', numLote, dt, kLarEps);
-                html    += renderSecao(rowsMesa,    'CAIXOTE MESA',       numLote, dt, kLarEps);
-                html    += renderSecao(rowsConj,    'CAIXOTE CONJUGADO',  numLote, dt, kLarEps);
+                let html = renderSecao(rowsRobotec, 'CAIXOTE ROBOTEC',    numLote, dt, kRobotec, DOC_ROBOTEC);
+                html    += renderSecao(rowsSem,     'CAIXOTE SEM PILLOW', numLote, dt, kLarEps,  DOC_SEM);
+                html    += renderSecao(rowsCom,     'CAIXOTE COM PILLOW', numLote, dt, kLarEps,  DOC_COM);
+                html    += renderSecao(rowsMesa,    'CAIXOTE MESA',       numLote, dt, kLarEps,  DOC_MESA);
+                html    += renderSecao(rowsConj,    'CAIXOTE CONJUGADO',  numLote, dt, kLarEps,  DOC_CONJ);
 
                 if (!html.trim()) {
                     statusMsg.innerHTML = '<span class="text-warning">Nenhum dado encontrado para este lote.</span>';

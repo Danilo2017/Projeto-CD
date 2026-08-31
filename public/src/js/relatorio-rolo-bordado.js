@@ -6,14 +6,11 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-
-    function dataHoje() {
-        const d = new Date();
-        return String(d.getDate()).padStart(2,'0') + '/' +
-               String(d.getMonth()+1).padStart(2,'0') + '/' +
-               d.getFullYear();
-    }
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_ROLO     = 'R.14.GEP-28';  // Rolo Bordado
+    const DOC_AGRUP    = 'R.14.GEP-29';  // Rolo Bordado Agrupado
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function fmt(v)    { return (v === null || v === undefined || v === '') ? '' : v; }
 
@@ -37,7 +34,7 @@
         return isNaN(n) ? '' : n.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
     }
 
-    function cabecalho(titulo, numLote, dataLote) {
+    function cabecalho(titulo, numLote, dataLote, docCode) {
         const label = `${titulo} - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}`;
         return `
     <div class="pcp-report-header">
@@ -45,7 +42,11 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">REVISÃO-02 &nbsp;&nbsp; DATA: ${dataHoje()}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${docCode}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     <div class="pcp-section-title">${label}</div>`;
     }
 
@@ -108,7 +109,7 @@
 
         return `
 <div class="pcp-section">
-    ${cabecalho('ROLO BORDADO', numLote, dataLote)}
+    ${cabecalho('ROLO BORDADO', numLote, dataLote, DOC_ROLO)}
     <div style="overflow-x:auto">
     <table class="pcp-table">
         <thead>
@@ -160,7 +161,7 @@
 
         return `
 <div class="pcp-section">
-    ${cabecalho('ROLO BORDADO AGRUPADO', numLote, dataLote)}
+    ${cabecalho('ROLO BORDADO AGRUPADO', numLote, dataLote, DOC_AGRUP)}
     <div style="overflow-x:auto">
     <table class="pcp-table">
         <thead>

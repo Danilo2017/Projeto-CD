@@ -5,14 +5,10 @@
         { data: '16/06/2026', alteracao: 'Elaboração Inicial' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-
-    function dataHoje() {
-        const d = new Date();
-        return String(d.getDate()).padStart(2,'0') + '/' +
-               String(d.getMonth()+1).padStart(2,'0') + '/' +
-               d.getFullYear();
-    }
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_CODE     = 'R.14.GEP-34';  // Horizontal Espuma
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function fmt(v)    { return (v === null || v === undefined || v === '') ? '' : v; }
     function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '' : (n === 0 ? '0' : n); }
@@ -52,7 +48,11 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">R.14.GEP-20 &nbsp;&nbsp; REVISÃO-01 &nbsp;&nbsp; DATA: ${dataHoje()}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${DOC_CODE}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     <div class="pcp-section-title">${titulo}</div>
     <div style="overflow-x:auto">
     <table class="pcp-table">

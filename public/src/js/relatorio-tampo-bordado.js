@@ -6,14 +6,14 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-
-    function dataHoje() {
-        const d = new Date();
-        return String(d.getDate()).padStart(2,'0') + '/' +
-               String(d.getMonth()+1).padStart(2,'0') + '/' +
-               d.getFullYear();
-    }
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_TAMPO    = 'R.14.GEP-14';  // Tampo Bordado
+    const DOC_MESA     = 'R.14.GEP-15';  // Tampo Bordado Mesa
+    const DOC_CONJ     = 'R.14.GEP-16';  // Tampo Bordado Conjugado
+    const DOC_BORD_P1  = 'R.14.GEP-17';  // Bordadeira P1
+    const DOC_BORD_P23 = 'R.14.GEP-18';  // Bordadeira P2 e P3
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function fmt(v) { return (v === null || v === undefined || v === '') ? '' : v; }
     function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '' : (n === 0 ? '0' : n); }
@@ -29,8 +29,6 @@
             if (eb !== ea) return eb - ea;
             return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
         });
-
-        const hoje = dataHoje();
 
         let totalQtde      = 0;
         let totalQtdeTampo = 0;
@@ -81,8 +79,11 @@
             <div>GESTÃO DE PRODUÇÃO</div>
         </div>
     </div>
-    <div class="pcp-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${hoje}</div>
-
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${DOC_TAMPO}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     <div class="pcp-section-title">
         TAMPO BORDADO - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
     </div>
@@ -136,7 +137,6 @@
             return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
         });
 
-        const hoje = dataHoje();
         let totalQtde = 0, totalQtdeTampo = 0, corpoTabela = '';
 
         for (const r of rows) {
@@ -179,7 +179,11 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${hoje}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${DOC_MESA}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     <div class="pcp-section-title">
         TAMPO BORDADO MESA - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
     </div>
@@ -218,7 +222,6 @@
             return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
         });
 
-        const hoje = dataHoje();
         let totalQtde = 0, corpoTabela = '';
 
         for (const r of rows) {
@@ -256,7 +259,11 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${hoje}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${DOC_CONJ}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     <div class="pcp-section-title">
         TAMPO BORDADO CONJUGADO - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
     </div>
@@ -361,10 +368,9 @@
     </div>`;
     }
 
-    function secaoBordadeira(rows, titulo, numLote, dataLote) {
+    function secaoBordadeira(rows, titulo, numLote, dataLote, docCode) {
         const tabela = tabelaBordadeira(rows, titulo, numLote, dataLote);
         if (!tabela) return '';
-        const hoje = dataHoje();
         return `
 <div class="pcp-section">
     <div class="pcp-report-header">
@@ -372,7 +378,11 @@
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
         <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">REVISÃO-02 &nbsp;&nbsp; DATA: ${hoje}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${docCode}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
     ${tabela}
     <div class="pcp-historico">
         <table>
@@ -390,8 +400,8 @@
         if (!rows || rows.length === 0) return '';
         const p1Rows   = rows.filter(r =>  isBordP1(r));
         const p2p3Rows = rows.filter(r => !isBordP1(r));
-        return secaoBordadeira(p1Rows,   'BORDADEIRA P1',      numLote, dataLote)
-             + secaoBordadeira(p2p3Rows, 'BORDADEIRA P2 E P3', numLote, dataLote);
+        return secaoBordadeira(p1Rows,   'BORDADEIRA P1',      numLote, dataLote, DOC_BORD_P1)
+             + secaoBordadeira(p2p3Rows, 'BORDADEIRA P2 E P3', numLote, dataLote, DOC_BORD_P23);
     }
 
     /* ── Abre janela de impressão ────────────────── */

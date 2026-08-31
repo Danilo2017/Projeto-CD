@@ -6,8 +6,10 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-    const REVISAO  = 'REVISÃO-02';
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_CODE     = 'R.14.GEP-35';  // Caixa Box
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function toNum(v) {
         return parseFloat(String(v).replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0;
@@ -15,7 +17,7 @@
 
     function fmt(v) { return (v === null || v === undefined || v === '') ? '-' : v; }
 
-    function cabecalho(hoje) {
+    function cabecalho() {
         return `
 <div class="cb-header-wrap">
     <div class="cb-header-row1">
@@ -28,8 +30,8 @@
     </div>
     <div class="cb-header-row2">
         <div class="col-logo2"></div>
-        <div class="col-code">${REVISAO}</div>
-        <div class="col-rev">DATA: ${hoje}</div>
+        <div class="col-code">${DOC_CODE}</div>
+        <div class="col-rev">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
     </div>
 </div>`;
     }
@@ -49,7 +51,7 @@
     }
 
     /* ─── Seção 1: Principal (BASE / CONJUGADO) ─── */
-    function renderPrincipal(rows, numLote, dataLote, hoje) {
+    function renderPrincipal(rows, numLote, dataLote) {
         let corpo      = '';
         let totalQtde  = 0;
         let totalCab   = 0;
@@ -84,7 +86,7 @@
 
         return `
 <div class="cb-section">
-    ${cabecalho(hoje)}
+    ${cabecalho()}
     <div class="cb-section-title">CAIXA BOX - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}</div>
     <div style="overflow-x:auto">
     <table class="cb-table">
@@ -106,7 +108,7 @@
     }
 
     /* ─── Seção 2: Auxiliar + Cabeceira ─── */
-    function renderAux(rows, numLote, dataLote, hoje) {
+    function renderAux(rows, numLote, dataLote) {
         let corpo     = '';
         let totalQtde = 0;
         let totalCab  = 0;
@@ -145,7 +147,7 @@
 
         return `
 <div class="cb-section">
-    ${cabecalho(hoje)}
+    ${cabecalho()}
     <div class="cb-section-title">CAIXA BOX AUXILIAR E CABECEIRA - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}</div>
     <div style="overflow-x:auto">
     <table class="cb-table">
@@ -240,16 +242,16 @@ body{font-family:Arial,sans-serif;font-size:7.5pt;background:#fff}
                     return;
                 }
 
-                const hoje = new Date().toLocaleDateString('pt-BR');
+
                 const numL = parseInt(numLote);
                 const dt   = data.data_lote || '';
 
                 let html = '';
                 if (data.principal_rows && data.principal_rows.length > 0) {
-                    html += renderPrincipal(data.principal_rows, numL, dt, hoje);
+                    html += renderPrincipal(data.principal_rows, numL, dt);
                 }
                 if (data.aux_rows && data.aux_rows.length > 0) {
-                    html += renderAux(data.aux_rows, numL, dt, hoje);
+                    html += renderAux(data.aux_rows, numL, dt);
                 }
                 if (!html) {
                     html = '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';

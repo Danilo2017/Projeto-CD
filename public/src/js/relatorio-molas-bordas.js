@@ -7,8 +7,9 @@
     ];
 
     const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-    const DOC_CODE = 'R.14.GEP-13';
-    const REVISAO  = 'REVISÃO-02';
+    const DOC_CODE     = 'R.14.GEP-13';
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function toNum(v) {
         return parseFloat(String(v).replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0;
@@ -16,7 +17,7 @@
 
     function fmt(v) { return (v === null || v === undefined || v === '') ? '' : v; }
 
-    function cabecalho(hoje) {
+    function cabecalho() {
         return `
 <div class="mb-header-wrap">
     <div class="mb-header-row1">
@@ -27,10 +28,10 @@
             <div>GESTÃO DE PRODUÇÃO</div>
         </div>
     </div>
-    <div class="mb-header-row2">
-        <div class="col-logo2"></div>
-        <div class="col-code">${DOC_CODE}</div>
-        <div class="col-rev">${REVISAO}&nbsp;&nbsp;DATA: ${hoje}</div>
+    <div style="display:flex;align-items:center;border-top:1px solid #000;font-size:7.5pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 6px"></div>
+        <div style="flex:1;text-align:center;padding:2px 6px;border-right:1px solid #000;font-weight:bold">${DOC_CODE}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 6px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
     </div>
 </div>`;
     }
@@ -59,7 +60,7 @@
     </tr>
 </thead>`;
 
-    function renderMolasBordas(rows, numLote, dataLote, hoje) {
+    function renderMolasBordas(rows, numLote, dataLote) {
         if (!rows || rows.length === 0) {
             return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
         }
@@ -89,7 +90,7 @@
 
         return `
 <div class="mb-section">
-    ${cabecalho(hoje)}
+    ${cabecalho()}
     <div class="mb-section-title">
         MOLAS E BORDAS - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
     </div>
@@ -176,8 +177,7 @@ body{font-family:Arial,sans-serif;font-size:7.5pt;background:#fff}
                     return;
                 }
 
-                const hoje = new Date().toLocaleDateString('pt-BR');
-                const html = renderMolasBordas(data.molas_rows || [], numLote, data.data_lote || '', hoje);
+                const html = renderMolasBordas(data.molas_rows || [], numLote, data.data_lote || '');
 
                 printArea.innerHTML = html;
                 printArea.className = 'visible';

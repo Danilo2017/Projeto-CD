@@ -6,14 +6,11 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-
-    function dataHoje() {
-        const d = new Date();
-        return String(d.getDate()).padStart(2,'0') + '/' +
-               String(d.getMonth()+1).padStart(2,'0') + '/' +
-               d.getFullYear();
-    }
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_BOX      = 'R.14.GEP-26';  // Mesa de Corte (Caixa Box)
+    const DOC_CAIXOTE  = 'R.14.GEP-27';  // Mesa de Corte (Caixote)
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function fmt(v) { return (v === null || v === undefined || v === '') ? '' : v; }
     function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '' : (n === 0 ? '0' : n); }
@@ -60,54 +57,42 @@
     </div>`;
     }
 
-    /* ── Renderiza relatório Mesa de Corte ───────── */
-    function renderMesaDeCorte(caixaBoxRows, caixoteRows, numLote, dataLote) {
-        const hoje    = dataHoje();
-        const temDados = (caixaBoxRows && caixaBoxRows.length > 0) || (caixoteRows && caixoteRows.length > 0);
-
-        if (!temDados) {
-            return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
-        }
-
-        let corpo = '';
-
-        if (caixaBoxRows && caixaBoxRows.length > 0) {
-            corpo += tabelaSecao(caixaBoxRows, 'MESA DE CORTE (CAIXA BOX)', numLote, dataLote);
-        }
-
-        if (caixoteRows && caixoteRows.length > 0) {
-            if (corpo) corpo += '<div style="margin-top:8px"></div>';
-            corpo += tabelaSecao(caixoteRows, 'MESA DE CORTE (CAIXOTE)', numLote, dataLote);
-        }
-
+    /* ── Monta uma seção completa com cabeçalho próprio ── */
+    function secaoCorte(rows, titulo, docCode, numLote, dataLote) {
+        if (!rows || rows.length === 0) return '';
         return `
 <div class="pcp-section">
     <div class="pcp-report-header">
-        <div class="col-logo">
-            <img src="${LOGO_URL}" alt="Gazin">
-        </div>
+        <div class="col-logo"><img src="${LOGO_URL}" alt="Gazin"></div>
         <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
-        <div class="col-right">
-            <div><strong>SETOR</strong></div>
-            <div>GESTÃO DE PRODUÇÃO</div>
-        </div>
+        <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
     </div>
-    <div class="pcp-revisao">REVISÃO-02 &nbsp;&nbsp; DATA: ${hoje}</div>
-
-    ${corpo}
-
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${docCode}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
+    ${tabelaSecao(rows, titulo, numLote, dataLote)}
     <div class="pcp-historico">
         <table>
             <thead>
                 <tr><th colspan="2">Histórico de Revisões</th></tr>
                 <tr><th style="width:120px">data</th><th>Alterações</th></tr>
             </thead>
-            <tbody>
-                ${HISTORICO.map(h => `<tr><td>${h.data}</td><td>${h.alteracao}</td></tr>`).join('')}
-            </tbody>
+            <tbody>${HISTORICO.map(h => `<tr><td>${h.data}</td><td>${h.alteracao}</td></tr>`).join('')}</tbody>
         </table>
     </div>
 </div>`;
+    }
+
+    /* ── Renderiza relatório Mesa de Corte ───────── */
+    function renderMesaDeCorte(caixaBoxRows, caixoteRows, numLote, dataLote) {
+        const temDados = (caixaBoxRows && caixaBoxRows.length > 0) || (caixoteRows && caixoteRows.length > 0);
+        if (!temDados) {
+            return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
+        }
+        return secaoCorte(caixaBoxRows, 'MESA DE CORTE (CAIXA BOX)', DOC_BOX,     numLote, dataLote)
+             + secaoCorte(caixoteRows,  'MESA DE CORTE (CAIXOTE)',   DOC_CAIXOTE, numLote, dataLote);
     }
 
     /* ── Abre janela de impressão ────────────────── */

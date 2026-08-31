@@ -6,14 +6,10 @@
         { data: '13/08/2025', alteracao: 'Alteração do Título do documento e do rodapé.' },
     ];
 
-    const LOGO_URL = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
-
-    function dataHoje() {
-        const d = new Date();
-        return String(d.getDate()).padStart(2,'0') + '/' +
-               String(d.getMonth()+1).padStart(2,'0') + '/' +
-               d.getFullYear();
-    }
+    const LOGO_URL     = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
+    const DOC_CODE     = 'R.14.GEP-19';  // Pillow
+    const REVISAO      = 'REVISÃO-01';
+    const DATA_REVISAO = '17/08/2026';    // Data do documento para auditoria
 
     function fmt(v) { return (v === null || v === undefined || v === '') ? '' : v; }
     function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '' : (n === 0 ? '0' : n); }
@@ -24,8 +20,6 @@
         if (!rows || rows.length === 0) {
             return '<p class="text-muted text-center py-4">Nenhum dado encontrado para este lote.</p>';
         }
-
-        const hoje = dataHoje();
 
         let totalQtde   = 0;
         let totalLinear = 0;
@@ -69,7 +63,11 @@
             <div>GESTÃO DE PRODUÇÃO</div>
         </div>
     </div>
-    <div class="pcp-revisao">REVISÃO-01 &nbsp;&nbsp; DATA: ${hoje}</div>
+    <div style="display:flex;align-items:center;border:1px solid #000;border-top:none;font-size:8pt">
+        <div style="width:110px;flex-shrink:0;border-right:1px solid #000;padding:2px 8px"></div>
+        <div style="flex:1;text-align:center;padding:2px 8px;border-right:1px solid #000;font-weight:bold">${DOC_CODE}</div>
+        <div style="width:170px;flex-shrink:0;text-align:right;padding:2px 8px">${REVISAO}&nbsp;&nbsp;DATA: ${DATA_REVISAO}</div>
+    </div>
 
     <div class="pcp-section-title">
         PILLOW - LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
