@@ -663,9 +663,21 @@ $userName = $user_login ?? 'Usuário';
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-submenu <?= $activeGroup === 'manutencao' ? 'open' : '' ?>">
+                <li><a href="<?= $base ?>manutencao-dashboard"
+                       class="sidebar-sublink <?= $pActive === 'manutencao-dashboard' ? 'active' : '' ?>">
+                    Dashboard</a></li>
                 <li><a href="<?= $base ?>manutencao-gestao-ordens"
                        class="sidebar-sublink <?= $pActive === 'manutencao-gestao-ordens' ? 'active' : '' ?>">
                     Gestão de Ordens</a></li>
+                <li><a href="<?= $base ?>manutencao-liberacao-ordens"
+                       class="sidebar-sublink <?= $pActive === 'manutencao-liberacao-ordens' ? 'active' : '' ?>">
+                    Liberação de Ordens</a></li>
+                <li><a href="<?= $base ?>manutencao-gerar-ordem"
+                       class="sidebar-sublink <?= $pActive === 'manutencao-gerar-ordem' ? 'active' : '' ?>">
+                    Gerar Ordem</a></li>
+                <li><a href="<?= $base ?>manutencao-chklist-config"
+                       class="sidebar-sublink <?= $pActive === 'manutencao-chklist-config' ? 'active' : '' ?>">
+                    Cadastro de Checklist</a></li>
             </ul>
         </li>
         <?php endif; ?>

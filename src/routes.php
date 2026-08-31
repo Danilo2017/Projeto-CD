@@ -360,7 +360,17 @@ $router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@ca
 $router->post('/pd-api-excluir-item',          'PD\\InativacaoPrecoController@excluirItem',        true);
 
 // ========== Rotas de Manutenção ==========
-$router->get('/manutencao-gestao-ordens',           'Manutencao\\ManutencaoController@index',              true);
+$router->get('/manutencao-dashboard',               'Manutencao\\ManutencaoController@dashboardManutencao', true);
+$router->get('/manutencao-api-dash-resumo',         'Manutencao\\ManutencaoController@apiDashResumo',      true);
+$router->get('/manutencao-api-dash-distrib',        'Manutencao\\ManutencaoController@apiDashDistrib',     true);
+$router->get('/manutencao-api-dash-geradas',        'Manutencao\\ManutencaoController@apiDashGeradas',     true);
+$router->get('/manutencao-api-dash-grupos',         'Manutencao\\ManutencaoController@apiDashGrupos',      true);
+$router->get('/manutencao-api-dash-preventivas',    'Manutencao\\ManutencaoController@apiDashPreventivas', true);
+$router->get('/manutencao-api-dash-func-ordens',    'Manutencao\\ManutencaoController@apiDashFuncOrdens',  true);
+$router->get('/manutencao-api-dash-minutos',        'Manutencao\\ManutencaoController@apiDashMinutos',     true);
+$router->get('/manutencao-api-dash-func-horas',     'Manutencao\\ManutencaoController@apiDashFuncHoras',   true);
+$router->get('/manutencao-gestao-ordens',            'Manutencao\\ManutencaoController@index',              true);
+$router->get('/manutencao-liberacao-ordens',         'Manutencao\\ManutencaoController@liberacaoOrdens',    true);
 $router->get('/manutencao-api-empresas',            'Manutencao\\ManutencaoController@listarEmpresas',     true);
 $router->get('/manutencao-api-aberta',              'Manutencao\\ManutencaoController@listarAberta',       true);
 $router->get('/manutencao-api-detalhar-aberta',     'Manutencao\\ManutencaoController@detalharAberta',     true);
@@ -374,6 +384,18 @@ $router->post('/manutencao-api-ok',                 'Manutencao\\ManutencaoContr
 $router->post('/manutencao-api-des-ok',             'Manutencao\\ManutencaoController@desmarcarOk',        true);
 $router->post('/manutencao-api-fechar',             'Manutencao\\ManutencaoController@fechar',             true);
 $router->post('/manutencao-api-excluir',            'Manutencao\\ManutencaoController@excluir',            true);
+$router->get('/manutencao-api-lib-listar',          'Manutencao\\ManutencaoController@listarLiberacao',    true);
+$router->post('/manutencao-api-lib-atender',        'Manutencao\\ManutencaoController@atenderLiberacao',   true);
+$router->post('/manutencao-api-lib-fechar',         'Manutencao\\ManutencaoController@fecharLiberacao',    true);
+$router->get('/manutencao-gerar-ordem',             'Manutencao\\ManutencaoController@gerarOrdem',         true);
+$router->get('/manutencao-chklist-config',          'Manutencao\\ManutencaoController@chklistConfig',      true);
+$router->get('/manutencao-api-maquinas',            'Manutencao\\ManutencaoController@apiMaquinas',        true);
+$router->get('/manutencao-api-solicitantes',        'Manutencao\\ManutencaoController@apiSolicitantes',    true);
+$router->post('/manutencao-api-gerar-ordem',        'Manutencao\\ManutencaoController@apiGerarOrdem',      true);
+$router->get('/manutencao-api-chklist-maquina',     'Manutencao\\ManutencaoController@apiChklistMaquina',  true);
+$router->get('/manutencao-api-chklist-todos',       'Manutencao\\ManutencaoController@apiChklistTodos',    true);
+$router->post('/manutencao-api-chklist-salvar',     'Manutencao\\ManutencaoController@apiChklistSalvar',   true);
+$router->post('/manutencao-api-chklist-excluir',    'Manutencao\\ManutencaoController@apiChklistExcluir',  true);
 
 // ========== Rotas de Qualidade ==========
 $router->get('/qualidade-rastreabilidade-costura',              'Qualidade\\RastreabilidadeController@indexCostura',      true);

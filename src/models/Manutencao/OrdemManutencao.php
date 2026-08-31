@@ -21,7 +21,7 @@ class OrdemManutencao
                     WHEN $t.TP_OS = 'C' AND $t.TP_MAQ_PARADA = 1 AND $m.IND_CRITICO = 1 THEN 0
                     WHEN $t.TP_OS = 'C' AND $t.TP_MAQ_PARADA = 1 AND $m.IND_CRITICO = 0 THEN 1
                     WHEN $t.TP_OS = 'C' AND $t.TP_MAQ_PARADA = 2 AND $m.IND_CRITICO = 1 THEN 2
-                    WHEN (T.TP_OS = 'M' OR ($t.TP_OS = 'C' AND $t.TP_MAQ_PARADA = 2 AND $m.IND_CRITICO = 0)) THEN 3
+                    WHEN ($t.TP_OS = 'M' OR ($t.TP_OS = 'C' AND $t.TP_MAQ_PARADA = 2 AND $m.IND_CRITICO = 0)) THEN 3
                     ELSE 9
                 END";
     }
@@ -34,19 +34,31 @@ class OrdemManutencao
 
     public static function listarAberta(int $emprId, string $dataIni, string $dataFim): array
     {
-        $di = self::dateSql($dataIni);
-        $df = self::dateSql($dataFim);
-        $sql = "SELECT V.MAQUINA_ID,
-                       V.MAQUINA,
-                       COUNT(V.NUM_ORDEM)                            AS TOTAL,
-                       V.PRIORIDADE,
-                       MAX(TO_CHAR(V.DT_INCLUSAO,'DD/MM/RRRR HH24:MI')) AS DT_MAX,
-                       SUM(V.OK)                                     AS OK_COUNT
-                  FROM VGAZIN_ORDENS_MAN_OK_OTM V
-                 WHERE V.EMPR_ID = $emprId
-                   AND V.DT_INCLUSAO BETWEEN $di AND ($df + 1 - 1/86400)
-                 GROUP BY V.MAQUINA_ID, V.MAQUINA, V.PRIORIDADE
-                 ORDER BY V.PRIORIDADE, V.MAQUINA";
+        $di  = self::dateSql($dataIni);
+        $df  = self::dateSql($dataFim);
+        $pri = self::priCase();
+        $sql = "SELECT M.ID                                              MAQUINA_ID,
+                       M.COD_MAQUINA||' - '||M.DESCRICAO               MAQUINA,
+                       COUNT(T.NUM_ORDEM)                               AS TOTAL,
+                       ($pri)                                           AS PRIORIDADE,
+                       TO_CHAR(MAX(
+                           (SELECT MIN(L.DTA_OPERACAO_LOG)
+                              FROM FOCCO3I.F3I_LOG_TORDENS_MAN L
+                             WHERE L.COD_OPERACAO_LOG = 'I'
+                               AND L.ID = T.ID)
+                       ), 'DD/MM/RRRR HH24:MI') AS DT_MAX
+                  FROM FOCCO3I.TORDENS_MAN T,
+                       FOCCO3I.TMAQUINAS   M
+                 WHERE M.ID = T.MAQUINA_ID
+                   AND T.TP_ORDEM <> 'OME'
+                   AND T.TP_OS NOT IN ('P','G')
+                   AND T.EMPR_ID = $emprId
+                   AND T.DT_SOLICITACAO BETWEEN $di AND ($df + 1 - 1/86400)
+                   AND NOT EXISTS (SELECT 1 FROM TORDENS_MAN_ATEND_OTM A WHERE A.ORDEM_ID = T.ID)
+                 GROUP BY M.ID,
+                          M.COD_MAQUINA||' - '||M.DESCRICAO,
+                          ($pri)
+                 ORDER BY ($pri), M.COD_MAQUINA||' - '||M.DESCRICAO";
         $res = Database::switchParams('focco', [], null, true, false, null, $sql);
         return $res['retorno'] ?: [];
     }
@@ -58,7 +70,10 @@ class OrdemManutencao
         $pri = self::priCase();
         $sql = "SELECT T.ID,
                        T.NUM_ORDEM,
-                       TO_CHAR(T.DT_SOLICITACAO,'DD/MM/RRRR HH24:MI') DT_SOLICITACAO,
+                       TO_CHAR((SELECT MIN(L.DTA_OPERACAO_LOG)
+                                  FROM FOCCO3I.F3I_LOG_TORDENS_MAN L
+                                 WHERE L.COD_OPERACAO_LOG = 'I'
+                                   AND L.ID = T.ID), 'DD/MM/RRRR HH24:MI') DT_SOLICITACAO,
                        M.COD_MAQUINA||' - '||M.DESCRICAO              RECURSO,
                        DECODE(T.TP_PROBLEMA,1,'Elétrico',2,'Mecânico',3,'Ferramenta',4,'Pneumático',NULL) TP_PROBLEMA,
                        DECODE(T.TP_OS,'P','Preventiva','M','Melhoria/TPM','C','Corretiva','G','Programada') TP_OS,
@@ -188,38 +203,100 @@ class OrdemManutencao
         return $res['retorno'] ?: [];
     }
 
+    public static function listarSolicitantes(int $emprId): array
+    {
+        $sql = "SELECT ID, COD_FUNC, NOME, COD_FUNC||' - '||NOME LABEL
+                  FROM FOCCO3I.TFUNCIONARIOS
+                 WHERE EMPR_ID = $emprId AND SIT = 1
+                 ORDER BY NOME";
+        $res = Database::switchParams('focco', [], null, true, false, null, $sql);
+        return $res['retorno'] ?: [];
+    }
+
+    public static function listarMaquinas(int $emprId): array
+    {
+        $sql = "SELECT ID, COD_MAQUINA, DESCRICAO,
+                       COD_MAQUINA||' - '||DESCRICAO NOME
+                  FROM FOCCO3I.TMAQUINAS
+                 WHERE EMPR_ID = $emprId
+                 ORDER BY COD_MAQUINA";
+        $res = Database::switchParams('focco', [], null, true, false, null, $sql);
+        return $res['retorno'] ?: [];
+    }
+
+    public static function gerarOrdem(array $d): int
+    {
+        $emprId    = (int) $d['empr_id'];
+        $maqId     = (int) $d['maquina_id'];
+        $funcId    = $d['func_id'] ? (int) $d['func_id'] : 'NULL';
+        $tpOs      = str_replace("'", "''", $d['tp_os']      ?? 'C');
+        $situacao  = str_replace("'", "''", $d['situacao']   ?? 'L');
+        $problema  = str_replace("'", "''", $d['des_problema'] ?? '');
+        $tpProb    = $d['tp_problema']  ? (int) $d['tp_problema']  : 'NULL';
+        $tpPar     = $d['tp_maq_parada'] ? (int) $d['tp_maq_parada'] : 'NULL';
+        $urgente   = $d['ind_urgente']  ? 1 : 0;
+        $dtSol     = str_replace("'", "''", $d['dt_solicitacao'] ?? date('d/m/Y'));
+        $dtPrev    = $d['dt_prevista'] ? "TO_DATE('" . str_replace("'","''",$d['dt_prevista']) . "','DD/MM/RRRR')" : 'NULL';
+
+        // Próximo número de ordem
+        $numRes = Database::switchParams('focco', [], null, true, false, null,
+            "SELECT NVL(MAX(NUM_ORDEM),0)+1 PROX FROM FOCCO3I.TORDENS_MAN WHERE EMPR_ID = $emprId");
+        $numOrdem = (int)(($numRes['retorno'][0] ?? [])['PROX'] ?? 1);
+
+        $sql = "INSERT INTO FOCCO3I.TORDENS_MAN VALUES (
+                    FOCCO3I.SEQ_ID_TORDENS_MAN.NEXTVAL,
+                    $maqId,
+                    $numOrdem,
+                    TO_DATE('$dtSol','DD/MM/RRRR'),
+                    $dtPrev,
+                    $urgente,
+                    '$problema',
+                    '$tpOs',
+                    '$situacao',
+                    'OMA',
+                    $emprId,
+                    $funcId,
+                    NULL,
+                    0,
+                    0,
+                    $tpProb,
+                    $tpPar,
+                    SYSDATE
+                )";
+        $res = Database::switchParams('focco', [], null, true, false, null, $sql);
+        if (!empty($res['error'])) throw new \Exception('Erro ao gerar ordem: ' . $res['error']);
+        Database::getInstance('focco')->exec('COMMIT');
+
+        // Retorna o ID gerado
+        $idRes = Database::switchParams('focco', [], null, true, false, null,
+            "SELECT MAX(ID) ID FROM FOCCO3I.TORDENS_MAN WHERE EMPR_ID = $emprId AND NUM_ORDEM = $numOrdem");
+        return (int)(($idRes['retorno'][0] ?? [])['ID'] ?? 0);
+    }
+
     public static function atender(array $ids): void
     {
         $idsStr = implode(',', array_map('intval', $ids));
-        $sql = "BEGIN
-                    FOR c IN (SELECT SEQ_ID_TORDENS_MAN_ATEND_OTM.NEXTVAL ID, T.ID ORDEM_ID
-                                FROM FOCCO3I.TORDENS_MAN T WHERE T.ID IN ($idsStr))
-                    LOOP
-                        INSERT INTO TORDENS_MAN_ATEND_OTM VALUES (C.ID, C.ORDEM_ID, SYSDATE);
-                    END LOOP;
-                    COMMIT;
-                END;";
+        $sql = "INSERT INTO TORDENS_MAN_ATEND_OTM
+                SELECT SEQ_TORDENS_MAN_ATEND_OTM.NEXTVAL, T.ID, SYSDATE
+                  FROM FOCCO3I.TORDENS_MAN T
+                 WHERE T.ID IN ($idsStr)
+                   AND NOT EXISTS (SELECT 1 FROM TORDENS_MAN_ATEND_OTM X WHERE X.ORDEM_ID = T.ID)";
         $res = Database::switchParams('focco', [], null, true, false, null, $sql);
-        if (!empty($res['error'])) {
-            throw new \Exception('Erro ao registrar atendimento: ' . $res['error']);
-        }
+        if (!empty($res['error'])) throw new \Exception('Erro ao registrar atendimento: ' . $res['error']);
+        Database::getInstance('focco')->exec('COMMIT');
     }
 
     public static function marcarOk(array $ids, int $funcId): void
     {
         $idsStr = implode(',', array_map('intval', $ids));
-        $sql = "BEGIN
-                    FOR c IN (SELECT SEQ_TORDENS_MAN_ATEND_OK_OTM.NEXTVAL ID, T.ID ORDEM_ID, T.NUM_ORDEM
-                                FROM FOCCO3I.TORDENS_MAN T WHERE T.ID IN ($idsStr))
-                    LOOP
-                        INSERT INTO TORDENS_MAN_ATEND_OK_OTM VALUES (C.ID, C.ORDEM_ID, C.NUM_ORDEM, $funcId);
-                    END LOOP;
-                    COMMIT;
-                END;";
+        $sql = "INSERT INTO TORDENS_MAN_ATEND_OK_OTM (ID, ORDEM_ID, NUM_ORDEM, FUNC_ID)
+                SELECT SEQ_TORDENS_MAN_ATEND_OK_OTM.NEXTVAL, T.ID, T.NUM_ORDEM, $funcId
+                  FROM FOCCO3I.TORDENS_MAN T
+                 WHERE T.ID IN ($idsStr)
+                   AND NOT EXISTS (SELECT 1 FROM TORDENS_MAN_ATEND_OK_OTM X WHERE X.ORDEM_ID = T.ID)";
         $res = Database::switchParams('focco', [], null, true, false, null, $sql);
-        if (!empty($res['error'])) {
-            throw new \Exception('Erro ao marcar OK: ' . $res['error']);
-        }
+        if (!empty($res['error'])) throw new \Exception('Erro ao marcar OK: ' . $res['error']);
+        Database::getInstance('focco')->exec('COMMIT');
     }
 
     public static function desmarcarOk(array $ids): void
@@ -238,22 +315,60 @@ class OrdemManutencao
         }
     }
 
-    public static function fechar(array $ids, string $obs): void
+    public static function fechar(array $ids, string $obs = ''): void
     {
         $idsStr = implode(',', array_map('intval', $ids));
-        $obsEsc = str_replace("'", "''", $obs);
+        $sql = "UPDATE FOCCO3I.TORDENS_MAN SET DT_FECHAMENTO = TRUNC(SYSDATE), TP_ORDEM = 'OME' WHERE ID IN ($idsStr)";
+        $res = Database::switchParams('focco', [], null, true, false, null, $sql);
+        if (!empty($res['error'])) throw new \Exception('Erro ao fechar ordem: ' . $res['error']);
+        Database::getInstance('focco')->exec('COMMIT');
+    }
+
+    public static function listarLiberacao(int $emprId): array
+    {
+        $pri = self::priCase();
+        $sql = "SELECT T.ID,
+                       T.NUM_ORDEM,
+                       TO_CHAR(T.DT_SOLICITACAO,'DD/MM/RRRR HH24:MI') DT_SOLICITACAO,
+                       M.COD_MAQUINA||' - '||M.DESCRICAO              RECURSO,
+                       DECODE(T.TP_PROBLEMA,1,'Elétrico',2,'Mecânico',3,'Ferramenta',4,'Pneumático',NULL) TP_PROBLEMA,
+                       DECODE(T.TP_OS,'P','Preventiva','M','Melhoria/TPM','C','Corretiva','G','Programada') TP_OS,
+                       DECODE(M.IND_CRITICO,1,'Sim','Não')             IND_CRITICO,
+                       DECODE(T.TP_MAQ_PARADA,1,'Sim',2,'Não',NULL)   MAQ_PARADA,
+                       T.DES_PROBLEMA,
+                       CASE WHEN (SELECT COUNT(*) FROM TORDENS_MAN_ATEND_OTM C WHERE C.ORDEM_ID = T.ID) > 0
+                            THEN 'S' ELSE 'N' END TEM_ATEND,
+                       F.NOME FUNC_OK,
+                       ($pri) PRIORIDADE
+                  FROM FOCCO3I.TMAQUINAS           M,
+                       FOCCO3I.TORDENS_MAN         T,
+                       TORDENS_MAN_ATEND_OK_OTM    O,
+                       FOCCO3I.TFUNCIONARIOS       F
+                 WHERE M.ID = T.MAQUINA_ID
+                   AND T.ID = O.ORDEM_ID
+                   AND F.ID = O.FUNC_ID
+                   AND (T.SITUACAO IS NULL OR T.SITUACAO <> 'F')
+                   AND T.TP_ORDEM <> 'OME'
+                   AND T.EMPR_ID = $emprId
+                 ORDER BY ($pri), T.DT_SOLICITACAO, T.NUM_ORDEM";
+        $res = Database::switchParams('focco', [], null, true, false, null, $sql);
+        return $res['retorno'] ?: [];
+    }
+
+    public static function fecharLiberacao(array $ids): void
+    {
+        $idsStr = implode(',', array_map('intval', $ids));
         $sql = "BEGIN
-                    FOR c IN (SELECT SEQ_TORDENS_MAN_ATEND_OBS_OTM.NEXTVAL OBS_ID, T.ID ORDEM_ID, T.NUM_ORDEM
-                                FROM FOCCO3I.TORDENS_MAN T WHERE T.ID IN ($idsStr))
+                    FOR c IN (SELECT ID ORDEM_ID FROM FOCCO3I.TORDENS_MAN WHERE ID IN ($idsStr))
                     LOOP
-                        UPDATE FOCCO3I.TORDENS_MAN SET DT_FECHAMENTO = TRUNC(SYSDATE), TP_ORDEM = 'OME' WHERE ID = C.ORDEM_ID;
-                        INSERT INTO TORDENS_MAN_ATEND_OBS_OTM VALUES (C.OBS_ID, C.ORDEM_ID, '$obsEsc');
+                        UPDATE FOCCO3I.TORDENS_MAN SET SITUACAO = 'F', DT_FECHAMENTO = TRUNC(SYSDATE)
+                         WHERE ID = C.ORDEM_ID;
                     END LOOP;
                     COMMIT;
                 END;";
         $res = Database::switchParams('focco', [], null, true, false, null, $sql);
         if (!empty($res['error'])) {
-            throw new \Exception('Erro ao fechar ordem: ' . $res['error']);
+            throw new \Exception('Erro ao fechar liberação: ' . $res['error']);
         }
     }
 

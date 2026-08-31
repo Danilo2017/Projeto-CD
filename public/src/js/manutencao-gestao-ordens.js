@@ -1,6 +1,7 @@
 /* Gestão de Ordens de Manutenção */
 'use strict';
 
+let _base     = '';
 let _emprId   = 0;
 let _dataIni  = '';
 let _dataFim  = '';
@@ -11,12 +12,13 @@ let _ordensSelecionadas = [];
 
 /* ─── Inicialização ─────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
-    _emprId = EMPR_SESS;
+    const appData = document.getElementById('man-app-data');
+    _base   = appData ? appData.dataset.base : '/';
+    _emprId = appData ? parseInt(appData.dataset.empr || '0', 10) : 0;
     carregarTodos();
 });
 
 function params() {
-    _emprId  = EMPR_SESS;
     _dataIni = document.getElementById('dataIni').value;
     _dataFim = document.getElementById('dataFim').value;
     return new URLSearchParams({ empr_id: _emprId, data_ini: _dataIni, data_fim: _dataFim });
@@ -41,7 +43,7 @@ async function carregarAberta(p) {
     const tb = document.getElementById('tbAberta');
     tb.innerHTML = '<tr><td colspan="4" class="man-empty">Carregando...</td></tr>';
     try {
-        const r = await fetch(BASE + 'manutencao-api-aberta?' + p);
+        const r = await fetch(_base +'manutencao-api-aberta?' + p);
         const d = await r.json();
         const rows = d.data || [];
         document.getElementById('cntAberta').textContent = rows.length + ' registro(s)';
@@ -68,7 +70,7 @@ async function carregarAtendimento(p) {
     const tb = document.getElementById('tbAtend');
     tb.innerHTML = '<tr><td colspan="3" class="man-empty">Carregando...</td></tr>';
     try {
-        const r = await fetch(BASE + 'manutencao-api-atendimento?' + new URLSearchParams({ empr_id: EMPR_SESS }));
+        const r = await fetch(_base +'manutencao-api-atendimento?' + new URLSearchParams({ empr_id: _emprId }));
         const d = await r.json();
         const rows = d.data || [];
         document.getElementById('cntAtend').textContent = rows.length + ' registro(s)';
@@ -94,7 +96,7 @@ async function carregarLiberada(p) {
     const tb = document.getElementById('tbLib');
     tb.innerHTML = '<tr><td colspan="2" class="man-empty">Carregando...</td></tr>';
     try {
-        const r = await fetch(BASE + 'manutencao-api-liberada?' + p);
+        const r = await fetch(_base +'manutencao-api-liberada?' + p);
         const d = await r.json();
         const rows = d.data || [];
         document.getElementById('cntLib').textContent = rows.length + ' registro(s)';
@@ -119,7 +121,7 @@ async function carregarProgramada(p) {
     const tb = document.getElementById('tbProg');
     tb.innerHTML = '<tr><td colspan="3" class="man-empty">Carregando...</td></tr>';
     try {
-        const r = await fetch(BASE + 'manutencao-api-programada?' + p);
+        const r = await fetch(_base +'manutencao-api-programada?' + p);
         const d = await r.json();
         const rows = d.data || [];
         document.getElementById('cntProg').textContent = rows.length + ' registro(s)';
@@ -164,7 +166,7 @@ async function abrirDetalheAberta(maqId, prio, maqName) {
 
     try {
         const p = new URLSearchParams({ maquina_id: maqId, prioridade: prio, empr_id: _emprId, data_ini: _dataIni, data_fim: _dataFim });
-        const r = await fetch(BASE + 'manutencao-api-detalhar-aberta?' + p);
+        const r = await fetch(_base +'manutencao-api-detalhar-aberta?' + p);
         const d = await r.json();
         const rows = d.data || [];
         if (!rows.length) {
@@ -217,7 +219,7 @@ async function abrirDetalheAtendimento(maqId, prio, maqName) {
 
     try {
         const p = new URLSearchParams({ maquina_id: maqId, prioridade: prio });
-        const r = await fetch(BASE + 'manutencao-api-detalhar-atendimento?' + p);
+        const r = await fetch(_base +'manutencao-api-detalhar-atendimento?' + p);
         const d = await r.json();
         const rows = d.data || [];
         if (!rows.length) {
@@ -290,7 +292,7 @@ function abrirModalOk() {
 
 async function carregarFuncionarios() {
     try {
-        const r = await fetch(BASE + 'manutencao-api-funcionarios?empr_id=' + EMPR_SESS);
+        const r = await fetch(_base +'manutencao-api-funcionarios?empr_id=' + _emprId);
         const d = await r.json();
         const sel = document.getElementById('selFuncionario');
         sel.innerHTML = '<option value="">Selecione...</option>';
@@ -343,7 +345,7 @@ async function acaoExcluir() {
 
 async function postAcao(rota, body) {
     try {
-        const r = await fetch(BASE + rota, {
+        const r = await fetch(_base +rota, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),

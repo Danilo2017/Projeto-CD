@@ -8,7 +8,7 @@
 
     const LOGO_URL  = 'https://system.colchoesgazin.com.br/assets/media/logos/logo-gazin.png';
     const DOC_CODE  = 'R.14.GEP-02';
-    const REVISAO   = 'REVISÃO-02';
+    const REVISAO   = 'REVISÃO-01  ';
 
     /* ── ORD → CSS class e rótulo ───────────────────── */
     const ORD_CLASS = {
