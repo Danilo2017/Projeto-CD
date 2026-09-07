@@ -26,7 +26,7 @@ class DashboardManutencao
         return $rows[0] ?? [];
     }
 
-    // KPIs: ordens abertas no período (DT_SOLICITACAO)
+    // KPIs: ordens criadas no período (DT_SOLICITACAO)
     public static function getResumo(int $emprId, string $di, string $df): array
     {
         $ddi = self::dateSql($di);
@@ -40,19 +40,18 @@ class DashboardManutencao
                     COUNT(CASE WHEN TP_OS = 'G' THEN 1 END) AS PROGRAMADAS
                 FROM FOCCO3I.TORDENS_MAN
                 WHERE EMPR_ID = $emprId
-                  AND TP_ORDEM <> 'OME'
                   AND DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)";
         return self::queryOne($sql);
     }
 
-    // Distribuição: mesmo padrão de joins do OTM (old-style Oracle + TPREVEN_SERVICOS)
+    // Distribuição por tipo de OS fechadas no período (DT_FECHAMENTO) — igual ao painel OTM
     public static function getDistribuicao(int $emprId, string $di, string $df): array
     {
         $ddi = self::dateSql($di);
         $ddf = self::dateSql($df);
         $sql = "SELECT TIPO, QTD,
                     ROUND(QTD * 100.0 / SUM(QTD) OVER (), 1) AS PERC_QTD,
-                    VALOR
+                    VALOR, VALOR_ESTOQUE, VALOR_SERVICO
                 FROM (
                     SELECT
                         CASE T.TP_OS
@@ -69,24 +68,20 @@ class DashboardManutencao
                                 T.DT_FECHAMENTO, 999999999, EC.TMASC_ITEM_ID
                             ) * ISM.QTDE, 0)) +
                             SUM(NVL(S.VLR_GASTO, 0))
-                        , 2) AS VALOR
-                    FROM FOCCO3I.TITENS_SERV_MAN ISM,
-                         FOCCO3I.TORDENS_MAN T,
-                         TSERV_MAN S,
-                         FOCCO3I.TPREVEN_SERVICOS PREV,
-                         FOCCO3I.TITENS_ESTOQUE ESTQ,
-                         FOCCO3I.TITENS_EMPR IE,
-                         FOCCO3I.TITENS_ESTQ_CONF EC
-                    WHERE T.ID       = S.ORD_MAN_ID(+)
-                      AND S.ID       = ISM.SERV_MAN_ID(+)
-                      AND PREV.ID    = S.TPRESER_ID
-                      AND ESTQ.ID    = EC.ITESTQ_ID(+)
-                      AND ESTQ.ID(+) = ISM.ITESTQ_ID
-                      AND IE.ID(+)   = ESTQ.ITEMPR_ID
-                      AND T.EMPR_ID  IN ($emprId)
-                      AND T.TP_ORDEM <> 'OME'
-                      AND T.DT_FECHAMENTO >= $ddi
-                      AND T.DT_FECHAMENTO <  ($ddf + 1)
+                        , 2) AS VALOR,
+                        ROUND(SUM(NVL(FOCCO3I.MAN_EST_RETORNA_CUSTO_MEDIO(
+                                IE.EMPR_ID, IE.ID, NULL, 1,
+                                T.DT_FECHAMENTO, 999999999, EC.TMASC_ITEM_ID
+                            ) * ISM.QTDE, 0)), 2) AS VALOR_ESTOQUE,
+                        ROUND(SUM(NVL(S.VLR_GASTO, 0)), 2) AS VALOR_SERVICO
+                    FROM FOCCO3I.TORDENS_MAN T
+                    LEFT JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
+                    LEFT JOIN FOCCO3I.TITENS_SERV_MAN ISM ON ISM.SERV_MAN_ID = S.ID
+                    LEFT JOIN FOCCO3I.TITENS_ESTOQUE ESTQ ON ESTQ.ID = ISM.ITESTQ_ID
+                    LEFT JOIN FOCCO3I.TITENS_EMPR IE ON IE.ID = ESTQ.ITEMPR_ID
+                    LEFT JOIN FOCCO3I.TITENS_ESTQ_CONF EC ON EC.ITESTQ_ID = ESTQ.ID
+                    WHERE T.EMPR_ID = $emprId
+                      AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                     GROUP BY T.TP_OS
                 )
                 ORDER BY QTD DESC";
@@ -94,23 +89,23 @@ class DashboardManutencao
     }
 
     // Geradas = criadas no período (DT_SOLICITACAO)
-    // Atendidas = fechadas no período (DT_FECHAMENTO) — igual ao OTM
+    // Atendidas = fechadas no período (DT_FECHAMENTO)
     public static function getGeradasAtendidas(int $emprId, string $di, string $df): array
     {
         $ddi = self::dateSql($di);
         $ddf = self::dateSql($df);
         $sql = "SELECT
                     (SELECT COUNT(*) FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId AND TP_ORDEM <> 'OME'
+                     WHERE EMPR_ID = $emprId
                        AND DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS GERADAS,
                     (SELECT COUNT(*) FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId AND TP_ORDEM <> 'OME'
+                     WHERE EMPR_ID = $emprId
                        AND DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS ATENDIDAS
                 FROM DUAL";
         return self::queryOne($sql);
     }
 
-    // Grupo/Valor: SQL idêntico ao OTM (old-style Oracle joins + filtro de custo > 0)
+    // Grupo/Valor: custo por grupo de máquina em ordens FECHADAS no período
     public static function getOrdensGrupo(int $emprId, string $di, string $df): array
     {
         $ddi = self::dateSql($di);
@@ -172,49 +167,66 @@ class DashboardManutencao
                        AND TPER.DT_PREVISTA BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS PROGRAMADAS,
                     (SELECT COUNT(DISTINCT NUM_ORDEM)
                      FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId AND TP_OS = 'P' AND TP_ORDEM <> 'OME'
+                     WHERE EMPR_ID = $emprId AND TP_OS = 'P'
                        AND DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS LIBERADAS,
                     (SELECT COUNT(DISTINCT NUM_ORDEM)
                      FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId AND TP_OS = 'P' AND TP_ORDEM <> 'OME'
-                       AND SITUACAO = 'F'
+                     WHERE EMPR_ID = $emprId AND TP_OS = 'P'
                        AND DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS REALIZADAS
                 FROM DUAL";
         return self::queryOne($sql);
     }
 
-    // Funcionário/Ordens: quem executou ordens FECHADAS no período
+    // Funcionário/Ordens: por responsável direto na OS (TORDENS_MAN.FUNC_ID nativo FOCCO)
     public static function getFuncOrdens(int $emprId, string $di, string $df): array
     {
         $ddi = self::dateSql($di);
         $ddf = self::dateSql($df);
-        $sql = "SELECT ROWNUM RN, F.NOME AS FUNCIONARIO, FECHADAS, ABERTAS FROM (
-                    SELECT F.NOME,
-                           COUNT(CASE WHEN T.SITUACAO = 'F' THEN 1 END) AS FECHADAS,
-                           COUNT(CASE WHEN T.SITUACAO <> 'F' THEN 1 END) AS ABERTAS
-                    FROM FOCCO3I.TORDENS_MAN T
-                    JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = S.FUNC_ID
-                    WHERE T.EMPR_ID = $emprId
-                      AND T.TP_ORDEM <> 'OME'
-                      AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
+
+        // Fechadas no período (DT_FECHAMENTO) + Abertas atuais (DT_FECHAMENTO IS NULL) por UNION
+        $sql = "SELECT ROWNUM RN, FUNCIONARIO, FECHADAS, ABERTAS FROM (
+                    SELECT F.NOME AS FUNCIONARIO,
+                           SUM(FECHADAS) AS FECHADAS,
+                           SUM(ABERTAS)  AS ABERTAS
+                    FROM (
+                        SELECT S.FUNC_ID,
+                               COUNT(DISTINCT T.ID) AS FECHADAS,
+                               0 AS ABERTAS
+                        FROM FOCCO3I.TORDENS_MAN T
+                        JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
+                        WHERE T.EMPR_ID = $emprId
+                          AND S.FUNC_ID IS NOT NULL
+                          AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
+                        GROUP BY S.FUNC_ID
+                        UNION ALL
+                        SELECT S.FUNC_ID,
+                               0 AS FECHADAS,
+                               COUNT(DISTINCT T.ID) AS ABERTAS
+                        FROM FOCCO3I.TORDENS_MAN T
+                        JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
+                        WHERE T.EMPR_ID = $emprId
+                          AND S.FUNC_ID IS NOT NULL
+                          AND T.DT_FECHAMENTO IS NULL
+                          AND T.DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
+                        GROUP BY S.FUNC_ID
+                    ) CMB
+                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = CMB.FUNC_ID
                     GROUP BY F.NOME
                     ORDER BY FECHADAS DESC, F.NOME
                 ) WHERE ROWNUM <= 20";
         $rows = self::query($sql);
         if (!empty($rows)) return $rows;
 
-        // Fallback: via atendimento (quem registrou OK na OS)
-        $sql2 = "SELECT ROWNUM RN, F.NOME AS FUNCIONARIO, FECHADAS, ABERTAS FROM (
-                    SELECT F.NOME,
-                           COUNT(CASE WHEN T.SITUACAO = 'F' THEN 1 END) AS FECHADAS,
-                           COUNT(CASE WHEN T.SITUACAO <> 'F' THEN 1 END) AS ABERTAS
+        // Fallback: TORDENS_MAN.FUNC_ID filtrado por DT_SOLICITACAO
+        $sql2 = "SELECT ROWNUM RN, FUNCIONARIO, FECHADAS, ABERTAS FROM (
+                    SELECT F.NOME AS FUNCIONARIO,
+                           COUNT(CASE WHEN T.DT_FECHAMENTO IS NOT NULL THEN 1 END) AS FECHADAS,
+                           COUNT(CASE WHEN T.DT_FECHAMENTO IS NULL     THEN 1 END) AS ABERTAS
                     FROM FOCCO3I.TORDENS_MAN T
-                    JOIN TORDENS_MAN_ATEND_OK_OTM OK ON OK.ORDEM_ID = T.ID
-                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = OK.FUNC_ID
+                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = T.FUNC_ID
                     WHERE T.EMPR_ID = $emprId
-                      AND T.TP_ORDEM <> 'OME'
-                      AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
+                      AND T.FUNC_ID IS NOT NULL
+                      AND T.DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                     GROUP BY F.NOME
                     ORDER BY FECHADAS DESC, F.NOME
                 ) WHERE ROWNUM <= 20";
@@ -232,12 +244,11 @@ class DashboardManutencao
                 FROM FOCCO3I.TORDENS_MAN T
                 LEFT JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
                 WHERE T.EMPR_ID = $emprId
-                  AND T.TP_ORDEM <> 'OME'
                   AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)";
         return self::queryOne($sql);
     }
 
-    // Minutos por tipo: ordens FECHADAS no período (igual ao OTM)
+    // Minutos por tipo: ordens FECHADAS no período
     public static function getMinutosPorTipo(int $emprId, string $di, string $df): array
     {
         $ddi = self::dateSql($di);
@@ -255,32 +266,30 @@ class DashboardManutencao
                 FROM FOCCO3I.TORDENS_MAN T
                 JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
                 WHERE T.EMPR_ID = $emprId
-                  AND T.TP_ORDEM <> 'OME'
                   AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                 GROUP BY T.TP_OS
                 ORDER BY MINUTOS DESC";
         return self::query($sql);
     }
 
-    // Funcionário/Horas: ordens FECHADAS no período
+    // Funcionário/Horas: replica lógica de OTIMIZA.PDASHBOARD_ORDENS_FUNC_OTM
     public static function getFuncHoras(int $emprId, string $di, string $df): array
     {
         $ddi = self::dateSql($di);
         $ddf = self::dateSql($df);
-        $sql = "SELECT ROWNUM RN, F.NOME AS FUNCIONARIO, MIN_EXEC, QTD_CORRETIVAS, MTTR FROM (
-                    SELECT F.NOME,
-                           ROUND(SUM(S.QTD_HORA * 60), 0) AS MIN_EXEC,
-                           COUNT(DISTINCT CASE WHEN T.TP_OS = 'C' THEN T.ID END) AS QTD_CORRETIVAS,
-                           CASE COUNT(DISTINCT CASE WHEN T.TP_OS = 'C' THEN T.ID END)
-                               WHEN 0 THEN 0
-                               ELSE ROUND(SUM(S.QTD_HORA * 60) /
-                                    COUNT(DISTINCT CASE WHEN T.TP_OS = 'C' THEN T.ID END), 1)
-                           END AS MTTR
+
+        $sql = "SELECT ROWNUM RN, FUNCIONARIO, MIN_EXEC, MTTR FROM (
+                    SELECT F.NOME AS FUNCIONARIO,
+                           ROUND(SUM(NVL(S.QTD_HORA, 0) * 60), 0) AS MIN_EXEC,
+                           ROUND(
+                               SUM(NVL(S.QTD_HORA, 0) * 60) /
+                               NULLIF(COUNT(DISTINCT T.ID), 0)
+                           , 1) AS MTTR
                     FROM FOCCO3I.TORDENS_MAN T
-                    JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = S.FUNC_ID
+                    LEFT JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
+                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = T.FUNC_ID
                     WHERE T.EMPR_ID = $emprId
-                      AND T.TP_ORDEM <> 'OME'
+                      AND T.FUNC_ID IS NOT NULL
                       AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                     GROUP BY F.NOME
                     ORDER BY MIN_EXEC DESC

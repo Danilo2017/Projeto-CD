@@ -194,6 +194,19 @@ $router->get('/faturamento-api-dias-mes', 'Faturamento\\FaturamentoDashboardCont
 $router->get('/faturamento-api-dias-mes-empresa', 'Faturamento\\FaturamentoDashboardController@getDiasMesEmpresa', true);
 $router->get('/faturamento-api-vlr-faltante-carga', 'Faturamento\\FaturamentoDashboardController@getVlrFaltanteCarga', true);
 
+// ========== Carteira PDV ==========
+$router->get('/faturamento-carteira-pdv',      'Faturamento\\CarteiraPDVController@index',     true);
+$router->get('/faturamento-carteira-api-l1',   'Faturamento\\CarteiraPDVController@getNivel1', true);
+$router->get('/faturamento-carteira-api-l2',   'Faturamento\\CarteiraPDVController@getNivel2', true);
+$router->get('/faturamento-carteira-api-l3',   'Faturamento\\CarteiraPDVController@getNivel3', true);
+$router->get('/faturamento-carteira-api-l4',   'Faturamento\\CarteiraPDVController@getNivel4', true);
+
+// ========== Carteira PDV — Visão por Filial ==========
+$router->get('/faturamento-carteira-pdv-filial',  'Faturamento\\CarteiraPDVFilialController@index',     true);
+$router->get('/faturamento-carteira-filial-l1',   'Faturamento\\CarteiraPDVFilialController@getNivel1', true);
+$router->get('/faturamento-carteira-filial-l2',   'Faturamento\\CarteiraPDVFilialController@getNivel2', true);
+$router->get('/faturamento-carteira-filial-l3',   'Faturamento\\CarteiraPDVFilialController@getNivel3', true);
+
 // ========== Programação de Pedidos ==========
 $router->get('/faturamento-programacao', 'Faturamento\\FaturamentoProgramacaoController@index', true);
 $router->get('/faturamento-api-programacao', 'Faturamento\\FaturamentoProgramacaoController@listar', true);

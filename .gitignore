@@ -3,5 +3,8 @@ logs
 .env
 .claude
 exec*.php
+patch-*.php
+public/saida.csv
+public/*.csv
 *.txt
 graphify-out/

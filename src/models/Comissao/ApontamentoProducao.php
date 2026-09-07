@@ -27,6 +27,19 @@ class ApontamentoProducao
     }
 
     /**
+     * Definir data de referência para o cache de pontuações.
+     * Deve ser chamado antes dos métodos batch passando $periodoFim,
+     * garantindo que pontuações do período filtrado sejam usadas.
+     */
+    public static function definirDataRef(string $dataRef): void
+    {
+        if (self::$cacheDataRef !== $dataRef) {
+            self::$cachePontuacao = null;
+        }
+        self::$cacheDataRef = $dataRef;
+    }
+
+    /**
      * Carregar cache de pontuações uma vez
      * Chave inclui ID_EMPR para garantir filtro por filial
      */
@@ -42,7 +55,7 @@ class ApontamentoProducao
             'por_mascara' => [],
         ];
 
-        $hoje   = date('Y-m-d');
+        $hoje   = self::$cacheDataRef ?? date('Y-m-d');
         $result = Database::switchParams('focco', ['hoje' => $hoje], 'comissao.apontamento.cache_pontuacao', true);
 
         $pontuacoes = is_array($result['retorno']) ? $result['retorno'] : [];

@@ -121,6 +121,8 @@ $fatSub = match(true) {
     in_array($pActive, ['faturamento-dashboard', 'faturamento']) => 'dashboard',
     $pActive === 'meta-empresa'                                  => 'metas',
     $pActive === 'faturamento-programacao'                       => 'programacao',
+    $pActive === 'faturamento-carteira-pdv'                      => 'carteira-pdv',
+    $pActive === 'faturamento-carteira-pdv-filial'              => 'carteira-pdv-filial',
     default => ''
 };
 $pedidosSub = match(true) {
@@ -279,6 +281,18 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>faturamento-analise-tanque"
                        class="sidebar-sublink <?= $pActive === 'faturamento-analise-tanque' ? 'active' : '' ?>">
                         Análise por Tanque
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>faturamento-carteira-pdv"
+                       class="sidebar-sublink <?= $fatSub === 'carteira-pdv' ? 'active' : '' ?>">
+                        Carteira PDV
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>faturamento-carteira-pdv-filial"
+                       class="sidebar-sublink <?= $fatSub === 'carteira-pdv-filial' ? 'active' : '' ?>">
+                        Carteira PDV — Filial
                     </a>
                 </li>
             </ul>

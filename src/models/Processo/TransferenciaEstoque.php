@@ -35,12 +35,13 @@ class TransferenciaEstoque
 
         $plsql = "BEGIN\n";
         foreach ($itens as $it) {
-            $codItem  = (int) $it['cod_item'];
-            $idMasc   = (int) $it['id_mascara'];
-            $almoxOrg = (int) $it['almox_orig'];
-            $almoxDst = (int) $it['almox_dest'];
-            $qtde     = (int) $it['qtde'];
-            $plsql   .= "  PTRANSFERE_ESTQ_ITENS({$emprId},{$codItem},{$idMasc},{$almoxOrg},{$almoxDst},{$qtde});\n";
+            $codItem  = (int)   $it['cod_item'];
+            $idMasc   = (int)   ($it['id_mascara'] ?? 0);
+            $almoxOrg = (int)   $it['almox_orig'];
+            $almoxDst = (int)   $it['almox_dest'];
+            $qtde     = (float) $it['qtde'];
+            $qtdeStr  = rtrim(rtrim(number_format($qtde, 6, '.', ''), '0'), '.');
+            $plsql   .= "  PTRANSFERE_ESTQ_ITENS({$emprId},{$codItem},{$idMasc},{$almoxOrg},{$almoxDst},{$qtdeStr});\n";
         }
         $plsql .= "  COMMIT;\nEND;";
 

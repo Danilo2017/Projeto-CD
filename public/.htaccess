@@ -1,3 +1,15 @@
+# Bloqueia arquivos temporários de manutenção/patch
+<FilesMatch "^(patch-|exec).*\.php$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Bloqueia CSVs de dados temporários
+<FilesMatch "\.csv$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

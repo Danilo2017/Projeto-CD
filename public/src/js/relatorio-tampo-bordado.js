@@ -301,6 +301,112 @@
 </div>`;
     }
 
+    /* ── Extrai dimensões de uma máscara (ex: "140X190", "1400X1900") ── */
+    function parseMascDim(mask) {
+        if (!mask) return null;
+        const m = String(mask).match(/(\d+(?:[.,]\d+)?)\s*[xX\/\#]\s*(\d+(?:[.,]\d+)?)/);
+        if (!m) return null;
+        let a = parseFloat(m[1].replace(',', '.'));
+        let b = parseFloat(m[2].replace(',', '.'));
+        // Se > 500, provavelmente em mm → converte para cm
+        if (a > 500) a = a / 10;
+        if (b > 500) b = b / 10;
+        if (a <= 0 || b <= 0) return null;
+        return { largura: a, comprimento: b };
+    }
+
+    /* ── Resumo de espuma por espessura (m³) ─────── */
+    function buildResumoEspuma(rows, numLote, dataLote) {
+        if (!rows || rows.length === 0) return '';
+
+        const grupos = {};
+        let semDimensao = 0;
+
+        for (const r of rows) {
+            const esp  = parseFloat(r.ESPESSURA  || 0);
+            const qtde = parseFloat(r.QTDE_TAMPO || 0);
+            if (esp <= 0 || qtde <= 0) continue;
+
+            // Tenta várias fontes: máscara do tampo, máscara do item, descrições
+            const dim = parseMascDim(r.MASCARA_FAIXA)
+                     || parseMascDim(r.MASCARA)
+                     || parseMascDim(r.DESCICAO)
+                     || parseMascDim(r.DESC_TECNICA);
+
+            if (!grupos[esp]) grupos[esp] = { qtde: 0, vol: 0, semDim: 0 };
+            grupos[esp].qtde += qtde;
+
+            if (dim) {
+                grupos[esp].vol += (dim.largura / 100) * (dim.comprimento / 100) * (esp / 100) * qtde;
+            } else {
+                grupos[esp].semDim += qtde;
+                semDimensao++;
+            }
+        }
+
+        const espessuras = Object.keys(grupos).map(Number).sort((a, b) => b - a);
+        if (espessuras.length === 0) return '';
+
+        let totalQtde = 0, totalVol = 0, corpo = '';
+        for (const esp of espessuras) {
+            const g = grupos[esp];
+            totalQtde += g.qtde;
+            totalVol  += g.vol;
+            const volStr = g.semDim > 0 && g.vol === 0
+                ? '<span style="color:#c00">sem dim.</span>'
+                : g.vol.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+            corpo += `<tr>
+                <td style="text-align:center">${esp}</td>
+                <td style="text-align:center">${g.qtde}</td>
+                <td style="text-align:right">${volStr}</td>
+            </tr>`;
+        }
+        corpo += `<tr class="total-row">
+            <td style="text-align:center">TOTAL</td>
+            <td style="text-align:center">${totalQtde}</td>
+            <td style="text-align:right">${totalVol.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}</td>
+        </tr>`;
+
+        const aviso = semDimensao > 0
+            ? `<p style="font-size:8pt;color:#c00;margin-top:6px">* ${semDimensao} item(ns) sem dimensão identificável na máscara — volume não contabilizado.</p>`
+            : '';
+
+        return `
+<div class="pcp-section">
+    <div class="pcp-report-header">
+        <div class="col-logo"><img src="${LOGO_URL}" alt="Gazin"></div>
+        <div class="col-title">RELATÓRIO DE PRODUÇÃO</div>
+        <div class="col-right"><div><strong>SETOR</strong></div><div>GESTÃO DE PRODUÇÃO</div></div>
+    </div>
+    <div class="pcp-section-title">
+        RESUMO DE ESPUMA (m³) — LOTE ${numLote}${dataLote ? ' (' + dataLote + ')' : ''}
+    </div>
+    <p style="font-size:8pt;margin:4px 0 6px">Volume total de espuma por espessura — baseado no Tampo Bordado (total do lote)</p>
+    <div style="overflow-x:auto">
+    <table class="pcp-table" style="max-width:420px">
+        <thead>
+            <tr>
+                <th>ESPESSURA (cm)</th>
+                <th>QTD. TAMPOS</th>
+                <th>VOLUME (m³)</th>
+            </tr>
+        </thead>
+        <tbody>${corpo}</tbody>
+    </table>
+    </div>
+    ${aviso}
+    <div class="pcp-historico">
+        <table>
+            <thead>
+                <tr><th colspan="2">Histórico de Revisões</th></tr>
+                <tr><th style="width:120px">data</th><th>Alterações</th></tr>
+            </thead>
+            <tbody>${HISTORICO.map(h => `<tr><td>${h.data}</td><td>${h.alteracao}</td></tr>`).join('')}</tbody>
+        </table>
+    </div>
+</div>`;
+    }
+
     /* ── Helpers NLS Oracle (número com vírgula) ── */
     function toNum(v) {
         if (v === null || v === undefined) return NaN;
@@ -523,10 +629,13 @@ body{font-family:Arial,sans-serif;font-size:9pt;background:#fff}
                     return String(a.TECIDO || '').localeCompare(String(b.TECIDO || ''));
                 });
 
+                const todasRowsEspuma = data.tampo_rows || [];
+
                 let html = renderTampoBordado(data.tampo_rows || [], numLote, dt);
                 html    += renderTampoBordadoMesa(data.mesa_rows || [], numLote, dt);
                 html    += renderTampoBordadoConj(data.conj_rows || [], numLote, dt);
                 html    += renderBordadeiraSec(bordRows, numLote, dt);
+                html    += buildResumoEspuma(todasRowsEspuma, numLote, dt);
 
                 if (!html) {
                     statusMsg.innerHTML = '<span class="text-warning">Nenhum dado encontrado para este lote.</span>';

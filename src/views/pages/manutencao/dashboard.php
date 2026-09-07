@@ -161,7 +161,7 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 
     <!-- Linha 2: Tipo+Qtd+Valor | OS counts + Preventivas | Func/Ordens -->
     <div class="mdb-row">
-        <div class="mdb-panel w-tipo" style="max-height:260px">
+        <div class="mdb-panel w-tipo">
             <div class="mdb-ph">Tipo de Manutenção / Quantidade / Valor em $</div>
             <div class="mdb-pb">
                 <table class="mdb-tbl" id="tbTipo">
@@ -176,7 +176,7 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
                 <div class="mdb-load">Carregando...</div>
             </div>
         </div>
-        <div class="mdb-panel w-func" style="max-height:260px">
+        <div class="mdb-panel w-func">
             <div class="mdb-ph">Funcionário / Ordens Fechada / Aberta</div>
             <div class="mdb-pb">
                 <table class="mdb-tbl" id="tbFuncOrdens">
@@ -199,11 +199,10 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
                 <table class="mdb-tbl" id="tbFuncHoras">
                     <thead><tr>
                         <th>Funcionário</th>
-                        <th class="r">Min. Execução</th>
-                        <th class="r">OS Corretivas</th>
+                        <th class="r">Min. em Execução</th>
                         <th class="r">MTTR (min)</th>
                     </tr></thead>
-                    <tbody><tr><td colspan="4" class="mdb-load">Carregando...</td></tr></tbody>
+                    <tbody><tr><td colspan="3" class="mdb-load">Carregando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -217,5 +216,6 @@ if (!$acesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
      style="display:none"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="<?= $base ?>src/js/manutencao-dashboard.js?v=<?= time() ?>"></script>
 <?= $render('footer') ?>

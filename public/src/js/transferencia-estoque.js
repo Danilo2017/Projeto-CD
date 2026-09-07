@@ -19,7 +19,27 @@
         const r = await fetch(url, opts);
         return r.json();
     }
-    function fmtN(v) { const n = parseFloat(v); return isNaN(n) ? '0' : n.toLocaleString('pt-BR'); }
+    // Oracle pode retornar número com ponto ("0.2027") ou vírgula ("1.234,56")
+    function parseNum(v) {
+        if (v === null || v === undefined) return NaN;
+        if (typeof v === 'number') return v;
+        const s = String(v).trim();
+        if (s.includes(',')) {
+            // Formato brasileiro: remove separador de milhar (ponto) e troca vírgula por ponto
+            return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+        }
+        return parseFloat(s);
+    }
+    function fmtN(v) {
+        if (v === null || v === undefined || v === '') return '0';
+        const s = String(v).trim();
+        // Oracle retorna decimal com ponto ("0.2027") → troca ponto por vírgula sem re-arredondar
+        if (s.includes('.') && !s.includes(',')) return s.replace('.', ',');
+        // Já está em formato pt-BR ou é inteiro
+        if (s.includes(',')) return s;
+        const n = parseInt(s, 10);
+        return isNaN(n) ? s : n.toLocaleString('pt-BR');
+    }
     function almoxOrig() { return document.getElementById('selAlmoxOrig').value.trim(); }
     function almoxDest() { return document.getElementById('selAlmoxDest').value.trim(); }
 
@@ -74,8 +94,8 @@
 
         tbody.innerHTML = _itens.map((r, idx) => {
             const sel   = _selecionados.has(idx);
-            const qtde  = parseFloat(r.qtde) || 0;
-            const saldo = parseFloat(r.ESTOQUE) || 0;
+            const qtde  = parseNum(r.qtde)   || 0;
+            const saldo = parseNum(r.ESTOQUE) || 0;
             const valido = qtde > 0 && qtde <= saldo;
             const badge  = r.status === 'ok'
                 ? '<span class="badge bg-success">Transferido</span>'
@@ -103,9 +123,10 @@
     <td class="text-center fw-bold ${saldo === 0 ? 'text-danger' : 'text-success'}">${fmtN(saldo)}</td>
     <td class="text-center p-1">
         ${r.status === 'ok' ? fmtN(qtde) : `
-        <input type="number" min="1" max="${saldo}" step="1"
+        <input type="number" min="0.0001" max="${saldo}" step="any"
                class="form-control form-control-sm text-center p-0"
                style="width:88px;margin:auto"
+               step="any"
                value="${qtde > 0 ? qtde : ''}"
                placeholder="0"
                oninput="setQtde(${idx}, this.value)">`}
@@ -121,7 +142,7 @@
         // Atualiza só o badge da linha sem re-render completo
         const row = document.querySelector(`.ck-item[data-idx="${idx}"]`)?.closest('tr');
         if (!row) return;
-        const saldo = parseFloat(_itens[idx].ESTOQUE) || 0;
+        const saldo = parseNum(_itens[idx].ESTOQUE) || 0;
         const qtde  = _itens[idx].qtde;
         const badgeTd = row.cells[10];
         if (qtde <= 0)
@@ -169,7 +190,7 @@
         if (!_selecionados.size) { toast('Selecione ao menos um item.', 'warning'); return; }
 
         const itensSel = [..._selecionados].map(idx => _itens[idx]);
-        const invalidos = itensSel.filter(r => !(r.qtde > 0 && r.qtde <= parseFloat(r.ESTOQUE)));
+        const invalidos = itensSel.filter(r => !(r.qtde > 0 && r.qtde <= parseNum(r.ESTOQUE)));
         if (invalidos.length) {
             toast(`${invalidos.length} item(ns) sem qtde válida ou que excede o saldo.`, 'warning');
             return;

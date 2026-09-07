@@ -1,0 +1,29 @@
+{
+    "recommendations": [
+        // ── PHP ──────────────────────────────────────────────────
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "junstyle.php-cs-fixer",
+        "MehediDracula.php-namespace-resolver",
+
+        // ── SQL / Oracle ─────────────────────────────────────────
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-oracle",
+
+        // ── JavaScript ───────────────────────────────────────────
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+
+        // ── Git ──────────────────────────────────────────────────
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+
+        // ── Produtividade ─────────────────────────────────────────
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker",
+        "streetsidesoftware.code-spell-checker-portuguese-brazilian",
+        "christian-kohler.path-intellisense",
+        "wayou.vscode-todo-highlight",
+        "gruntfuggly.todo-tree"
+    ]
+}

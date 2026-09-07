@@ -821,7 +821,10 @@ class Comissao
     public static function calcularComissaoTodosCompletaOtimizado(string $periodoIni, string $periodoFim, int $emprId, ?int $centroTrabId = null): array
     {
         $inicioProcessamento = microtime(true);
-        
+
+        // Garante que o cache de pontuações usa as regras vigentes no fim do período filtrado
+        ApontamentoProducao::definirDataRef($periodoFim);
+
         // =============================================
         // PASSO 1: Buscar lista de funcionários com apontamentos (1 query)
         // =============================================
@@ -1199,7 +1202,7 @@ class Comissao
                 // Funcionário Apoio  (A) -> faixa Apoio
                 if ($pontosNormais > 0) {
                     $tipoFaixaNormal = ($tipoVinculoFunc === 'A') ? 'A' : 'N';
-                    $faixaNormal = self::buscarFaixaAplicavelEmMemoria($faixas, $pontosNormais, $tipoFaixaNormal);
+                    $faixaNormal = self::buscarFaixaAplicavelEmMemoria($faixas, $pontosNormais, $tipoFaixaNormal, $centroIdFuncionario);
                     if ($faixaNormal) {
                         $faixaAplicada = [
                             'id' => $faixaNormal['ID_FAIXA'],
@@ -1223,7 +1226,8 @@ class Comissao
                 // Se tipo TOTAL (T) -> usa faixa APOIO
                 if ($pontosApoio > 0) {
                     $tipoFaixaApoio = ($tipoCalculoApoio === 'M') ? 'N' : 'A';
-                    $faixaApoio = self::buscarFaixaAplicavelEmMemoria($faixas, $pontosApoio, $tipoFaixaApoio);
+                    $centroParaFaixaApoio = $centroApoioInfo ?? $centroIdFuncionario;
+                    $faixaApoio = self::buscarFaixaAplicavelEmMemoria($faixas, $pontosApoio, $tipoFaixaApoio, $centroParaFaixaApoio);
                     if ($faixaApoio) {
                         $faixaApoioAplicada = [
                             'id' => $faixaApoio['ID_FAIXA'],
@@ -1372,7 +1376,7 @@ class Comissao
      * @param string $tipoFuncionario Tipo do funcionário: N=Normal, A=Apoio (para filtrar faixas)
      * @return array|null
      */
-    private static function buscarFaixaAplicavelEmMemoria(array $faixas, float $pontos, string $tipoFuncionario = 'N'): ?array
+    private static function buscarFaixaAplicavelEmMemoria(array $faixas, float $pontos, string $tipoFuncionario = 'N', ?int $centroTrabId = null): ?array
     {
         // Filtrar faixas pelo tipo de funcionário
         // N (Normal) -> faixas com TIPO_FUNCIONARIO IN ('N', 'T')
@@ -1384,20 +1388,32 @@ class Comissao
             } elseif ($tipoFuncionario === 'A') {
                 return in_array($tipoFaixa, ['A', 'T']);
             }
-            return true; // Se tipo desconhecido, aceita qualquer faixa
+            return true;
         });
-        
-        // Ordenar para priorizar faixas específicas (N ou A) sobre genéricas (T)
-        usort($faixasFiltradas, function($a, $b) {
-            $prioA = ($a['TIPO_FUNCIONARIO'] ?? 'T') === 'T' ? 1 : 0;
-            $prioB = ($b['TIPO_FUNCIONARIO'] ?? 'T') === 'T' ? 1 : 0;
-            return $prioA - $prioB;
+
+        // Ordenar por prioridade:
+        // 1) Faixa específica do centro do funcionário (CENTRO_TRAB_ID bate)
+        // 2) Faixa sem centro (NULL) — genérica para qualquer centro
+        // 3) Tipo específico (N/A) antes de genérico (T)
+        usort($faixasFiltradas, function($a, $b) use ($centroTrabId) {
+            $centroA = isset($a['CENTRO_TRAB_ID']) && $a['CENTRO_TRAB_ID'] !== null && $a['CENTRO_TRAB_ID'] !== '' ? (int)$a['CENTRO_TRAB_ID'] : null;
+            $centroB = isset($b['CENTRO_TRAB_ID']) && $b['CENTRO_TRAB_ID'] !== null && $b['CENTRO_TRAB_ID'] !== '' ? (int)$b['CENTRO_TRAB_ID'] : null;
+
+            // Centro específico do funcionário tem prioridade máxima
+            $matchA = ($centroTrabId && $centroA === $centroTrabId) ? 0 : ($centroA === null ? 1 : 2);
+            $matchB = ($centroTrabId && $centroB === $centroTrabId) ? 0 : ($centroB === null ? 1 : 2);
+            if ($matchA !== $matchB) return $matchA - $matchB;
+
+            // Tipo específico (N/A) antes de genérico (T)
+            $tipoA = ($a['TIPO_FUNCIONARIO'] ?? 'T') === 'T' ? 1 : 0;
+            $tipoB = ($b['TIPO_FUNCIONARIO'] ?? 'T') === 'T' ? 1 : 0;
+            return $tipoA - $tipoB;
         });
-        
+
         foreach ($faixasFiltradas as $faixa) {
             $min = floatval($faixa['PONTO_INICIAL'] ?? 0);
             $max = floatval($faixa['PONTO_FINAL'] ?? PHP_FLOAT_MAX);
-            
+
             if ($pontos >= $min && ($max == 0 || $pontos <= $max)) {
                 return $faixa;
             }

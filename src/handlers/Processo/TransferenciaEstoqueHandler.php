@@ -34,13 +34,15 @@ class TransferenciaEstoqueHandler
         if (empty($itens)) throw new \Exception('Nenhum item para transferir.', 400);
 
         foreach ($itens as $i => $it) {
-            if (!isset($it['cod_item'], $it['id_mascara'], $it['almox_orig'], $it['almox_dest'], $it['qtde'])) {
+            // id_mascara pode ser null para itens sem máscara — não incluso no isset
+            if (!isset($it['cod_item'], $it['almox_orig'], $it['almox_dest'], $it['qtde'])) {
                 throw new \Exception("Item #{$i} incompleto.", 400);
             }
-            $qtde  = (int) $it['qtde'];
-            $saldo = (int) ($it['saldo'] ?? 0);
+            $qtde    = (float) $it['qtde'];
+            $saldo   = (float) ($it['saldo'] ?? 0);
+            $idMasc  = $it['id_mascara'] ?? '-';
             if ($qtde <= 0)     throw new \Exception("Item #{$i}: quantidade deve ser maior que zero.", 400);
-            if ($qtde > $saldo) throw new \Exception("Item {$it['cod_item']}/Másc.{$it['id_mascara']}: qtde ({$qtde}) excede saldo ({$saldo}).", 400);
+            if ($qtde > $saldo) throw new \Exception("Item {$it['cod_item']}/Másc.{$idMasc}: qtde ({$qtde}) excede saldo ({$saldo}).", 400);
         }
 
         $result = TransferenciaEstoque::executar($emprId, $itens);

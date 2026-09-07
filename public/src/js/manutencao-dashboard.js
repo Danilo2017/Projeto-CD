@@ -23,6 +23,8 @@ var ROW = {
     'Preventiva': 'row-P', 'Melhoria': 'row-M', 'Nao Planejada': 'row-N'
 };
 
+Chart.register(ChartDataLabels);
+
 document.addEventListener('DOMContentLoaded', function () {
     var d   = document.getElementById('mdb-app-data');
     _base   = d ? d.dataset.base : '/';
@@ -91,6 +93,7 @@ function onDistrib(json) {
     var rows = json.success ? (json.data || []) : [];
     renderTipoTabela(rows);
     renderDistribChart(rows);
+    renderCustosChart(rows);
 }
 
 function onGeradas(json) {
@@ -137,20 +140,18 @@ function onFuncOrdens(json) {
 function onMinutos(json) {
     var rows = json.success ? (json.data || []) : [];
     renderMinutosChart(rows);
-    renderCustosChart(rows);
 }
 
 function onFuncHoras(json) {
     var rows = json.success ? (json.data || []) : [];
     var tb = document.querySelector('#tbFuncHoras tbody');
     if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="4" class="mdb-empty">Sem dados</td></tr>';
+        tb.innerHTML = '<tr><td colspan="3" class="mdb-empty">Sem dados</td></tr>';
         return;
     }
     tb.innerHTML = rows.map(function (r) {
         return '<tr><td>' + esc(r.FUNCIONARIO || '') + '</td>' +
             '<td class="r">' + num(r.MIN_EXEC || 0) + '</td>' +
-            '<td class="r">' + fmt(r.QTD_CORRETIVAS) + '</td>' +
             '<td class="r">' + num(r.MTTR || 0) + '</td></tr>';
     }).join('');
 }
@@ -245,9 +246,15 @@ function renderDistribChart(rows) {
             }]
         },
         options: Object.assign({}, chartDefaults, {
+            layout: { padding: { top: 24 } },
             plugins: {
                 legend: { display: true, position: 'bottom',
-                    labels: { font: { size: 10 }, boxWidth: 12 } }
+                    labels: { font: { size: 10 }, boxWidth: 12 } },
+                datalabels: {
+                    anchor: 'end', align: 'top',
+                    color: '#333', font: { size: 10, weight: 'bold' },
+                    formatter: function (v) { return v > 0 ? v + '%' : ''; }
+                }
             },
             scales: {
                 y: {
@@ -275,9 +282,15 @@ function renderGeradasChart(d) {
             ]
         },
         options: Object.assign({}, chartDefaults, {
+            layout: { padding: { top: 24 } },
             plugins: {
                 legend: { display: true, position: 'bottom',
-                    labels: { font: { size: 10 }, boxWidth: 12 } }
+                    labels: { font: { size: 10 }, boxWidth: 12 } },
+                datalabels: {
+                    anchor: 'end', align: 'top',
+                    color: '#333', font: { size: 11, weight: 'bold' },
+                    formatter: function (v) { return v > 0 ? v : ''; }
+                }
             },
             scales: {
                 y: { beginAtZero: true, ticks: { font: { size: 10 }, stepSize: 1 } },
@@ -308,9 +321,15 @@ function renderMinutosChart(rows) {
             }]
         },
         options: Object.assign({}, chartDefaults, {
+            layout: { padding: { top: 24 } },
             plugins: {
                 legend: { display: true, position: 'bottom',
-                    labels: { font: { size: 10 }, boxWidth: 12 } }
+                    labels: { font: { size: 10 }, boxWidth: 12 } },
+                datalabels: {
+                    anchor: 'end', align: 'top',
+                    color: '#333', font: { size: 10, weight: 'bold' },
+                    formatter: function (v) { return v > 0 ? v.toLocaleString('pt-BR') : ''; }
+                }
             },
             scales: {
                 y: { beginAtZero: true, ticks: { font: { size: 10 } } },
@@ -323,25 +342,33 @@ function renderMinutosChart(rows) {
 function renderCustosChart(rows) {
     var ctx = document.getElementById('chartCustos').getContext('2d');
     if (_chCust) _chCust.destroy();
-    var totalServ = rows.reduce(function (s, r) { return s + parseFloat(r.VALOR_SERVICO || r.VALOR || 0); }, 0);
+    var movEst  = rows.reduce(function (s, r) { return s + parseFloat(r.VALOR_ESTOQUE || 0); }, 0);
+    var servTerc = rows.reduce(function (s, r) { return s + parseFloat(r.VALOR_SERVICO || 0); }, 0);
+    var realiz  = rows.reduce(function (s, r) { return s + parseFloat(r.VALOR || 0); }, 0);
     _chCust = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['Mov. Estoque', 'Serv. Terceiros', 'Realizado'],
             datasets: [{
-                data: [0, totalServ, totalServ],
+                data: [movEst, servTerc, realiz],
                 backgroundColor: ['#1565c0', '#e65100', '#2e7d32'],
                 borderRadius: 4,
                 label: 'R$'
             }]
         },
         options: Object.assign({}, chartDefaults, {
+            layout: { padding: { top: 24 } },
             plugins: {
                 legend: { display: true, position: 'bottom',
-                    labels: { font: { size: 10 }, boxWidth: 12 } }
+                    labels: { font: { size: 10 }, boxWidth: 12 } },
+                datalabels: {
+                    anchor: 'end', align: 'top',
+                    color: '#333', font: { size: 10, weight: 'bold' },
+                    formatter: function (v) { return v > 0 ? moeda(v) : ''; }
+                }
             },
             scales: {
-                y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: function (v) { return moeda(v); } } },
                 x: { ticks: { font: { size: 10 } } }
             }
         })

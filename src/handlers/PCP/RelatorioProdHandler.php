@@ -132,8 +132,11 @@ class RelatorioProdHandler
     public static function buscarTampoBordado(int $emprId, int $numLote): array
     {
         return self::cached("pcp.tampoBordado.{$emprId}.{$numLote}", function () use ($emprId, $numLote) {
-            $rows           = RelatorioProd::buscarTampoBordado($emprId, $numLote);
-            $mesaRows       = RelatorioProd::buscarTampoBordadoMesa($emprId, $numLote);
+            $rows = RelatorioProd::buscarTampoBordado($emprId, $numLote);
+            // Mesa rows são subconjunto de tampo rows (mesma query + filtro ORD=MESA_PL)
+            // Filtra em PHP para evitar uma segunda chamada Oracle com GAZIN_COLCHOES_ESPECIAIS
+            $mesaRows = array_values(array_filter($rows, fn($r) => stripos($r['ORD'] ?? '', 'MESA_PL') !== false));
+
             $conjRows       = RelatorioProd::buscarTampoBordadoConj($emprId, $numLote);
             $bordadeiraRows = RelatorioProd::buscarBordadeira($emprId, $numLote);
             $dataLote       = RelatorioProd::buscarDataLote($emprId, $numLote);
