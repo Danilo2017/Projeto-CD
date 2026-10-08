@@ -309,14 +309,15 @@ function abrirListaDia(data) {
     const tfoot = document.getElementById('tabelaTotais');
     
     if (recebimentosDia.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="sem-recebimentos">Nenhum recebimento agendado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="sem-recebimentos">Nenhum recebimento agendado</td></tr>';
         tfoot.innerHTML = '';
     } else {
         // Calcular totais
         const totalRecebimentos = recebimentosDia.length;
         const totalPeso = recebimentosDia.reduce((sum, rec) => sum + (parseFloat(rec.peso) || 0), 0);
         const totalVolume = recebimentosDia.reduce((sum, rec) => sum + (parseFloat(rec.volume) || 0), 0);
-        
+        const totalComprovante = recebimentosDia.reduce((sum, rec) => sum + (parseFloat(rec.valor_pago) || 0), 0);
+
         tbody.innerHTML = recebimentosDia.map(rec => {
             const badgeClass = rec.recebido ? 'badge-recebido' : 'badge-pendente';
             const statusText = rec.recebido ? 'Recebido' : 'Pendente';
@@ -324,7 +325,10 @@ function abrirListaDia(data) {
             const volumeFormatado = rec.volume ? parseFloat(rec.volume).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-';
             const btnStatusClass = rec.recebido ? 'btn-pendente' : 'btn-recebido';
             const btnStatusText = rec.recebido ? 'Pendente' : 'Recebido';
-            
+            const valorFormatado = rec.valor_pago
+                ? 'R$ ' + parseFloat(rec.valor_pago).toLocaleString('pt-BR', {minimumFractionDigits: 2})
+                : '-';
+
             return `
                 <tr>
                     <td>${rec.hora || '--:--'}</td>
@@ -333,26 +337,37 @@ function abrirListaDia(data) {
                     <td>${rec.descricao || '-'}</td>
                     <td>${pesoFormatado}</td>
                     <td>${volumeFormatado}</td>
+                    <td>${valorFormatado}</td>
                     <td><span class="${badgeClass}">${statusText}</span></td>
                     <td>
                         <div class="acoes-btns">
-                            <button class="${btnStatusClass}" onclick="alterarStatus(${rec.id})">${btnStatusText}</button>
-                            <button class="btn-recibo" onclick="abrirModalRecibo(${rec.id})">Recibo</button>
-                            <button class="btn-editar" onclick="editarRecebimento(${rec.id})">Editar</button>
-                            <button class="btn-deletar" onclick="confirmarExclusao(${rec.id})">Excluir</button>
+                            ${rec.recebido
+                                ? `${rec.recibo_id
+                                    ? `<button class="btn-ver-comprovante" onclick="visualizarRecibo(${rec.recibo_id})">Comprovante</button>`
+                                    : `<button class="btn-recibo" onclick="abrirModalRecibo(${rec.id})">Recibo</button>`
+                                  }`
+                                : `<button class="${btnStatusClass}" onclick="alterarStatus(${rec.id})">${btnStatusText}</button>
+                                   <button class="btn-recibo" onclick="abrirModalRecibo(${rec.id})">Recibo</button>
+                                   <button class="btn-editar" onclick="editarRecebimento(${rec.id})">Editar</button>
+                                   <button class="btn-deletar" onclick="confirmarExclusao(${rec.id})">Excluir</button>`
+                            }
                         </div>
                     </td>
                 </tr>
             `;
         }).join('');
-        
+
         // Adicionar linha de totais
+        const totalComprovanteFmt = totalComprovante > 0
+            ? 'R$ ' + totalComprovante.toLocaleString('pt-BR', {minimumFractionDigits: 2})
+            : '-';
         tfoot.innerHTML = `
             <tr class="linha-totais">
                 <td colspan="3"><strong>Total: ${totalRecebimentos} recebimento${totalRecebimentos !== 1 ? 's' : ''}</strong></td>
                 <td></td>
                 <td><strong>${totalPeso.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
                 <td><strong>${totalVolume.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                <td><strong>${totalComprovanteFmt}</strong></td>
                 <td colspan="2"></td>
             </tr>
         `;
@@ -653,6 +668,20 @@ async function salvarRecibo(event) {
         
         if (result.success) {
             fecharModalRecibo();
+
+            // Se o agendamento ainda não está recebido, muda status automaticamente
+            const agendamento = recebimentos.find(r => r.id === dados.agendamento_id);
+            if (agendamento && !agendamento.recebido) {
+                await fetch(BASE + 'cd-api-calendario-status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: dados.agendamento_id })
+                });
+            }
+
+            await carregarRecebimentos();
+            renderizarCalendarioAnual();
+
             // Buscar dados do recibo gerado e exibir
             await visualizarRecibo(result.data.id);
         } else {

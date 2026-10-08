@@ -84,6 +84,15 @@ class ReciboDescarga
         return $result['retorno'];
     }
 
+    public static function listarTodos()
+    {
+        $result = Database::switchParams('focco', [], 'cd.recibo.listarTodos', true);
+        if ($result['error']) {
+            throw new \Exception($result['error']);
+        }
+        return $result['retorno'];
+    }
+
     public static function listarRecibosMes()
     {
         $result = Database::switchParams('focco', [], 'cd.recibo.listarRecibosMes', true);

@@ -22,7 +22,37 @@ class CDCalendarioHandler
      */
     public static function listarRecebimentos(): array
     {
-        return AgendamentoRecebimento::listarTodos();
+        $recebimentos = AgendamentoRecebimento::listarTodos();
+
+        try {
+            $recibos = ReciboDescarga::listarTodos();
+            $recibosPorAgendamento = [];
+            foreach ($recibos as $recibo) {
+                $aid = (int)($recibo['AGENDAMENTO_ID'] ?? 0);
+                if ($aid) {
+                    $recibosPorAgendamento[$aid] = $recibo;
+                }
+            }
+
+            foreach ($recebimentos as &$rec) {
+                $aid = (int)$rec['id'];
+                if (isset($recibosPorAgendamento[$aid])) {
+                    $r = $recibosPorAgendamento[$aid];
+                    $rec['recibo_id']        = $r['ID'];
+                    $rec['recibo_numero']    = $r['NUMERO_RECIBO'];
+                    $rec['valor_pago']       = $r['VALOR_PAGO'];
+                    $rec['forma_pagamento']  = $r['FORMA_PAGAMENTO'];
+                    $rec['empresa_pagadora'] = $r['EMPRESA_PAGADORA'];
+                } else {
+                    $rec['recibo_id'] = null;
+                }
+            }
+            unset($rec);
+        } catch (\Exception $e) {
+            // se falhar, retorna agendamentos sem dados de recibo
+        }
+
+        return $recebimentos;
     }
 
     /**

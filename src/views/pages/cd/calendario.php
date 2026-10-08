@@ -211,7 +211,8 @@ if (!$acessoCd) {
         }
 
         .modal-lista {
-            max-width: 900px;
+            max-width: 1100px;
+            width: 95%;
         }
 
         @keyframes modalSlideIn {
@@ -499,6 +500,23 @@ if (!$acessoCd) {
             background: #138496;
         }
 
+        .btn-ver-comprovante {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-right: 5px;
+            transition: all 0.2s;
+            background: #28a745;
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-ver-comprovante:hover {
+            background: #218838;
+        }
+
         /* Grupo de botões de ação */
         .acoes-btns {
             display: flex;
@@ -779,7 +797,8 @@ if (!$acessoCd) {
                                 <th>Placa</th>
                                 <th>Descrição</th>
                                 <th>Peso (kg)</th>
-                                <th>Volume </th>
+                                <th>Volume</th>
+                                <th>Comprovante</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
