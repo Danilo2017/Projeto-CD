@@ -90,8 +90,9 @@
                        data-tmasc="${tmascId}" data-empr="${emprIdR}" data-desc="${descEsc}" data-masc="${mascEsc}">
                        <i class="bi bi-exclamation-triangle"></i> Ativo (${qtdAtivos})</span>`;
 
-            const btnExcl = `<button class="btn btn-xs btn-sm btn-outline-danger" onclick="removerItem(${r.ID})" title="Remover"><i class="bi bi-trash"></i></button>`;
+            const btnExcl = `<button class="btn btn-xs btn-sm btn-outline-danger" onclick="removerItem(${r.ID},this)" title="Remover"><i class="bi bi-trash"></i></button>`;
             return `<tr>
+                <td class="text-center"><input type="checkbox" class="chk-hist" value="${r.ID}"></td>
                 <td>${emprIdR}</td>
                 <td>${r.COD_ITEM ?? ''}</td>
                 <td>${tmascId}</td>
@@ -102,6 +103,7 @@
                 <td class="text-center">${btnExcl}</td>
             </tr>`;
         }).join('');
+        atualizarBtnRemoverSelecionados();
     }
 
     // ── MODAL PEDIDOS PENDENTES ───────────────────────────
@@ -184,6 +186,45 @@
         }
     };
 
+    // ── SELEÇÃO MÚLTIPLA DO HISTÓRICO ────────────────────
+    function atualizarBtnRemoverSelecionados() {
+        const cnt = document.querySelectorAll('#tbodyFila .chk-hist:checked').length;
+        const btn = document.getElementById('btnRemoverSelecionados');
+        document.getElementById('cntSelecionados').textContent = cnt;
+        btn.style.display = cnt > 0 ? '' : 'none';
+        const chkTodos = document.getElementById('chkHistTodos');
+        const total    = document.querySelectorAll('#tbodyFila .chk-hist').length;
+        chkTodos.indeterminate = cnt > 0 && cnt < total;
+        chkTodos.checked       = total > 0 && cnt === total;
+    }
+
+    document.getElementById('chkHistTodos').addEventListener('change', function () {
+        document.querySelectorAll('#tbodyFila .chk-hist').forEach(c => c.checked = this.checked);
+        atualizarBtnRemoverSelecionados();
+    });
+
+    document.getElementById('tbodyFila').addEventListener('change', function (e) {
+        if (e.target.classList.contains('chk-hist')) atualizarBtnRemoverSelecionados();
+    });
+
+    document.getElementById('btnRemoverSelecionados').addEventListener('click', async function () {
+        const ids = [...document.querySelectorAll('#tbodyFila .chk-hist:checked')].map(c => parseInt(c.value, 10));
+        if (!ids.length) return;
+        if (!confirm(`Remover ${ids.length} registro(s) selecionado(s)?`)) return;
+        this.disabled = true;
+        this.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Removendo...`;
+        try {
+            const data = await post('pd-api-excluir-varios', { empr_id: emprId(), ids });
+            if (data.error) { alert(data.error); return; }
+            carregarHistorico();
+        } catch (e) {
+            alert('Erro: ' + e.message);
+        } finally {
+            this.disabled = false;
+            this.innerHTML = `<i class="bi bi-trash"></i> Remover Selecionados (<span id="cntSelecionados">0</span>)`;
+        }
+    });
+
     // Clique no badge de status → abre modal de pedidos
     document.getElementById('tbodyFila').addEventListener('click', function (e) {
         const badge = e.target.closest('.pd-status-badge');
@@ -219,14 +260,17 @@
     });
 
     // ── REMOVER ITEM ─────────────────────────────────────
-    window.removerItem = async function (id) {
+    window.removerItem = async function (id, btn) {
         if (!confirm('Remover este registro do histórico?')) return;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
         try {
             const data = await post('pd-api-excluir-item', { empr_id: emprId(), id });
             if (data.error) { alert(data.error); return; }
             carregarHistorico();
         } catch (e) {
             alert('Erro: ' + e.message);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash"></i>'; }
         }
     };
 

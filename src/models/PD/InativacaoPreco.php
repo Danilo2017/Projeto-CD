@@ -13,7 +13,22 @@ class InativacaoPreco
             'cod_item' => $codItem,
         ], 'pd.inativacao_preco.buscar_itens', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
-        return is_array($result['retorno']) ? $result['retorno'] : [];
+        $rows = is_array($result['retorno']) ? $result['retorno'] : [];
+        if (empty($rows)) return [];
+
+        // Exclui itens já registrados no monitoramento para este empr_id + cod_item
+        try {
+            $pdo  = Database::getInstance('focco');
+            $stmt = $pdo->query(
+                "SELECT TMASC_ITEM_ID FROM TGAZIN_PD_INATIV_PRECO WHERE EMPR_ID = $emprId AND COD_ITEM = $codItem"
+            );
+            $jaReg = array_flip(array_map('strval', array_column($stmt->fetchAll(\PDO::FETCH_ASSOC), 'TMASC_ITEM_ID')));
+            $rows  = array_values(array_filter($rows, fn($r) => !isset($jaReg[strval($r['TMASC_ITEM_ID'] ?? '')])));
+        } catch (\Exception $_) {
+            // tabela ainda não existe — retorna tudo sem filtrar
+        }
+
+        return $rows;
     }
 
     // Inativa imediatamente um item nas tabelas de preço
@@ -96,12 +111,47 @@ class InativacaoPreco
 
     public static function excluirItem(int $id, int $emprId): void
     {
-        $result = Database::switchParams('focco', [
-            'id'      => $id,
-            'empr_id' => $emprId,
-        ], 'pd.inativacao_preco.excluir', true);
-        if (!empty($result['error'])) throw new \Exception($result['error']);
-        Database::getInstance('focco')->exec('COMMIT');
+        $pdo = Database::getInstance('focco');
+        try {
+            $pdo->beginTransaction();
+            // NOWAIT: falha imediatamente se outra sessão Oracle tiver lock na linha
+            $chk = $pdo->query(
+                "SELECT ID FROM TGAZIN_PD_INATIV_PRECO WHERE ID = $id AND EMPR_ID = $emprId FOR UPDATE NOWAIT"
+            );
+            if (!$chk || !$chk->fetch()) {
+                $pdo->rollBack();
+                throw new \Exception('Registro não encontrado.', 404);
+            }
+            $pdo->exec("DELETE FROM TGAZIN_PD_INATIV_PRECO WHERE ID = $id AND EMPR_ID = $emprId");
+            $pdo->commit();
+        } catch (\PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            if (strpos($e->getMessage(), 'ORA-00054') !== false) {
+                throw new \Exception('Não foi possível remover: registro em uso por outra operação. Tente novamente em instantes.', 409);
+            }
+            throw new \Exception($e->getMessage(), 500);
+        }
+    }
+
+    public static function excluirVarios(array $ids, int $emprId): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) return 0;
+        $in  = implode(',', $ids);
+        $pdo = Database::getInstance('focco');
+        try {
+            $pdo->beginTransaction();
+            $pdo->query("SELECT ID FROM TGAZIN_PD_INATIV_PRECO WHERE ID IN ($in) AND EMPR_ID = $emprId FOR UPDATE NOWAIT");
+            $pdo->exec("DELETE FROM TGAZIN_PD_INATIV_PRECO WHERE ID IN ($in) AND EMPR_ID = $emprId");
+            $pdo->commit();
+            return count($ids);
+        } catch (\PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            if (strpos($e->getMessage(), 'ORA-00054') !== false) {
+                throw new \Exception('Um ou mais registros estão em uso. Tente novamente em instantes.', 409);
+            }
+            throw new \Exception($e->getMessage(), 500);
+        }
     }
 
     public static function commit(): void

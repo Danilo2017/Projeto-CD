@@ -88,12 +88,15 @@ if (!$acessoPd) {
         <div class="card-header bg-info text-white fw-semibold py-2 d-flex align-items-center gap-2">
             <i class="bi bi-list-check"></i> Histórico de Inativações
             <span id="badgeFila" class="badge bg-white text-dark ms-1">0</span>
-            <button id="btnRecarregar" class="btn btn-sm btn-outline-light ms-auto">
+            <button id="btnRemoverSelecionados" class="btn btn-sm btn-danger ms-auto" style="display:none;">
+                <i class="bi bi-trash"></i> Remover Selecionados (<span id="cntSelecionados">0</span>)
+            </button>
+            <button id="btnRecarregar" class="btn btn-sm btn-outline-light">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>
         <div class="card-body p-0">
-            <div class="px-3 pt-2 pb-1">
+            <div class="px-3 pt-2 pb-1 d-flex align-items-center gap-2">
                 <div class="input-group input-group-sm" style="max-width:320px;">
                     <span class="input-group-text"><i class="bi bi-funnel"></i></span>
                     <input type="text" id="inpFiltroHistorico" class="form-control" placeholder="Filtrar por código, descrição ou máscara...">
@@ -107,6 +110,7 @@ if (!$acessoPd) {
                 <table class="table table-sm table-bordered table-hover mb-0" id="tabelaFila">
                     <thead class="table-secondary">
                         <tr>
+                            <th style="width:36px" class="text-center"><input type="checkbox" id="chkHistTodos" title="Selecionar todos visíveis"></th>
                             <th>Filial</th>
                             <th>Cód. Item</th>
                             <th>Máscara ID</th>
@@ -118,7 +122,7 @@ if (!$acessoPd) {
                         </tr>
                     </thead>
                     <tbody id="tbodyFila">
-                        <tr><td colspan="8" class="text-center text-muted py-3">Carregando...</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-3">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>

@@ -88,6 +88,18 @@ class InativacaoPrecoHandler
         return ['success' => true, 'rows' => $rows];
     }
 
+    public static function excluirVarios(array $dados): array
+    {
+        $emprId = (int) ($dados['empr_id'] ?? 0);
+        $ids    = $dados['ids'] ?? [];
+
+        if ($emprId <= 0) throw new \Exception('Empresa inválida.', 400);
+        if (empty($ids) || !is_array($ids)) throw new \Exception('Nenhum ID informado.', 400);
+
+        $total = InativacaoPreco::excluirVarios($ids, $emprId);
+        return ['success' => true, 'total' => $total, 'message' => "{$total} registro(s) removido(s)."];
+    }
+
     public static function excluirItem(array $dados): array
     {
         $emprId = (int) ($dados['empr_id'] ?? 0);

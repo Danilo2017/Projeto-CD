@@ -371,6 +371,7 @@ $router->post('/pd-api-buscar-itens',          'PD\\InativacaoPrecoController@bu
 $router->get('/pd-api-listar-cadastros',       'PD\\InativacaoPrecoController@listarCadastros',    true);
 $router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@cadastrarItens',     true);
 $router->post('/pd-api-excluir-item',          'PD\\InativacaoPrecoController@excluirItem',        true);
+$router->post('/pd-api-excluir-varios',        'PD\\InativacaoPrecoController@excluirVarios',      true);
 
 // ========== Rotas de Manutenção ==========
 $router->get('/manutencao-dashboard',               'Manutencao\\ManutencaoController@dashboardManutencao', true);

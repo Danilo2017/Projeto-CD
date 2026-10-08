@@ -76,6 +76,18 @@ class InativacaoPrecoController extends Controller
         }
     }
 
+    public function excluirVarios(): void
+    {
+        try {
+            $body  = self::getBody() ?? [];
+            $dados = array_merge(['empr_id' => $this->emprIdSessao()], $body);
+            self::response(InativacaoPrecoHandler::excluirVarios($dados), 200);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
     public function excluirItem(): void
     {
         try {
