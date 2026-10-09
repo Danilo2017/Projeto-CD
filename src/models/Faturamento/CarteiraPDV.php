@@ -27,6 +27,7 @@ class CarteiraPDV
 
     private static function measures(string $tot): string
     {
+        $desp = "NVL(GAZIN_DESPESAS_MC.PERC_DESPESAS_MC, 0)";
         return "SUM(PDV_VALOR_PENDENTE)                                AS VLR_PENDENTE,
                     ROUND(SUM(PDV_VALOR_PENDENTE) * 100
                           / NULLIF($tot, 0), 2)                        AS PERC_PARTICIPACAO,
@@ -37,6 +38,7 @@ class CarteiraPDV
                         - NVL(PDV_VALOR_ICMS,0)
                         - NVL(PDV_VALOR_PIS,0)
                         - NVL(PDV_VALOR_COFINS,0)
+                        - NVL(PDV_VALOR_PEND_LIBERADO,0) * ($desp / 100)
                         - NVL(PDV_CUSMED,0))                           AS MC_VALOR,
                     ROUND(SUM(
                         NVL(PDV_VALOR_PEND_LIBERADO,0)
@@ -46,10 +48,16 @@ class CarteiraPDV
                         - NVL(PDV_VALOR_ICMS,0)
                         - NVL(PDV_VALOR_PIS,0)
                         - NVL(PDV_VALOR_COFINS,0)
+                        - NVL(PDV_VALOR_PEND_LIBERADO,0) * ($desp / 100)
                         - NVL(PDV_CUSMED,0)
                     ) / NULLIF(SUM(PDV_VALOR_PEND_LIBERADO), 0) * 100, 2) AS MC_PERC,
                     ROUND(SUM(NVL(PDV_VALOR_PEND_LIBERADO,0))
                           / NULLIF(SUM(NVL(UEP,0)), 0), 4)             AS TAXA";
+    }
+
+    private static function joinDesp(): string
+    {
+        return "LEFT JOIN GAZIN_DESPESAS_MC ON TGAZIN_CARTEIRA_PDV.EMPR_ID = GAZIN_DESPESAS_MC.FILIAL";
     }
 
     private static function exec(string $sql): array
@@ -69,6 +77,7 @@ class CarteiraPDV
         $sql = "SELECT EMPR_ID,
                     " . self::measures($tot) . "
                 FROM FOCCO3I.TGAZIN_CARTEIRA_PDV
+                " . self::joinDesp() . "
                 WHERE DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                 GROUP BY EMPR_ID
                 ORDER BY EMPR_ID";
@@ -87,6 +96,7 @@ class CarteiraPDV
         $sql = "SELECT COD_TANQUE, MAX(DESC_TANQUE) AS DESC_TANQUE,
                     " . self::measures($tot) . "
                 FROM FOCCO3I.TGAZIN_CARTEIRA_PDV
+                " . self::joinDesp() . "
                 WHERE EMPR_ID = $emprId
                   AND DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                 GROUP BY COD_TANQUE
@@ -107,6 +117,7 @@ class CarteiraPDV
         $sql = "SELECT SUB_GRUPO_ITEM, FAMILIA_ITEM, SUB_FAMILIA_ITEM,
                     " . self::measures($tot) . "
                 FROM FOCCO3I.TGAZIN_CARTEIRA_PDV
+                " . self::joinDesp() . "
                 WHERE EMPR_ID = $emprId
                   AND COD_TANQUE = '$tq'
                   AND DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)
@@ -131,6 +142,7 @@ class CarteiraPDV
         $sql = "SELECT COD_ITEM, ITEM,
                     " . self::measures($tot) . "
                 FROM FOCCO3I.TGAZIN_CARTEIRA_PDV
+                " . self::joinDesp() . "
                 WHERE EMPR_ID = $emprId
                   AND COD_TANQUE = '$tq'
                   AND SUB_GRUPO_ITEM = '$sg'
@@ -149,6 +161,7 @@ class CarteiraPDV
         if (!self::validaDatas($di, $df)) return [];
         $ddi = self::df($di);
         $ddf = self::df($df);
+        $desp = "NVL(GAZIN_DESPESAS_MC.PERC_DESPESAS_MC, 0)";
 
         $sql = "SELECT
                     SUM(PDV_VALOR_PENDENTE)                                AS VLR_PENDENTE,
@@ -160,6 +173,7 @@ class CarteiraPDV
                         - NVL(PDV_VALOR_ICMS,0)
                         - NVL(PDV_VALOR_PIS,0)
                         - NVL(PDV_VALOR_COFINS,0)
+                        - NVL(PDV_VALOR_PEND_LIBERADO,0) * ($desp / 100)
                         - NVL(PDV_CUSMED,0))                              AS MC_VALOR,
                     ROUND(SUM(
                         NVL(PDV_VALOR_PEND_LIBERADO,0)
@@ -169,11 +183,13 @@ class CarteiraPDV
                         - NVL(PDV_VALOR_ICMS,0)
                         - NVL(PDV_VALOR_PIS,0)
                         - NVL(PDV_VALOR_COFINS,0)
+                        - NVL(PDV_VALOR_PEND_LIBERADO,0) * ($desp / 100)
                         - NVL(PDV_CUSMED,0)
                     ) / NULLIF(SUM(PDV_VALOR_PEND_LIBERADO), 0) * 100, 2) AS MC_PERC,
                     ROUND(SUM(NVL(PDV_VALOR_PEND_LIBERADO,0))
                           / NULLIF(SUM(NVL(UEP,0)), 0), 4)               AS TAXA
                 FROM FOCCO3I.TGAZIN_CARTEIRA_PDV
+                LEFT JOIN GAZIN_DESPESAS_MC ON TGAZIN_CARTEIRA_PDV.EMPR_ID = GAZIN_DESPESAS_MC.FILIAL
                 WHERE DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)";
 
         $res = Database::switchParams('focco', [], null, true, false, null, $sql);
