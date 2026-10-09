@@ -32,7 +32,13 @@ class CarteiraPDVFilial
                         - NVL(t.PDV_VALOR_ICMS,0)
                         - NVL(t.PDV_VALOR_PIS,0)
                         - NVL(t.PDV_VALOR_COFINS,0)
+                        - NVL(t.PDV_VALOR_PEND_LIBERADO,0) * (NVL(d.PERC_DESPESAS_MC, 0) / 100)
                         - NVL(t.PDV_CUSMED,0)";
+    }
+
+    private static function joinDesp(): string
+    {
+        return "LEFT JOIN GAZIN_DESPESAS_MC d ON d.FILIAL = t.EMPR_ID";
     }
 
     private static function cteTotais(string $ddi, string $ddf): string
@@ -65,6 +71,7 @@ class CarteiraPDVFilial
                           / NULLIF(SUM(NVL(t.UEP,0)), 0), 4)             AS TAXA
                 FROM FOCCO3I.TGAZIN_CARTEIRA_PDV t
                 JOIN TOTAIS tot ON tot.EMPR_ID = t.EMPR_ID
+                " . self::joinDesp() . "
                 WHERE t.DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                 GROUP BY t.COD_TANQUE, t.EMPR_ID, tot.TOTAL
                 ORDER BY LPAD(t.COD_TANQUE, 10, '0'), t.EMPR_ID";
@@ -89,6 +96,7 @@ class CarteiraPDVFilial
                     ROUND(SUM(NVL(t.PDV_VALOR_PEND_LIBERADO,0))
                           / NULLIF(SUM(NVL(t.UEP,0)), 0), 4)             AS TAXA
                 FROM FOCCO3I.TGAZIN_CARTEIRA_PDV t
+                " . self::joinDesp() . "
                 WHERE t.DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                 GROUP BY t.EMPR_ID
                 ORDER BY t.EMPR_ID";
@@ -121,6 +129,7 @@ class CarteiraPDVFilial
                         )                                                  AS GRUPO_TOTAL
                     FROM FOCCO3I.TGAZIN_CARTEIRA_PDV t
                     JOIN TOTAIS tot ON tot.EMPR_ID = t.EMPR_ID
+                    " . self::joinDesp() . "
                     WHERE t.DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                       AND t.COD_TANQUE = '$tq'
                     GROUP BY t.SUB_GRUPO_ITEM, t.FAMILIA_ITEM, t.SUB_FAMILIA_ITEM,
@@ -164,6 +173,7 @@ class CarteiraPDVFilial
                         )                                                  AS ITEM_TOTAL
                     FROM FOCCO3I.TGAZIN_CARTEIRA_PDV t
                     JOIN TOTAIS tot ON tot.EMPR_ID = t.EMPR_ID
+                    " . self::joinDesp() . "
                     WHERE t.DT_EMIS BETWEEN $ddi AND ($ddf + 1 - 1/86400)
                       AND t.COD_TANQUE = '$tq'
                       AND t.SUB_GRUPO_ITEM = '$sg'

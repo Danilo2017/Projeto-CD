@@ -216,17 +216,17 @@ function toggleL1(row) {
     if (row.classList.contains('expanded')) {
         removeDesc(path);
         row.classList.remove('expanded');
-        return;
+        return Promise.resolve();
     }
 
     if (_c.l2[emprK]) {
         insertL2(row, _c.l2[emprK], path, empr);
         row.classList.add('expanded');
-        return;
+        return Promise.resolve();
     }
 
     row.classList.add('loading');
-    fetch(_base+'faturamento-carteira-api-l2?'+qs()+'&empr_id='+encodeURIComponent(empr))
+    return fetch(_base+'faturamento-carteira-api-l2?'+qs()+'&empr_id='+encodeURIComponent(empr))
         .then(function(r){ return r.json(); })
         .then(function(json) {
             row.classList.remove('loading');
@@ -266,17 +266,17 @@ function toggleL2(row) {
     if (row.classList.contains('expanded')) {
         removeDesc(path);
         row.classList.remove('expanded');
-        return;
+        return Promise.resolve();
     }
 
     if (_c.l3[tqK]) {
         insertL3(row, _c.l3[tqK], path, empr, tq);
         row.classList.add('expanded');
-        return;
+        return Promise.resolve();
     }
 
     row.classList.add('loading');
-    fetch(_base+'faturamento-carteira-api-l3?'+qs()+'&empr_id='+encodeURIComponent(empr)+'&tanque='+encodeURIComponent(tq))
+    return fetch(_base+'faturamento-carteira-api-l3?'+qs()+'&empr_id='+encodeURIComponent(empr)+'&tanque='+encodeURIComponent(tq))
         .then(function(r){ return r.json(); })
         .then(function(json) {
             row.classList.remove('loading');
@@ -348,8 +348,19 @@ function insertL4(refRow, rows, parentPath) {
 }
 
 /* ── EXPANDIR / RECOLHER TUDO ── */
-function expandirTudo() {
-    document.querySelectorAll('.row-l1:not(.expanded)').forEach(function(r){ toggleL1(r); });
+async function expandirTudo() {
+    // 1. Empresa → Tanque (L1 → L2)
+    await Promise.all(
+        Array.from(document.querySelectorAll('.row-l1:not(.expanded)'))
+            .map(function(r){ return toggleL1(r); })
+    );
+    // 2. Tanque → Sub Grupo (L2 → L3)
+    await Promise.all(
+        Array.from(document.querySelectorAll('.row-l2:not(.expanded)'))
+            .map(function(r){ return toggleL2(r); })
+    );
+    // 3. Sub Grupo → Itens (L3 → L4)
+    document.querySelectorAll('.row-l3:not(.expanded)').forEach(function(r){ toggleL3(r); });
 }
 function recolherTudo() {
     document.querySelectorAll('.row-l3.expanded').forEach(function(r){ toggleL3(r); });
