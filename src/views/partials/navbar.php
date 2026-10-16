@@ -43,6 +43,7 @@ $comissaoSub = match(true) {
 $cdSub = match(true) {
     in_array($pActive, ['cd-dashboard', 'dashboard'])   => 'dashboard',
     in_array($pActive, ['cd-calendario', 'calendario']) => 'calendario',
+    $pActive === 'cd-indicadores'                       => 'indicadores',
     default => ''
 };
 $cargaSub = match(true) {
@@ -239,6 +240,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>cd-calendario"
                        class="sidebar-sublink <?= $cdSub === 'calendario' ? 'active' : '' ?>">
                         Agendamento
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>cd-indicadores"
+                       class="sidebar-sublink <?= $cdSub === 'indicadores' ? 'active' : '' ?>">
+                        Indicadores
                     </a>
                 </li>
             </ul>

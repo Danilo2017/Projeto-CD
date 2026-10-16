@@ -35,8 +35,12 @@ $router->post('/cd-api-anexo-upload', 'CD\\CDCalendarioController@uploadAnexo', 
 $router->get('/cd-api-anexo-download', 'CD\\CDCalendarioController@downloadAnexo', true);
 $router->post('/cd-api-anexo-excluir', 'CD\\CDCalendarioController@excluirAnexo', true);
 
+// APIs de Indicadores
+$router->get('/cd-api-indicadores', 'CD\\CDIndicadoresController@dados', true);
+
 // Páginas CD
 $router->get('/cd-calendario', 'CD\\CDCalendarioController@index', true);
+$router->get('/cd-indicadores', 'CD\\CDIndicadoresController@index', true);
 $router->get('/cd-dashboard', 'CD\\CDDashboardController@index', true);
 $router->get('/cd', 'CD\\CDDashboardController@index', true);
 
