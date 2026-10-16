@@ -2,6 +2,7 @@
 
 namespace src\handlers\CD;
 
+use src\models\CD\AgendamentoAnexo;
 use src\models\CD\AgendamentoRecebimento;
 use src\models\CD\ReciboDescarga;
 
@@ -51,6 +52,16 @@ class CDCalendarioHandler
         } catch (\Exception $e) {
             // se falhar, retorna agendamentos sem dados de recibo
         }
+
+        try {
+            $anexos = AgendamentoAnexo::contarPorAgendamento();
+        } catch (\Exception $e) {
+            $anexos = [];
+        }
+        foreach ($recebimentos as &$rec) {
+            $rec['qtd_anexos'] = $anexos[(int)$rec['id']] ?? 0;
+        }
+        unset($rec);
 
         return $recebimentos;
     }
@@ -154,5 +165,60 @@ class CDCalendarioHandler
     public static function listarRecibosPorAgendamento(int $agendamentoId): array
     {
         return ReciboDescarga::listarPorAgendamento($agendamentoId);
+    }
+
+    // ========================================
+    // ANEXOS (COMPROVANTE DE RECEBIMENTO)
+    // ========================================
+
+    const ANEXO_TAMANHO_MAX = 10 * 1024 * 1024;
+    const ANEXO_EXTENSOES = ['pdf', 'jpg', 'jpeg', 'png'];
+
+    public static function listarAnexos(int $agendamentoId): array
+    {
+        return AgendamentoAnexo::listar($agendamentoId);
+    }
+
+    /**
+     * Valida e grava o arquivo enviado ($_FILES['arquivo'])
+     *
+     * @return int ID do anexo criado
+     * @throws \Exception Se arquivo inválido
+     */
+    public static function salvarAnexo(int $agendamentoId, ?array $arquivo, string $usuario): int
+    {
+        if ($agendamentoId <= 0) {
+            throw new \Exception('Agendamento não informado.');
+        }
+        if (!$arquivo || $arquivo['error'] !== UPLOAD_ERR_OK) {
+            throw new \Exception('Falha no envio do arquivo.');
+        }
+        if ($arquivo['size'] > self::ANEXO_TAMANHO_MAX) {
+            throw new \Exception('Arquivo maior que 10 MB.');
+        }
+
+        $extensao = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
+        if (!in_array($extensao, self::ANEXO_EXTENSOES, true)) {
+            throw new \Exception('Formato não permitido. Envie PDF, JPG ou PNG.');
+        }
+
+        return AgendamentoAnexo::salvar(
+            $agendamentoId,
+            $arquivo['name'],
+            $arquivo['type'] ?: 'application/octet-stream',
+            (int) $arquivo['size'],
+            file_get_contents($arquivo['tmp_name']),
+            $usuario
+        );
+    }
+
+    public static function downloadAnexo(int $id): ?array
+    {
+        return AgendamentoAnexo::download($id);
+    }
+
+    public static function excluirAnexo(int $id): void
+    {
+        AgendamentoAnexo::excluir($id);
     }
 }

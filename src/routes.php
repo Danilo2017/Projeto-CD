@@ -29,6 +29,12 @@ $router->post('/cd-api-recibo', 'CD\\CDCalendarioController@gerarRecibo', true);
 $router->get('/cd-api-recibo', 'CD\\CDCalendarioController@buscarRecibo', true);
 $router->get('/cd-api-recibos', 'CD\\CDCalendarioController@listarRecibos', true);
 
+// APIs de Anexo (comprovante de recebimento)
+$router->get('/cd-api-anexo-listar', 'CD\\CDCalendarioController@listarAnexos', true);
+$router->post('/cd-api-anexo-upload', 'CD\\CDCalendarioController@uploadAnexo', true);
+$router->get('/cd-api-anexo-download', 'CD\\CDCalendarioController@downloadAnexo', true);
+$router->post('/cd-api-anexo-excluir', 'CD\\CDCalendarioController@excluirAnexo', true);
+
 // Páginas CD
 $router->get('/cd-calendario', 'CD\\CDCalendarioController@index', true);
 $router->get('/cd-dashboard', 'CD\\CDDashboardController@index', true);

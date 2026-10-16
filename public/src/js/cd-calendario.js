@@ -328,6 +328,8 @@ function abrirListaDia(data) {
             const valorFormatado = rec.valor_pago
                 ? 'R$ ' + parseFloat(rec.valor_pago).toLocaleString('pt-BR', {minimumFractionDigits: 2})
                 : '-';
+            const qtdAnexos = parseInt(rec.qtd_anexos) || 0;
+            const btnAnexo = `<button class="btn-anexo ${qtdAnexos ? 'tem-anexo' : ''}" onclick="abrirModalAnexos(${rec.id})">📎 ${qtdAnexos ? `Anexos (${qtdAnexos})` : 'Anexar'}</button>`;
 
             return `
                 <tr>
@@ -345,8 +347,9 @@ function abrirListaDia(data) {
                                 ? `${rec.recibo_id
                                     ? `<button class="btn-ver-comprovante" onclick="visualizarRecibo(${rec.recibo_id})">Comprovante</button>`
                                     : `<button class="btn-recibo" onclick="abrirModalRecibo(${rec.id})">Recibo</button>`
-                                  }`
+                                  }${btnAnexo}`
                                 : `<button class="${btnStatusClass}" onclick="alterarStatus(${rec.id})">${btnStatusText}</button>
+                                   ${btnAnexo}
                                    <button class="btn-recibo" onclick="abrirModalRecibo(${rec.id})">Recibo</button>
                                    <button class="btn-editar" onclick="editarRecebimento(${rec.id})">Editar</button>
                                    <button class="btn-deletar" onclick="confirmarExclusao(${rec.id})">Excluir</button>`
@@ -909,8 +912,151 @@ function imprimirRecibo() {
     window.print();
 }
 
+// ========================================
+// ANEXOS (COMPROVANTE DE RECEBIMENTO)
+// ========================================
+
+let anexosAlterados = false;
+
+function escaparHtml(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto ?? '';
+    return div.innerHTML;
+}
+
+/**
+ * Abrir modal de anexos do agendamento
+ */
+function abrirModalAnexos(agendamentoId) {
+    const id = parseInt(agendamentoId);
+    const rec = recebimentos.find(r => parseInt(r.id) === id);
+    if (!rec) {
+        alert('Recebimento não encontrado');
+        return;
+    }
+
+    anexosAlterados = false;
+    document.getElementById('anexoAgendamentoId').value = id;
+    document.getElementById('anexoFornecedor').textContent = rec.fornecedor || '-';
+    document.getElementById('anexoData').textContent = formatarDataExibicao(new Date(rec.data + 'T00:00:00'));
+    document.getElementById('anexoDescricao').textContent = rec.descricao || '-';
+    document.getElementById('anexoArquivo').value = '';
+
+    document.getElementById('modalAnexos').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    carregarAnexos(id);
+}
+
+/**
+ * Fechar modal de anexos; se houve alteração, atualiza a contagem no calendário/lista
+ */
+async function fecharModalAnexos() {
+    document.getElementById('modalAnexos').style.display = 'none';
+
+    if (anexosAlterados) {
+        await carregarRecebimentos();
+        renderizarCalendarioAnual();
+        if (dataSelecionada && document.getElementById('modalListaDia').style.display === 'block') {
+            abrirListaDia(dataSelecionada);
+        }
+    }
+}
+
+async function carregarAnexos(agendamentoId) {
+    const tbody = document.getElementById('tabelaAnexos');
+    tbody.innerHTML = '<tr><td colspan="4" class="sem-recebimentos">Carregando...</td></tr>';
+
+    try {
+        const response = await fetch(BASE + 'cd-api-anexo-listar?agendamento_id=' + agendamentoId);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Erro ao carregar anexos');
+
+        if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="sem-recebimentos">Nenhum comprovante anexado</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = result.data.map(a => `
+            <tr>
+                <td><a href="${BASE}cd-api-anexo-download?id=${parseInt(a.ID)}" target="_blank" rel="noopener">${escaparHtml(a.NOME_ORIG)}</a></td>
+                <td>${escaparHtml(a.DT_CADASTRO)}</td>
+                <td>${escaparHtml(a.USUARIO)}</td>
+                <td><button class="btn-deletar" onclick="excluirAnexo(${parseInt(a.ID)})">Excluir</button></td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Erro ao carregar anexos:', error);
+        tbody.innerHTML = `<tr><td colspan="4" class="sem-recebimentos">${escaparHtml(error.message)}</td></tr>`;
+    }
+}
+
+async function enviarAnexo(event) {
+    event.preventDefault();
+
+    const agendamentoId = document.getElementById('anexoAgendamentoId').value;
+    const input = document.getElementById('anexoArquivo');
+    const arquivo = input.files[0];
+    if (!arquivo) return;
+
+    if (arquivo.size > 10 * 1024 * 1024) {
+        alert('Arquivo maior que 10 MB.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('agendamento_id', agendamentoId);
+    formData.append('arquivo', arquivo);
+
+    const btn = document.getElementById('btnEnviarAnexo');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        const response = await fetch(BASE + 'cd-api-anexo-upload', { method: 'POST', body: formData });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Erro ao anexar comprovante');
+
+        anexosAlterados = true;
+        input.value = '';
+        await carregarAnexos(agendamentoId);
+    } catch (error) {
+        console.error('Erro ao anexar:', error);
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Anexar';
+    }
+}
+
+async function excluirAnexo(id) {
+    if (!confirm('Tem certeza que deseja excluir este comprovante?')) return;
+
+    try {
+        const response = await fetch(BASE + 'cd-api-anexo-excluir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Erro ao excluir anexo');
+
+        anexosAlterados = true;
+        await carregarAnexos(document.getElementById('anexoAgendamentoId').value);
+    } catch (error) {
+        console.error('Erro ao excluir anexo:', error);
+        alert(error.message);
+    }
+}
+
 // Event listeners para o modal de recibo
 document.addEventListener('DOMContentLoaded', function() {
+    // Modal de anexos
+    document.getElementById('fecharModalAnexos').addEventListener('click', fecharModalAnexos);
+    document.getElementById('formAnexo').addEventListener('submit', enviarAnexo);
+    document.getElementById('modalAnexos').addEventListener('click', function(e) {
+        if (e.target === this) fecharModalAnexos();
+    });
+
     // Fechar modal recibo
     const fecharModalReciboBtn = document.getElementById('fecharModalRecibo');
     if (fecharModalReciboBtn) {

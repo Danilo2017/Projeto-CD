@@ -233,6 +233,104 @@ class CDCalendarioController extends ctrl
             ], 400);
         }
     }
+
+    /**
+     * API para listar anexos de um agendamento (GET ?agendamento_id=)
+     */
+    public function listarAnexos()
+    {
+        try {
+            $agendamentoId = (int) ($_GET['agendamento_id'] ?? 0);
+            if ($agendamentoId <= 0) {
+                throw new \Exception('ID do agendamento não informado');
+            }
+
+            self::response([
+                'success' => true,
+                'data' => CDCalendarioHandler::listarAnexos($agendamentoId)
+            ], 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API para anexar comprovante (POST multipart: agendamento_id, arquivo)
+     */
+    public function uploadAnexo()
+    {
+        try {
+            $id = CDCalendarioHandler::salvarAnexo(
+                (int) ($_POST['agendamento_id'] ?? 0),
+                $_FILES['arquivo'] ?? null,
+                $_SESSION['user']['login'] ?? 'desconhecido'
+            );
+
+            self::response([
+                'success' => true,
+                'id' => $id,
+                'message' => 'Comprovante anexado com sucesso!'
+            ], 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Download/visualização do anexo (GET ?id=)
+     */
+    public function downloadAnexo()
+    {
+        try {
+            $anexo = CDCalendarioHandler::downloadAnexo((int) ($_GET['id'] ?? 0));
+            if (!$anexo) {
+                http_response_code(404);
+                echo 'Arquivo não encontrado';
+                return;
+            }
+
+            // inline: PDF/imagem abrem direto no navegador
+            header('Content-Type: ' . ($anexo['MIME_TYPE'] ?: 'application/octet-stream'));
+            header("Content-Disposition: inline; filename*=UTF-8''" . rawurlencode($anexo['NOME_ORIG']));
+            header('Content-Length: ' . strlen($anexo['CONTEUDO']));
+            echo $anexo['CONTEUDO'];
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo $e->getMessage();
+        }
+    }
+
+    /**
+     * API para excluir anexo (POST JSON: id)
+     */
+    public function excluirAnexo()
+    {
+        try {
+            $input = Request::getJsonBody();
+            $id = (int) ($input['id'] ?? 0);
+            if ($id <= 0) {
+                throw new \Exception('ID não informado');
+            }
+
+            CDCalendarioHandler::excluirAnexo($id);
+
+            self::response([
+                'success' => true,
+                'message' => 'Anexo excluído com sucesso!'
+            ], 200);
+        } catch (\Exception $e) {
+            self::response([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
 
 

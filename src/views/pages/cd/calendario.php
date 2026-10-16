@@ -517,6 +517,84 @@ if (!$acessoCd) {
             background: #218838;
         }
 
+        .btn-anexo {
+            padding: 5px 10px;
+            border: 1px solid #6f42c1;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-right: 5px;
+            transition: all 0.2s;
+            background: white;
+            color: #6f42c1;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .btn-anexo:hover,
+        .btn-anexo.tem-anexo {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .btn-anexo.tem-anexo:hover {
+            background: #59339d;
+        }
+
+        /* Modal de anexos */
+        .anexo-upload {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 12px;
+            border: 1px dashed #b8c2cc;
+            border-radius: 6px;
+            margin-bottom: 14px;
+        }
+
+        .anexo-upload input[type="file"] {
+            flex: 1;
+            min-width: 200px;
+            font-size: 13px;
+        }
+
+        .anexo-dica {
+            width: 100%;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .anexo-lista {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .anexo-lista th,
+        .anexo-lista td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        .anexo-lista th {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+
+        .anexo-lista a {
+            color: #004080;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .anexo-lista a:hover {
+            text-decoration: underline;
+        }
+
         /* Grupo de botões de ação */
         .acoes-btns {
             display: flex;
@@ -869,6 +947,41 @@ if (!$acessoCd) {
                             <button type="submit" class="btn btn-primary">Gerar Recibo</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de anexos (comprovante de recebimento) -->
+        <div id="modalAnexos" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Comprovante de Recebimento</h3>
+                    <span class="modal-close" id="fecharModalAnexos">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="recibo-info">
+                        <p><strong>Fornecedor:</strong> <span id="anexoFornecedor"></span></p>
+                        <p><strong>Data:</strong> <span id="anexoData"></span> | <strong>Descrição:</strong> <span id="anexoDescricao"></span></p>
+                    </div>
+
+                    <form id="formAnexo" class="anexo-upload">
+                        <input type="hidden" id="anexoAgendamentoId">
+                        <input type="file" id="anexoArquivo" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <button type="submit" class="btn btn-primary" id="btnEnviarAnexo">Anexar</button>
+                        <span class="anexo-dica">PDF, JPG ou PNG — até 10 MB</span>
+                    </form>
+
+                    <table class="anexo-lista">
+                        <thead>
+                            <tr>
+                                <th>Arquivo</th>
+                                <th>Enviado em</th>
+                                <th>Usuário</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaAnexos"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
