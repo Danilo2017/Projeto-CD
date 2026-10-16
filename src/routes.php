@@ -41,6 +41,20 @@ $router->get('/cd-api-indicadores', 'CD\\CDIndicadoresController@dados', true);
 // Páginas CD
 $router->get('/cd-calendario', 'CD\\CDCalendarioController@index', true);
 $router->get('/cd-indicadores', 'CD\\CDIndicadoresController@index', true);
+
+// Projeção de Carga CD (clientes 5210 e 5487, WMS FOCCOWMS85)
+$router->get('/cd-projecao-carga',                 'CD\\ProjecaoCargaCDController@index',                true);
+$router->post('/cd-carga-api-listar',              'CD\\ProjecaoCargaCDController@listar',               true);
+$router->post('/cd-carga-api-salvar',              'CD\\ProjecaoCargaCDController@salvar',               true);
+$router->get('/cd-carga-api-log',                  'CD\\ProjecaoCargaCDController@listarLog',            true);
+$router->get('/cd-carga-api-anexo-listar',         'CD\\ProjecaoCargaCDController@listarAnexos',         true);
+$router->post('/cd-carga-api-anexo-upload',        'CD\\ProjecaoCargaCDController@uploadAnexo',          true);
+$router->get('/cd-carga-api-anexo-download',       'CD\\ProjecaoCargaCDController@downloadAnexo',        true);
+$router->post('/cd-carga-api-anexo-excluir',       'CD\\ProjecaoCargaCDController@excluirAnexo',         true);
+$router->get('/cd-carga-api-rota-listar',          'CD\\ProjecaoCargaCDController@listarRota',           true);
+$router->post('/cd-carga-api-rota-salvar',         'CD\\ProjecaoCargaCDController@salvarRota',           true);
+$router->get('/cd-carga-api-itens',                'CD\\ProjecaoCargaCDController@listarItens',          true);
+$router->get('/cd-carga-api-itens-expedicao',      'CD\\ProjecaoCargaCDController@listarItensExpedicao', true);
 $router->get('/cd-dashboard', 'CD\\CDDashboardController@index', true);
 $router->get('/cd', 'CD\\CDDashboardController@index', true);
 
