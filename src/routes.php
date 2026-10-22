@@ -313,6 +313,10 @@ $router->post('/processo-api-relatorio-consumo-demanda-espuma',     'Processo\\C
 $router->get('/processo-relatorio-variacao-nfe',                    'Processo\\VariacaoNfeController@index',                   true);
 $router->post('/processo-api-relatorio-variacao-nfe',               'Processo\\VariacaoNfeController@listar',                  true);
 
+$router->get('/processo-relatorio-despesa-centro-custo',            'Processo\\DespesaCentroCustoController@index',            true);
+$router->post('/processo-api-relatorio-despesa-centro-custo',       'Processo\\DespesaCentroCustoController@listar',           true);
+$router->post('/processo-api-relatorio-despesa-centro-custo-nf',    'Processo\\DespesaCentroCustoController@detalhe',          true);
+
 // ========== PCP ==========
 $router->get('/pcp-relatorio-producao',      'PCP\\RelatorioProdController@index',        true);
 $router->post('/pcp-api-relatorio-producao', 'PCP\\RelatorioProdController@buscar',       true);
