@@ -400,6 +400,9 @@ $router->get('/pd-api-listar-cadastros',       'PD\\InativacaoPrecoController@li
 $router->post('/pd-api-cadastrar-itens',       'PD\\InativacaoPrecoController@cadastrarItens',     true);
 $router->post('/pd-api-excluir-item',          'PD\\InativacaoPrecoController@excluirItem',        true);
 $router->post('/pd-api-excluir-varios',        'PD\\InativacaoPrecoController@excluirVarios',      true);
+$router->get('/pd-analise-itens-criacao',                'PD\\AnaliseItensCriacaoController@index',    true);
+$router->post('/pd-api-analise-itens-criacao',           'PD\\AnaliseItensCriacaoController@listar',   true);
+$router->post('/pd-api-analise-itens-criacao-inativar',  'PD\\AnaliseItensCriacaoController@inativar', true);
 
 // ========== Rotas de Manutenção ==========
 $router->get('/manutencao-dashboard',               'Manutencao\\ManutencaoController@dashboardManutencao', true);

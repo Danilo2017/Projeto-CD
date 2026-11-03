@@ -150,7 +150,8 @@ $processoSub = match(true) {
 $processoRelSgAtivo = str_starts_with($processoSub, 'relatorio-');
 
 $pdSub = match(true) {
-    $pActive === 'pd-inativacao-preco' => 'inativacao-preco',
+    $pActive === 'pd-inativacao-preco'      => 'inativacao-preco',
+    $pActive === 'pd-analise-itens-criacao' => 'analise-itens-criacao',
     default => ''
 };
 
@@ -624,6 +625,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>pd-inativacao-preco"
                        class="sidebar-sublink <?= $pdSub === 'inativacao-preco' ? 'active' : '' ?>">
                         Inativação de Preço
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>pd-analise-itens-criacao"
+                       class="sidebar-sublink <?= $pdSub === 'analise-itens-criacao' ? 'active' : '' ?>">
+                        Análise Itens Criação
                     </a>
                 </li>
             </ul>
