@@ -32,9 +32,9 @@ if (!$acessoPd) {
 .aic-tbl                { border-collapse:separate; border-spacing:0; width:100%; min-width:1150px; table-layout:fixed; }
 .aic-tbl thead th       { background:#e3f2fd !important; color:#1565c0 !important; padding:6px 6px !important;
                           font-size:10.5px !important; font-weight:700 !important; letter-spacing:.2px;
-                          white-space:nowrap; border-bottom:2px solid #bbdefb !important; text-align:left;
-                          position:sticky; top:0; z-index:2; cursor:pointer; user-select:none;
-                          overflow:hidden; text-overflow:ellipsis; }
+                          white-space:normal !important; line-height:1.25; vertical-align:bottom;
+                          border-bottom:2px solid #bbdefb !important; text-align:left;
+                          position:sticky; top:0; z-index:2; cursor:pointer; user-select:none; }
 .aic-tbl thead th.r     { text-align:right; }
 .aic-tbl thead th.c     { text-align:center; cursor:default; }
 .aic-tbl th .sort       { color:#90caf9; font-size:9px; margin-left:2px; }
@@ -108,7 +108,7 @@ if (!$acessoPd) {
         <div class="aic-wrap">
             <table class="aic-tbl">
                 <colgroup>
-                    <col style="width:40px">   <!-- Emp -->
+                    <col style="width:62px">   <!-- Empresa -->
                     <col style="width:14%">    <!-- Classificação -->
                     <col style="width:88px">   <!-- Data ID -->
                     <col style="width:82px">   <!-- Data Pai -->
@@ -123,18 +123,18 @@ if (!$acessoPd) {
                 </colgroup>
                 <thead>
                     <tr>
-                        <th data-col="COD_EMP" title="Empresa">Emp<span class="sort">⇅</span></th>
+                        <th data-col="COD_EMP">Empresa<span class="sort">⇅</span></th>
                         <th data-col="CLASSIFICACAO">Classificação<span class="sort">⇅</span></th>
                         <th data-col="DATA_ID_ORD">Data ID<span class="sort">⇅</span></th>
-                        <th data-col="DATA_PAI_ORD" title="Data Cód. Pai">Dt. Pai<span class="sort">⇅</span></th>
+                        <th data-col="DATA_PAI_ORD">Data Cód. Pai<span class="sort">⇅</span></th>
                         <th data-col="COD_ITEM" data-num="1">Código<span class="sort">⇅</span></th>
                         <th data-col="ID" data-num="1">ID<span class="sort">⇅</span></th>
                         <th data-col="DESC_TECNICA">Descrição do Item<span class="sort">⇅</span></th>
                         <th data-col="MASCARA">Máscara<span class="sort">⇅</span></th>
-                        <th data-col="QTDE_FATURADO" data-num="1" class="r" title="Qtde Faturado no período">Faturado<span class="sort">⇅</span></th>
-                        <th data-col="QTDE_PDV_PENDENTE" data-num="1" class="r" title="Qtde PDV Pendente">Pendente<span class="sort">⇅</span></th>
-                        <th data-col="ASSISTENCIA" data-num="1" class="r" title="Assistência (divisão 6)">Assist.<span class="sort">⇅</span></th>
-                        <th class="c"></th>
+                        <th data-col="QTDE_FATURADO" data-num="1" class="r">Qtde Faturado<span class="sort">⇅</span></th>
+                        <th data-col="QTDE_PDV_PENDENTE" data-num="1" class="r">Qtde PDV Pendente<span class="sort">⇅</span></th>
+                        <th data-col="ASSISTENCIA" data-num="1" class="r">Assistência<span class="sort">⇅</span></th>
+                        <th class="c">Ação</th>
                     </tr>
                 </thead>
                 <tbody id="aicBody">
