@@ -14,6 +14,8 @@ $acessoCarga       = $is_admin || in_array('carga',       $rotas_permitidas) || 
 $acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoApontamento = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPd          = $is_admin || in_array('pd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoPlanejamento = $is_admin || in_array('planejamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoIndustrial  = $is_admin || in_array('industrial',  $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoQualidade   = $is_admin || in_array('qualidade',   $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoManutencao  = $is_admin || in_array('manutencao',  $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
@@ -28,6 +30,8 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'apontamento-') || $pActive === 'apontamento-producao'                => 'apontamento',
     str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
     str_starts_with($pActive, 'pd-')                                                                => 'pd',
+    str_starts_with($pActive, 'planejamento-')                                                      => 'planejamento',
+    str_starts_with($pActive, 'industrial-')                                                        => 'industrial',
     str_starts_with($pActive, 'qualidade-')                                                         => 'qualidade',
     str_starts_with($pActive, 'manutencao-')                                                        => 'manutencao',
     $pActive === 'permissao'                                                                         => 'permissao',
@@ -152,6 +156,24 @@ $processoRelSgAtivo = str_starts_with($processoSub, 'relatorio-');
 $pdSub = match(true) {
     $pActive === 'pd-inativacao-preco'      => 'inativacao-preco',
     $pActive === 'pd-analise-itens-criacao' => 'analise-itens-criacao',
+    default => ''
+};
+
+$planejamentoSub = match(true) {
+    $pActive === 'planejamento-reposicao-cd'            => 'reposicao-cd',
+    $pActive === 'planejamento-follow-up-pedido-compra' => 'follow-up-pedido-compra',
+    $pActive === 'planejamento-material-filial'         => 'material-filial',
+    default => ''
+};
+
+// Processos Industriais: os relatórios entram aqui (rotas 'industrial-...')
+$industrialSub = match(true) {
+    $pActive === 'industrial-pecas-colaborador'       => 'pecas-colaborador',
+    $pActive === 'industrial-faturamento-colaborador' => 'faturamento-colaborador',
+    $pActive === 'industrial-ggf-colaborador'         => 'ggf-colaborador',
+    $pActive === 'industrial-comparativo-caixa-box'   => 'comparativo-caixa-box',
+    $pActive === 'industrial-consumo-molinha'         => 'consumo-molinha',
+    $pActive === 'industrial-consumo-molejo-filiais'  => 'consumo-molejo-filiais',
     default => ''
 };
 
@@ -631,6 +653,84 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>pd-analise-itens-criacao"
                        class="sidebar-sublink <?= $pdSub === 'analise-itens-criacao' ? 'active' : '' ?>">
                         Análise Itens Criação
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoPlanejamento): ?>
+        <li class="sidebar-group" id="grpPlanejamento">
+            <button class="sidebar-group-btn <?= $activeGroup === 'planejamento' ? 'active open' : '' ?>">
+                <i class="bi bi-clipboard-data"></i>
+                <span>Planejamento</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'planejamento' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>planejamento-reposicao-cd"
+                       class="sidebar-sublink <?= $planejamentoSub === 'reposicao-cd' ? 'active' : '' ?>">
+                        Reposição CD
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>planejamento-follow-up-pedido-compra"
+                       class="sidebar-sublink <?= $planejamentoSub === 'follow-up-pedido-compra' ? 'active' : '' ?>">
+                        Follow-up Pedido Compra
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>planejamento-material-filial"
+                       class="sidebar-sublink <?= $planejamentoSub === 'material-filial' ? 'active' : '' ?>">
+                        Planej. Material por Filial
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoIndustrial): ?>
+        <li class="sidebar-group" id="grpIndustrial">
+            <button class="sidebar-group-btn <?= $activeGroup === 'industrial' ? 'active open' : '' ?>">
+                <i class="bi bi-gear-wide-connected"></i>
+                <span>Processos Industriais</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'industrial' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>industrial-pecas-colaborador"
+                       class="sidebar-sublink <?= $industrialSub === 'pecas-colaborador' ? 'active' : '' ?>">
+                        Peças por Colaborador
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>industrial-faturamento-colaborador"
+                       class="sidebar-sublink <?= $industrialSub === 'faturamento-colaborador' ? 'active' : '' ?>">
+                        Faturamento por Colaborador
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>industrial-ggf-colaborador"
+                       class="sidebar-sublink <?= $industrialSub === 'ggf-colaborador' ? 'active' : '' ?>">
+                        GGF por Colaborador
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>industrial-comparativo-caixa-box"
+                       class="sidebar-sublink <?= $industrialSub === 'comparativo-caixa-box' ? 'active' : '' ?>">
+                        Comparativo Filiais
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>industrial-consumo-molinha"
+                       class="sidebar-sublink <?= $industrialSub === 'consumo-molinha' ? 'active' : '' ?>">
+                        Consumo de Molinha
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>industrial-consumo-molejo-filiais"
+                       class="sidebar-sublink <?= $industrialSub === 'consumo-molejo-filiais' ? 'active' : '' ?>">
+                        Molejo: Produção x Consumo Filiais
                     </a>
                 </li>
             </ul>

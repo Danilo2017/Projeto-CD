@@ -310,89 +310,37 @@ class ManutencaoController extends Controller
     private function dashParams(): array
     {
         $emprId = (int) ($_GET['empr_id'] ?? ($_SESSION['empresa']['id'] ?? 0));
-        $di     = $_GET['data_ini'] ?? date('Y-m-01');
-        $df     = $_GET['data_fim'] ?? date('Y-m-t');
+        $di     = (string) ($_GET['data_ini'] ?? date('Y-m-01'));
+        $df     = (string) ($_GET['data_fim'] ?? date('Y-m-t'));
+        if ($emprId <= 0) throw new \InvalidArgumentException('Empresa inválida', 400);
+        if ($di > $df) throw new \InvalidArgumentException('Período inválido', 400);
         return [$emprId, $di, $df];
     }
 
-    public function apiDashResumo(): void
+    /** Executa um bloco do dashboard (mesmas regras do painel OTM "dashboard_ordens_manut"). */
+    private function dash(callable $fn): void
     {
         try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getResumo($emprId, $di, $df)], 200);
+            self::response(['success' => true, 'data' => $fn(...$this->dashParams())], 200);
         } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['success' => false, 'error' => $e->getMessage()], ($code >= 400 && $code < 500) ? $code : 500);
         }
     }
 
-    public function apiDashDistrib(): void
-    {
-        try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getDistribuicao($emprId, $di, $df)], 200);
-        } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
-        }
-    }
+    public function apiDashResumo(): void     { $this->dash([DashboardManutencao::class, 'resumo']); }
+    public function apiDashDistrib(): void    { $this->dash([DashboardManutencao::class, 'distribuicao']); }
+    public function apiDashGrupos(): void     { $this->dash([DashboardManutencao::class, 'grupos']); }
+    public function apiDashFuncOrdens(): void { $this->dash([DashboardManutencao::class, 'funcOrdens']); }
+    public function apiDashFuncHoras(): void  { $this->dash([DashboardManutencao::class, 'funcHoras']); }
+    public function apiDashEstoque(): void    { $this->dash(fn() => DashboardManutencao::estoque()); }
+    public function apiDashCustos(): void     { $this->dash([DashboardManutencao::class, 'custos']); }
 
-    public function apiDashGeradas(): void
+    /** Janelas de detalhe (drill-down) ao clicar nos campos do dashboard. */
+    public function apiDashDrill(): void
     {
-        try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getGeradasAtendidas($emprId, $di, $df)], 200);
-        } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function apiDashGrupos(): void
-    {
-        try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getOrdensGrupo($emprId, $di, $df)], 200);
-        } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function apiDashPreventivas(): void
-    {
-        try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getPreventivas($emprId, $di, $df)], 200);
-        } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function apiDashFuncOrdens(): void
-    {
-        try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getFuncOrdens($emprId, $di, $df)], 200);
-        } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function apiDashMinutos(): void
-    {
-        try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getMinutosPorTipo($emprId, $di, $df)], 200);
-        } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function apiDashFuncHoras(): void
-    {
-        try {
-            [$emprId, $di, $df] = $this->dashParams();
-            self::response(['success' => true, 'data' => DashboardManutencao::getFuncHoras($emprId, $di, $df)], 200);
-        } catch (\Exception $e) {
-            self::response(['success' => false, 'error' => $e->getMessage()], 500);
-        }
+        $tipo = (string) ($_GET['tipo'] ?? '');
+        $this->dash(fn($e, $di, $df) => DashboardManutencao::drill($tipo, $e, $di, $df, $_GET));
     }
 
     public function excluir(): void

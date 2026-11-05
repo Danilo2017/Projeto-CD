@@ -404,16 +404,53 @@ $router->get('/pd-analise-itens-criacao',                'PD\\AnaliseItensCriaca
 $router->post('/pd-api-analise-itens-criacao',           'PD\\AnaliseItensCriacaoController@listar',   true);
 $router->post('/pd-api-analise-itens-criacao-inativar',  'PD\\AnaliseItensCriacaoController@inativar', true);
 
+// ========== Rotas do Planejamento ==========
+$router->get('/planejamento-reposicao-cd',                'Planejamento\\PlanejamentoReposicaoCDController@index',        true);
+$router->post('/planejamento-api-rep-cd-listar',          'Planejamento\\PlanejamentoReposicaoCDController@listar',       true);
+$router->post('/planejamento-api-rep-cd-recalcular',      'Planejamento\\PlanejamentoReposicaoCDController@recalcular',   true);
+$router->post('/planejamento-api-rep-cd-detalhe',         'Planejamento\\PlanejamentoReposicaoCDController@detalhe',      true);
+$router->post('/planejamento-api-rep-cd-planejadores',    'Planejamento\\PlanejamentoReposicaoCDController@planejadores', true);
+$router->post('/planejamento-api-rep-cd-alterar',         'Planejamento\\PlanejamentoReposicaoCDController@alterar',      true);
+$router->get('/planejamento-follow-up-pedido-compra',     'Planejamento\\FollowUpPedidoCompraController@index',           true);
+$router->post('/planejamento-api-follow-up-filtros',      'Planejamento\\FollowUpPedidoCompraController@filtros',         true);
+$router->post('/planejamento-api-follow-up-fornecedores', 'Planejamento\\FollowUpPedidoCompraController@fornecedores',    true);
+$router->post('/planejamento-api-follow-up-mascaras',     'Planejamento\\FollowUpPedidoCompraController@mascaras',        true);
+$router->post('/planejamento-api-follow-up-listar',       'Planejamento\\FollowUpPedidoCompraController@listar',          true);
+$router->get('/planejamento-material-filial',             'Planejamento\\PlanejMaterialFilialController@index',           true);
+$router->post('/planejamento-api-pmf-filtros',            'Planejamento\\PlanejMaterialFilialController@filtros',         true);
+$router->post('/planejamento-api-pmf-gerar',              'Planejamento\\PlanejMaterialFilialController@gerar',           true);
+$router->post('/planejamento-api-pmf-listar',             'Planejamento\\PlanejMaterialFilialController@listar',          true);
+$router->post('/planejamento-api-pmf-selecionar',         'Planejamento\\PlanejMaterialFilialController@selecionar',      true);
+$router->post('/planejamento-api-pmf-detalhe',            'Planejamento\\PlanejMaterialFilialController@detalhe',         true);
+$router->post('/planejamento-api-pmf-resumo',             'Planejamento\\PlanejMaterialFilialController@resumo',          true);
+$router->post('/planejamento-api-pmf-qtde',               'Planejamento\\PlanejMaterialFilialController@qtde',            true);
+$router->post('/planejamento-api-pmf-interfabrica',       'Planejamento\\PlanejMaterialFilialController@interfabrica',    true);
+$router->post('/planejamento-api-pmf-mensagens',          'Planejamento\\PlanejMaterialFilialController@mensagens',       true);
+
+// ========== Rotas de Processos Industriais ==========
+$router->get('/industrial-pecas-colaborador',            'Industrial\\PecasColaboradorController@index',  true);
+$router->post('/industrial-api-pecas-colaborador',       'Industrial\\PecasColaboradorController@listar', true);
+$router->get('/industrial-faturamento-colaborador',      'Industrial\\FaturamentoColaboradorController@index',  true);
+$router->post('/industrial-api-faturamento-colaborador', 'Industrial\\FaturamentoColaboradorController@listar', true);
+$router->get('/industrial-ggf-colaborador',              'Industrial\\GgfColaboradorController@index',  true);
+$router->post('/industrial-api-ggf-colaborador',         'Industrial\\GgfColaboradorController@listar', true);
+$router->get('/industrial-comparativo-caixa-box',        'Industrial\\ComparativoCaixaBoxController@index', true);
+$router->post('/industrial-api-comparativo-caixa-box',   'Industrial\\ComparativoCaixaBoxController@mes',   true);
+$router->get('/industrial-consumo-molinha',              'Industrial\\ConsumoMolinhaController@index',  true);
+$router->post('/industrial-api-consumo-molinha',         'Industrial\\ConsumoMolinhaController@listar', true);
+$router->get('/industrial-consumo-molejo-filiais',       'Industrial\\ConsumoMolejoFiliaisController@index',  true);
+$router->post('/industrial-api-consumo-molejo-filiais',  'Industrial\\ConsumoMolejoFiliaisController@listar', true);
+
 // ========== Rotas de Manutenção ==========
 $router->get('/manutencao-dashboard',               'Manutencao\\ManutencaoController@dashboardManutencao', true);
 $router->get('/manutencao-api-dash-resumo',         'Manutencao\\ManutencaoController@apiDashResumo',      true);
 $router->get('/manutencao-api-dash-distrib',        'Manutencao\\ManutencaoController@apiDashDistrib',     true);
-$router->get('/manutencao-api-dash-geradas',        'Manutencao\\ManutencaoController@apiDashGeradas',     true);
 $router->get('/manutencao-api-dash-grupos',         'Manutencao\\ManutencaoController@apiDashGrupos',      true);
-$router->get('/manutencao-api-dash-preventivas',    'Manutencao\\ManutencaoController@apiDashPreventivas', true);
 $router->get('/manutencao-api-dash-func-ordens',    'Manutencao\\ManutencaoController@apiDashFuncOrdens',  true);
-$router->get('/manutencao-api-dash-minutos',        'Manutencao\\ManutencaoController@apiDashMinutos',     true);
 $router->get('/manutencao-api-dash-func-horas',     'Manutencao\\ManutencaoController@apiDashFuncHoras',   true);
+$router->get('/manutencao-api-dash-estoque',        'Manutencao\\ManutencaoController@apiDashEstoque',     true);
+$router->get('/manutencao-api-dash-custos',         'Manutencao\\ManutencaoController@apiDashCustos',      true);
+$router->get('/manutencao-api-dash-drill',         'Manutencao\\ManutencaoController@apiDashDrill',       true);
 $router->get('/manutencao-gestao-ordens',            'Manutencao\\ManutencaoController@index',              true);
 $router->get('/manutencao-liberacao-ordens',         'Manutencao\\ManutencaoController@liberacaoOrdens',    true);
 $router->get('/manutencao-api-empresas',            'Manutencao\\ManutencaoController@listarEmpresas',     true);
@@ -460,8 +497,6 @@ $router->post('/qualidade-api-rastreabilidade-fixacao-borda',   'Qualidade\\Rast
 $router->get('/qualidade-rastreabilidade-caixote-mola',         'Qualidade\\RastreabilidadeController@indexCaixoteMola',    true);
 $router->post('/qualidade-api-rastreabilidade-caixote-mola',    'Qualidade\\RastreabilidadeController@buscarCaixoteMola',   true);
 
-// TEMPORÁRIO — remover após inserção do SQL verticalEspuma
-$router->get('/tmp-insert-vertical-espuma', 'AdminSqlsController@tmpInsertVerticalEspuma', true);
 
 // ========== Admin - Gerenciamento de SQLs ==========
 $router->get('/admin-sqls', 'AdminSqlsController@index', true);

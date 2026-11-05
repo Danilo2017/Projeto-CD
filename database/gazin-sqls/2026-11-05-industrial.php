@@ -1,0 +1,223 @@
+<?php
+/**
+ * SQLs dos relatórios de Processos Industriais — gravados em FOCCO3I.GAZIN_SQLS (TASK-REFATORACAO, critério 1).
+ * Registro/deploy: o sistema lê da GAZIN_SQLS, não deste arquivo. Instalar com database/gazin-sqls/instalar.php.
+ *
+ * Parâmetros (substituição textual do Database::switchParams):
+ *   :ano_mes   texto já entre aspas, ex. '2026-09'  (validado por regex no model)
+ *   :anomes    número, ex. 202609
+ * Listas fixas no SQL (manter igual às constantes dos models):
+ *   segmentos  COLCHOES / ESTOFADOS / CAIXA_BOX (BASE + CONJUGADO) / ESPUMA  -> SEGMENTOS
+ *   empresas   ConsumoMolinha::FILIAIS = (10, 16); ConsumoMolejoFiliais::FABRICAS = (10, 16), EMPRESA_ESTRUTURA = 10
+ */
+return [
+
+    // ───────────── GGF por Colaborador ─────────────
+    'industrial.ggfColaborador.listarEmpresas' => ['GGF por Colaborador: empresas (código - cidade)', <<<'SQL'
+SELECT E.ID, E.COD_EMP, INITCAP(C.CIDADE) CIDADE
+  FROM FOCCO3I.TEMPRESAS E
+  LEFT JOIN FOCCO3I.TCIDADES C ON C.ID = E.CID_ID
+ WHERE E.ID IN (1, 2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 16)
+ ORDER BY E.ID
+SQL],
+
+    'industrial.ggfColaborador.listarGgf' => ['GGF por Colaborador: GGF do mês (VW_MLC_CUSTOS_PRODUTIVOS) por empresa e segmento do centro de custo', <<<'SQL'
+SELECT EMPR_ID, SEGMENTO, SUM(VALOR) VALOR FROM (
+    SELECT V.EMPR_ID,
+           CASE SUBSTR(TO_CHAR(V.COD), 1, 3) WHEN '110' THEN 'COLCHOES' WHEN '120' THEN 'ESTOFADOS'
+                WHEN '140' THEN 'CAIXA_BOX' WHEN '130' THEN 'ESPUMA' END SEGMENTO,
+           V.VALOR
+      FROM FOCCO3I.VW_MLC_CUSTOS_PRODUTIVOS V
+     WHERE V.MES_ANO = TO_DATE(:ano_mes, 'YYYY-MM')
+ ) WHERE SEGMENTO IS NOT NULL
+ GROUP BY EMPR_ID, SEGMENTO
+SQL],
+
+    'industrial.ggfColaborador.listarColaboradores' => ['GGF por Colaborador: colaboradores ativos do mês por empresa e segmento do centro de custo', <<<'SQL'
+SELECT EMPR_ID, SEGMENTO, COUNT(*) QTD FROM (
+    SELECT DISTINCT F.FILIAL_CORRIGIDA EMPR_ID,
+           CASE SUBSTR(F.CENTROCUSTO, 1, 3) WHEN '110' THEN 'COLCHOES' WHEN '120' THEN 'ESTOFADOS'
+                WHEN '140' THEN 'CAIXA_BOX' WHEN '130' THEN 'ESPUMA' END SEGMENTO,
+           F.CENTROCUSTO, F.NOME
+      FROM FOCCO3I.TCC TCC, FOCCO3I.VW_GAZIN_FUNCIONARIOS F
+     WHERE TCC.COD = F.CENTROCUSTO
+       AND F.ANOMES = :anomes
+       AND TCC.TIPO_CC = 'PRO'
+       AND F.SITUACAO = '1 - Ativo'
+ ) WHERE SEGMENTO IS NOT NULL AND EMPR_ID IS NOT NULL
+ GROUP BY EMPR_ID, SEGMENTO
+SQL],
+
+    // ───────────── Faturamento por Colaborador ─────────────
+    'industrial.faturamentoColaborador.listarEmpresas' => ['Faturamento por Colaborador: empresas industriais (código - cidade)', <<<'SQL'
+SELECT E.ID, E.COD_EMP, INITCAP(C.CIDADE) CIDADE
+  FROM FOCCO3I.TEMPRESAS E
+  LEFT JOIN FOCCO3I.TCIDADES C ON C.ID = E.CID_ID
+ WHERE E.ID IN (1, 2, 3, 4, 5, 9, 10, 11, 13, 14, 15, 16)
+ ORDER BY E.ID
+SQL],
+
+    'industrial.faturamentoColaborador.listarFaturamento' => ['Faturamento por Colaborador: faturamento líquido do mês (VGAZIN_FAT_COM_DEV_IMP_NW) por empresa e segmento do agrupador', <<<'SQL'
+SELECT EMPRESA, SEGMENTO, SUM(VALOR) VALOR FROM (
+    SELECT V.EMPRESA,
+           CASE WHEN V.AGRUPADOR LIKE 'COLCHAO%' THEN 'COLCHOES'
+                WHEN V.AGRUPADOR LIKE 'ESTOFADO%' THEN 'ESTOFADOS'
+                WHEN V.AGRUPADOR IN ('BASE', 'CONJUGADO') THEN 'CAIXA_BOX'
+                WHEN V.AGRUPADOR = 'ESPUMA INDUSTRIAL' THEN 'ESPUMA' END SEGMENTO,
+           NVL(V.VLR_CONTAB_SAIDA, 0) - NVL(V.VLR_ICMS_ST_SAIDA, 0)
+         + NVL(V.VLR_CONTAB_ENTRADA, 0) - NVL(V.VLR_ICMS_ST_ENTRADA, 0) VALOR
+      FROM FOCCO3I.VGAZIN_FAT_COM_DEV_IMP_NW V
+     WHERE (V.NUM_PED_ORIGEM NOT LIKE '28411905%' OR V.NUM_PED_ORIGEM IS NULL)
+       AND (V.VLR_CONTAB_ENTRADA = 0 OR V.TIPO_NOTA_ENTRADA = 5)
+       AND V.DT_NOTA >= TO_DATE(:ano_mes, 'YYYY-MM') AND V.DT_NOTA < ADD_MONTHS(TO_DATE(:ano_mes, 'YYYY-MM'), 1)
+ ) WHERE SEGMENTO IS NOT NULL
+ GROUP BY EMPRESA, SEGMENTO
+SQL],
+
+    'industrial.faturamentoColaborador.listarColaboradores' => ['Faturamento por Colaborador: colaboradores ativos do mês por empresa e segmento do centro de custo', <<<'SQL'
+SELECT EMPR_ID, SEGMENTO, COUNT(*) QTD FROM (
+    SELECT DISTINCT F.FILIAL_CORRIGIDA EMPR_ID,
+           CASE SUBSTR(F.CENTROCUSTO, 1, 3) WHEN '110' THEN 'COLCHOES' WHEN '120' THEN 'ESTOFADOS'
+                WHEN '140' THEN 'CAIXA_BOX' WHEN '130' THEN 'ESPUMA' END SEGMENTO,
+           F.CENTROCUSTO, F.NOME
+      FROM FOCCO3I.TCC TCC, FOCCO3I.VW_GAZIN_FUNCIONARIOS F
+     WHERE TCC.COD = F.CENTROCUSTO
+       AND F.ANOMES = :anomes
+       AND TCC.TIPO_CC = 'PRO'
+       AND F.SITUACAO = '1 - Ativo'
+ ) WHERE SEGMENTO IS NOT NULL AND EMPR_ID IS NOT NULL
+ GROUP BY EMPR_ID, SEGMENTO
+SQL],
+
+    // ───────────── Peças por Colaborador ─────────────
+    'industrial.pecasColaborador.listarEmpresas' => ['Peças por Colaborador: empresas industriais (código - cidade)', <<<'SQL'
+SELECT E.ID, E.COD_EMP, INITCAP(C.CIDADE) CIDADE
+  FROM FOCCO3I.TEMPRESAS E
+  LEFT JOIN FOCCO3I.TCIDADES C ON C.ID = E.CID_ID
+ WHERE E.ID IN (1, 2, 3, 4, 5, 9, 10, 11, 13, 14, 15, 16)
+ ORDER BY E.ID
+SQL],
+
+    'industrial.pecasColaborador.listarPecas' => ['Peças por Colaborador: peças produzidas no mês (regra da VW_PROD_IND_SINTETICO) por empresa e segmento do agrupador', <<<'SQL'
+SELECT EMPRESA, SEGMENTO, SUM(QTD) QTD FROM (
+    SELECT IE.EMPR_ID EMPRESA,
+           CASE WHEN AG.AGRUPADOR LIKE 'COLCHAO%' THEN 'COLCHOES'
+                WHEN AG.AGRUPADOR LIKE 'ESTOFADO%' THEN 'ESTOFADOS'
+                WHEN AG.AGRUPADOR IN ('BASE', 'CONJUGADO') THEN 'CAIXA_BOX'
+                WHEN AG.AGRUPADOR = 'ESPUMA INDUSTRIAL' THEN 'ESPUMA' END SEGMENTO,
+           CASE WHEN TM.SIGLA = 'PPE' THEN -M.QTDE ELSE M.QTDE END * (1 / IC.FAT_CONV_VOL) QTD
+      FROM FOCCO3I.TMOV_ESTQ M
+      JOIN FOCCO3I.TTP_MOV_ESTQ TM ON TM.ID = M.TMVES_ID AND TM.SIGLA IN ('PPE', 'EPP')
+      JOIN FOCCO3I.TCUSTO_ESTQ CE ON CE.MOV_ESTQ_ID = M.ID AND CE.TMVES_ID = TM.ID AND CE.ITESTQ_ID = M.ITESTQ_ID
+      JOIN FOCCO3I.TITENS_ESTOQUE ES ON ES.ID = M.ITESTQ_ID
+      JOIN FOCCO3I.TGRP_CLAS_ITE G ON G.ID = ES.GRP_CLAS_ID
+      JOIN FOCCO3I.TITENS_EMPR IE ON IE.ID = ES.ITEMPR_ID
+      JOIN FOCCO3I.TITENS_PLANEJAMENTO IP ON IP.ITEMPR_ID = IE.ID
+      JOIN FOCCO3I.TITENS_ENGENHARIA IG ON IG.ITEMPR_ID = IE.ID
+      JOIN FOCCO3I.TITENS_COMERCIAL IC ON IC.ITEMPR_ID = IE.ID
+      JOIN FOCCO3I.TITENS I ON I.ID = IE.ITEM_ID
+      JOIN FOCCO3I.TGRP_CLAS_ITE G1 ON G1.ID = IG.GRP_CLAS_ID
+      JOIN FOCCO3I.VGAZIN_AGRUPADOR_COMERCIAL AG ON AG.ITEMPR_ID = IE.ID
+     WHERE M.DT >= TO_DATE(:ano_mes, 'YYYY-MM') AND M.DT < ADD_MONTHS(TO_DATE(:ano_mes, 'YYYY-MM'), 1)
+       AND (G.COD_GRP_ITE LIKE '30.%' OR G.COD_GRP_ITE LIKE '%20.003.004%' OR G.COD_GRP_ITE LIKE '%20.003.001%')
+       AND G.COD_GRP_ITE NOT LIKE '%30.008%'
+       AND IG.TP_ESTRUTURA NOT LIKE 'C%'
+ ) WHERE SEGMENTO IS NOT NULL
+ GROUP BY EMPRESA, SEGMENTO
+SQL],
+
+    'industrial.pecasColaborador.listarColaboradores' => ['Peças por Colaborador: colaboradores ativos do mês por empresa e segmento do centro de custo', <<<'SQL'
+SELECT EMPR_ID, SEGMENTO, COUNT(*) QTD FROM (
+    SELECT DISTINCT F.FILIAL_CORRIGIDA EMPR_ID,
+           CASE SUBSTR(F.CENTROCUSTO, 1, 3) WHEN '110' THEN 'COLCHOES' WHEN '120' THEN 'ESTOFADOS'
+                WHEN '140' THEN 'CAIXA_BOX' WHEN '130' THEN 'ESPUMA' END SEGMENTO,
+           F.CENTROCUSTO, F.NOME
+      FROM FOCCO3I.TCC TCC, FOCCO3I.VW_GAZIN_FUNCIONARIOS F
+     WHERE TCC.COD = F.CENTROCUSTO
+       AND F.ANOMES = :anomes
+       AND TCC.TIPO_CC = 'PRO'
+       AND F.SITUACAO = '1 - Ativo'
+ ) WHERE SEGMENTO IS NOT NULL AND EMPR_ID IS NOT NULL
+ GROUP BY EMPR_ID, SEGMENTO
+SQL],
+
+    // ───────────── Consumo de Molinha ─────────────
+    'industrial.consumoMolinha.listarEmpresas' => ['Consumo de Molinha: fábricas de molas (10, 16)', <<<'SQL'
+SELECT E.ID, E.COD_EMP, INITCAP(C.CIDADE) CIDADE, E.RAZAO_SOCIAL
+  FROM FOCCO3I.TEMPRESAS E
+  LEFT JOIN FOCCO3I.TCIDADES C ON C.ID = E.CID_ID
+ WHERE E.ID IN (10, 16)
+ ORDER BY E.ID
+SQL],
+
+    'industrial.consumoMolinha.listarProducao' => ['Consumo de Molinha: produção do mês (DT_SIST, EPP − PPE sem fator) por empresa, item e máscara nas fábricas 10 e 16', <<<'SQL'
+SELECT /*+ LEADING(IE I ES M) USE_NL(I) USE_NL(ES) USE_NL(M) */
+       IE.EMPR_ID EMPRESA, I.COD_ITEM, MAX(I.DESC_TECNICA) DESC_TECNICA, M.TMASC_ITEM_ID ID_MASC,
+       MAX(MS.MASCARA) MASCARA,
+       SUM(CASE WHEN TM.SIGLA = 'PPE' THEN -M.QTDE ELSE M.QTDE END) QTD
+  FROM FOCCO3I.TITENS_EMPR IE
+  JOIN FOCCO3I.TITENS I ON I.ID = IE.ITEM_ID
+  JOIN FOCCO3I.TITENS_ESTOQUE ES ON ES.ITEMPR_ID = IE.ID
+  JOIN FOCCO3I.TMOV_ESTQ M ON M.ITESTQ_ID = ES.ID
+   AND M.DT_SIST >= TO_DATE(:ano_mes, 'YYYY-MM') AND M.DT_SIST < ADD_MONTHS(TO_DATE(:ano_mes, 'YYYY-MM'), 1)
+  JOIN FOCCO3I.TTP_MOV_ESTQ TM ON TM.ID = M.TMVES_ID AND TM.SIGLA IN ('PPE', 'EPP')
+  JOIN FOCCO3I.TCUSTO_ESTQ CE ON CE.MOV_ESTQ_ID = M.ID AND CE.TMVES_ID = TM.ID AND CE.ITESTQ_ID = M.ITESTQ_ID
+  JOIN FOCCO3I.TGRP_CLAS_ITE G ON G.ID = ES.GRP_CLAS_ID
+  JOIN FOCCO3I.TITENS_PLANEJAMENTO IP ON IP.ITEMPR_ID = IE.ID
+  JOIN FOCCO3I.TITENS_ENGENHARIA IG ON IG.ITEMPR_ID = IE.ID
+  JOIN FOCCO3I.TITENS_COMERCIAL IC ON IC.ITEMPR_ID = IE.ID
+  JOIN FOCCO3I.TGRP_CLAS_ITE G1 ON G1.ID = IG.GRP_CLAS_ID
+  JOIN FOCCO3I.VGAZIN_AGRUPADOR_COMERCIAL AG ON AG.ITEMPR_ID = IE.ID
+  LEFT JOIN FOCCO3I.TMASC_ITEM MS ON MS.ID = M.TMASC_ITEM_ID
+ WHERE IE.EMPR_ID IN (10, 16)
+   AND IG.TP_ESTRUTURA NOT LIKE 'C%'
+ GROUP BY IE.EMPR_ID, I.COD_ITEM, M.TMASC_ITEM_ID
+SQL],
+
+    'industrial.consumoMolinha.listarEstrutura' => ['Consumo de Molinha: molinhas por item pai (TGAZIN_ADMIN_TANQUE_MOLA) nas fábricas 10 e 16', <<<'SQL'
+SELECT EMPR_ID, PAI_COD_ITEM, PAI_TMASC_ITEM_ID, COD_ITEM, MAX(DESC_TECNICA) DESC_TECNICA, SUM(QTDE_TOT) QTDE_TOT
+  FROM FOCCO3I.TGAZIN_ADMIN_TANQUE_MOLA
+ WHERE EMPR_ID IN (10, 16)
+   AND DESC_TECNICA LIKE '%MOLA ENSACADA INDIVIDUALMENTE%'
+ GROUP BY EMPR_ID, PAI_COD_ITEM, PAI_TMASC_ITEM_ID, COD_ITEM
+HAVING SUM(QTDE_TOT) > 0
+SQL],
+
+    // ───────────── Molejo: Produção x Consumo Filiais ─────────────
+    'industrial.consumoMolejoFiliais.listarEmpresas' => ['Molejo Produção x Consumo: todas as empresas (código - cidade)', <<<'SQL'
+SELECT E.ID, E.COD_EMP, INITCAP(C.CIDADE) CIDADE
+  FROM FOCCO3I.TEMPRESAS E
+  LEFT JOIN FOCCO3I.TCIDADES C ON C.ID = E.CID_ID
+ ORDER BY E.ID
+SQL],
+
+    'industrial.consumoMolejoFiliais.listarMovimentos' => ['Molejo Produção x Consumo: por dia — produção EPP − PPE nas fábricas 10/16 (lado P) e consumo REP nas filiais (lado C)', <<<'SQL'
+SELECT /*+ LEADING(I IE ES M) USE_NL(IE) USE_NL(ES) USE_NL(M) */
+       CASE WHEN TM.SIGLA = 'REP' THEN 'C' ELSE 'P' END LADO,
+       IE.EMPR_ID EMPRESA, TO_CHAR(TRUNC(M.DT_SIST), 'YYYY-MM-DD') DIA,
+       I.COD_ITEM, MAX(I.DESC_TECNICA) DESC_TECNICA, M.TMASC_ITEM_ID ID_MASC, MAX(MS.MASCARA) MASCARA,
+       SUM(CASE WHEN TM.SIGLA = 'PPE' THEN -M.QTDE ELSE M.QTDE END) QTD
+  FROM FOCCO3I.TITENS I
+  JOIN FOCCO3I.TITENS_EMPR IE ON IE.ITEM_ID = I.ID
+  JOIN FOCCO3I.TITENS_ESTOQUE ES ON ES.ITEMPR_ID = IE.ID
+  JOIN FOCCO3I.TMOV_ESTQ M ON M.ITESTQ_ID = ES.ID
+   AND M.DT_SIST >= TO_DATE(:ano_mes, 'YYYY-MM') AND M.DT_SIST < ADD_MONTHS(TO_DATE(:ano_mes, 'YYYY-MM'), 1)
+  JOIN FOCCO3I.TTP_MOV_ESTQ TM ON TM.ID = M.TMVES_ID
+  JOIN FOCCO3I.TITENS_ENGENHARIA IG ON IG.ITEMPR_ID = IE.ID
+  LEFT JOIN FOCCO3I.TMASC_ITEM MS ON MS.ID = M.TMASC_ITEM_ID
+ WHERE I.DESC_TECNICA LIKE 'MOLEJO%'
+   AND (   (TM.SIGLA IN ('EPP', 'PPE') AND IE.EMPR_ID IN (10, 16) AND IG.TP_ESTRUTURA NOT LIKE 'C%')
+        OR (TM.SIGLA = 'REP' AND M.ENT_SAI = 'S' AND IE.EMPR_ID NOT IN (10, 16)))
+ GROUP BY CASE WHEN TM.SIGLA = 'REP' THEN 'C' ELSE 'P' END,
+          IE.EMPR_ID, TRUNC(M.DT_SIST), I.COD_ITEM, M.TMASC_ITEM_ID
+SQL],
+
+    'industrial.consumoMolejoFiliais.listarEstrutura' => ['Molejo Produção x Consumo: molinhas por molejo pela estrutura da empresa 10 (TGAZIN_ADMIN_TANQUE_MOLA)', <<<'SQL'
+SELECT PAI_COD_ITEM, PAI_TMASC_ITEM_ID, COD_ITEM, MAX(DESC_TECNICA) DESC_TECNICA, SUM(QTDE_TOT) QTDE_TOT
+  FROM FOCCO3I.TGAZIN_ADMIN_TANQUE_MOLA
+ WHERE EMPR_ID = 10
+   AND DESC_TECNICA LIKE '%MOLA ENSACADA INDIVIDUALMENTE%'
+ GROUP BY PAI_COD_ITEM, PAI_TMASC_ITEM_ID, COD_ITEM
+HAVING SUM(QTDE_TOT) > 0
+SQL],
+];

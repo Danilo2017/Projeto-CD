@@ -4,296 +4,174 @@ namespace src\models\Manutencao;
 
 use core\Database;
 
+/**
+ * Dashboard de Ordens de Manutenção — porte do painel OTM "CLI/dashboard_ordens_manut".
+ *
+ * Mesmas regras das rotinas originais, executadas direto (somente leitura, sem tabela de sessão):
+ *  - OTIMIZA.PDASHBOARD_DISTR_MANUT_OTM  -> distribuicao()
+ *  - OTIMIZA.PDASHBOARD_ORDENS_FUNC_OTM  -> funcHoras()
+ *  - OTIMIZA.FQTD_ORDENS_MAN_OTM         -> CTEs FQ_F / FQ_A / FQ_T
+ *  - FOCCO3I.VGAZIN_FUNC_ORDEM_MANUT_OTM -> funcOrdens()
+ *  - OTIMIZA.VGAZIN_FUNC_ORDEM_DET_OTM   -> drill 'func_ordens'
+ *  - FOCCO3I.TESTOQUE_MANUTENCAO_JOB_OTM -> estoque() (alimentada pelo job JOB_OTM_ESTQ_MANUT)
+ * Período: "TO_DATE(campo) BETWEEN ini AND fim" do OTM = campo >= ini AND campo < fim + 1.
+ *
+ * SQLs na FOCCO3I.GAZIN_SQLS: manutencao.dashboard.* (registro em database/gazin-sqls/2026-11-05-manutencao.php).
+ */
 class DashboardManutencao
 {
-    private static function dateSql(string $d): string
+    // ── infraestrutura ───────────────────────────────────────────────
+
+    /** Executa um SQL da FOCCO3I.GAZIN_SQLS. */
+    private static function sql(string $idsql, array $params = []): array
     {
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) {
-            throw new \InvalidArgumentException("Data inválida: $d");
+        $r = Database::switchParams('focco', $params, $idsql, true, false);
+        if (!empty($r['error'])) throw new \RuntimeException("Falha no SQL $idsql: " . $r['error']);
+        return is_array($r['retorno']) ? $r['retorno'] : [];
+    }
+
+    /** Texto -> literal Oracle para a substituição textual do switchParams (\ $ : = via CHR). */
+    private static function lit(string $v): string
+    {
+        $v = strtr(str_replace("'", "''", $v), [
+            '\\' => "' || CHR(92) || '", '$' => "' || CHR(36) || '",
+            ':'  => "' || CHR(58) || '", '=' => "' || CHR(61) || '",
+        ]);
+        return "'" . $v . "'";
+    }
+
+    private static function data(string $d): string
+    {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || !checkdate((int) substr($d, 5, 2), (int) substr($d, 8, 2), (int) substr($d, 0, 4))) {
+            throw new \InvalidArgumentException("Data inválida: $d", 400);
         }
-        return "TO_DATE('$d','YYYY-MM-DD')";
+        return "DATE '$d'";
     }
 
-    private static function query(string $sql): array
+    /** Parâmetros comuns: empresa e período (datas validadas). */
+    private static function periodo(int $e, string $di, string $df): array
     {
-        $res = Database::switchParams('focco', [], null, true, false, null, $sql);
-        return $res['retorno'] ?: [];
+        return ['empresa' => $e, 'dt_ini' => self::data($di), 'dt_fim' => self::data($df)];
     }
 
-    private static function queryOne(string $sql): array
+    // ── KPIs + OS Geradas x Atendidas + OS Preventivas ───────────────
+
+    /**
+     * Geradas/Atendidas: blocos GERADA_ATEND (distintas por nº ordem + data, só ordens com serviço/máquina).
+     * Preventivas: bloco GERADA_ATEND_PREV (Programadas = TPERFIL_ITENS_CALC plano 1).
+     */
+    public static function resumo(int $e, string $di, string $df): array
     {
-        $rows = self::query($sql);
-        return $rows[0] ?? [];
+        return self::sql('manutencao.dashboard.resumo', self::periodo($e, $di, $df))[0] ?? [];
     }
 
-    // KPIs: ordens criadas no período (DT_SOLICITACAO)
-    public static function getResumo(int $emprId, string $di, string $df): array
+    // ── Distribuição por tipo (PDASHBOARD_DISTR_MANUT_OTM) ───────────
+
+    /**
+     * Por tipo: QTD = "Quantidade Ordens" do OTM (contagem de ordens fechadas da máquina/tipo),
+     * VALOR = material + serviço de terceiros, MINUTOS = horas de serviço x 60 (bloco DET_GRUPO).
+     * PERC_QTD truncado em 2 casas, como no OTM.
+     */
+    public static function distribuicao(int $e, string $di, string $df): array
     {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-        $sql = "SELECT
-                    COUNT(*) AS TOTAL,
-                    COUNT(CASE WHEN SITUACAO = 'F' THEN 1 END) AS FECHADAS,
-                    COUNT(CASE WHEN SITUACAO <> 'F' THEN 1 END) AS ABERTAS,
-                    COUNT(CASE WHEN TP_OS = 'C' THEN 1 END) AS CORRETIVAS,
-                    COUNT(CASE WHEN TP_OS = 'P' THEN 1 END) AS PREVENTIVAS,
-                    COUNT(CASE WHEN TP_OS = 'G' THEN 1 END) AS PROGRAMADAS
-                FROM FOCCO3I.TORDENS_MAN
-                WHERE EMPR_ID = $emprId
-                  AND DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)";
-        return self::queryOne($sql);
+        return self::sql('manutencao.dashboard.distribuicao', self::periodo($e, $di, $df));
     }
 
-    // Distribuição por tipo de OS fechadas no período (DT_FECHAMENTO) — igual ao painel OTM
-    public static function getDistribuicao(int $emprId, string $di, string $df): array
+    // ── Empresa / Grupo / Valor (bloco GRUPO) ────────────────────────
+
+    public static function grupos(int $e, string $di, string $df): array
     {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-        $sql = "SELECT TIPO, QTD,
-                    ROUND(QTD * 100.0 / SUM(QTD) OVER (), 1) AS PERC_QTD,
-                    VALOR, VALOR_ESTOQUE, VALOR_SERVICO
-                FROM (
-                    SELECT
-                        CASE T.TP_OS
-                            WHEN 'C' THEN 'Corretiva'
-                            WHEN 'G' THEN 'Programada'
-                            WHEN 'P' THEN 'Preventiva'
-                            WHEN 'M' THEN 'Melhoria'
-                            ELSE 'Nao Planejada'
-                        END AS TIPO,
-                        COUNT(DISTINCT T.ID) AS QTD,
-                        ROUND(
-                            SUM(NVL(FOCCO3I.MAN_EST_RETORNA_CUSTO_MEDIO(
-                                IE.EMPR_ID, IE.ID, NULL, 1,
-                                T.DT_FECHAMENTO, 999999999, EC.TMASC_ITEM_ID
-                            ) * ISM.QTDE, 0)) +
-                            SUM(NVL(S.VLR_GASTO, 0))
-                        , 2) AS VALOR,
-                        ROUND(SUM(NVL(FOCCO3I.MAN_EST_RETORNA_CUSTO_MEDIO(
-                                IE.EMPR_ID, IE.ID, NULL, 1,
-                                T.DT_FECHAMENTO, 999999999, EC.TMASC_ITEM_ID
-                            ) * ISM.QTDE, 0)), 2) AS VALOR_ESTOQUE,
-                        ROUND(SUM(NVL(S.VLR_GASTO, 0)), 2) AS VALOR_SERVICO
-                    FROM FOCCO3I.TORDENS_MAN T
-                    LEFT JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                    LEFT JOIN FOCCO3I.TITENS_SERV_MAN ISM ON ISM.SERV_MAN_ID = S.ID
-                    LEFT JOIN FOCCO3I.TITENS_ESTOQUE ESTQ ON ESTQ.ID = ISM.ITESTQ_ID
-                    LEFT JOIN FOCCO3I.TITENS_EMPR IE ON IE.ID = ESTQ.ITEMPR_ID
-                    LEFT JOIN FOCCO3I.TITENS_ESTQ_CONF EC ON EC.ITESTQ_ID = ESTQ.ID
-                    WHERE T.EMPR_ID = $emprId
-                      AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
-                    GROUP BY T.TP_OS
-                )
-                ORDER BY QTD DESC";
-        return self::query($sql);
+        return self::sql('manutencao.dashboard.listarGrupos', self::periodo($e, $di, $df));
     }
 
-    // Geradas = criadas no período (DT_SOLICITACAO)
-    // Atendidas = fechadas no período (DT_FECHAMENTO)
-    public static function getGeradasAtendidas(int $emprId, string $di, string $df): array
+    // ── Funcionário / Ordens Fechada / Aberta (bloco ORDENS_FUNC) ────
+
+    /** Funcionários da VGAZIN_FUNC_ORDEM_MANUT_OTM no período (= quem tem fechada ou aberta). */
+    public static function funcOrdens(int $e, string $di, string $df): array
     {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-        $sql = "SELECT
-                    (SELECT COUNT(*) FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId
-                       AND DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS GERADAS,
-                    (SELECT COUNT(*) FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId
-                       AND DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS ATENDIDAS
-                FROM DUAL";
-        return self::queryOne($sql);
+        return self::sql('manutencao.dashboard.listarFuncOrdens', self::periodo($e, $di, $df));
     }
 
-    // Grupo/Valor: custo por grupo de máquina em ordens FECHADAS no período
-    public static function getOrdensGrupo(int $emprId, string $di, string $df): array
+    // ── Funcionário / Min. Disp. / Exec. / % / MTBF / MTTR (PDASHBOARD_ORDENS_FUNC_OTM) ──
+
+    public static function funcHoras(int $e, string $di, string $df): array
     {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-        $sql = "SELECT ROWNUM RN, GR.EMPR_ID, GR.GRUPO, GR.VALOR FROM (
-                    SELECT T.EMPR_ID,
-                           SUBSTR(M.COD_MAQUINA, 1, 4) AS GRUPO,
-                           ROUND(
-                               SUM(NVL(FOCCO3I.MAN_EST_RETORNA_CUSTO_MEDIO(
-                                   IE.EMPR_ID, IE.ID, NULL, 1,
-                                   T.DT_FECHAMENTO, 999999999, EC.TMASC_ITEM_ID
-                               ) * ISM.QTDE, 0)) +
-                               SUM(NVL(S.VLR_GASTO, 0))
-                           , 2) AS VALOR
-                    FROM FOCCO3I.TITENS_SERV_MAN ISM,
-                         FOCCO3I.TORDENS_MAN T,
-                         TSERV_MAN S,
-                         FOCCO3I.TPREVEN_SERVICOS PREV,
-                         FOCCO3I.TITENS_ESTOQUE ESTQ,
-                         FOCCO3I.TITENS_EMPR IE,
-                         FOCCO3I.TITENS_ESTQ_CONF EC,
-                         FOCCO3I.TMAQUINAS M
-                    WHERE T.ID            = S.ORD_MAN_ID(+)
-                      AND S.ID            = ISM.SERV_MAN_ID(+)
-                      AND PREV.ID         = S.TPRESER_ID
-                      AND ESTQ.ID         = EC.ITESTQ_ID(+)
-                      AND ESTQ.ID(+)      = ISM.ITESTQ_ID
-                      AND IE.ID(+)        = ESTQ.ITEMPR_ID
-                      AND M.ID            = T.MAQUINA_ID
-                      AND T.EMPR_ID       IN ($emprId)
-                      AND T.DT_FECHAMENTO >= $ddi
-                      AND T.DT_FECHAMENTO <  ($ddf + 1)
-                      AND (
-                            NVL(S.VLR_GASTO, 0) > 0
-                            OR NVL(FOCCO3I.MAN_EST_RETORNA_CUSTO_MEDIO(
-                                IE.EMPR_ID, IE.ID, NULL, 1,
-                                T.DT_FECHAMENTO, 999999999, EC.TMASC_ITEM_ID
-                            ) * ISM.QTDE, 0) > 0
-                          )
-                    GROUP BY T.EMPR_ID, SUBSTR(M.COD_MAQUINA, 1, 4)
-                    ORDER BY VALOR DESC, GRUPO
-                ) GR WHERE ROWNUM <= 20";
-        return self::query($sql);
+        return self::sql('manutencao.dashboard.listarFuncHoras', self::periodo($e, $di, $df));
     }
 
-    public static function getPreventivas(int $emprId, string $di, string $df): array
+    // ── Custos Manutenção de Máquinas e Equipamentos (gráfico do painel OTM) ──
+
+    /**
+     * Mesmo SQL do gráfico OTM (capturado do v$sql do painel):
+     *  - Orçado: OTIMIZA.TORCAMENTO_MENSAL_CUSTO_OTM (período dentro de um mês -> mês inteiro).
+     *  - Mov. Estoque: contabilidade, contas reduzidas 1541/1550, lançamentos EST (débito - crédito).
+     *  - Serv. Terceiros - Compra Direta: mesmas contas, lançamentos NFE/OUT (débito - crédito).
+     *  - Realizado: Mov. Estoque + Serv. Terceiros.
+     */
+    public static function custos(int $e, string $di, string $df): array
     {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-        $sql = "SELECT
-                    (SELECT COUNT(DISTINCT TPER.NUM_ORDEM)
-                     FROM FOCCO3I.TPERFIL_ITENS_CALC TPER
-                     JOIN FOCCO3I.TPLANOS_MAN PLA ON PLA.ID = TPER.TPLANO_MAN_ID
-                     WHERE TPER.EMPR_ID = $emprId
-                       AND TPER.SITUACAO = 1
-                       AND TPER.TP_ORDEM = 'OMP'
-                       AND TPER.TP_OS = 'P'
-                       AND PLA.COD_PLANO = 1
-                       AND TPER.DT_PREVISTA BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS PROGRAMADAS,
-                    (SELECT COUNT(DISTINCT NUM_ORDEM)
-                     FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId AND TP_OS = 'P'
-                       AND DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS LIBERADAS,
-                    (SELECT COUNT(DISTINCT NUM_ORDEM)
-                     FROM FOCCO3I.TORDENS_MAN
-                     WHERE EMPR_ID = $emprId AND TP_OS = 'P'
-                       AND DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)) AS REALIZADAS
-                FROM DUAL";
-        return self::queryOne($sql);
+        $p = self::periodo($e, $di, $df);
+        $mesmoMes = substr($di, 0, 7) === substr($df, 0, 7);
+        $p['orc_ini'] = $mesmoMes ? "TRUNC({$p['dt_ini']}, 'MM')" : $p['dt_ini'];
+        $p['orc_fim'] = $mesmoMes ? "LAST_DAY({$p['dt_ini']})"    : $p['dt_fim'];
+        return self::sql('manutencao.dashboard.buscarCustos', $p)[0] ?? [];
     }
 
-    // Funcionário/Ordens: por responsável direto na OS (TORDENS_MAN.FUNC_ID nativo FOCCO)
-    public static function getFuncOrdens(int $emprId, string $di, string $df): array
+    // ── Estoque manutenção (bloco ESTOQUE; snapshot diário do job) ───
+
+    public static function estoque(): array
     {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-
-        // Fechadas no período (DT_FECHAMENTO) + Abertas atuais (DT_FECHAMENTO IS NULL) por UNION
-        $sql = "SELECT ROWNUM RN, FUNCIONARIO, FECHADAS, ABERTAS FROM (
-                    SELECT F.NOME AS FUNCIONARIO,
-                           SUM(FECHADAS) AS FECHADAS,
-                           SUM(ABERTAS)  AS ABERTAS
-                    FROM (
-                        SELECT S.FUNC_ID,
-                               COUNT(DISTINCT T.ID) AS FECHADAS,
-                               0 AS ABERTAS
-                        FROM FOCCO3I.TORDENS_MAN T
-                        JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                        WHERE T.EMPR_ID = $emprId
-                          AND S.FUNC_ID IS NOT NULL
-                          AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
-                        GROUP BY S.FUNC_ID
-                        UNION ALL
-                        SELECT S.FUNC_ID,
-                               0 AS FECHADAS,
-                               COUNT(DISTINCT T.ID) AS ABERTAS
-                        FROM FOCCO3I.TORDENS_MAN T
-                        JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                        WHERE T.EMPR_ID = $emprId
-                          AND S.FUNC_ID IS NOT NULL
-                          AND T.DT_FECHAMENTO IS NULL
-                          AND T.DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
-                        GROUP BY S.FUNC_ID
-                    ) CMB
-                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = CMB.FUNC_ID
-                    GROUP BY F.NOME
-                    ORDER BY FECHADAS DESC, F.NOME
-                ) WHERE ROWNUM <= 20";
-        $rows = self::query($sql);
-        if (!empty($rows)) return $rows;
-
-        // Fallback: TORDENS_MAN.FUNC_ID filtrado por DT_SOLICITACAO
-        $sql2 = "SELECT ROWNUM RN, FUNCIONARIO, FECHADAS, ABERTAS FROM (
-                    SELECT F.NOME AS FUNCIONARIO,
-                           COUNT(CASE WHEN T.DT_FECHAMENTO IS NOT NULL THEN 1 END) AS FECHADAS,
-                           COUNT(CASE WHEN T.DT_FECHAMENTO IS NULL     THEN 1 END) AS ABERTAS
-                    FROM FOCCO3I.TORDENS_MAN T
-                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = T.FUNC_ID
-                    WHERE T.EMPR_ID = $emprId
-                      AND T.FUNC_ID IS NOT NULL
-                      AND T.DT_SOLICITACAO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
-                    GROUP BY F.NOME
-                    ORDER BY FECHADAS DESC, F.NOME
-                ) WHERE ROWNUM <= 20";
-        return self::query($sql2);
+        return self::sql('manutencao.dashboard.listarEstoque');
     }
 
-    // Custos: ordens FECHADAS no período
-    public static function getCustos(int $emprId, string $di, string $df): array
-    {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-        $sql = "SELECT
-                    ROUND(SUM(NVL(S.VLR_GASTO, 0)), 2) AS SERV_TERCEIROS,
-                    ROUND(SUM(NVL(S.VLR_GASTO, 0)), 2) AS REALIZADO
-                FROM FOCCO3I.TORDENS_MAN T
-                LEFT JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                WHERE T.EMPR_ID = $emprId
-                  AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)";
-        return self::queryOne($sql);
-    }
+    // ── Drill-downs (janelas que abrem ao clicar) ────────────────────
 
-    // Minutos por tipo: ordens FECHADAS no período
-    public static function getMinutosPorTipo(int $emprId, string $di, string $df): array
+    public static function drill(string $tipo, int $e, string $di, string $df, array $p): array
     {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
-        $sql = "SELECT
-                    CASE T.TP_OS
-                        WHEN 'C' THEN 'Corretiva'
-                        WHEN 'G' THEN 'Programada'
-                        WHEN 'P' THEN 'Preventiva'
-                        WHEN 'M' THEN 'Melhoria'
-                        ELSE 'Nao Planejada'
-                    END AS TIPO,
-                    ROUND(SUM(S.QTD_HORA * 60), 0) AS MINUTOS,
-                    ROUND(SUM(NVL(S.VLR_GASTO, 0)), 2) AS VALOR_SERVICO
-                FROM FOCCO3I.TORDENS_MAN T
-                JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                WHERE T.EMPR_ID = $emprId
-                  AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
-                GROUP BY T.TP_OS
-                ORDER BY MINUTOS DESC";
-        return self::query($sql);
-    }
+        $per = self::periodo($e, $di, $df);
 
-    // Funcionário/Horas: replica lógica de OTIMIZA.PDASHBOARD_ORDENS_FUNC_OTM
-    public static function getFuncHoras(int $emprId, string $di, string $df): array
-    {
-        $ddi = self::dateSql($di);
-        $ddf = self::dateSql($df);
+        switch ($tipo) {
+            // GRUPO -> "Detalhar Grupo": máquinas do grupo
+            case 'grupo':
+                return self::sql('manutencao.dashboard.drillGrupo', $per + ['grupo' => self::lit((string) ($p['g'] ?? ''))]);
 
-        $sql = "SELECT ROWNUM RN, FUNCIONARIO, MIN_EXEC, MTTR FROM (
-                    SELECT F.NOME AS FUNCIONARIO,
-                           ROUND(SUM(NVL(S.QTD_HORA, 0) * 60), 0) AS MIN_EXEC,
-                           ROUND(
-                               SUM(NVL(S.QTD_HORA, 0) * 60) /
-                               NULLIF(COUNT(DISTINCT T.ID), 0)
-                           , 1) AS MTTR
-                    FROM FOCCO3I.TORDENS_MAN T
-                    LEFT JOIN TSERV_MAN S ON S.ORD_MAN_ID = T.ID
-                    JOIN FOCCO3I.TFUNCIONARIOS F ON F.ID = T.FUNC_ID
-                    WHERE T.EMPR_ID = $emprId
-                      AND T.FUNC_ID IS NOT NULL
-                      AND T.DT_FECHAMENTO BETWEEN $ddi AND ($ddf + 1 - 1/86400)
-                    GROUP BY F.NOME
-                    ORDER BY MIN_EXEC DESC
-                ) WHERE ROWNUM <= 20";
-        return self::query($sql);
+            // DISTRIBUIDO -> DET_GRUPO: máquinas do tipo de manutenção
+            case 'tipo':
+                return self::sql('manutencao.dashboard.drillTipo', $per + ['tipo' => self::lit((string) ($p['tip'] ?? ''))]);
+
+            // DET_GRUPO -> DET_GRUPO_DETALHAR: ordens da máquina no tipo
+            case 'maquina':
+                return self::sql('manutencao.dashboard.drillMaquina', $per + [
+                    'tp_os'   => self::lit((string) ($p['tp'] ?? '')),
+                    'maquina' => self::lit((string) ($p['maq'] ?? '')),
+                ]);
+
+            // DET_GRUPO_DETALHAR -> DET_DETALHAR_ORDEM: material x serviço de terceiros
+            case 'ordem':
+                return self::sql('manutencao.dashboard.drillOrdem', ['ordem_id' => (int) ($p['o'] ?? 0)]);
+
+            // GERADA_ATEND -> GERADA_ATEND_DET (Geradas / Atendidas) e GERADA_ATEND_PREV_DET (Liberadas / Realizadas)
+            case 'geradas':         return self::sql('manutencao.dashboard.drillGeradas', $per);
+            case 'atendidas':       return self::sql('manutencao.dashboard.drillAtendidas', $per);
+            case 'prev_liberadas':  return self::sql('manutencao.dashboard.drillPrevLiberadas', $per);
+            case 'prev_realizadas': return self::sql('manutencao.dashboard.drillPrevRealizadas', $per);
+
+            // GERADA_ATEND_PREV_DET 'Prev. Programadas'
+            case 'prev_programadas':
+                return self::sql('manutencao.dashboard.drillPrevProgramadas', $per);
+
+            // ATEND_FUNC -> ATEND_FUNC_DET: ordens do funcionário (minutos)
+            case 'func_horas':
+                return self::sql('manutencao.dashboard.drillFuncHoras', $per + ['func_id' => (int) ($p['f'] ?? 0)]);
+
+            // ORDENS_FUNC -> ORDENS_FUNC_DET (VGAZIN_FUNC_ORDEM_DET_OTM): abertas (execução) + fechadas (responsável)
+            case 'func_ordens':
+                return self::sql('manutencao.dashboard.drillFuncOrdens', $per + ['func_id' => (int) ($p['f'] ?? 0)]);
+
+            // ESTOQUE -> ESTOQUE_ITENS
+            case 'estoque':
+                return self::sql('manutencao.dashboard.drillEstoque', ['empresa' => (int) ($p['emp'] ?? 0)]);
+        }
+        throw new \InvalidArgumentException('Detalhe inválido', 400);
     }
 }

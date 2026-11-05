@@ -46,6 +46,24 @@ class PerfilAcesso
             if ($pd !== null) $perfis[] = $pd;
         }
 
+        $temPlanejamento = false;
+        foreach ($perfis as $p) {
+            if (strtoupper($p['NOME'] ?? '') === 'PLANEJAMENTO') $temPlanejamento = true;
+        }
+        if (!$temPlanejamento) {
+            $pl = self::garantirPerfilPlanejamento();
+            if ($pl !== null) $perfis[] = $pl;
+        }
+
+        $temIndustrial = false;
+        foreach ($perfis as $p) {
+            if (strtoupper($p['NOME'] ?? '') === 'PROCESSOS INDUSTRIAIS') $temIndustrial = true;
+        }
+        if (!$temIndustrial) {
+            $pi = self::garantirPerfilIndustrial();
+            if ($pi !== null) $perfis[] = $pi;
+        }
+
         if (!$temManutencao) {
             $m = self::garantirPerfilManutencao();
             if ($m !== null) $perfis[] = $m;
@@ -112,6 +130,99 @@ class PerfilAcesso
             return ['ID_PERFIL' => $novoId, 'NOME' => 'P&D', 'DESCRICAO' => 'Acesso ao módulo P&D'];
         } catch (\Throwable $e) {
             error_log('[PerfilAcesso] garantirPerfilPD erro: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private static function garantirPerfilPlanejamento(): ?array
+    {
+        try {
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PLANEJAMENTO'");
+            $existing = $chk['retorno'][0] ?? null;
+
+            if ($existing) {
+                $id = (int)$existing['ID_PERFIL'];
+
+                $rotaChk = Database::switchParams('focco', [], null, true, false, null,
+                    "SELECT COUNT(1) AS CNT FROM TGAZIN_PERFIL_ROTA WHERE PERFIL_ID = $id AND PREFIXO_ROTA = 'planejamento'");
+                $cnt = (int)(($rotaChk['retorno'][0] ?? [])['CNT'] ?? 0);
+                if ($cnt === 0) {
+                    Database::switchParams('focco', [], null, true, false, null,
+                        "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                         VALUES ($id, 'planejamento', SYSDATE)");
+                    Database::getInstance('focco')->exec('COMMIT');
+                }
+
+                return ['ID_PERFIL' => $id, 'NOME' => 'Planejamento', 'DESCRICAO' => 'Acesso ao módulo Planejamento'];
+            }
+
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('Planejamento', 'Acesso ao módulo Planejamento', 'S', SYSDATE)");
+            if (!empty($resA['error'])) return null;
+
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PLANEJAMENTO'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
+
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'planejamento', SYSDATE)");
+
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId, 'NOME' => 'Planejamento', 'DESCRICAO' => 'Acesso ao módulo Planejamento'];
+        } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilPlanejamento erro: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private static function garantirPerfilIndustrial(): ?array
+    {
+        $perfil = ['NOME' => 'Processos Industriais', 'DESCRICAO' => 'Acesso ao módulo Processos Industriais'];
+        try {
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PROCESSOS INDUSTRIAIS'");
+            $existing = $chk['retorno'][0] ?? null;
+
+            if ($existing) {
+                $id = (int)$existing['ID_PERFIL'];
+
+                $rotaChk = Database::switchParams('focco', [], null, true, false, null,
+                    "SELECT COUNT(1) AS CNT FROM TGAZIN_PERFIL_ROTA WHERE PERFIL_ID = $id AND PREFIXO_ROTA = 'industrial'");
+                $cnt = (int)(($rotaChk['retorno'][0] ?? [])['CNT'] ?? 0);
+                if ($cnt === 0) {
+                    Database::switchParams('focco', [], null, true, false, null,
+                        "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                         VALUES ($id, 'industrial', SYSDATE)");
+                    Database::getInstance('focco')->exec('COMMIT');
+                }
+
+                return ['ID_PERFIL' => $id] + $perfil;
+            }
+
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('Processos Industriais', 'Acesso ao módulo Processos Industriais', 'S', SYSDATE)");
+            if (!empty($resA['error'])) return null;
+
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'PROCESSOS INDUSTRIAIS'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
+
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'industrial', SYSDATE)");
+
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId] + $perfil;
+        } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilIndustrial erro: ' . $e->getMessage());
             return null;
         }
     }
