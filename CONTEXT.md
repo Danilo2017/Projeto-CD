@@ -1,16 +1,46 @@
 # Contexto do Projeto
 
-Este projeto é uma API PHP para controle de recebimento de cargas, agendamento de cargas e geração de recibos de pagamento das descargas. Também inclui um **Sistema de Comissionamento de Produtividade** para acompanhamento de produção de colchões. Utiliza uma arquitetura MVC simples, com rotas, controllers, models e views, além de autenticação básica.
+Portal web interno em PHP com telas operacionais e relatórios da indústria de colchões Gazin. Começou como API de cargas (recebimento, agendamento e recibo de descarga) e com o **Sistema de Comissionamento de Produtividade**. Hoje cobre vários setores: CD, Faturamento, Pedidos, Processo, Cargas, PCP, Apontamento, P&D, Planejamento, Processos Industriais, Qualidade e Manutenção.
+Os dados vêm do ERP Focco (Oracle 12.1, schema `FOCCO3I`). A arquitetura é MVC própria (rotas → controllers → handlers → models → views), com autenticação e acesso por perfil.
 
 ## Estrutura
-- **core/**: Classes base do sistema (Auth, Controller, Database, Request, Router).
-- **public/**: Arquivos públicos, incluindo o ponto de entrada da aplicação e assets (CSS/JS).
-- **src/**: Configurações, rotas, controllers, models, utilitários e views.
-- **vendor/**: Dependências gerenciadas pelo Composer.
-- **Dockerfile / docker-compose.yml**: Arquivos para configuração e execução do ambiente Docker.
-- **docker-compose-comissao.yml**: Docker Compose paralelo para o sistema de comissão (porta 8003).
+- **core/**: classes base (Auth, Controller, Database, Request, Router).
+  - `Database::switchParams` faz a troca textual de parâmetros nos SQLs vindos da GAZIN_SQLS.
+- **public/**: ponto de entrada (`index.php`) e assets (CSS/JS). É o docroot do Apache.
+- **src/routes.php**: rotas.
+- **src/controllers|handlers|models/<Módulo>/**: um diretório por módulo (CD, Comissao, Faturamento, Industrial, Manutencao, PCP, PD, Planejamento, Processo, Qualidade).
+  - Handlers e models usam métodos estáticos.
+- **src/views/pages/<módulo>/** e **src/views/partials/navbar.php** (menu lateral por grupo).
+- **src/cli/**: scripts PHP de linha de comando disparados em segundo plano (`nohup php ... &`). No Apache com mod_php, a resposta só é liberada quando o processo termina.
+- **database/**: DDL/scripts.
+  - **database/gazin-sqls/** contém os SQLs por módulo e `instalar.php`, que grava na `FOCCO3I.GAZIN_SQLS`.
+- **vendor/**: dependências do Composer.
+- **docker-compose-comissao.yml**: ambiente do portal, container `comissao_colchao`, porta **8050**, PHP 8.1.
+- **docker-compose.yml**: API de rotinas original, container `api_rotinas`, porta 8002.
+
+## Regras do Projeto
+- **SQL na `FOCCO3I.GAZIN_SQLS`**, buscado por `idsql` (`modulo.tela.consulta`). A exceção são telas em teste.
+  - Escritas e chamadas de pacote continuam com binds PDO.
+  - Ver [TASK-REFATORACAO.md](TASK-REFATORACAO.md).
+- **Não alterar** nada no schema OTIMIZA (OTM) nem em tabelas existentes do Focco. Objetos novos vão no FOCCO3I com prefixo `TGAZIN_` / `GAZIN_`.
+- **Sem Python.** Testes e scripts são feitos em PHP dentro do container.
+- O **acesso** é por perfil: o prefixo da URL vira o módulo (`Auth::extrairPrefixoUrl`), e os perfis são vinculados na tela Permissões.
+- Particularidades do **PDO_OCI**:
+  - bind de saída deve começar como `''` (com `null` volta vazio);
+  - evitar `PARAM_INT|PARAM_INPUT_OUTPUT` (corrompe a memória do PHP);
+  - evitar `MATERIALIZE` com subconsulta escalar sobre a CTE (ORA-03113 no 12.1).
 
 ## Funcionalidades
+
+A lista completa de telas, rotas e situação está em [CONTROLE.md](CONTROLE.md).
+
+### Planejamento
+- **Planejamento Reposição CD**: sugestão de reposição do CD (objetos `FOCCO3I.GAZIN_PLA_REP_CD*` e job).
+- **Follow-up Pedido Compra**: porte do relatório `OTIMIZA.pfollow_up_pdc_otm`, consultado direto, sem tabela temporária.
+- **Material por Filial**: planejamento de material por filial, com seleção de vários planejadores.
+- **Compra Direta Crossdocking** (em teste): porte da tela do OTM `compra_dir_cross`.
+  - Gera a sugestão, cria as demandas independentes (`TDEMANDAS_INDEP`, um número por item) e roda o MRP do plano em segundo plano (`FOCCO3I_JOB.MRP_AUTO`).
+  - No fim, mostra a OCP gerada e permite liberá-la para o comprador (`TGAZIN_LIB_ORD_COMPRA`, STATUS 1, equivalente ao FGAZIN_SUP004).
 
 ### Centro de Distribuição (CD)
 - **Controle de Recebimento de Cargas**: Cadastro, consulta e atualização de recebimentos.
@@ -124,40 +154,51 @@ O sistema integra com as seguintes tabelas do FOCCO:
 - `GET /comissao-api-centro`: Relatório completo por centro de trabalho
 
 ## Como Funciona
-- As requisições chegam pelo `public/index.php`, que inicializa o roteador e direciona para o controller adequado.
-- Controllers processam a lógica de negócio e interagem com os models para acessar o banco de dados.
-- Models representam as entidades do sistema (Agendamento, Avisos, Login, Recibo).
-- As respostas podem ser em JSON (API) ou HTML (views).
+- As requisições chegam pelo `public/index.php`, que inicializa o roteador e direciona para o controller.
+- O controller chama o handler, que concentra regra de negócio e validação. O handler usa o model, que acessa o Oracle:
+  - leitura pela GAZIN_SQLS (`sql()` + `lit()`);
+  - escrita com binds PDO.
+- Telas: a view (HTML + JS) chama APIs `POST /<modulo>-api-*`, que respondem em JSON.
+- Os resultados pesados ficam em cache em arquivo (`DashboardCache`, `/tmp/fat_dashboard_cache`) ou por usuário.
 
 ## Como Rodar o Projeto
-1. **Pré-requisitos**:
-   - Docker e Docker Compose instalados
-   - PHP >= 7.4
-   - Composer
-
-2. **Instalação**:
-   - Clone o repositório
-   - Execute `composer install` para instalar as dependências
-
-3. **Rodando com Docker**:
-   - Execute `docker-compose up` para subir o ambiente
-   - O serviço estará disponível em `http://localhost:8080` (ajuste conforme configuração do docker-compose)
-
-4. **Acesso**:
-   - Utilize ferramentas como Postman para testar as rotas da API
-   - Endpoints principais:
-     - `/api/recebimento` (controle de recebimento)
-     - `/api/agendamento` (agendamento de cargas)
-     - `/api/recibo` (recibo de pagamento)
+1. Configure o ambiente (`src/Env.php` / `.env`). Senhas não vão para o repositório.
+2. `docker compose -f docker-compose-comissao.yml up -d --build`
+3. Acesse `http://localhost:8050`.
+4. Validar sintaxe: `docker exec comissao_colchao php -l <arquivo>`.
+5. Gravar SQLs novos: `docker exec comissao_colchao php database/gazin-sqls/instalar.php`.
 
 ## Observações
 - As configurações de ambiente estão em `src/Config.php` e `src/Env.php`.
-- As rotas estão definidas em `src/routes.php`.
-- O projeto segue padrão PSR-4 para autoload.
+- O autoload segue o padrão PSR-4.
+- Grafo do código em `graphify-out/` (`graphify query "..."`; depois de alterar código, rodar `graphify update .`).
+- Commits só depois de o usuário validar a alteração. Não versionar `.env_exemplo` nem `.claude/`.
 
 ---
 
 ## Histórico de Mudanças Recentes
+
+### 05–06/11/2026 - Planejamento e GAZIN_SQLS
+1. **Migração para GAZIN_SQLS** dos models novos:
+   - Follow-up, Reposição CD e Material por Filial (28 `planejamento.*`);
+   - Dashboard de Manutenção (19 `manutencao.dashboard.*`).
+   - `instalar.php` passou a aceitar parâmetros de exemplo por SQL.
+2. **Menus Planejamento e Processos Industriais** (commit a7f41e7). A Reposição CD saiu do P&D.
+3. **Material por Filial**: filtro de planejador com seleção múltipla (inclui "(sem planejador)").
+4. **Compra Direta Crossdocking** (nova, em teste, SQL no código):
+   - sugestão com consumo, saldo e estoque, mais perfil, pedidos, itens do pedido e alteração de status;
+   - **Gerar Linha** cria as demandas e dispara o MRP em segundo plano;
+   - a tela acompanha o MRP e, no fim, oferece liberar a OCP para o comprador.
+   - Correções:
+     - número da demanda por item e por empresa (chave única `DEMAND_IND_EMP_NUM_DEM_UK`);
+     - a tela mostra só a ordem que cobre a quantidade pedida (o MRP repõe o saldo do dia e o estoque de segurança).
+
+**Arquivos novos (não commitados):**
+- `src/controllers/Planejamento/CompraDiretaCrossController.php`
+- `src/handlers/Planejamento/CompraDiretaCrossHandler.php`
+- `src/models/Planejamento/CompraDiretaCross.php`
+- `src/views/pages/planejamento/compra-direta-cross.php`
+- `src/cli/compra-direta-cross-mrp.php`
 
 ### 19/02/2026 - Sessão de Desenvolvimento
 **Funcionalidades implementadas:**

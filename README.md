@@ -1,48 +1,59 @@
-# Projeto Tech - API de Controle de Cargas
+# Projeto Tech — Portal de Rotinas Gazin (Colchões)
 
-Este projeto é uma API PHP para controle de recebimento de cargas, agendamento de cargas e geração de recibos de pagamento das descargas.
+Portal web interno em PHP com telas operacionais e relatórios da indústria de colchões: comissão de produtividade, CD, faturamento, processos, PCP, apontamento, P&D, planejamento, processos industriais, qualidade e manutenção.
+Os dados vêm do ERP **Focco** (Oracle, schema `FOCCO3I`).
+
+## Stack
+- **PHP 8.1** em MVC próprio (`core/`), autoload PSR-4 pelo Composer
+- **Oracle 12.1** (FOCCO3I) via PDO_OCI
+- **Apache + mod_php** em Docker
+- Front-end: Bootstrap 5, Bootstrap Icons e JavaScript puro nas views
 
 ## Estrutura do Projeto
-- **core/**: Classes base do sistema (Auth, Controller, Database, Request, Router).
-- **public/**: Arquivos públicos, ponto de entrada da aplicação e assets (CSS/JS).
-- **src/**: Configurações, rotas, controllers, models, utilitários e views.
-- **vendor/**: Dependências gerenciadas pelo Composer.
-- **Dockerfile / docker-compose.yml**: Arquivos para configuração e execução do ambiente Docker.
-
-## Funcionalidades
-- Controle de recebimento de cargas
-- Agendamento de cargas
-- Geração de recibos de pagamento das descargas
+- **core/**: classes base (Auth, Controller, Database, Request, Router).
+- **public/**: ponto de entrada (`index.php`) e assets (CSS/JS). É o docroot do Apache.
+- **src/routes.php**: todas as rotas.
+- **src/controllers/<Módulo>/**: recebem a requisição e devolvem HTML ou JSON.
+- **src/handlers/<Módulo>/**: regras de negócio e validação (métodos estáticos).
+- **src/models/<Módulo>/**: acesso ao banco (métodos estáticos).
+- **src/views/pages/<módulo>/**: telas; **src/views/partials/navbar.php**: menu lateral.
+- **src/cli/**: scripts de linha de comando chamados em segundo plano (ex.: MRP da Compra Direta Crossdocking).
+- **database/**: scripts SQL/DDL; **database/gazin-sqls/**: carga dos SQLs na `FOCCO3I.GAZIN_SQLS` (`instalar.php`).
+- Os módulos são CD, Comissao, Faturamento, Industrial, Manutencao, PCP, PD, Planejamento, Processo e Qualidade.
 
 ## Como Rodar o Projeto
 
 ### Pré-requisitos
 - Docker e Docker Compose
-- PHP >= 7.4
-- Composer
-
-### Instalação
-1. Clone o repositório
-2. Execute `composer install` para instalar as dependências
+- Acesso de rede ao Oracle do Focco
+- Arquivo de ambiente configurado (`src/Env.php` / `.env`; não versionar senhas)
 
 ### Executando com Docker
-1. Execute `docker-compose up` para subir o ambiente
-2. O serviço estará disponível em `http://localhost:8080` (ajuste conforme configuração do docker-compose)
+```bash
+docker compose -f docker-compose-comissao.yml up -d --build
+```
+- Container: `comissao_colchao`
+- Endereço: `http://localhost:8050`
+- `docker-compose.yml` (container `api_rotinas`, porta 8002) é o ambiente da API de rotinas original.
 
-### Testando a API
-Utilize ferramentas como Postman para testar os endpoints:
-- `/api/recebimento` (controle de recebimento)
-- `/api/agendamento` (agendamento de cargas)
-- `/api/recibo` (recibo de pagamento)
+### Comandos úteis
+```bash
+docker exec comissao_colchao php -l src/<arquivo>.php          # validar sintaxe
+docker exec comissao_colchao php database/gazin-sqls/instalar.php   # gravar/atualizar SQLs na GAZIN_SQLS
+```
 
-## Configuração
-- As configurações de ambiente estão em `src/Config.php` e `src/Env.php`
-- As rotas estão definidas em `src/routes.php`
+## Convenções
+- **SQL fica na `FOCCO3I.GAZIN_SQLS`**, buscado por `idsql` (`modulo.tela.consulta`), e não no PHP. A exceção é uma tela ainda em teste (hoje a Compra Direta Crossdocking).
+- Handlers e models usam métodos estáticos.
+- Não alterar nada no schema OTIMIZA (OTM) nem em tabelas existentes do Focco. Objetos novos são criados no FOCCO3I com prefixo `TGAZIN_` / `GAZIN_`.
+- Sem Python: tudo em PHP, dentro do container.
+- O acesso é por perfil (tela Permissões), pelo prefixo da URL (`planejamento-`, `pcp-`, `manutencao-`, ...).
+- Commits só depois de a alteração ser validada pelo usuário.
 
 ## Documentação
-Consulte os arquivos:
-- [CONTEXT.md](CONTEXT.md): Contexto geral do projeto
-- [CONTROLE.md](CONTROLE.md): Detalhes dos módulos de controle de recebimento, agendamento e recibo
+- [CONTEXT.md](CONTEXT.md): contexto geral, módulos e detalhes técnicos
+- [CONTROLE.md](CONTROLE.md): controle das telas (rotas, objetos de banco e situação)
+- [TASK-REFATORACAO.md](TASK-REFATORACAO.md): refatoração GAZIN_SQLS e métodos estáticos- `graphify-out/`: grafo de conhecimento do código (`graphify query "..."`; atualizar com `graphify update .`)
 
 ---
 
