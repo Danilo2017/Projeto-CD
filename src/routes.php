@@ -426,6 +426,17 @@ $router->post('/planejamento-api-pmf-resumo',             'Planejamento\\PlanejM
 $router->post('/planejamento-api-pmf-qtde',               'Planejamento\\PlanejMaterialFilialController@qtde',            true);
 $router->post('/planejamento-api-pmf-interfabrica',       'Planejamento\\PlanejMaterialFilialController@interfabrica',    true);
 $router->post('/planejamento-api-pmf-mensagens',          'Planejamento\\PlanejMaterialFilialController@mensagens',       true);
+$router->get('/planejamento-compra-direta-cross',         'Planejamento\\CompraDiretaCrossController@index',              true);
+$router->post('/planejamento-api-cdc-filtros',            'Planejamento\\CompraDiretaCrossController@filtros',            true);
+$router->post('/planejamento-api-cdc-gerar',              'Planejamento\\CompraDiretaCrossController@gerar',              true);
+$router->post('/planejamento-api-cdc-listar',             'Planejamento\\CompraDiretaCrossController@listar',             true);
+$router->post('/planejamento-api-cdc-detalhe',            'Planejamento\\CompraDiretaCrossController@detalhe',            true);
+$router->post('/planejamento-api-cdc-status',             'Planejamento\\CompraDiretaCrossController@status',             true);
+$router->post('/planejamento-api-cdc-opcoes-linha',       'Planejamento\\CompraDiretaCrossController@opcoesLinha',        true);
+$router->post('/planejamento-api-cdc-gerar-linha',        'Planejamento\\CompraDiretaCrossController@gerarLinha',         true);
+$router->post('/planejamento-api-cdc-mrp-status',         'Planejamento\\CompraDiretaCrossController@mrpStatus',          true);
+$router->post('/planejamento-api-cdc-liberar',            'Planejamento\\CompraDiretaCrossController@liberar',            true);
+$router->post('/planejamento-api-cdc-concluir',           'Planejamento\\CompraDiretaCrossController@concluir',           true);
 
 // ========== Rotas de Processos Industriais ==========
 $router->get('/industrial-pecas-colaborador',            'Industrial\\PecasColaboradorController@index',  true);

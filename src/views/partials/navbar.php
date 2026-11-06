@@ -163,6 +163,7 @@ $planejamentoSub = match(true) {
     $pActive === 'planejamento-reposicao-cd'            => 'reposicao-cd',
     $pActive === 'planejamento-follow-up-pedido-compra' => 'follow-up-pedido-compra',
     $pActive === 'planejamento-material-filial'         => 'material-filial',
+    $pActive === 'planejamento-compra-direta-cross'     => 'compra-direta-cross',
     default => ''
 };
 
@@ -683,6 +684,12 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>planejamento-material-filial"
                        class="sidebar-sublink <?= $planejamentoSub === 'material-filial' ? 'active' : '' ?>">
                         Planej. Material por Filial
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base ?>planejamento-compra-direta-cross"
+                       class="sidebar-sublink <?= $planejamentoSub === 'compra-direta-cross' ? 'active' : '' ?>">
+                        Compra Direta Crossdocking
                     </a>
                 </li>
             </ul>
