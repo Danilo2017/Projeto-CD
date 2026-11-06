@@ -65,11 +65,17 @@ if (!$acesso) {
         <div class="card shadow-sm mb-4">
             <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-list-check me-1"></i> Pedidos Encontrados</span>
-                <span id="totalPedidos" class="badge bg-secondary">0</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span id="totalPedidos" class="badge bg-secondary">0</span>
+                    <button id="btnExcelPedidos" type="button" class="btn btn-sm btn-success" onclick="downloadExcelPedidos()">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                    </button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0">
+                    <!-- id com prefixo "tabela": o template.js não aplica o DataTables (a lista é montada pelo JS da tela) -->
+                    <table id="tabelaPedidosGrid" class="table table-hover table-sm mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th style="width:40px;">
@@ -141,7 +147,7 @@ if (!$acesso) {
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
+                    <table id="tabelaResultadosGrid" class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Pedido Original</th>
