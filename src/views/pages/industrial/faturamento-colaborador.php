@@ -99,6 +99,20 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
         document.getElementById('btnFiltrar').disabled = true;
         const t0 = Date.now();
         try {
+            // Um mês por requisição (o servidor guarda cada mês em cache): assim nenhuma requisição
+            // passa do tempo limite do servidor (504 Gateway Time-out) em períodos de vários meses.
+            const meses = [];
+            for (let [a, m] = ini.split('-').map(Number); a * 12 + m <= Number(fim.slice(0, 4)) * 12 + Number(fim.slice(5, 7)) && meses.length <= 12; m++) {
+                if (m > 12) { m = 1; a++; }
+                meses.push(a + '-' + String(m).padStart(2, '0'));
+            }
+            if (meses.length > 1 && meses.length <= 12) {
+                for (let i = 0; i < meses.length; i++) {
+                    st.textContent = 'Carregando ' + meses[i].slice(5) + '/' + meses[i].slice(0, 4) + ' (' + (i + 1) + ' de ' + meses.length + ')...';
+                    await post(API, { ini: meses[i], fim: meses[i] });
+                }
+                st.textContent = 'Montando o período...';
+            }
             dados = await post(API, { ini, fim });
             desenhar();
             st.textContent = 'Atualizado em ' + ((Date.now() - t0) / 1000).toFixed(1) + 's';

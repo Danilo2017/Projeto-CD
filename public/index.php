@@ -25,6 +25,19 @@ ini_set('max_execution_time', 0);
 
 session_start();
 
+// Libera a trava do arquivo de sessão logo no início: o PHP segura a sessão até o fim da requisição,
+// e uma consulta demorada numa aba fazia todas as outras abas do mesmo usuário esperarem (504 no nginx).
+// $_SESSION continua disponível para leitura. Só as rotas abaixo GRAVAM na sessão e mantêm a trava.
+$rotasQueGravamSessao = [
+    'login', 'logout',
+    'comissao-api-empresas', 'comissao-api-selecionar-empresa',
+    'apontamento-api-iniciar-sessao', 'apontamento-api-encerrar-sessao', 'apontamento-api-set-maquina',
+];
+$rotaAtual = basename((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH));
+if (!in_array($rotaAtual, $rotasQueGravamSessao, true)) {
+    session_write_close();
+}
+
 require_once '../vendor/autoload.php';
 require_once '../src/routes.php';
 
