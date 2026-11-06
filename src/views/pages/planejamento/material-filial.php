@@ -32,6 +32,10 @@ if (!$acessoPlanejamento) {
 .ms-list label:hover { background:#f1f5fb; }
 .ms-acts       { display:flex; justify-content:space-between; padding-top:4px; border-top:1px solid #eef1f6; margin-top:4px; }
 .ms-acts a     { font-size:.75rem; cursor:pointer; }
+/* Multiseleção dentro da barra azul da tabela (planejadores) */
+.ms-head .ms-btn { height:26px; font-size:12px !important; padding:2px 24px 2px 8px !important; }
+.ms-head .ms-pop { right:0; left:auto; color:#212529; text-transform:none; font-weight:400; letter-spacing:0; }
+.ms-head .ms-list { max-height:360px; }
 
 /* Cards */
 .pm-cards      { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
@@ -129,7 +133,7 @@ if (!$acessoPlanejamento) {
             <span>Itens por filial — marque os itens para o Resumo / Interfábrica</span>
             <div class="ctrl">
                 <select id="selEmpFiltro" class="form-select form-select-sm" style="width:130px"><option value="">Todas as filiais</option></select>
-                <select id="selPlanejador" class="form-select form-select-sm" style="width:190px"><option value="">Todos os planejadores</option></select>
+                <div class="ms ms-head" id="msPlan" style="width:220px"></div>
                 <input type="text" id="inpFiltro" class="form-control form-control-sm" style="width:260px" placeholder="Localizar / filtrar (código, descrição, máscara...)">
             </div>
         </div>
@@ -233,13 +237,38 @@ if (!$acessoPlanejamento) {
         if (e.target.dataset.a === 'limpar') ms.sel.clear();
         msDesenhar(); msRotulo();
     });
-    document.addEventListener('click', e => { if (!e.target.closest('.ms')) msEl.classList.remove('open'); });
+    document.addEventListener('click', e => { if (!e.target.closest('#msEmpresa')) msEl.classList.remove('open'); });
 
     // ── Estado ─────────────────────────────────────────────────────
     const body = document.getElementById('pmBody'), msgEl = document.getElementById('msgRelatorio');
     const spanTotal = document.getElementById('spanTotalReg'), inpFiltro = document.getElementById('inpFiltro');
-    const selPlan = document.getElementById('selPlanejador'), selEmp = document.getElementById('selEmpFiltro');
+    const selEmp = document.getElementById('selEmpFiltro');
     let _rows = [], _sort = { col: null, num: false, dir: 1 }, _kpi = 'todos', _par = null;
+
+    // ── Multiseleção de planejadores (filtro da tabela; vazio = todos) ──
+    const SEM_PLAN = '(sem planejador)';
+    const mpEl = document.getElementById('msPlan');
+    const mp = { itens: [], sel: new Set() };
+    mpEl.innerHTML = `<button type="button" class="form-select form-select-sm ms-btn"></button>
+        <div class="ms-pop"><div class="ms-list"></div><div class="ms-acts"><a data-a="todos">Marcar todos</a><a data-a="limpar">Limpar (todos)</a></div></div>`;
+    const mpBtn = mpEl.querySelector('.ms-btn'), mpList = mpEl.querySelector('.ms-list');
+    function mpRotulo() {
+        const n = mp.sel.size;
+        mpBtn.textContent = !n || n === mp.itens.length ? 'Todos os planejadores' : (n <= 2 ? [...mp.sel].join(', ') : `${n} planejadores`);
+        mpBtn.title = n ? [...mp.sel].join(', ') : '';
+    }
+    function mpDesenhar() {
+        mpList.innerHTML = mp.itens.map(p => `<label><input type="checkbox" value="${esc(p)}" ${mp.sel.has(p) ? 'checked' : ''}> ${esc(p)}</label>`).join('');
+    }
+    mpBtn.addEventListener('click', () => { mpEl.classList.toggle('open'); mpDesenhar(); });
+    mpList.addEventListener('change', e => { if (e.target.checked) mp.sel.add(e.target.value); else mp.sel.delete(e.target.value); mpRotulo(); render(); });
+    mpEl.querySelector('.ms-acts').addEventListener('click', e => {
+        if (e.target.dataset.a === 'todos') mp.itens.forEach(p => mp.sel.add(p));
+        if (e.target.dataset.a === 'limpar') mp.sel.clear();
+        mpDesenhar(); mpRotulo(); render();
+    });
+    document.addEventListener('click', e => { if (!e.target.closest('#msPlan')) mpEl.classList.remove('open'); });
+    const planDe = r => r.PLANEJADOR || SEM_PLAN;
 
     const isInativo  = r => r.TIPO_PRODUTO === 'N';
     const isCritico  = r => !vazio(r.AUTONOMIA) && num(r.AUTONOMIA) <= 15;
@@ -255,10 +284,10 @@ if (!$acessoPlanejamento) {
     })();
 
     function linhasVisiveis() {
-        const termo = inpFiltro.value.trim().toLowerCase(), plan = selPlan.value, emp = selEmp.value;
+        const termo = inpFiltro.value.trim().toLowerCase(), emp = selEmp.value;
         let lista = _rows.filter(KPI[_kpi]);
         if (emp)  lista = lista.filter(r => String(r.EMPR_ID) === emp);
-        if (plan) lista = lista.filter(r => (r.PLANEJADOR || '') === plan);
+        if (mp.sel.size) lista = lista.filter(r => mp.sel.has(planDe(r)));
         if (termo) lista = lista.filter(r => [r.COD_ITEM, r.DESC_ITEM, r.MASC_ID, r.MASCARA, r.PLANEJADOR, r.PEDIDO, r.OBS]
             .some(v => String(v ?? '').toLowerCase().includes(termo)));
         if (_sort.col) {
@@ -330,7 +359,10 @@ if (!$acessoPlanejamento) {
         const sg = document.getElementById('spanGerado');
         sg.innerHTML = _par ? `<i class="bi bi-clock-history"></i> Gerado em <b>${esc(_par.DT_GERACAO)}</b> · ${esc(_par.SEGUNDOS)}s · período ${esc(_par.DT_INI_BR)} a ${esc(_par.DT_FIM_BR)}` : '';
         const plans = [...new Set(_rows.map(r => r.PLANEJADOR).filter(Boolean))].sort();
-        selPlan.innerHTML = '<option value="">Todos os planejadores</option>' + plans.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+        if (_rows.some(r => !r.PLANEJADOR)) plans.push(SEM_PLAN);
+        mp.itens = plans;
+        [...mp.sel].forEach(p => { if (!plans.includes(p)) mp.sel.delete(p); });   // mantém a escolha ao gerar de novo
+        mpRotulo();
         const emps = [...new Set(_rows.map(r => String(r.EMPR_ID)))].sort((a, b) => a - b);
         selEmp.innerHTML = '<option value="">Todas as filiais</option>' + emps.map(e => `<option value="${e}">FL ${e}</option>`).join('');
         document.getElementById('pmCards').style.display = _par ? '' : 'none';
@@ -371,7 +403,7 @@ if (!$acessoPlanejamento) {
 
     // ── Filtros / ordenação / KPIs ─────────────────────────────────
     let _tF; inpFiltro.addEventListener('input', () => { clearTimeout(_tF); _tF = setTimeout(render, 200); });
-    selPlan.addEventListener('change', render); selEmp.addEventListener('change', render);
+    selEmp.addEventListener('change', render);
     document.querySelectorAll('.pm-kpi').forEach(k => k.addEventListener('click', function () {
         _kpi = this.dataset.f; document.querySelectorAll('.pm-kpi').forEach(x => x.classList.toggle('ativo', x === this)); render();
     }));
