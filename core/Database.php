@@ -85,8 +85,7 @@ class Database
             // legado: replace textual
             if (!empty($params)) {
                 foreach ($params as $nome => $valor) {
-                    @$rpl = str_replace('\"', "'", $valor);
-                    $valor = is_string($valor) ? trim($rpl) : $valor;
+                    $valor = is_string($valor) ? trim($valor) : $valor;
                     // '--' como comentário de linha não funciona em SQL single-line (CLOB),
                     // pois comenta tudo após ele na mesma linha (GROUP BY, ORDER BY, etc).
                     // Substitui por string vazia para simplesmente remover o filtro.
@@ -150,10 +149,15 @@ class Database
                 if (!is_dir($logDir)) {
                     @mkdir($logDir, 0755, true);
                 }
+                // mascara parâmetros sensíveis (senha) antes de gravar em log
+                $paramsLog = $params;
+                foreach ($paramsLog as $k => $v) {
+                    if (preg_match('/pass|senha|pwd/i', (string) $k)) $paramsLog[$k] = '***';
+                }
                 $logjv = [
                     'data'   => date('Y-m-d H:i:s'),
                     'sql'    => $sql,
-                    'params' => $params,
+                    'params' => $paramsLog,
                     'res'    => $res['retorno']
                 ];
                 file_put_contents($logDir . 'exec' . date('Y-m-d') . '-sql.txt', print_r($logjv, true), FILE_APPEND);
@@ -167,7 +171,9 @@ class Database
             $logjv = [
                 'data' => date('Y-m-d H:i:s'),
                 'msg'  => $e->getMessage(),
-                'sql'  => $sql
+                // só grava o SQL quando o log está habilitado para esta chamada
+                // (a autenticação passa $log=false para não vazar a senha substituída)
+                'sql'  => $log ? $sql : '[omitido]'
             ];
             file_put_contents($logDir . 'error' . date('Y-m-d') . '-sql.txt', print_r($logjv, true), FILE_APPEND);
             $res['error'] = $e->getMessage();
@@ -182,8 +188,7 @@ class Database
     public static function replaceParams($sql, $params)
     {
         foreach ($params as $nome => $valor) {
-            @$rpl = str_replace('\"', "'", $valor);
-            $valor = is_string($valor) ? trim($rpl) : $valor;
+            $valor = is_string($valor) ? trim($valor) : $valor;
             if ($valor === '--') {
                 $valor = '';
             }

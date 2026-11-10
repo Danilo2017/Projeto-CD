@@ -29,6 +29,11 @@ class LoginController extends ctrl
             $usuario = $body['usuario'] ?? '';
             $senha = $body['senha'] ?? '';
 
+            // Novo ID de sessão a cada login, evita fixação de sessão (session fixation)
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_regenerate_id(true);
+            }
+
             $user = Login::autenticar($usuario, $senha);
             self::response([
                 'success' => true,

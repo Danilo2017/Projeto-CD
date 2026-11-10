@@ -73,7 +73,7 @@ COPY . /var/www/html
 WORKDIR /var/www/html
 
 RUN mkdir -p logs
-RUN chmod -R 777 logs
+RUN chown -R www-data:www-data logs && chmod -R 775 logs
 
 RUN composer install --ignore-platform-reqs
 
@@ -96,7 +96,7 @@ RUN echo "xdebug.mode= develop,debug,coverage" >> "/usr/local/etc/php/conf.d/xde
 && echo "xdebug.log = '/tmp/xdebug.log'" >> "/usr/local/etc/php/conf.d/xdebug.ini" \
 && echo "xdebug.client_port= 9000" >> "/usr/local/etc/php/conf.d/xdebug.ini" \
 && echo "xdebug.client_host = host.docker.internal" >> "/usr/local/etc/php/conf.d/xdebug.ini" \
-&& echo "xdebug.start_with_request= yes" >> "/usr/local/etc/php/conf.d/xdebug.ini"
+&& echo "xdebug.start_with_request= trigger" >> "/usr/local/etc/php/conf.d/xdebug.ini"
 
 # Adicionar certificado SSL
 RUN echo "openssl.cafile=/etc/ssl/certs/ca-certificates.crt" >> /usr/local/etc/php/conf.d/security.ini

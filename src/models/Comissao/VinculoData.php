@@ -77,7 +77,7 @@ class VinculoData
         $params = [
             'id_funcionario' => intval($idFuncionario),
             'id_empr' => intval($idEmpr),
-            'mes_ano' => "'" . $mesAno . "'"
+            'mes_ano' => "'" . str_replace("'", "''", $mesAno) . "'"
         ];
         
         try {
@@ -103,7 +103,7 @@ class VinculoData
         $params = [
             'id_funcionario' => intval($idFuncionario),
             'id_empr' => intval($idEmpr),
-            'data' => "'" . $data . "'"
+            'data' => "'" . str_replace("'", "''", $data) . "'"
         ];
         
         try {
@@ -148,7 +148,7 @@ class VinculoData
         // Verificar se já existe registro (ativo ou inativo) para esta data
         $paramsExiste = [
             'id_vinculo' => intval($idVinculo),
-            'data' => "'" . $data . "'"
+            'data' => "'" . str_replace("'", "''", $data) . "'"
         ];
         
         $resultExiste = Database::switchParams('focco', $paramsExiste, 'vinculodata.registro.buscarExistente', true);
@@ -174,7 +174,7 @@ class VinculoData
         // Não existe, insere novo registro
         $paramsInsert = [
             'id_vinculo' => intval($idVinculo),
-            'data' => "'" . $data . "'",
+            'data' => "'" . str_replace("'", "''", $data) . "'",
             'centro_value' => $centroValue
         ];
         
@@ -216,7 +216,7 @@ class VinculoData
     {
         $params = [
             'id_vinculo' => intval($idVinculo),
-            'data' => "'" . $data . "'"
+            'data' => "'" . str_replace("'", "''", $data) . "'"
         ];
         
         $result = Database::switchParams('focco', $params, 'vinculodata.data.existe', true);
@@ -243,7 +243,7 @@ class VinculoData
     {
         $params = [
             'id_vinculo' => intval($idVinculo),
-            'data' => "'" . $data . "'"
+            'data' => "'" . str_replace("'", "''", $data) . "'"
         ];
         
         $result = Database::switchParams('focco', $params, 'vinculodata.registro.excluirPorData', true);
@@ -303,8 +303,8 @@ class VinculoData
         $params = [
             'func_ids' => $inIds,
             'id_empr' => intval($emprId),
-            'periodo_ini' => "'" . $periodoIni . "'",
-            'periodo_fim' => "'" . $periodoFim . "'",
+            'periodo_ini' => "'" . str_replace("'", "''", $periodoIni) . "'",
+            'periodo_fim' => "'" . str_replace("'", "''", $periodoFim) . "'",
             'campo_tipo_calculo' => $campoTipoCalculo
         ];
         
@@ -353,8 +353,8 @@ class VinculoData
         
         $params = [
             'id_empr' => intval($emprId),
-            'periodo_ini' => "'" . $periodoIni . "'",
-            'periodo_fim' => "'" . $periodoFim . "'",
+            'periodo_ini' => "'" . str_replace("'", "''", $periodoIni) . "'",
+            'periodo_fim' => "'" . str_replace("'", "''", $periodoFim) . "'",
             'filtro_centro' => $filtroCtId
         ];
         
@@ -386,8 +386,8 @@ class VinculoData
         
         $params = [
             'id_empr' => intval($emprId),
-            'periodo_ini' => "'" . $periodoIni . "'",
-            'periodo_fim' => "'" . $periodoFim . "'",
+            'periodo_ini' => "'" . str_replace("'", "''", $periodoIni) . "'",
+            'periodo_fim' => "'" . str_replace("'", "''", $periodoFim) . "'",
             'filtro_centro' => $filtroCtId,
             'campo_tipo_calculo' => $campoTipoCalculo
         ];

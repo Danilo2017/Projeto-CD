@@ -334,9 +334,9 @@ function abrirListaDia(data) {
             return `
                 <tr>
                     <td>${rec.hora || '--:--'}</td>
-                    <td>${rec.fornecedor || '-'}</td>
-                    <td>${rec.placa || '-'}</td>
-                    <td>${rec.descricao || '-'}</td>
+                    <td>${escaparHtml(rec.fornecedor) || '-'}</td>
+                    <td>${escaparHtml(rec.placa) || '-'}</td>
+                    <td>${escaparHtml(rec.descricao) || '-'}</td>
                     <td>${pesoFormatado}</td>
                     <td>${volumeFormatado}</td>
                     <td>${valorFormatado}</td>
@@ -802,7 +802,7 @@ function renderizarRecibo(recibo) {
                     </div>
                     <div class="recibo-corpo" style="margin-bottom: 16px;">
                         <p class="recibo-texto" style="font-size: 1rem; margin-bottom: 8px;">
-                            <strong>Recebí(emos)</strong> de <strong>${recibo.EMPRESA_PAGADORA}</strong>${recibo.CNPJ_CPF ? ` - CPF/CNPJ nº ${formatarCnpjCpf(recibo.CNPJ_CPF)}` : ''}, a importância de <strong>${valorExtenso}</strong> referente a(o) ${descricaoDescarga}. Pagamento: ${formaPagamentoTexto}
+                            <strong>Recebí(emos)</strong> de <strong>${escaparHtml(recibo.EMPRESA_PAGADORA)}</strong>${recibo.CNPJ_CPF ? ` - CPF/CNPJ nº ${formatarCnpjCpf(recibo.CNPJ_CPF)}` : ''}, a importância de <strong>${valorExtenso}</strong> referente a(o) ${descricaoDescarga}. Pagamento: ${formaPagamentoTexto}
                         </p>
                         <p class="recibo-declaracao" style="font-size: 0.95rem; color: #555; margin-bottom: 8px;">
                             E, para maior clareza firmo o presente recibo para que produza os seus efeitos, dando plena, rasa e irrevogável quitação, pelo valor recebido.

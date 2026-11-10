@@ -19,6 +19,15 @@ function carregarDashboard() {
 }
 
 /**
+ * Escapa texto para interpolar com segurança em innerHTML (evita XSS).
+ */
+function escaparHtml(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto ?? '';
+    return div.innerHTML;
+}
+
+/**
  * Carregar todos os dados do dashboard
  */
 async function carregarDados() {
@@ -137,19 +146,19 @@ function atualizarTabela(avisos) {
         }
 
         // Formatar placa estilo Mercosul
-        const placaHtml = aviso.PLACA ? 
-            `<span class="cd-placa-carro">${aviso.PLACA}</span>` : '-';
+        const placaHtml = aviso.PLACA ?
+            `<span class="cd-placa-carro">${escaparHtml(aviso.PLACA)}</span>` : '-';
 
         return `
             <tr>
-                <td>${aviso.EMPRESA || '-'}</td>
-                <td>${aviso.ALMOX || '-'}</td>
+                <td>${escaparHtml(aviso.EMPRESA) || '-'}</td>
+                <td>${escaparHtml(aviso.ALMOX) || '-'}</td>
                 <td>${placaHtml}</td>
-                <td>${aviso.CHEGADA || '-'}</td>
-                <td>${aviso.INICIO || '-'}</td>
-                <td>${aviso.TERMINO || '-'}</td>
-                <td><span class="cd-status-badge ${statusClass}">${status}</span></td>
-                <td class="cd-crossdocking-cell">${aviso.CROSSDOCKING || '-'}</td>
+                <td>${escaparHtml(aviso.CHEGADA) || '-'}</td>
+                <td>${escaparHtml(aviso.INICIO) || '-'}</td>
+                <td>${escaparHtml(aviso.TERMINO) || '-'}</td>
+                <td><span class="cd-status-badge ${statusClass}">${escaparHtml(status)}</span></td>
+                <td class="cd-crossdocking-cell">${escaparHtml(aviso.CROSSDOCKING) || '-'}</td>
             </tr>
         `;
     }).join('');
@@ -169,11 +178,11 @@ function atualizarTabelaAgendamentos(agendamentos) {
     tbody.innerHTML = agendamentos.map(agend => {
         return `
             <tr>
-                <td>${agend.EMPRESA || '-'}</td>
-                <td>${agend.CHEGADA || '-'}</td>
-                <td>${agend.FORNECEDOR || '-'}</td>
-                <td>${agend.OBSERVACOES || '-'}</td>
-                <td><span class="cd-status-badge cd-status-pendente">${agend.STATUS || 'PENDENTE'}</span></td>
+                <td>${escaparHtml(agend.EMPRESA) || '-'}</td>
+                <td>${escaparHtml(agend.CHEGADA) || '-'}</td>
+                <td>${escaparHtml(agend.FORNECEDOR) || '-'}</td>
+                <td>${escaparHtml(agend.OBSERVACOES) || '-'}</td>
+                <td><span class="cd-status-badge cd-status-pendente">${escaparHtml(agend.STATUS) || 'PENDENTE'}</span></td>
             </tr>
         `;
     }).join('');

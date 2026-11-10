@@ -14,10 +14,11 @@ class Login
         $username = strtoupper($username);
 
         // Validar usuário e senha apenas pela procedure FOCCO3I.BR_UTL_USUARIOS.AUTENTICA
+        // $log = false: nunca gravar o SQL de autenticação em log (contém a senha substituída)
         $resultAuth = Database::switchParams('focco', [
             'username' => "'" . str_replace("'", "''", $username) . "'",
             'password' => "'" . str_replace("'", "''", $password) . "'"
-        ], 'auth.usuario.autenticar', true);
+        ], 'auth.usuario.autenticar', true, false);
 
         if ($resultAuth['error']) {
             throw new \Exception('Erro ao autenticar usuário.');

@@ -1,15 +1,22 @@
 <?php
 header("Content-Type: text/html; charset=UTF-8");
+// CORS com allowlist: só devolve Allow-Origin + credenciais para a MESMA origem
+// (mesmo host:porta do Portal) ou para origens extras configuradas na env CORS_ORIGINS
+// (separadas por vírgula, ex.: "https://portal.gazin.com.br"). Antes refletia qualquer
+// origem com credenciais, o que permitia a sites externos lerem respostas autenticadas.
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin) {
-    header("Access-Control-Allow-Origin: " . $origin);
-    header("Vary: Origin");
-} else {
-    header("Access-Control-Allow-Origin: *");
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $originSemEsquema = preg_replace('#^https?://#i', '', $origin);
+    $extras = array_filter(array_map('trim', explode(',', (string) getenv('CORS_ORIGINS'))));
+    if ($originSemEsquema === $host || in_array($origin, $extras, true)) {
+        header("Access-Control-Allow-Origin: " . $origin);
+        header("Vary: Origin");
+        header("Access-Control-Allow-Credentials: true");
+    }
 }
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Access-Control-Allow-Origin");
-header("Access-Control-Allow-Credentials: true");
 
 if (isset($_SERVER['REQUEST_METHOD']) && !empty($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     header("HTTP/1.1 200 OK");
@@ -23,6 +30,18 @@ ini_set('max_execution_time', 0);
 //ini_set('display_errors', 0); // Desativa a exibição de erros na tela
 
 
+// Cookie de sessão com flags seguras: HttpOnly impede leitura por JS (mitiga roubo via XSS),
+// SameSite=Lax impede envio do cookie em requisições cross-site (mitiga CSRF e leitura via CORS),
+// Secure só sob HTTPS (não quebra acesso interno por HTTP).
+$__https = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'httponly' => true,
+    'samesite' => 'Lax',
+    'secure'   => $__https,
+]);
 session_start();
 
 // Libera a trava do arquivo de sessão logo no início: o PHP segura a sessão até o fim da requisição,

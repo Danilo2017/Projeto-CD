@@ -240,7 +240,9 @@ class ApontamentoProducaoHandler
         string $tipo       = 'TP',
         string $codBarra   = ''
     ): array {
-        $token = self::TOKEN;
+        // Preferir o token da env (FOCCO_API_TOKEN); mantém o antigo como fallback para não quebrar
+        // enquanto não é configurado. IMPORTANTE: trocar o token, pois o antigo está no histórico do git.
+        $token = getenv('FOCCO_API_TOKEN') ?: self::TOKEN;
         $body = [
             'OrdemRoteiro'       => ['ID' => $ordemRotId],
             'Quantidade'         => $quantidade,

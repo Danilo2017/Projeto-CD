@@ -49,7 +49,7 @@ class AgendamentoRecebimento
         $placaCheck = $placa !== null ? $placa : 'VAZIO';
 
         $params = [
-            'data_hora' => "'" . $data_hora . "'",
+            'data_hora' => "'" . str_replace("'", "''", $data_hora) . "'",
             'fornecedor' => "'" . str_replace("'", "''", $fornecedor) . "'",
             'descricao' => "'" . str_replace("'", "''", $descricao) . "'",
             'placa' => "'" . str_replace("'", "''", $placaCheck) . "'"
@@ -76,7 +76,7 @@ class AgendamentoRecebimento
 
         $params = [
             'placa' => $placa !== null ? "'" . str_replace("'", "''", $placa) . "'" : 'NULL',
-            'data_hora' => "'" . $data_hora . "'",
+            'data_hora' => "'" . str_replace("'", "''", $data_hora) . "'",
             'fornecedor' => "'" . str_replace("'", "''", $fornecedor) . "'",
             'descricao' => "'" . str_replace("'", "''", $descricao) . "'",
             'peso' => $peso !== null ? $peso : 'NULL',
@@ -117,7 +117,7 @@ class AgendamentoRecebimento
         $params = [
             'id' => intval($id),
             'placa' => $placa !== null ? "'" . str_replace("'", "''", $placa) . "'" : 'NULL',
-            'data_hora' => "'" . $data_hora . "'",
+            'data_hora' => "'" . str_replace("'", "''", $data_hora) . "'",
             'fornecedor' => "'" . str_replace("'", "''", $fornecedor) . "'",
             'descricao' => "'" . str_replace("'", "''", $descricao) . "'",
             'peso' => $peso !== null ? $peso : 'NULL',
