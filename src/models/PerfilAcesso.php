@@ -84,7 +84,63 @@ class PerfilAcesso
             if ($pcp !== null) $perfis[] = $pcp;
         }
 
+        $temCusto = false;
+        foreach ($perfis as $p) {
+            if (strtoupper($p['NOME'] ?? '') === 'CUSTO') $temCusto = true;
+        }
+        if (!$temCusto) {
+            $c = self::garantirPerfilCusto();
+            if ($c !== null) $perfis[] = $c;
+        }
+
         return $perfis;
+    }
+
+    private static function garantirPerfilCusto(): ?array
+    {
+        $perfil = ['NOME' => 'Custo', 'DESCRICAO' => 'Acesso ao módulo Custo'];
+        try {
+            $chk      = Database::switchParams('focco', [], null, true, false, null,
+                        "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'CUSTO'");
+            $existing = $chk['retorno'][0] ?? null;
+
+            if ($existing) {
+                $id = (int)$existing['ID_PERFIL'];
+
+                $rotaChk = Database::switchParams('focco', [], null, true, false, null,
+                    "SELECT COUNT(1) AS CNT FROM TGAZIN_PERFIL_ROTA WHERE PERFIL_ID = $id AND PREFIXO_ROTA = 'custo'");
+                $cnt = (int)(($rotaChk['retorno'][0] ?? [])['CNT'] ?? 0);
+                if ($cnt === 0) {
+                    Database::switchParams('focco', [], null, true, false, null,
+                        "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                         VALUES ($id, 'custo', SYSDATE)");
+                    Database::getInstance('focco')->exec('COMMIT');
+                }
+
+                return ['ID_PERFIL' => $id] + $perfil;
+            }
+
+            $resA = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('Custo', 'Acesso ao módulo Custo', 'S', SYSDATE)");
+            if (!empty($resA['error'])) return null;
+
+            $idRes  = Database::switchParams('focco', [], null, true, false, null,
+                      "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = 'CUSTO'");
+            $novoId = (int)($idRes['retorno'][0]['ID_PERFIL'] ?? 0);
+            if ($novoId === 0) return null;
+
+            Database::switchParams('focco', [], null, true, false, null,
+                "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                 VALUES ($novoId, 'custo', SYSDATE)");
+
+            Database::getInstance('focco')->exec('COMMIT');
+
+            return ['ID_PERFIL' => $novoId] + $perfil;
+        } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilCusto erro: ' . $e->getMessage());
+            return null;
+        }
     }
 
     private static function garantirPerfilPD(): ?array

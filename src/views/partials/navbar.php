@@ -18,6 +18,7 @@ $acessoPlanejamento = $is_admin || in_array('planejamento', $rotas_permitidas) |
 $acessoIndustrial  = $is_admin || in_array('industrial',  $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoQualidade   = $is_admin || in_array('qualidade',   $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoManutencao  = $is_admin || in_array('manutencao',  $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoCusto       = $is_admin || in_array('custo',       $rotas_permitidas) || in_array('*', $rotas_permitidas);
 
 $pActive = $pageActive ?? '';
 $activeGroup = match(true) {
@@ -34,6 +35,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'industrial-')                                                        => 'industrial',
     str_starts_with($pActive, 'qualidade-')                                                         => 'qualidade',
     str_starts_with($pActive, 'manutencao-')                                                        => 'manutencao',
+    str_starts_with($pActive, 'custo-')                                                      => 'custo',
     $pActive === 'permissao'                                                                         => 'permissao',
     default => ''
 };
@@ -175,6 +177,12 @@ $industrialSub = match(true) {
     $pActive === 'industrial-comparativo-caixa-box'   => 'comparativo-caixa-box',
     $pActive === 'industrial-consumo-molinha'         => 'consumo-molinha',
     $pActive === 'industrial-consumo-molejo-filiais'  => 'consumo-molejo-filiais',
+    default => ''
+};
+
+// Custo: rotas 'custo-...'
+$custoSub = match(true) {
+    $pActive === 'custo-dashboard-entrada' => 'dashboard-entrada',
     default => ''
 };
 
@@ -738,6 +746,24 @@ $userName = $user_login ?? 'Usuário';
                     <a href="<?= $base ?>industrial-consumo-molejo-filiais"
                        class="sidebar-sublink <?= $industrialSub === 'consumo-molejo-filiais' ? 'active' : '' ?>">
                         Molejo: Produção x Consumo Filiais
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <?php if ($acessoCusto): ?>
+        <li class="sidebar-group" id="grpCusto">
+            <button class="sidebar-group-btn <?= $activeGroup === 'custo' ? 'active open' : '' ?>">
+                <i class="bi bi-cash-coin"></i>
+                <span>Custo</span>
+                <i class="bi bi-chevron-down group-chevron"></i>
+            </button>
+            <ul class="sidebar-submenu <?= $activeGroup === 'custo' ? 'open' : '' ?>">
+                <li>
+                    <a href="<?= $base ?>custo-dashboard-entrada"
+                       class="sidebar-sublink <?= $custoSub === 'dashboard-entrada' ? 'active' : '' ?>">
+                        Custo das Notas de Entrada
                     </a>
                 </li>
             </ul>

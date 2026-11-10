@@ -439,6 +439,11 @@ $router->post('/planejamento-api-cdc-liberar',            'Planejamento\\CompraD
 $router->post('/planejamento-api-cdc-concluir',           'Planejamento\\CompraDiretaCrossController@concluir',           true);
 
 // ========== Rotas de Processos Industriais ==========
+// Custo (somente leitura)
+$router->get('/custo-dashboard-entrada',                 'Custo\\CustoEntradaController@index',  true);
+$router->post('/custo-api-entrada-listar',               'Custo\\CustoEntradaController@listar', true);
+$router->post('/custo-api-entrada-razao',                'Custo\\CustoEntradaController@razao',  true);
+
 $router->get('/industrial-pecas-colaborador',            'Industrial\\PecasColaboradorController@index',  true);
 $router->post('/industrial-api-pecas-colaborador',       'Industrial\\PecasColaboradorController@listar', true);
 $router->get('/industrial-faturamento-colaborador',      'Industrial\\FaturamentoColaboradorController@index',  true);
