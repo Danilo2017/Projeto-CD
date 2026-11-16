@@ -59,6 +59,38 @@ class ProjecaoCargaController extends Controller
         }
     }
 
+    public function salvarSequencia(): void
+    {
+        try {
+            $dados            = self::getBody() ?? [];
+            $dados['empr_id'] = $this->emprIdSessao();
+            $usuario          = $_SESSION['user']['login'] ?? 'desconhecido';
+            self::response(ProjecaoCargaHandler::salvarSequencia($dados, $usuario), 200);
+        } catch (\PDOException $e) {
+            error_log('[carga-sequencia] ' . $e->getMessage());
+            self::response(['error' => 'Erro ao gravar a sequência no banco.'], 500);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
+    public function salvarDescricao(): void
+    {
+        try {
+            $dados            = self::getBody() ?? [];
+            $dados['empr_id'] = $this->emprIdSessao();
+            $usuario          = $_SESSION['user']['login'] ?? 'desconhecido';
+            self::response(ProjecaoCargaHandler::salvarDescricao($dados, $usuario), 200);
+        } catch (\PDOException $e) {
+            error_log('[carga-descricao] ' . $e->getMessage());
+            self::response(['error' => 'Erro ao gravar a descrição.'], 500);
+        } catch (\Exception $e) {
+            $code = is_numeric($e->getCode()) ? (int) $e->getCode() : 0;
+            self::response(['error' => $e->getMessage()], $code ?: 500);
+        }
+    }
+
     public function listarLog(): void
     {
         try {

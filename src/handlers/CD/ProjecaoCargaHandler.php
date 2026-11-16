@@ -65,6 +65,65 @@ class ProjecaoCargaHandler
         return ['success' => true, 'alteracoes' => $resultado['alteracoes']];
     }
 
+    /** Sequência de carregamento: inteiro de 1 a 9999, ou vazio para voltar à ordem padrão. */
+    public static function salvarSequencia(array $dados, string $usuario): array
+    {
+        Controller::verificarCamposVazios($dados, ['empr_id', 'num_carga']);
+
+        $emprId   = (int) $dados['empr_id'];
+        $numCarga = (int) $dados['num_carga'];
+        if ($emprId <= 0 || $numCarga <= 0) {
+            throw new \Exception('Empresa ou número de carga inválidos.', 400);
+        }
+
+        $bruto = $dados['seq'] ?? null;
+        if ($bruto === null || $bruto === '') {
+            $seq = null;
+        } else {
+            $seq = filter_var($bruto, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 9999]]);
+            if ($seq === false) {
+                throw new \Exception('A sequência deve ser um número de 1 a 9999 (ou vazio).', 400);
+            }
+        }
+
+        $r = ProjecaoCarga::salvarSequencia($emprId, $numCarga, $seq, $usuario);
+        return ['success' => true, 'alterado' => $r['alterado'], 'seq' => $seq];
+    }
+
+    /**
+     * Descrição da carga só na tela (TGAZIN_CARGA_AGEND.DESCRICAO_TELA, VARCHAR2(70), banco em Latin-1). A TCARGAS não é alterada.
+     * Descrição vazia = remove a da tela e volta a valer a original do Focco.
+     */
+    public static function salvarDescricao(array $dados, string $usuario): array
+    {
+        Controller::verificarCamposVazios($dados, ['empr_id', 'plc_id']);
+
+        $emprId = (int) $dados['empr_id'];
+        $plcId  = (int) $dados['plc_id'];
+        if ($emprId <= 0 || $plcId <= 0) {
+            throw new \Exception('Empresa ou carga inválidas.', 400);
+        }
+
+        $desc = (string) ($dados['descricao'] ?? '');
+        // aspas e travessões "inteligentes" (colados do Word) viram os equivalentes simples
+        $desc = strtr($desc, ["\u{201C}" => '"', "\u{201D}" => '"', "\u{2018}" => "'", "\u{2019}" => "'", "\u{2013}" => '-', "\u{2014}" => '-', "\u{2026}" => '...']);
+        $desc = trim(preg_replace('/[\x00-\x1F\x7F\s]+/u', ' ', $desc));
+
+        if (mb_strlen($desc) > 70) {
+            throw new \Exception('A descrição pode ter no máximo 70 caracteres.', 400);
+        }
+        $latin1 = @iconv('UTF-8', 'ISO-8859-1//IGNORE', $desc);
+        if ($latin1 === false || mb_strlen(iconv('ISO-8859-1', 'UTF-8', $latin1)) !== mb_strlen($desc)) {
+            throw new \Exception('A descrição tem caracteres que o Focco não aceita (ex.: emoji). Use letras, números e pontuação comum.', 400);
+        }
+
+        $r = ProjecaoCarga::atualizarDescricao($emprId, $plcId, $desc, $usuario);
+        return [
+            'success' => true, 'alterado' => $r['alterado'], 'num_carga' => $r['num_carga'],
+            'descricao' => $r['descricao'], 'descricao_orig' => $r['original'],
+        ];
+    }
+
     public static function listarLog(array $dados): array
     {
         Controller::verificarCamposVazios($dados, ['empr_id', 'num_carga']);

@@ -25,9 +25,84 @@ class ProjecaoCarga
             'data_inicio' => $dataInicio,
             'data_fim'    => $dataFim,
             'wms_schema'  => $wmsSchema,
-        ], 'cd.projecao_carga.listar', true);
+        ], 'cd.projecaoCarga.listarSeq', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return is_array($result['retorno']) ? $result['retorno'] : [];
+    }
+
+    /**
+     * Grava só a sequência de carregamento (menor carrega primeiro; null = volta à ordem padrão).
+     * Não passa por salvar(), que regrava todos os campos do agendamento.
+     */
+    public static function salvarSequencia(int $emprId, int $numCarga, ?int $seq, string $usuario): array
+    {
+        $pdo = Database::getInstance('focco');
+
+        $st = $pdo->prepare(GetSqlFocco::getSql('cd.carga.seqBuscar'));
+        $st->execute([':empr_id' => $emprId, ':num_carga' => $numCarga]);
+        $linha = $st->fetch(\PDO::FETCH_ASSOC);
+        $antes = ($linha && $linha['SEQ_CARREGAMENTO'] !== null) ? (int) $linha['SEQ_CARREGAMENTO'] : null;
+        if ($antes === $seq) return ['alterado' => false];
+
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare(GetSqlFocco::getSql($linha ? 'cd.carga.seqAtualizar' : 'cd.carga.seqInserir'))->execute([
+                ':empr_id' => $emprId, ':num_carga' => $numCarga, ':seq' => $seq, ':usuario' => $usuario,
+            ]);
+            $pdo->prepare(GetSqlFocco::getSql('cd.carga.log.inserir'))->execute([
+                ':e' => $emprId, ':c' => $numCarga, ':campo' => 'SEQ_CARREGAMENTO',
+                ':antes' => $antes, ':depois' => $seq, ':usuario' => $usuario,
+            ]);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
+        return ['alterado' => true];
+    }
+
+    /**
+     * Descrição só na tela: grava em TGAZIN_CARGA_AGEND.DESCRICAO_TELA. A TCARGAS (Focco) NÃO é alterada: só é lida, para conferir
+     * que a carga é da empresa e trazer a descrição original. Vazio (ou igual à original) remove a descrição de tela e volta a valer a do Focco.
+     * A carga vem pelo ID interno (PLC_ID) porque (EMPR_ID, CARGA) já se repetiu em cargas antigas.
+     */
+    public static function atualizarDescricao(int $emprId, int $plcId, string $descricao, string $usuario): array
+    {
+        $pdo = Database::getInstance('focco');
+
+        $st = $pdo->prepare(GetSqlFocco::getSql('cd.carga.descTelaBuscar'));
+        $st->execute([':plc_id' => $plcId, ':empr_id' => $emprId]);
+        $carga = $st->fetch(\PDO::FETCH_ASSOC);
+        if (!$carga) throw new \Exception('Carga não encontrada nesta empresa.', 404);
+
+        $numCarga  = (int) $carga['NUM_CARGA'];
+        $orig      = (string) ($carga['DESCRICAO_ORIG'] ?? '');
+        $telaAtual = $carga['DESCRICAO_TELA'] !== null ? (string) $carga['DESCRICAO_TELA'] : null;
+        $telaNova  = ($descricao === '' || $descricao === $orig) ? null : $descricao;
+        $resp      = ['num_carga' => $numCarga, 'descricao' => $telaNova ?? $orig, 'original' => $orig];
+
+        if ($telaAtual === $telaNova) return $resp + ['alterado' => false];
+
+        $pdo->beginTransaction();
+        try {
+            $bind = [':empr_id' => $emprId, ':num_carga' => $numCarga, ':descricao' => $telaNova, ':usuario' => $usuario];
+            $up = $pdo->prepare(GetSqlFocco::getSql('cd.carga.descTelaAtualizar'));
+            $up->execute($bind);
+            if ($up->rowCount() === 0) {
+                $pdo->prepare(GetSqlFocco::getSql('cd.carga.descTelaInserir'))->execute($bind);
+            }
+            $antes  = $telaAtual ?? $orig;
+            $depois = $telaNova ?? $orig;
+            $pdo->prepare(GetSqlFocco::getSql('cd.carga.log.inserir'))->execute([
+                ':e' => $emprId, ':c' => $numCarga, ':campo' => 'DESCRICAO_TELA',
+                ':antes' => $antes !== '' ? $antes : null, ':depois' => $depois !== '' ? $depois : null, ':usuario' => $usuario,
+            ]);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
+        return $resp + ['alterado' => true];
     }
 
     public static function salvar(int $emprId, int $numCarga, array $dados, string $usuario): array

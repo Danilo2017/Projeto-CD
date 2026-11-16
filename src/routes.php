@@ -62,6 +62,8 @@ $router->get('/cd', 'CD\\CDDashboardController@index', true);
 $router->get('/carga-projecao',          'CD\\ProjecaoCargaController@index',    true);
 $router->post('/carga-api-listar',       'CD\\ProjecaoCargaController@listar',   true);
 $router->post('/carga-api-salvar',       'CD\\ProjecaoCargaController@salvar',   true);
+$router->post('/carga-api-sequencia-salvar', 'CD\\ProjecaoCargaController@salvarSequencia', true);
+$router->post('/carga-api-descricao-salvar', 'CD\\ProjecaoCargaController@salvarDescricao', true);
 $router->get('/carga-api-log',           'CD\\ProjecaoCargaController@listarLog',   true);
 $router->get('/carga-api-anexo-listar',  'CD\\ProjecaoCargaController@listarAnexos', true);
 $router->post('/carga-api-anexo-upload', 'CD\\ProjecaoCargaController@uploadAnexo',  true);

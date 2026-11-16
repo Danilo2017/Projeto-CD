@@ -16,6 +16,26 @@
     const _fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
     function fmt(v) { return v ?? '-'; }
+    // a descrição agora é editável pelo usuário: escapa antes de entrar em innerHTML (texto e atributo)
+    function escHtml(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    // descrição alterada só nesta tela (DESCRICAO_TELA) difere da original do Focco (DESCRICAO_ORIG, que nunca é alterada)
+    function descPersonalizada(r) { return (r.DESCRICAO ?? '') !== (r.DESCRICAO_ORIG ?? ''); }
+    function tituloLapis(r) {
+        return descPersonalizada(r)
+            ? `Descrição alterada só nesta tela. Original no Focco: ${r.DESCRICAO_ORIG || '(vazia)'}. Clique para alterar ou voltar à original.`
+            : 'Alterar a descrição (vale só nesta tela; o Focco não é alterado)';
+    }
+    // sequência de carregamento: menor primeiro; sem sequência segue a ordem que veio do servidor (_ord)
+    function ordenarCargas() {
+        const seqDe = r => { const n = parseInt(r.SEQ_CARREGAMENTO, 10); return Number.isFinite(n) ? n : Infinity; };
+        _cargasData.sort((a, b) => {
+            const sa = seqDe(a), sb = seqDe(b);
+            if (sa !== sb) return sa < sb ? -1 : 1;
+            return (a._ord ?? 0) - (b._ord ?? 0);
+        });
+    }
     function fmtValor(v) {
         const n = parseFloat(v);
         return isNaN(n) ? '-' : _fmtBRL.format(n);
@@ -110,14 +130,15 @@
         carregandoLista = true;
         document.getElementById('btnAtualizar').disabled = true;
         document.getElementById('tabelaBody').innerHTML =
-            '<tr><td colspan="16" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
+            '<tr><td colspan="17" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Carregando...</td></tr>';
 
         try {
             const df   = dataFiltroAtual();
             const data = await fetchJson('carga-api-listar', { data_inicio: df.inicio, data_fim: df.fim });
             if (data.error) { toast(data.error); return; }
             if (data._transicao_erro) console.warn('[transição] erro ao gravar status:', data._transicao_erro);
-            renderTabela(data.data || []);
+            // _ord guarda a ordem original do servidor para as cargas sem sequência
+            renderTabela((data.data || []).map((r, i) => { r._ord = i; return r; }));
         } catch (e) {
             toast('Erro ao carregar dados.');
         } finally {
@@ -146,7 +167,7 @@
         if (!filtrado) _cargasData = rows;
         const tbody = elTbody || document.getElementById('tabelaBody');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="16" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="17" class="text-center text-muted py-4">Nenhuma carga encontrada.</td></tr>';
             (elTotalCargas     || document.getElementById('totalCargas')).textContent = '0';
             (elTotalPend       || document.getElementById('totalPendente')).textContent = '-';
             (elTotalFat        || document.getElementById('totalFaturado')).textContent = '-';
@@ -187,12 +208,26 @@
             const temObs      = !isFaturada && r.OBSERVACOES && r.OBSERVACOES.trim() !== '';
             const rowClass    = isFaturada ? 'table-success' : (temObs ? 'table-warning' : '');
             return `
-            <tr data-carga="${r.NUM_CARGA}" data-pos="${r.POS_PLC}" class="${rowClass}">
+            <tr data-carga="${r.NUM_CARGA}" data-plc="${r.PLC_ID}" data-pos="${r.POS_PLC}" class="${rowClass}">
+                <td class="text-center" style="width:78px">
+                    <input type="number" min="1" max="9999" step="1" inputmode="numeric"
+                           class="form-control form-control-sm text-center px-1" style="width:60px!important;height:24px!important;min-height:0!important;padding:0 4px!important;font-size:0.8rem!important;margin:0 auto"
+                           value="${escHtml(r.SEQ_CARREGAMENTO)}" data-orig="${escHtml(r.SEQ_CARREGAMENTO)}"
+                           title="Sequência de carregamento (menor carrega primeiro). Vazio segue a ordem padrão."
+                           onchange="salvarSequencia(this, ${r.NUM_CARGA})">
+                </td>
                 <td class="text-center fw-bold">${r.STATUS_WMS === 'Encerrada'
                     ? `<a href="javascript:void(0)" class="text-decoration-none" onclick="abrirItensCarga(${r.NUM_CARGA})" title="Ver itens da carga">${fmt(r.NUM_CARGA)}</a>`
                     : fmt(r.NUM_CARGA)}</td>
                 <td>${fmt(r.DT_GERACAO)}</td>
-                <td class="text-truncate" style="max-width:160px" title="${r.DESCRICAO ?? ''}">${fmt(r.DESCRICAO)}</td>
+                <td class="td-desc" style="max-width:210px">
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="text-truncate" style="min-width:0" title="${escHtml(r.DESCRICAO)}">${escHtml(fmt(r.DESCRICAO))}</span>
+                        <i class="bi bi-pencil-fill ${descPersonalizada(r) ? 'text-primary' : 'text-muted'} flex-shrink-0"
+                           style="font-size:0.6rem;opacity:${descPersonalizada(r) ? 1 : .6};cursor:pointer"
+                           title="${escHtml(tituloLapis(r))}" onclick="editarDescricao(${r.PLC_ID})"></i>
+                    </div>
+                </td>
                 <td class="text-truncate small" style="max-width:200px;cursor:pointer"
                     title="${r.ROTA ? r.ROTA + ' — clique para editar sequência' : 'Clique para editar sequência'}"
                     onclick="abrirRota(${r.NUM_CARGA})">${fmt(r.ROTA)} <i class="bi bi-pencil-fill text-muted" style="font-size:0.6rem;opacity:.6"></i></td>
@@ -248,6 +283,83 @@
         btnSim.classList.toggle('btn-outline-success', val !== 'SIM');
         btnNao.classList.toggle('btn-danger',          val === 'NAO');
         btnNao.classList.toggle('btn-outline-danger',  val !== 'NAO');
+    };
+
+    /* ── Sequência de carregamento (grava só esse campo) ─ */
+    window.salvarSequencia = async function (input, numCarga) {
+        const bruto = input.value.trim();
+        const antes = input.dataset.orig ?? '';
+        if (bruto === antes) return;
+        if (bruto !== '' && (!/^\d{1,4}$/.test(bruto) || Number(bruto) < 1)) {
+            toast('Informe um número de 1 a 9999 (ou deixe vazio).', 'warning');
+            input.value = antes;
+            return;
+        }
+        const seq = bruto === '' ? null : parseInt(bruto, 10);
+        input.disabled = true;
+        try {
+            const data = await fetchJson('carga-api-sequencia-salvar', { num_carga: numCarga, seq });
+            if (data.error) { toast(data.error); input.value = antes; input.disabled = false; return; }
+            _cargasData.forEach(r => { if (r.NUM_CARGA == numCarga) r.SEQ_CARREGAMENTO = seq; });
+            ordenarCargas();
+            aplicarFiltro();
+            toast(seq === null ? `Sequência da carga ${numCarga} removida.` : `Carga ${numCarga} na sequência ${seq}.`, 'success');
+        } catch (e) {
+            toast('Erro ao gravar a sequência.');
+            input.value = antes;
+            input.disabled = false;
+        }
+    };
+
+    /* ── Trocar a descrição da carga (grava no Focco) ──── */
+    window.editarDescricao = function (plcId) {
+        const r  = _cargasData.find(x => x.PLC_ID == plcId);
+        const td = document.querySelector(`tr[data-plc="${plcId}"] .td-desc`);
+        if (!r || !td) return;
+
+        td.style.maxWidth = 'none';
+        td.innerHTML = '<div class="d-flex align-items-center gap-1" style="min-width:320px">'
+            + '<input type="text" class="form-control form-control-sm" maxlength="70" placeholder="Vazio = descrição original do Focco">'
+            + '<button type="button" class="btn btn-sm btn-success py-0 px-2" title="Salvar"><i class="bi bi-check-lg"></i></button>'
+            + '<button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Cancelar"><i class="bi bi-x-lg"></i></button>'
+            + '</div>';
+        const inp = td.querySelector('input');
+        const [btnOk, btnNo] = td.querySelectorAll('button');
+        inp.value = r.DESCRICAO ?? '';
+
+        const cancelar = () => aplicarFiltro();
+        const salvar = async () => {
+            const nova = inp.value.trim();
+            if (nova === (r.DESCRICAO ?? '')) { cancelar(); return; }
+            if (!nova && !descPersonalizada(r)) { cancelar(); return; } // já está na original: nada a restaurar
+            inp.disabled = btnOk.disabled = btnNo.disabled = true;
+            try {
+                const data = await fetchJson('carga-api-descricao-salvar', { plc_id: plcId, descricao: nova });
+                if (data.error) {
+                    toast(data.error);
+                    inp.disabled = btnOk.disabled = btnNo.disabled = false;
+                    inp.focus();
+                    return;
+                }
+                r.DESCRICAO = data.descricao ?? nova;
+                r.DESCRICAO_ORIG = data.descricao_orig ?? r.DESCRICAO_ORIG;
+                aplicarFiltro();
+                toast(descPersonalizada(r)
+                    ? `Descrição da carga ${data.num_carga ?? ''} alterada (só nesta tela).`
+                    : `Descrição original da carga ${data.num_carga ?? ''} restaurada.`, 'success');
+            } catch (e) {
+                toast('Erro ao gravar a descrição.');
+                inp.disabled = btnOk.disabled = btnNo.disabled = false;
+            }
+        };
+        inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter')  { e.preventDefault(); salvar(); }
+            if (e.key === 'Escape') { cancelar(); }
+        });
+        btnOk.addEventListener('click', salvar);
+        btnNo.addEventListener('click', cancelar);
+        inp.focus();
+        inp.select();
     };
 
     /* ── Toggle rápido do Canhoto na tabela ───────────── */
@@ -400,6 +512,7 @@
         const NUMERICOS = new Set(['CUBAGEM', 'VALOR_PENDENTE', 'VALOR_FATURADO']);
 
         const cols = [
+            ['SEQ_CARREGAMENTO',   'SEQ CARREGAMENTO'],
             ['NUM_CARGA',          'Nº CARGA'],
             ['DT_GERACAO',         'DT CARGA'],
             ['DESCRICAO',          'DESCRIÇÃO'],
@@ -788,7 +901,7 @@
 
         // Aguarda clique do usuário — não carrega automaticamente
         document.getElementById('tabelaBody').innerHTML =
-            '<tr><td colspan="16" class="text-center text-muted py-5">'
+            '<tr><td colspan="17" class="text-center text-muted py-5">'
             + '<i class="bi bi-search me-2"></i>Selecione a data e clique em <strong>Buscar</strong>.'
             + '</td></tr>';
     });

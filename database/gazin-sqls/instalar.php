@@ -51,7 +51,13 @@ foreach ($lista as $idsql => $item) {
         echo "ERRO      $idsql — parâmetro sem valor de exemplo: {$sobra[0]}\n"; $erros++; continue;
     }
     try {
-        $pdo->query("SELECT COUNT(*) FROM ($teste) WHERE ROWNUM = 0")->fetchColumn();
+        if (preg_match('/^\s*(UPDATE|INSERT|DELETE)\b/i', $teste)) {
+            // comando de escrita não cabe numa subconsulta: valida com EXPLAIN PLAN (compila, não executa)
+            $pdo->exec("EXPLAIN PLAN FOR $teste");
+            if ($pdo->inTransaction()) $pdo->rollBack();
+        } else {
+            $pdo->query("SELECT COUNT(*) FROM ($teste) WHERE ROWNUM = 0")->fetchColumn();
+        }
     } catch (Throwable $e) {
         echo "ERRO      $idsql — não compila: " . trim(substr($e->getMessage(), 0, 200)) . "\n"; $erros++; continue;
     }

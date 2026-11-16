@@ -66,6 +66,7 @@ if (!$acessoCarga) {
         <table class="table table-sm table-striped table-hover align-middle mb-0" style="min-width:900px;">
             <thead class="table-dark">
                 <tr>
+                    <th class="text-center" style="width:78px" title="Sequência de carregamento: menor carrega primeiro. Vazio segue a ordem padrão.">SEQ</th>
                     <th class="text-center">Nº CARGA</th>
                     <th>DT CARGA</th>
                     <th>DESCRIÇÃO</th>
@@ -85,7 +86,7 @@ if (!$acessoCarga) {
                 </tr>
             </thead>
             <tbody id="tabelaBody">
-                <tr><td colspan="16" class="text-center py-4">
+                <tr><td colspan="17" class="text-center py-4">
                     <div class="spinner-border spinner-border-sm"></div> Carregando...
                 </td></tr>
             </tbody>
@@ -375,6 +376,7 @@ if (!$acessoCarga) {
                 <table class="table table-sm table-striped table-hover mb-0">
                     <thead class="table-dark">
                         <tr>
+                            <th class="text-center" style="width:78px" title="Sequência de carregamento: menor carrega primeiro. Vazio segue a ordem padrão.">SEQ</th>
                             <th class="text-center">Nº CARGA</th>
                             <th>STATUS</th>
                             <th class="text-center">PEDIDO</th>
