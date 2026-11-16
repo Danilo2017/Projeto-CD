@@ -29,10 +29,15 @@
     }
     // sequência de carregamento: menor primeiro; sem sequência segue a ordem que veio do servidor (_ord)
     function ordenarCargas() {
-        const seqDe = r => { const n = parseInt(r.SEQ_CARREGAMENTO, 10); return Number.isFinite(n) ? n : Infinity; };
+        // "17-1" vira [17, 1]; "17" vira [17, 0]; vazio/inválido vai para o fim. Compara número a número (17-2 vem antes de 17-10).
+        const seqDe = r => {
+            const m = /^(\d+)(?:-(\d+))?$/.exec(String(r.SEQ_CARREGAMENTO ?? '').trim());
+            return m ? [parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0] : [Infinity, 0];
+        };
         _cargasData.sort((a, b) => {
             const sa = seqDe(a), sb = seqDe(b);
-            if (sa !== sb) return sa < sb ? -1 : 1;
+            if (sa[0] !== sb[0]) return sa[0] < sb[0] ? -1 : 1;
+            if (sa[1] !== sb[1]) return sa[1] < sb[1] ? -1 : 1;
             return (a._ord ?? 0) - (b._ord ?? 0);
         });
     }
@@ -138,7 +143,10 @@
             if (data.error) { toast(data.error); return; }
             if (data._transicao_erro) console.warn('[transição] erro ao gravar status:', data._transicao_erro);
             // _ord guarda a ordem original do servidor para as cargas sem sequência
-            renderTabela((data.data || []).map((r, i) => { r._ord = i; return r; }));
+            const lista = (data.data || []).map((r, i) => { r._ord = i; return r; });
+            _cargasData = lista;
+            ordenarCargas();
+            renderTabela(lista);
         } catch (e) {
             toast('Erro ao carregar dados.');
         } finally {
@@ -210,10 +218,10 @@
             return `
             <tr data-carga="${r.NUM_CARGA}" data-plc="${r.PLC_ID}" data-pos="${r.POS_PLC}" class="${rowClass}">
                 <td class="text-center" style="width:78px">
-                    <input type="number" min="1" max="9999" step="1" inputmode="numeric"
-                           class="form-control form-control-sm text-center px-1" style="width:60px!important;height:24px!important;min-height:0!important;padding:0 4px!important;font-size:0.8rem!important;margin:0 auto"
+                    <input type="text" maxlength="9" autocomplete="off" placeholder="17-1"
+                           class="form-control form-control-sm text-center px-1" style="width:66px!important;height:24px!important;min-height:0!important;padding:0 4px!important;font-size:0.8rem!important;margin:0 auto"
                            value="${escHtml(r.SEQ_CARREGAMENTO)}" data-orig="${escHtml(r.SEQ_CARREGAMENTO)}"
-                           title="Sequência de carregamento (menor carrega primeiro). Vazio segue a ordem padrão."
+                           title="Sequência de carregamento, ex.: 17-1, 17-2, 17-3 (menor carrega primeiro). Vazio segue a ordem padrão."
                            onchange="salvarSequencia(this, ${r.NUM_CARGA})">
                 </td>
                 <td class="text-center fw-bold">${r.STATUS_WMS === 'Encerrada'
@@ -287,15 +295,18 @@
 
     /* ── Sequência de carregamento (grava só esse campo) ─ */
     window.salvarSequencia = async function (input, numCarga) {
-        const bruto = input.value.trim();
+        // aceita 17 ou 17-1 (traço "do Word" e espaços viram hífen simples); guarda sem zeros à esquerda
+        const bruto = input.value.replace(/[–—]/g, '-').replace(/\s+/g, '');
         const antes = input.dataset.orig ?? '';
-        if (bruto === antes) return;
-        if (bruto !== '' && (!/^\d{1,4}$/.test(bruto) || Number(bruto) < 1)) {
-            toast('Informe um número de 1 a 9999 (ou deixe vazio).', 'warning');
+        const m = /^(\d{1,4})(?:-(\d{1,4}))?$/.exec(bruto);
+        if (bruto !== '' && (!m || Number(m[1]) < 1 || (m[2] !== undefined && Number(m[2]) < 1))) {
+            toast('Informe a sequência como 17 ou 17-1 (números de 1 a 9999), ou deixe vazio.', 'warning');
             input.value = antes;
             return;
         }
-        const seq = bruto === '' ? null : parseInt(bruto, 10);
+        const seq = bruto === '' ? null : String(parseInt(m[1], 10)) + (m[2] !== undefined ? '-' + parseInt(m[2], 10) : '');
+        input.value = seq ?? '';
+        if ((seq ?? '') === antes) return;
         input.disabled = true;
         try {
             const data = await fetchJson('carga-api-sequencia-salvar', { num_carga: numCarga, seq });

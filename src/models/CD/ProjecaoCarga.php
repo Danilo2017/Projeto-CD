@@ -34,14 +34,14 @@ class ProjecaoCarga
      * Grava só a sequência de carregamento (menor carrega primeiro; null = volta à ordem padrão).
      * Não passa por salvar(), que regrava todos os campos do agendamento.
      */
-    public static function salvarSequencia(int $emprId, int $numCarga, ?int $seq, string $usuario): array
+    public static function salvarSequencia(int $emprId, int $numCarga, ?string $seq, string $usuario): array
     {
         $pdo = Database::getInstance('focco');
 
         $st = $pdo->prepare(GetSqlFocco::getSql('cd.carga.seqBuscar'));
         $st->execute([':empr_id' => $emprId, ':num_carga' => $numCarga]);
         $linha = $st->fetch(\PDO::FETCH_ASSOC);
-        $antes = ($linha && $linha['SEQ_CARREGAMENTO'] !== null) ? (int) $linha['SEQ_CARREGAMENTO'] : null;
+        $antes = ($linha && $linha['SEQ_CARREGAMENTO'] !== null) ? (string) $linha['SEQ_CARREGAMENTO'] : null;
         if ($antes === $seq) return ['alterado' => false];
 
         $pdo->beginTransaction();

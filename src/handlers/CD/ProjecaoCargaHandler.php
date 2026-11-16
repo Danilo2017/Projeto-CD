@@ -65,7 +65,7 @@ class ProjecaoCargaHandler
         return ['success' => true, 'alteracoes' => $resultado['alteracoes']];
     }
 
-    /** Sequência de carregamento: inteiro de 1 a 9999, ou vazio para voltar à ordem padrão. */
+    /** Sequência de carregamento no formato "17" ou "17-1" (cada parte de 1 a 9999), ou vazio para voltar à ordem padrão. */
     public static function salvarSequencia(array $dados, string $usuario): array
     {
         Controller::verificarCamposVazios($dados, ['empr_id', 'num_carga']);
@@ -76,14 +76,17 @@ class ProjecaoCargaHandler
             throw new \Exception('Empresa ou número de carga inválidos.', 400);
         }
 
-        $bruto = $dados['seq'] ?? null;
-        if ($bruto === null || $bruto === '') {
+        $bruto = trim((string) ($dados['seq'] ?? ''));
+        // traço "do Word" e espaços viram o hífen simples
+        $bruto = preg_replace('/\s+/', '', str_replace(["\u{2013}", "\u{2014}"], '-', $bruto));
+        if ($bruto === '') {
             $seq = null;
+        } elseif (preg_match('/^(\d{1,4})(?:-(\d{1,4}))?$/', $bruto, $m)
+                  && (int) $m[1] >= 1 && (!isset($m[2]) || (int) $m[2] >= 1)) {
+            // normaliza (sem zeros à esquerda): "017-01" vira "17-1"
+            $seq = (string) (int) $m[1] . (isset($m[2]) ? '-' . (int) $m[2] : '');
         } else {
-            $seq = filter_var($bruto, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 9999]]);
-            if ($seq === false) {
-                throw new \Exception('A sequência deve ser um número de 1 a 9999 (ou vazio).', 400);
-            }
+            throw new \Exception('A sequência deve ser como 17 ou 17-1 (números de 1 a 9999), ou vazia.', 400);
         }
 
         $r = ProjecaoCarga::salvarSequencia($emprId, $numCarga, $seq, $usuario);
