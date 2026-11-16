@@ -9,6 +9,5 @@ public/*.csv
 *.txt
 graphify-out/
 
-# SQLs do banco e instalador: ficam so na maquina local, nao vao para o git
-/database/gazin-sqls/
-/database/carga-sequencia/
+# database/ (SQLs do banco, DDL e instalador): fica so na maquina local, nao vai para o git
+/database/
