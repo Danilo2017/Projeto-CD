@@ -108,7 +108,7 @@ class ComissaoCadastroHandler
      * Usa uma única conexão PDO, prepared statements reutilizáveis,
      * pré-carregamento de duplicatas em batch e transação única.
      */
-    public static function importarPontuacoes(array $linhas, int $emprId, ?int $idUsuario): array
+    public static function importarPontuacoes(array $linhas, int $emprId, ?int $idUsuario, array $numerosLinha = []): array
     {
         $pdo = Database::getInstance('focco');
         $importados = 0;
@@ -130,8 +130,9 @@ class ComissaoCadastroHandler
         // Pré-validar todas as linhas e resolver lookups
         $linhasValidas = [];
         foreach ($linhas as $idx => $linha) {
-            $numLinha = $idx + 2;
-            
+            // linha no arquivo original (a importação chega em lotes, então o índice do lote não serve)
+            $numLinha = isset($numerosLinha[$idx]) ? (int) $numerosLinha[$idx] : $idx + 2;
+
             $codItem = trim($linha['COD_ITEM'] ?? '');
             $idMascara = trim($linha['ID_MASCARA'] ?? '');
             $codCentro = trim($linha['COD_CENTRO'] ?? '');
@@ -272,6 +273,7 @@ class ComissaoCadastroHandler
                 // Se mapaDuplicatas[$chave] === 'new', ignora linha duplicada do mesmo CSV
             }
             $pdo->commit();
+            \src\models\Comissao\ApontamentoProducao::invalidarCachePontuacao();
         } catch (\Exception $e) {
             $pdo->rollBack();
             $erros[] = "Erro na transação de importação: " . $e->getMessage();

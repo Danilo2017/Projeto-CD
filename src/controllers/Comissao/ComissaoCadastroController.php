@@ -280,8 +280,9 @@ class ComissaoCadastroController extends ctrl
     public function importarPontuacoes()
     {
         try {
+            @set_time_limit(180); // lote grande: o padrão do PHP (30s) pode não bastar
             $dados = Request::getJsonBody();
-            
+
             if (empty($dados['linhas']) || !is_array($dados['linhas'])) {
                 throw new \Exception('Nenhum dado para importar');
             }
@@ -293,7 +294,10 @@ class ComissaoCadastroController extends ctrl
                 throw new \Exception('Empresa não identificada na sessão');
             }
             
-            $resultado = ComissaoCadastroHandler::importarPontuacoes($dados['linhas'], (int)$emprId, $idUsuario);
+            $resultado = ComissaoCadastroHandler::importarPontuacoes(
+                $dados['linhas'], (int)$emprId, $idUsuario,
+                is_array($dados['numeros_linha'] ?? null) ? $dados['numeros_linha'] : []
+            );
             
             self::response([
                 'success' => true,

@@ -49,13 +49,25 @@ class ApontamentoProducao
             return;
         }
 
+        $hoje    = self::$cacheDataRef ?? date('Y-m-d');
+        $arquivo = self::arquivoCachePontuacao($hoje);
+
+        // Cache entre requisições: trazer ~15 mil pontuações do Oracle leva vários segundos e antes era refeito a cada relatório.
+        // Vale 5 minutos e é apagado sempre que uma pontuação é cadastrada, alterada, excluída ou importada (invalidarCachePontuacao).
+        if (is_file($arquivo) && (time() - (int) @filemtime($arquivo)) < self::TTL_CACHE_PONTUACAO) {
+            $salvo = @unserialize((string) @file_get_contents($arquivo), ['allowed_classes' => false]);
+            if (is_array($salvo) && isset($salvo['por_item'], $salvo['por_itempr'], $salvo['por_mascara'])) {
+                self::$cachePontuacao = $salvo;
+                return;
+            }
+        }
+
         self::$cachePontuacao = [
             'por_item'    => [],
             'por_itempr'  => [],
             'por_mascara' => [],
         ];
 
-        $hoje   = self::$cacheDataRef ?? date('Y-m-d');
         $result = Database::switchParams('focco', ['hoje' => $hoje], 'comissao.apontamento.cache_pontuacao', true);
 
         $pontuacoes = is_array($result['retorno']) ? $result['retorno'] : [];
@@ -88,6 +100,30 @@ class ApontamentoProducao
                 }
             }
         }
+
+        // grava de forma atômica (arquivo temporário + rename) para outra requisição nunca ler um arquivo pela metade
+        $dir = dirname($arquivo);
+        if (!is_dir($dir)) { @mkdir($dir, 0777, true); @chmod($dir, 0777); } // 0777: o PHP web (www-data) e o CLI precisam escrever
+        $tmp = $arquivo . '.' . getmypid() . '.tmp';
+        if (@file_put_contents($tmp, serialize(self::$cachePontuacao)) !== false) {
+            @rename($tmp, $arquivo);
+        }
+    }
+
+    private const TTL_CACHE_PONTUACAO = 300; // segundos
+
+    private static function arquivoCachePontuacao(string $dataRef): string
+    {
+        return sys_get_temp_dir() . '/comissao_cache/pontuacao_' . preg_replace('/[^0-9-]/', '', $dataRef) . '.ser';
+    }
+
+    /** Apaga o cache de pontuações guardado entre requisições (chamar ao cadastrar/alterar/excluir/importar pontuação). */
+    public static function invalidarCachePontuacao(): void
+    {
+        foreach (glob(sys_get_temp_dir() . '/comissao_cache/pontuacao_*.ser') ?: [] as $f) {
+            @unlink($f);
+        }
+        self::$cachePontuacao = null;
     }
 
     /**

@@ -757,6 +757,25 @@ class ComissaoRelatorioHandler
         }
         unset($dia);
 
+        // Centro de trabalho e recurso de cada dia normal (pontosPorDiaBatch só devolve data, pontos e quantidade).
+        // Vêm dos vínculos ativos do funcionário no mesmo centro usado na consulta dos pontos ($centroTrabId); não alteram pontos nem quantidades.
+        $nomesCentro = [];
+        $nomesRecurso = [];
+        foreach ($vinculos as $v) {
+            if ($centroTrabId && (int) ($v['ID_CENTRO_TRAB'] ?? 0) !== (int) $centroTrabId) continue;
+            if (!empty($v['CENTRO_DESCRICAO']))  $nomesCentro[$v['CENTRO_DESCRICAO']] = true;
+            if (!empty($v['RECURSO_DESCRICAO'])) $nomesRecurso[$v['RECURSO_DESCRICAO']] = true;
+        }
+        $textoCentro  = $nomesCentro  ? implode(' / ', array_keys($nomesCentro))  : null;
+        $textoRecurso = $nomesRecurso ? implode(' / ', array_keys($nomesRecurso)) : null;
+        foreach ($diario as &$dia) {
+            if (($dia['IS_APOIO'] ?? false) === false) {
+                if (empty($dia['CENTRO_TRABALHO'])) $dia['CENTRO_TRABALHO'] = $textoCentro;
+                if (empty($dia['RECURSO']))         $dia['RECURSO']         = $textoRecurso;
+            }
+        }
+        unset($dia);
+
         // Buscar apontamentos detalhados (vinculados ao funcionário)
         $apontamentos = ApontamentoProducao::listarApontamentosVinculados($funcionarioId, $dataInicio, $dataFim, $emprIdApontamentos, $centroTrabId);
         

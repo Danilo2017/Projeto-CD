@@ -814,64 +814,98 @@ function mostrarPreview(colunas, dados) {
 /**
  * Confirmar e enviar importação
  */
-function confirmarImportacao() {
+async function confirmarImportacao() {
     if (dadosImportacao.length === 0) {
         alert('Nenhum dado para importar');
         return;
     }
-    
+
     const btnImportar = document.getElementById('btnConfirmarImportacao');
     btnImportar.disabled = true;
     btnImportar.innerHTML = '<i class="bi bi-hourglass-split"></i> Importando...';
-    
+
     const resultado = document.getElementById('importacaoResultado');
     resultado.style.display = 'block';
-    resultado.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split"></i> Processando ' + dadosImportacao.length + ' registros, aguarde...</div>';
-    
-    fetch('/comissao-api-pontuacao-importar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ linhas: dadosImportacao })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            let html = '<div class="alert alert-success">';
-            html += '<i class="bi bi-check-circle"></i> <strong>Importação concluída!</strong><br>';
-            html += 'Novos: <strong>' + data.importados + '</strong>';
-            if (data.atualizados > 0) {
-                html += ' | Atualizados: <strong>' + data.atualizados + '</strong>';
-            }
-            html += ' | Total processado: ' + data.total + ' registros';
-            html += '</div>';
-            
-            if (data.erros && data.erros.length > 0) {
-                html += '<div class="alert alert-warning" style="max-height: 300px; overflow-y: auto;">';
-                html += '<strong><i class="bi bi-exclamation-triangle"></i> Erros encontrados (' + data.erros.length + '):</strong>';
-                html += '<table class="table table-sm table-bordered mt-2 mb-0" style="font-size: 0.85em;">';
-                html += '<thead><tr><th style="width:60px">#</th><th>Detalhe do Erro</th></tr></thead><tbody>';
-                data.erros.forEach(function(erro, i) {
-                    html += '<tr><td>' + (i + 1) + '</td><td>' + erro + '</td></tr>';
-                });
-                html += '</tbody></table></div>';
-            }
-            
-            resultado.innerHTML = html;
-            carregarPontuacoes(); // Recarregar tabela
-        } else {
-            resultado.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> Erro: ' + data.error + '</div>';
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const restaurarBotao = () => {
+        btnImportar.disabled = false;
+        btnImportar.innerHTML = '<i class="bi bi-upload"></i> Importar';
+    };
+
+    // Linha repetida no CSV (mesmo item + máscara + centro): vale a primeira, como sempre valeu. Guarda o nº da linha original (cabeçalho = linha 1).
+    const vistos = new Set();
+    const itens = [];
+    let repetidas = 0;
+    dadosImportacao.forEach((l, i) => {
+        const cod = String(l.COD_ITEM ?? '').trim();
+        const msc = String(l.ID_MASCARA ?? '').trim();
+        const cen = String(l.COD_CENTRO ?? '').trim();
+        if (cod !== '') {
+            const chave = cod + '|' + (msc === '' ? '' : String(parseInt(msc, 10))) + '|' + cen;
+            if (vistos.has(chave)) { repetidas++; return; }
+            vistos.add(chave);
         }
-        
-        btnImportar.disabled = false;
-        btnImportar.innerHTML = '<i class="bi bi-upload"></i> Importar';
-    })
-    .catch(error => {
-        console.error('Erro na importação:', error);
-        resultado.innerHTML = 
-            '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> Erro na importação: ' + error.message + '</div>';
-        btnImportar.disabled = false;
-        btnImportar.innerHTML = '<i class="bi bi-upload"></i> Importar';
+        itens.push({ linha: i + 2, dados: l });
     });
+
+    // Em lotes: uma requisição com milhares de linhas estoura o limite de tamanho/tempo do servidor e volta HTML de erro
+    const TAMANHO_LOTE = 2000;
+    const total = { importados: 0, atualizados: 0, processados: 0, erros: [] };
+    try {
+        for (let ini = 0; ini < itens.length; ini += TAMANHO_LOTE) {
+            const lote = itens.slice(ini, ini + TAMANHO_LOTE);
+            resultado.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split"></i> Processando ' +
+                Math.min(ini + lote.length, itens.length) + ' de ' + itens.length + ' registros, aguarde...</div>';
+
+            const resp = await fetch('/comissao-api-pontuacao-importar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ linhas: lote.map(x => x.dados), numeros_linha: lote.map(x => x.linha) })
+            });
+            const texto = await resp.text();
+            let data;
+            try { data = JSON.parse(texto); }
+            catch (e) { throw new Error('o servidor não respondeu corretamente (HTTP ' + resp.status + ') no lote a partir da linha ' + lote[0].linha); }
+            if (!data.success) throw new Error(data.error || 'erro desconhecido no lote a partir da linha ' + lote[0].linha);
+
+            total.importados   += data.importados  || 0;
+            total.atualizados  += data.atualizados || 0;
+            total.processados  += data.total       || 0;
+            (data.erros || []).forEach(e => total.erros.push(e));
+        }
+
+        let html = '<div class="alert alert-success">';
+        html += '<i class="bi bi-check-circle"></i> <strong>Importação concluída!</strong><br>';
+        html += 'Novos: <strong>' + total.importados + '</strong>';
+        if (total.atualizados > 0) html += ' | Atualizados: <strong>' + total.atualizados + '</strong>';
+        html += ' | Total processado: ' + (total.processados + repetidas) + ' registros';
+        if (repetidas > 0) html += '<br><small>' + repetidas + ' linha(s) repetida(s) no arquivo (mesmo item, máscara e centro) foram ignoradas; vale a primeira.</small>';
+        html += '</div>';
+
+        if (total.erros.length > 0) {
+            html += '<div class="alert alert-warning" style="max-height: 300px; overflow-y: auto;">';
+            html += '<strong><i class="bi bi-exclamation-triangle"></i> Erros encontrados (' + total.erros.length + '):</strong>';
+            html += '<table class="table table-sm table-bordered mt-2 mb-0" style="font-size: 0.85em;">';
+            html += '<thead><tr><th style="width:60px">#</th><th>Detalhe do Erro</th></tr></thead><tbody>';
+            total.erros.forEach(function (erro, i) {
+                html += '<tr><td>' + (i + 1) + '</td><td>' + esc(erro) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+        resultado.innerHTML = html;
+        carregarPontuacoes(); // Recarregar tabela
+    } catch (error) {
+        console.error('Erro na importação:', error);
+        // lotes anteriores já foram gravados; reenviar o arquivo é seguro (linhas já gravadas viram atualização, não duplicam)
+        let msg = '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> Erro na importação: ' + esc(error.message) + '</div>';
+        if (total.importados + total.atualizados > 0) {
+            msg += '<div class="alert alert-warning">Antes do erro já foram gravados ' + total.importados + ' novos e ' + total.atualizados +
+                   ' atualizados. Pode importar o arquivo de novo: o que já foi gravado será apenas atualizado.</div>';
+            carregarPontuacoes();
+        }
+        resultado.innerHTML = msg;
+    }
+    restaurarBotao();
 }
 
 /**

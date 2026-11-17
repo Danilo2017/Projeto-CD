@@ -239,6 +239,7 @@ class PontuacaoProduto
             'dt_fim_frag' => $dtFimFrag,
         ], 'comissao.pontuacao.inserir', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
+        ApontamentoProducao::invalidarCachePontuacao();
         return $novoId;
     }
 
@@ -260,6 +261,7 @@ class PontuacaoProduto
             'id'          => intval($id),
         ], 'comissao.pontuacao.atualizar', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
+        ApontamentoProducao::invalidarCachePontuacao();
         return true;
     }
 
@@ -275,6 +277,7 @@ class PontuacaoProduto
             'id'    => intval($id),
         ], 'comissao.pontuacao.alterar_status', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
+        ApontamentoProducao::invalidarCachePontuacao();
         return true;
     }
 
