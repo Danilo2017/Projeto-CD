@@ -28,7 +28,66 @@
             : 'Alterar a descrição (vale só nesta tela; o Focco não é alterado)';
     }
     // sequência de carregamento: menor primeiro; sem sequência segue a ordem que veio do servidor (_ord)
+    // ordenação escolhida clicando no cabeçalho; null = ordem de sequência (padrão)
+    let _ordem = null; // { chave, dir: 1 | -1 }
+    const _COLUNAS_ORD = { // índice da coluna → [campo, tipo]
+        0: ['SEQ_CARREGAMENTO', 'seq'], 1: ['NUM_CARGA', 'num'], 2: ['DT_GERACAO', 'data'], 3: ['DESCRICAO', 'txt'],
+        4: ['ROTA', 'txt'], 5: ['CUBAGEM', 'num'], 6: ['VALOR_PENDENTE', 'num'], 7: ['VALOR_FATURADO', 'num'],
+        8: ['DT_CARREGAMENTO', 'data'], 9: ['SITUACAO', 'txt'], 10: ['STATUS_WMS', 'txt'], 11: ['MOTORISTA', 'txt'],
+        12: ['PLACAS', 'txt'], 13: ['SITUACAO_CAMINHAO', 'txt'], 14: ['DOCA', 'txt'], 15: ['NUM_DOCS', 'txt'],
+    };
+    function valorOrdenacao(r, campo, tipo) {
+        const v = r[campo];
+        if (v === null || v === undefined || String(v).trim() === '') return null;
+        if (tipo === 'num')  { const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
+        if (tipo === 'data') { const m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(String(v)); return m ? m[3] + m[2] + m[1] : null; }
+        return String(v);
+    }
+    function ordenarPorColuna(idx) {
+        const def = _COLUNAS_ORD[idx];
+        if (!def) return;
+        // a tela já abre em SEQ crescente: o 1º clique na SEQ inverte; os demais alternam
+        if (idx === 0) _ordem = (!_ordem || (_ordem.chave === 0 && _ordem.dir === 1)) ? { chave: 0, dir: -1 } : { chave: 0, dir: 1 };
+        else _ordem = (_ordem && _ordem.chave === idx) ? { chave: idx, dir: -_ordem.dir } : { chave: idx, dir: 1 };
+        ordenarCargas();
+        aplicarFiltro();
+        atualizarSetas();
+    }
+    function atualizarSetas() {
+        document.querySelectorAll('th[data-ord-idx]').forEach(th => {
+            const idx = Number(th.dataset.ordIdx);
+            const ativo = _ordem && _ordem.chave === idx;
+            th.querySelector('.ord-seta').textContent = ativo ? (_ordem.dir === 1 ? ' ▲' : ' ▼') : '';
+        });
+    }
+    function iniciarOrdenacaoCabecalho() {
+        const ths = document.querySelectorAll('#tabelaBody')[0]?.closest('table')?.querySelectorAll('thead th');
+        if (!ths) return;
+        ths.forEach((th, idx) => {
+            if (!_COLUNAS_ORD[idx]) return;
+            th.dataset.ordIdx = idx;
+            th.style.cursor = 'pointer';
+            th.style.userSelect = 'none';
+            th.insertAdjacentHTML('beforeend', '<span class="ord-seta"></span>');
+            th.addEventListener('click', () => ordenarPorColuna(idx));
+        });
+    }
     function ordenarCargas() {
+        if (_ordem && _ordem.chave !== 0) {
+            const [campo, tipo] = _COLUNAS_ORD[_ordem.chave];
+            const col = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+            _cargasData.sort((a, b) => {
+                const va = valorOrdenacao(a, campo, tipo), vb = valorOrdenacao(b, campo, tipo);
+                if (va === null && vb === null) return (a._ord ?? 0) - (b._ord ?? 0);
+                if (va === null) return 1;          // vazio sempre no fim
+                if (vb === null) return -1;
+                const c = tipo === 'txt' ? col.compare(va, vb) : (va < vb ? -1 : va > vb ? 1 : 0);
+                return c !== 0 ? c * _ordem.dir : (a._ord ?? 0) - (b._ord ?? 0);
+            });
+            return;
+        }
+        // SEQ: crescente (padrão) ou decrescente
+        const inverte = _ordem && _ordem.chave === 0 && _ordem.dir === -1 ? -1 : 1;
         // "17-1" vira [17, 1]; "17" vira [17, 0]; vazio/inválido vai para o fim. Compara número a número (17-2 vem antes de 17-10).
         const seqDe = r => {
             const m = /^(\d+)(?:-(\d+))?$/.exec(String(r.SEQ_CARREGAMENTO ?? '').trim());
@@ -36,8 +95,13 @@
         };
         _cargasData.sort((a, b) => {
             const sa = seqDe(a), sb = seqDe(b);
-            if (sa[0] !== sb[0]) return sa[0] < sb[0] ? -1 : 1;
-            if (sa[1] !== sb[1]) return sa[1] < sb[1] ? -1 : 1;
+            // sem sequência fica sempre no fim, também na ordem decrescente
+            if (sa[0] === Infinity || sb[0] === Infinity) {
+                if (sa[0] !== sb[0]) return sa[0] === Infinity ? 1 : -1;
+                return (a._ord ?? 0) - (b._ord ?? 0);
+            }
+            if (sa[0] !== sb[0]) return (sa[0] < sb[0] ? -1 : 1) * inverte;
+            if (sa[1] !== sb[1]) return (sa[1] < sb[1] ? -1 : 1) * inverte;
             return (a._ord ?? 0) - (b._ord ?? 0);
         });
     }
@@ -163,6 +227,7 @@
         const q = filtroAtual();
         if (!q) { renderTabela(_cargasData); return; }
         const filtrados = _cargasData.filter(r =>
+            String(r.SEQ_CARREGAMENTO ?? '').toLowerCase().includes(q) ||
             String(r.NUM_CARGA  ?? '').toLowerCase().includes(q) ||
             String(r.DESCRICAO  ?? '').toLowerCase().includes(q) ||
             String(r.ROTA       ?? '').toLowerCase().includes(q) ||
@@ -876,6 +941,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         // Cache dos elementos DOM usados em renderTabela
         elTbody           = document.getElementById('tabelaBody');
+        iniciarOrdenacaoCabecalho();
         elTotalCargas     = document.getElementById('totalCargas');
         elTotalPend       = document.getElementById('totalPendente');
         elTotalFat        = document.getElementById('totalFaturado');
