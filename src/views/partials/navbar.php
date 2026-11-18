@@ -15,6 +15,7 @@ $acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || 
 $acessoApontamento = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPd          = $is_admin || in_array('pd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPlanejamento = $is_admin || in_array('planejamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoExpedicao   = $is_admin || in_array('expedicao',   $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoIndustrial  = $is_admin || in_array('industrial',  $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoQualidade   = $is_admin || in_array('qualidade',   $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoManutencao  = $is_admin || in_array('manutencao',  $rotas_permitidas) || in_array('*', $rotas_permitidas);
@@ -32,6 +33,7 @@ $activeGroup = match(true) {
     str_starts_with($pActive, 'pcp-')                                                               => 'pcp',
     str_starts_with($pActive, 'pd-')                                                                => 'pd',
     str_starts_with($pActive, 'planejamento-')                                                      => 'planejamento',
+    str_starts_with($pActive, 'expedicao-')                                                       => 'comissao',
     str_starts_with($pActive, 'industrial-')                                                        => 'industrial',
     str_starts_with($pActive, 'qualidade-')                                                         => 'qualidade',
     str_starts_with($pActive, 'manutencao-')                                                        => 'manutencao',
@@ -226,7 +228,7 @@ $userName = $user_login ?? 'Usuário';
 
     <ul class="sidebar-menu">
 
-        <?php if ($acessoComissao): ?>
+        <?php if ($acessoComissao || $acessoExpedicao): ?>
         <li class="sidebar-group" id="grpComissao">
             <button class="sidebar-group-btn <?= $activeGroup === 'comissao' ? 'active open' : '' ?>">
                 <i class="bi bi-award"></i>
@@ -234,6 +236,7 @@ $userName = $user_login ?? 'Usuário';
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-submenu <?= $activeGroup === 'comissao' ? 'open' : '' ?>">
+                <?php if ($acessoComissao): ?>
                 <li>
                     <a href="<?= $base ?>comissao-dashboard"
                        class="sidebar-sublink <?= $comissaoSub === 'dashboard' ? 'active' : '' ?>">
@@ -252,6 +255,27 @@ $userName = $user_login ?? 'Usuário';
                         Relatórios
                     </a>
                 </li>
+                <?php endif; ?>
+                <?php if ($acessoExpedicao): ?>
+                <?php $expRel = $pActive === 'expedicao-relatorio' || str_starts_with($pActive, 'expedicao-relatorio-'); ?>
+                <li class="pcp-subgroup">
+                    <button class="pcp-subgroup-btn <?= $activeGroup === 'comissao' && str_starts_with($pActive, 'expedicao-') ? 'active open' : '' ?>">
+                        <span>Expedição</span>
+                        <i class="bi bi-chevron-down subgrp-chevron"></i>
+                    </button>
+                    <ul class="pcp-sub-submenu <?= str_starts_with($pActive, 'expedicao-') ? 'open' : '' ?>">
+                        <li><a href="<?= $base ?>expedicao-dashboard"
+                               class="pcp-sub-sublink <?= $pActive === 'expedicao-dashboard' ? 'active' : '' ?>">
+                            Dashboard</a></li>
+                        <li><a href="<?= $base ?>expedicao-cadastro"
+                               class="pcp-sub-sublink <?= (str_starts_with($pActive, 'expedicao-') && !$expRel && $pActive !== 'expedicao-dashboard') ? 'active' : '' ?>">
+                            Cadastros</a></li>
+                        <li><a href="<?= $base ?>expedicao-relatorio"
+                               class="pcp-sub-sublink <?= $expRel ? 'active' : '' ?>">
+                            Relatórios</a></li>
+                    </ul>
+                </li>
+                <?php endif; ?>
             </ul>
         </li>
         <?php endif; ?>

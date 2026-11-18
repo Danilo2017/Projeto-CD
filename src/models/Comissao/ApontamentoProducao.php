@@ -288,7 +288,7 @@ class ApontamentoProducao
         $params['filtro_empr'] = $emprId ? "AND TORDENS.EMPR_ID = " . intval($emprId) : '--';
         $params['filtro_centro'] = $centroTrabId ? "AND TORDENS_ROT.CENTR_TRAB_ID = " . intval($centroTrabId) : '--';
 
-        $result = Database::switchParams('focco', $params, 'comissao.apontamento.resumoPorFunc', true);
+        $result = Database::switchParams('focco', $params, $centroTrabId ? 'comissao.apontamento.resumoPorFuncCentro' : 'comissao.apontamento.resumoPorFunc', true);
         $dadosBrutos = $result['retorno'] ?? [];
         
         if (empty($dadosBrutos)) {
@@ -682,7 +682,7 @@ class ApontamentoProducao
         $params['empr_id'] = intval($emprId);
         $params['filtro_centro'] = $centroTrabId ? "AND TORDENS_ROT.CENTR_TRAB_ID = " . intval($centroTrabId) : '--';
 
-        $result = Database::switchParams('focco', $params, 'comissao.apontamento.pontosPorDiaBatch', true);
+        $result = Database::switchParams('focco', $params, $centroTrabId ? 'comissao.apontamento.pontosPorDiaBatchCentro' : 'comissao.apontamento.pontosPorDiaBatch', true);
         $dadosBrutos = $result['retorno'] ?? [];
         
         // Carregar cache de pontuação (carregado uma vez só por request)

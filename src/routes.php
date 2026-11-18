@@ -440,6 +440,35 @@ $router->post('/planejamento-api-cdc-mrp-status',         'Planejamento\\CompraD
 $router->post('/planejamento-api-cdc-liberar',            'Planejamento\\CompraDiretaCrossController@liberar',            true);
 $router->post('/planejamento-api-cdc-concluir',           'Planejamento\\CompraDiretaCrossController@concluir',           true);
 
+// ========== Comissão da Expedição (paralelo à comissão de produção) ==========
+$router->get('/expedicao-dashboard',                    'Expedicao\ExpedicaoController@dashboard',       true);
+$router->get('/expedicao-cadastro',                      'Expedicao\ExpedicaoController@cadastro',          true);
+$router->get('/expedicao-equipes',                       'Expedicao\ExpedicaoController@equipesIndex',      true);
+$router->get('/expedicao-regras-equipe',                 'Expedicao\ExpedicaoController@regrasEquipeIndex', true);
+$router->get('/expedicao-regras-funcionario',            'Expedicao\ExpedicaoController@regrasFuncIndex',   true);
+$router->get('/expedicao-cargas',                        'Expedicao\ExpedicaoController@cargasIndex',       true);
+$router->get('/expedicao-relatorio',                     'Expedicao\ExpedicaoController@relatorio',         true);
+$router->get('/expedicao-relatorio-comissoes',           'Expedicao\ExpedicaoController@relComissoes',      true);
+$router->get('/expedicao-relatorio-diario',              'Expedicao\ExpedicaoController@relDiario',         true);
+$router->post('/expedicao-api-empresa',                  'Expedicao\ExpedicaoController@empresa',           true);
+$router->post('/expedicao-api-funcionarios',             'Expedicao\ExpedicaoController@funcionarios',      true);
+$router->post('/expedicao-api-equipes',                  'Expedicao\ExpedicaoController@equipes',           true);
+$router->post('/expedicao-api-equipe-salvar',            'Expedicao\ExpedicaoController@equipeSalvar',      true);
+$router->post('/expedicao-api-membros',                  'Expedicao\ExpedicaoController@membros',           true);
+$router->post('/expedicao-api-equipe-excluir',           'Expedicao\ExpedicaoController@equipeExcluir',    true);
+$router->post('/expedicao-api-membro-excluir',           'Expedicao\ExpedicaoController@membroExcluir',    true);
+$router->post('/expedicao-api-excluir',                 'Expedicao\ExpedicaoController@excluir',          true);
+$router->post('/expedicao-api-membro-salvar',            'Expedicao\ExpedicaoController@membroSalvar',      true);
+$router->post('/expedicao-api-regras-equipe',            'Expedicao\ExpedicaoController@regrasEquipe',      true);
+$router->post('/expedicao-api-regra-equipe-salvar',      'Expedicao\ExpedicaoController@regraEquipeSalvar', true);
+$router->post('/expedicao-api-regras-func',              'Expedicao\ExpedicaoController@regrasFunc',        true);
+$router->post('/expedicao-api-regra-func-salvar',        'Expedicao\ExpedicaoController@regraFuncSalvar',   true);
+$router->post('/expedicao-api-cargas',                   'Expedicao\ExpedicaoController@cargas',            true);
+$router->get('/expedicao-faltas',                       'Expedicao\\ExpedicaoController@faltasIndex',      true);
+$router->post('/expedicao-api-faltas',                  'Expedicao\\ExpedicaoController@faltas',           true);
+$router->post('/expedicao-api-falta-salvar',            'Expedicao\\ExpedicaoController@faltaSalvar',      true);
+$router->post('/expedicao-api-apurar',                   'Expedicao\ExpedicaoController@apurar',            true);
+
 // ========== Rotas de Processos Industriais ==========
 // Custo (somente leitura)
 $router->get('/custo-dashboard-entrada',                 'Custo\\CustoEntradaController@index',  true);

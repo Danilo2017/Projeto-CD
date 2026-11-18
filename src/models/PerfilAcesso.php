@@ -55,6 +55,15 @@ class PerfilAcesso
             if ($pl !== null) $perfis[] = $pl;
         }
 
+        $temExpedicao = false;
+        foreach ($perfis as $p) {
+            if (strtoupper($p['NOME'] ?? '') === 'EXPEDIÇÃO' || strtoupper($p['NOME'] ?? '') === 'EXPEDICAO') $temExpedicao = true;
+        }
+        if (!$temExpedicao) {
+            $ex = self::garantirPerfilExpedicao();
+            if ($ex !== null) $perfis[] = $ex;
+        }
+
         $temIndustrial = false;
         foreach ($perfis as $p) {
             if (strtoupper($p['NOME'] ?? '') === 'PROCESSOS INDUSTRIAIS') $temIndustrial = true;
@@ -232,6 +241,41 @@ class PerfilAcesso
             return ['ID_PERFIL' => $novoId, 'NOME' => 'Planejamento', 'DESCRICAO' => 'Acesso ao módulo Planejamento'];
         } catch (\Throwable $e) {
             error_log('[PerfilAcesso] garantirPerfilPlanejamento erro: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /** Perfil "Expedição" (prefixo de rota expedicao): comissão da expedição, paralela à de produção. */
+    private static function garantirPerfilExpedicao(): ?array
+    {
+        $perfil = ['NOME' => 'Expedição', 'DESCRICAO' => 'Acesso à comissão da Expedição'];
+        try {
+            $chk = Database::switchParams('focco', [], null, true, false, null,
+                "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) IN ('EXPEDIÇÃO', 'EXPEDICAO')");
+            $id = (int)(($chk['retorno'][0] ?? [])['ID_PERFIL'] ?? 0);
+
+            if ($id === 0) {
+                $res = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO)
+                     VALUES ('Expedição', 'Acesso à comissão da Expedição', 'S', SYSDATE)");
+                if (!empty($res['error'])) return null;
+                $idRes = Database::switchParams('focco', [], null, true, false, null,
+                    "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) IN ('EXPEDIÇÃO', 'EXPEDICAO')");
+                $id = (int)(($idRes['retorno'][0] ?? [])['ID_PERFIL'] ?? 0);
+                if ($id === 0) return null;
+            }
+
+            $rotaChk = Database::switchParams('focco', [], null, true, false, null,
+                "SELECT COUNT(1) AS CNT FROM TGAZIN_PERFIL_ROTA WHERE PERFIL_ID = $id AND PREFIXO_ROTA = 'expedicao'");
+            if ((int)(($rotaChk['retorno'][0] ?? [])['CNT'] ?? 0) === 0) {
+                Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO)
+                     VALUES ($id, 'expedicao', SYSDATE)");
+                Database::getInstance('focco')->exec('COMMIT');
+            }
+            return ['ID_PERFIL' => $id] + $perfil;
+        } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilExpedicao erro: ' . $e->getMessage());
             return null;
         }
     }
