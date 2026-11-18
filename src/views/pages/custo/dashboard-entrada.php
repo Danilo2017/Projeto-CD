@@ -113,7 +113,7 @@ $empPadrao  = (int) ($empresa['id'] ?? 1);
         </div>
         <div>
             <button class="btn btn-sm btn-primary" id="btnFiltrar"><i class="bi bi-search"></i> Filtrar</button>
-            <button class="btn btn-sm btn-outline-secondary" id="btnCsv"><i class="bi bi-download"></i> CSV</button>
+            <button class="btn btn-sm btn-outline-secondary" id="btnCsv"><i class="bi bi-file-earmark-excel"></i> Excel</button>
         </div>
         <span class="ce-status" id="status"></span>
         <div class="ce-nota">
@@ -128,30 +128,30 @@ $empPadrao  = (int) ($empresa['id'] ?? 1);
     <div class="ce-kpis" id="kpis"></div>
 
     <div class="ce-card">
-        <div class="ce-head"><span>Itens com variação de custo</span><small id="rotItens"></small></div>
+        <div class="ce-head"><span>Itens com variação de custo</span><small><span id="rotItens"></span> &nbsp;·&nbsp; <a class="ce-xls" data-t="tblItens" data-n="itens_com_variacao" title="Baixar esta tabela em Excel"><i class="bi bi-file-earmark-excel"></i> Excel</a></small></div>
         <div class="ce-scroll"><table class="ce-tbl" id="tblItens"></table></div>
     </div>
 
     <div class="ce-grid">
         <div class="ce-card">
-            <div class="ce-head"><span>Notas FOB sem nota de frete</span><small id="rotSemFrete"></small></div>
+            <div class="ce-head"><span>Notas FOB sem nota de frete</span><small><span id="rotSemFrete"></span> &nbsp;·&nbsp; <a class="ce-xls" data-t="tblSemFrete" data-n="notas_fob_sem_frete" title="Baixar esta tabela em Excel"><i class="bi bi-file-earmark-excel"></i> Excel</a></small></div>
             <div class="ce-scroll"><table class="ce-tbl" id="tblSemFrete"></table></div>
         </div>
         <div class="ce-card">
-            <div class="ce-head"><span>Por fornecedor</span><small>clique para ver as notas</small></div>
+            <div class="ce-head"><span>Por fornecedor</span><small>clique para ver as notas &nbsp;·&nbsp; <a class="ce-xls" data-t="tblForn" data-n="por_fornecedor" title="Baixar esta tabela em Excel"><i class="bi bi-file-earmark-excel"></i> Excel</a></small></div>
             <div class="ce-scroll"><table class="ce-tbl" id="tblForn"></table></div>
         </div>
     </div>
 
     <div class="ce-card" id="cardDet" style="display:none">
-        <div class="ce-head"><span id="detTitulo">Detalhe</span><small><a id="detCsv">CSV</a> &nbsp;·&nbsp; <a id="detFechar">fechar ✕</a></small></div>
+        <div class="ce-head"><span id="detTitulo">Detalhe</span><small><a id="detCsv" title="Baixar todas as colunas do detalhe"><i class="bi bi-file-earmark-excel"></i> Excel</a> &nbsp;·&nbsp; <a id="detFechar">fechar ✕</a></small></div>
         <div class="ce-scroll" style="max-height:560px"><table class="ce-tbl" id="tblDet"></table></div>
     </div>
 
     <div class="ce-card" id="cardRaz" style="display:none">
         <div class="ce-head"><span id="razTitulo">Por que o custo médio mudou</span>
             <small><label style="cursor:pointer;color:#fff;margin:0;text-transform:none;font-weight:400;letter-spacing:0"><input type="checkbox" id="razTodas" style="vertical-align:middle"> mostrar todas as movimentações</label>
-            &nbsp;·&nbsp; <a id="razFechar">fechar ✕</a></small></div>
+             &nbsp;·&nbsp; <a class="ce-xls" data-t="tblRaz" data-n="por_que_o_custo_mudou" title="Baixar esta tabela em Excel"><i class="bi bi-file-earmark-excel"></i> Excel</a> &nbsp;·&nbsp; <a id="razFechar">fechar ✕</a></small></div>
         <div class="ce-resumo" id="razResumo"></div>
         <div class="ce-scroll" style="max-height:600px"><table class="ce-tbl" id="tblRaz"></table></div>
     </div>
@@ -269,6 +269,7 @@ $empPadrao  = (int) ($empresa['id'] ?? 1);
                 if (va == null && vb == null) return 0; if (va == null) return 1; if (vb == null) return -1;
                 return (typeof va === 'string' ? va.localeCompare(vb, 'pt-BR') : va - vb) * dir;
             });
+            ultima[id] = { cols, r };
             let h = '<thead><tr>' + cols.map((c, i) => '<th data-i="' + i + '" class="' + (c[3] || '') + (i === ci ? (dir > 0 ? ' ord-asc' : ' ord-desc') : '') + '">' + c[0] + '</th>').join('') + '</tr></thead><tbody>';
             if (!r.length) h += '<tr><td class="ce-vazio" colspan="' + cols.length + '">Nada encontrado com esses filtros</td></tr>';
             r.forEach((x, j) => {
@@ -437,6 +438,23 @@ $empPadrao  = (int) ($empresa['id'] ?? 1);
         ], ms, [0, 1], null, null,
         m => (m.efeito_pct != null && Math.abs(m.efeito_pct) >= lim && mexeu(m)) ? (m.efeito > 0 ? 'puxa-cima' : 'puxa-baixo') : '');
     }
+
+    // Excel de qualquer tabela da tela: exatamente as colunas e a ordem que estão na tela (valores puros, sem R$/%)
+    const ultima = {};
+    function excelTabela(id, nome) {
+        const u = ultima[id];
+        if (!u || !u.r.length) return;
+        const q = v => { v = String(v ?? ''); return /[";\r\n]/.test(v) ? '"' + v.replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"' : v; };
+        const val = v => v == null ? '' : typeof v === 'number' ? String(Math.round(v * 1e6) / 1e6).replace('.', ',') : q(v);
+        const cab = u.cols.map(c => q(c[0]));
+        const lin = [cab.join(';')].concat(u.r.map(x => u.cols.map(c => val(c[1](x))).join(';')));
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob(['﻿' + lin.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+        a.download = 'custo_' + nome + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    document.querySelectorAll('.ce-xls').forEach(a => a.addEventListener('click', ev => { ev.stopPropagation(); excelTabela(a.dataset.t, a.dataset.n); }));
 
     function baixarCsv(ls, nome) {
         const q = v => { v = String(v ?? ''); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
