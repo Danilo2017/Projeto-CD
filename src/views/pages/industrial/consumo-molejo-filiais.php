@@ -92,8 +92,8 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
         </div>
         <span class="mf-status" id="status"></span>
         <div class="mf-nota">
-            Produção: molejos produzidos nas empresas 10 e 16 (EPP − PPE). Consumo: molejos requisitados pelas filiais para as ordens de produção (REP).
-            Molinhas = molejos × molinhas por unidade da estrutura da empresa 10 (TGAZIN_ADMIN_TANQUE_MOLA), nos dois lados.
+            Produção: molejos produzidos nas empresas 10 e 16 (EPP − PPE). Consumo: molejos requisitados pelas filiais para as ordens de produção (REP). No consumo, a filial requisita o molejo ENROLADO para fazer o S/BORDA (mesma quantidade): se a filial consumiu ENROLADO de um tamanho, vale o ENROLADO; se não, valem os demais (S/BORDA etc.), para não contar o mesmo molejo duas vezes.
+            Molinhas produzidas = molinha de fato produzida nas empresas 10 e 16 (itens MOLA ENSACADA INDIVIDUALMENTE, EPP − PPE). Molinhas consumidas = molejos × molinhas por unidade da estrutura da empresa 10 (TGAZIN_ADMIN_TANQUE_MOLA).
             Molejo Bonnel / Fio Contínuo não leva molinha ensacada: conta em molejos e fica com 0 molinhas.
         </div>
     </div>
@@ -137,6 +137,11 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
             <div class="mf-head"><span>Consumo das filiais no período</span><small id="unidRot5"></small></div>
             <div class="mf-scroll" style="max-height:none"><table class="mf-tbl" id="tblCons"></table></div>
         </div>
+    </div>
+
+    <div class="mf-card">
+        <div class="mf-head"><span>Molejos consumidos em cada filial e conversão em molinhas</span><small><span id="unidRot6"></span> &nbsp;·&nbsp; <a style="color:#fff;cursor:pointer" id="btnCsvConv">Excel</a></small></div>
+        <div class="mf-scroll" style="max-height:640px"><table class="mf-tbl" id="tblConv"></table></div>
     </div>
 
     <div class="mf-card" id="cardDet" style="display:none">
@@ -220,7 +225,7 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
 
     function desenhar() {
         const u = unid(), rotU = u === 'molinhas' ? 'em molinhas' : 'em molejos';
-        ['unidRot1', 'unidRot2', 'unidRot3', 'unidRot4', 'unidRot5'].forEach(i => document.getElementById(i).textContent = rotU);
+        ['unidRot1', 'unidRot2', 'unidRot3', 'unidRot4', 'unidRot5', 'unidRot6'].forEach(i => document.getElementById(i).textContent = rotU);
         const s = series();
         const tot = s.reduce((a, x) => ({ prod: a.prod + x.prod, cons: a.cons + x.cons }), { prod: 0, cons: 0 });
         const porFab = {}; dados.fabricas.forEach(e => porFab[e] = s.reduce((a, x) => a + x.fab[e], 0));
@@ -264,6 +269,7 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
         tabelaDia(s, tot);
         tabelaResumo('tblProd', dados.producao.map(f => ({ ...f, grupo: '' })), 'producao');
         tabelaResumo('tblCons', dados.consumo.map(f => ({ ...f, grupo: '' })), 'consumo');
+        tabelaConversao();
     }
 
     function tabelaDia(s, tot) {
@@ -292,6 +298,41 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
         document.getElementById('tblDia').innerHTML = h;
     }
 
+    // Consumo das filiais: cada molejo requisitado (REP) e quantas molinhas ele representa (molejos x molinhas por molejo da estrutura da empresa 10)
+    function linhasConversao() {
+        const out = [];
+        dados.consumo.forEach(f => f.itens.forEach(it => out.push({ filial: f.nome, ...it })));
+        return out;
+    }
+    function tabelaConversao() {
+        const t = document.getElementById('tblConv');
+        if (!dados.consumo.length) { t.innerHTML = '<tbody><tr><td class="mf-vazio">Sem consumo no período</td></tr></tbody>'; return; }
+        let h = '<thead><tr><th class="l">Filial</th><th class="l">Molejo consumido</th><th class="l">Máscara</th><th class="l">Molinha da estrutura (empresa ' + dados.empresaEstrutura + ')</th><th>Molinhas por molejo</th><th>Molejos consumidos</th><th>Molinhas</th></tr></thead><tbody>';
+        let tm = 0, tl = 0;
+        dados.consumo.forEach(f => {
+            h += '<tr><td class="l" colspan="5" style="font-weight:700;color:#1565c0;background:#f7f9fc">' + esc(f.nome) + '</td><td style="font-weight:700;background:#f7f9fc">' + n0(f.molejos) + '</td><td style="font-weight:700;background:#f7f9fc">' + n0(f.molinhas) + '</td></tr>';
+            f.itens.forEach(it => {
+                h += '<tr><td class="l"></td><td class="l">' + esc(it.cod_item + ' - ' + it.desc) + '</td><td class="l">' + esc(it.mascara || '') + '</td><td class="l">' +
+                     (it.molinha ? esc(it.molinha) : '<span class="sem">sem molinha ensacada</span>') + '</td><td>' + n2(it.por_unid) + '</td><td>' + n0(it.molejos) + '</td><td>' + n0(it.molinhas) + '</td></tr>';
+            });
+            tm += f.molejos; tl += f.molinhas;
+        });
+        h += '<tr class="tot"><td class="l" colspan="5">Total das filiais</td><td>' + n0(tm) + '</td><td>' + n0(tl) + '</td></tr>';
+        t.innerHTML = h + '</tbody>';
+    }
+    function csvConversao() {
+        if (!dados) return;
+        const q = v => { v = String(v ?? ''); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+        const num = (v, d) => v == null ? '' : String(Math.round(Number(v) * Math.pow(10, d)) / Math.pow(10, d)).replace('.', ',');
+        const lin = [['Filial', 'Código molejo', 'Molejo', 'Máscara', 'Código molinha', 'Molinha', 'Molinhas por molejo', 'Molejos consumidos', 'Molinhas'].join(';')];
+        linhasConversao().forEach(l => lin.push([q(l.filial), q(l.cod_item), q(l.desc), q(l.mascara), q(l.molinha_cod), q(l.molinha), num(l.por_unid, 2), num(l.molejos, 0), num(l.molinhas, 0)].join(';')));
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob(['\ufeff' + lin.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+        a.download = 'molejo_consumo_filiais_em_molinhas.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
     function tabelaResumo(id, linhas, lado) {
         const u = unid();
         if (!linhas.length) { document.getElementById(id).innerHTML = '<tbody><tr><td class="mf-vazio">Sem movimentos no período</td></tr></tbody>'; return; }
@@ -301,7 +342,7 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
             if (f.grupo && f.grupo !== grupo) { grupo = f.grupo; h += '<tr><td class="l" colspan="5" style="font-weight:700;color:#1565c0;background:#f7f9fc">' + esc(grupo) + '</td></tr>'; }
             tm += f.molejos; tl += f.molinhas;
             h += '<tr><td class="l">' + esc(f.nome) + '</td><td>' + n0(f.molejos) + '</td><td>' + n0(f.molinhas) + '</td><td>' +
-                 (f.molejos ? n0(f.molinhas / f.molejos) : '-') + '</td><td class="l mf-det"><a data-lado="' + lado + '" data-i="' + i + '">ver ' + f.itens.length + '</a>' +
+                 (lado !== 'producao' && f.molejos ? n0(f.molinhas / f.molejos) : '-') + '</td><td class="l mf-det"><a data-lado="' + lado + '" data-i="' + i + '">ver ' + f.itens.length + '</a>' +
                  (f.semEstrutura ? ' <span class="sem">(' + f.semEstrutura + ' sem molinha)</span>' : '') + '</td></tr>';
         });
         if (lado === 'consumo') h += '<tr class="tot"><td class="l">Total</td><td>' + n0(tm) + '</td><td>' + n0(tl) + '</td><td>' + (tm ? n0(tl / tm) : '-') + '</td><td></td></tr>';
@@ -340,6 +381,7 @@ $mesPadrao = date('Y-m', strtotime('first day of last month'));
 
     document.getElementById('btnFiltrar').addEventListener('click', filtrar);
     document.getElementById('btnCsv').addEventListener('click', csv);
+    document.getElementById('btnCsvConv').addEventListener('click', csvConversao);
     document.getElementById('fUnid').addEventListener('change', () => { if (dados) desenhar(); });
     document.getElementById('detFechar').addEventListener('click', () => document.getElementById('cardDet').style.display = 'none');
     filtrar();

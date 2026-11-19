@@ -12,7 +12,8 @@ use src\utils\DashboardCache;
  *   quantidade direta (mesma regra do SQL de produção do relatório Consumo de Molinha).
  * Consumo nas filiais: movimentos REP (Requisição Planejada, saída para as ordens de produção) dos molejos,
  *   pela DT_SIST, quantidade direta.
- * Molinhas: molejos x molinhas por unidade da estrutura da EMPRESA 10 (FOCCO3I.TGAZIN_ADMIN_TANQUE_MOLA,
+ * Produção em molinhas: a molinha de fato produzida (itens "MOLA ENSACADA INDIVIDUALMENTE", EPP − PPE), não molejo x estrutura.
+ * Consumo em molinhas: molejos x molinhas por unidade da estrutura da EMPRESA 10 (FOCCO3I.TGAZIN_ADMIN_TANQUE_MOLA,
  *   linhas "MOLA ENSACADA INDIVIDUALMENTE", QTDE_TOT), pelo item e máscara; sem a máscara, a estrutura sem máscara.
  *   A mesma estrutura vale para a produção e para o consumo, para os dois lados serem comparáveis.
  * Molejo sem molinha ensacada na estrutura (Bonnel, Fio Contínuo) conta como molejo e aparece marcado no detalhe.
@@ -89,17 +90,30 @@ class ConsumoMolejoFiliais
     public static function mes(string $anoMes): array
     {
         self::validaMes($anoMes);
-        $chave = "industrial_molejo_dia3_$anoMes";
+        $chave = "industrial_molejo_dia6_$anoMes";
         $val = DashboardCache::get($chave);
         if ($val !== null) return $val;
 
         $bom = self::estrutura();
         $out = [];
-        foreach (self::movimentos($anoMes) as $c) {
+        $movs = self::movimentos($anoMes);
+        // Consumo: a filial requisita o molejo ENROLADO para fazer o S/BORDA e depois requisita o S/BORDA para o colchão (mesma quantidade nos dois).
+        // Para não somar o mesmo molejo duas vezes: se a filial consumiu ENROLADO daquele tamanho, vale o ENROLADO; se não, valem os demais (S/BORDA etc.).
+        $chaveTam = fn(array $c): ?string => preg_match('/(\d+X\d+X\d+MM)/i', (string) $c['DESC_TECNICA'], $mm) ? $c['EMPRESA'] . '|' . strtoupper($mm[1]) : null;
+        $temEnrolado = [];
+        foreach ($movs as $c) {
+            if ($c['LADO'] === 'C' && abs((float) $c['QTD']) >= 0.0001 && stripos($c['DESC_TECNICA'], 'ENROLADO') !== false && ($k = $chaveTam($c)) !== null) $temEnrolado[$k] = true;
+        }
+        foreach ($movs as $c) {
             $qtd = (float) $c['QTD'];
             if (abs($qtd) < 0.0001) continue;
+            if ($c['LADO'] === 'C' && stripos($c['DESC_TECNICA'], 'ENROLADO') === false && ($k = $chaveTam($c)) !== null && isset($temEnrolado[$k])) continue;
             $item = ['lado' => $c['LADO'], 'empresa' => (int) $c['EMPRESA'], 'dia' => $c['DIA'], 'cod_item' => $c['COD_ITEM'],
                      'desc' => trim($c['DESC_TECNICA']), 'mascara' => $c['MASCARA']];
+            if ($c['LADO'] === 'P') {   // produção: as molinhas vêm da produção direta da molinha (abaixo), não do molejo x estrutura
+                $out[] = $item + ['molejos' => $qtd, 'molinha_cod' => null, 'molinha' => '(molinhas contadas pela produção da própria molinha)', 'por_unid' => null, 'molinhas' => 0.0];
+                continue;
+            }
             $mol = $bom[$c['COD_ITEM'] . '|' . ($c['ID_MASC'] ?? '')] ?? $bom[$c['COD_ITEM'] . '|'] ?? null;
             if (!$mol) {
                 $out[] = $item + ['molejos' => $qtd, 'molinha_cod' => null, 'molinha' => null, 'por_unid' => null, 'molinhas' => 0.0];
@@ -109,6 +123,13 @@ class ConsumoMolejoFiliais
                 $out[] = $item + ['molejos' => $i === 0 ? $qtd : 0.0, 'molinha_cod' => $m['cod'], 'molinha' => $m['desc'],
                                   'por_unid' => $m['qtde'], 'molinhas' => $qtd * $m['qtde']];
             }
+        }
+        // Produção das fábricas em molinhas = molinha de fato produzida (EPP − PPE do item "MOLA ENSACADA INDIVIDUALMENTE")
+        foreach (self::sql('industrial.consumoMolejoFiliais.listarMolinhasProduzidas', ['ano_mes' => "'$anoMes'"]) as $c) {
+            $qtd = (float) $c['QTD'];
+            if (abs($qtd) < 0.0001) continue;
+            $out[] = ['lado' => 'P', 'empresa' => (int) $c['EMPRESA'], 'dia' => $c['DIA'], 'cod_item' => $c['COD_ITEM'], 'desc' => trim($c['DESC_TECNICA']),
+                     'mascara' => $c['MASCARA'], 'molejos' => 0.0, 'molinha_cod' => $c['COD_ITEM'], 'molinha' => trim($c['DESC_TECNICA']), 'por_unid' => 1.0, 'molinhas' => $qtd];
         }
         DashboardCache::set($chave, $out, self::ttl($anoMes));
         return $out;
