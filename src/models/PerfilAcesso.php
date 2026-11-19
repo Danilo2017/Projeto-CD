@@ -55,6 +55,13 @@ class PerfilAcesso
             if ($pl !== null) $perfis[] = $pl;
         }
 
+        foreach ([['Processo - Rotinas', 'Acesso só às rotinas do menu Processo (trocas e transferência)', 'processo-rotinas'],
+                  ['Processo - Relatórios', 'Acesso só aos relatórios do menu Processo', 'processo-relatorios']] as [$nomePf, $descPf, $prefPf]) {
+            $ja = false;
+            foreach ($perfis as $p) { if (mb_strtoupper($p['NOME'] ?? '') === mb_strtoupper($nomePf)) $ja = true; }
+            if (!$ja) { $novo = self::garantirPerfilSimples($nomePf, $descPf, $prefPf); if ($novo !== null) $perfis[] = $novo; }
+        }
+
         $temExpedicao = false;
         foreach ($perfis as $p) {
             if (strtoupper($p['NOME'] ?? '') === 'EXPEDIÇÃO' || strtoupper($p['NOME'] ?? '') === 'EXPEDICAO') $temExpedicao = true;
@@ -241,6 +248,37 @@ class PerfilAcesso
             return ['ID_PERFIL' => $novoId, 'NOME' => 'Planejamento', 'DESCRICAO' => 'Acesso ao módulo Planejamento'];
         } catch (\Throwable $e) {
             error_log('[PerfilAcesso] garantirPerfilPlanejamento erro: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /** Perfil com um único prefixo de rota (cria o perfil e o prefixo se ainda não existirem). */
+    private static function garantirPerfilSimples(string $nome, string $descricao, string $prefixo): ?array
+    {
+        $nomeSql = str_replace("'", "''", $nome); $descSql = str_replace("'", "''", $descricao); $prefSql = str_replace("'", "''", $prefixo);
+        try {
+            $chk = Database::switchParams('focco', [], null, true, false, null,
+                "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = UPPER('$nomeSql')");
+            $id = (int)(($chk['retorno'][0] ?? [])['ID_PERFIL'] ?? 0);
+            if ($id === 0) {
+                $res = Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ACESSO (NOME, DESCRICAO, ATIVO, DT_CADASTRO) VALUES ('$nomeSql', '$descSql', 'S', SYSDATE)");
+                if (!empty($res['error'])) return null;
+                $idRes = Database::switchParams('focco', [], null, true, false, null,
+                    "SELECT ID_PERFIL FROM TGAZIN_PERFIL_ACESSO WHERE UPPER(NOME) = UPPER('$nomeSql')");
+                $id = (int)(($idRes['retorno'][0] ?? [])['ID_PERFIL'] ?? 0);
+                if ($id === 0) return null;
+            }
+            $rotaChk = Database::switchParams('focco', [], null, true, false, null,
+                "SELECT COUNT(1) AS CNT FROM TGAZIN_PERFIL_ROTA WHERE PERFIL_ID = $id AND PREFIXO_ROTA = '$prefSql'");
+            if ((int)(($rotaChk['retorno'][0] ?? [])['CNT'] ?? 0) === 0) {
+                Database::switchParams('focco', [], null, true, false, null,
+                    "INSERT INTO TGAZIN_PERFIL_ROTA (PERFIL_ID, PREFIXO_ROTA, DT_CADASTRO) VALUES ($id, '$prefSql', SYSDATE)");
+                Database::getInstance('focco')->exec('COMMIT');
+            }
+            return ['ID_PERFIL' => $id, 'NOME' => $nome, 'DESCRICAO' => $descricao];
+        } catch (\Throwable $e) {
+            error_log('[PerfilAcesso] garantirPerfilSimples erro: ' . $e->getMessage());
             return null;
         }
     }

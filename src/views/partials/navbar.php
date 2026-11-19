@@ -9,7 +9,9 @@ $acessoComissao    = $is_admin || in_array('comissao',    $rotas_permitidas) || 
 $acessoCd          = $is_admin || in_array('cd',          $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoFaturamento = $is_admin || in_array('faturamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPedidos     = $is_admin || in_array('pedidos',     $rotas_permitidas) || in_array('*', $rotas_permitidas);
-$acessoProcesso    = $is_admin || in_array('processo',    $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoProcRot      = $is_admin || in_array('processo', $rotas_permitidas) || in_array('processo-rotinas', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoProcRel      = $is_admin || in_array('processo', $rotas_permitidas) || in_array('processo-relatorios', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoProcesso    = $acessoProcRot || $acessoProcRel;
 $acessoCarga       = $is_admin || in_array('carga',       $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoPcp         = $is_admin || in_array('pcp',         $rotas_permitidas) || in_array('*', $rotas_permitidas);
 $acessoApontamento = $is_admin || in_array('apontamento', $rotas_permitidas) || in_array('*', $rotas_permitidas);
@@ -396,6 +398,7 @@ $userName = $user_login ?? 'Usuário';
                 <i class="bi bi-chevron-down group-chevron"></i>
             </button>
             <ul class="sidebar-submenu <?= $activeGroup === 'processo' ? 'open' : '' ?>">
+                <?php if ($acessoProcRot): ?>
                 <li>
                     <a href="<?= $base ?>processo-troca-almox"
                        class="sidebar-sublink <?= $processoSub === 'troca-almox' ? 'active' : '' ?>">
@@ -427,6 +430,8 @@ $userName = $user_login ?? 'Usuário';
                     </a>
                 </li>
 
+                <?php endif; ?>
+                <?php if ($acessoProcRel): ?>
                 <!-- ── Relatórios ── -->
                 <li class="pcp-subgroup">
                     <button class="pcp-subgroup-btn <?= $processoRelSgAtivo ? 'active open' : '' ?>">
@@ -460,6 +465,7 @@ $userName = $user_login ?? 'Usuário';
                             Despesa por Centro de Custo</a></li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
             </ul>
         </li>

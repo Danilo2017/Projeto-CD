@@ -47,6 +47,13 @@ class Auth extends Controller {
             return true;
         }
         
+        // Processo: 'processo' libera tudo; 'processo-rotinas' e 'processo-relatorios' liberam só uma das partes
+        if ($prefixoUrl === 'processo' && !in_array('processo', $rotasPermitidas)) {
+            $u = ltrim($url, '/');
+            $ehRelatorio = strpos($u, 'processo-relatorio') === 0 || strpos($u, 'processo-api-relatorio') === 0;
+            return in_array($ehRelatorio ? 'processo-relatorios' : 'processo-rotinas', $rotasPermitidas);
+        }
+
         // Verificar se o prefixo da URL está na lista de rotas permitidas
         return in_array($prefixoUrl, $rotasPermitidas);
     }
@@ -169,6 +176,8 @@ class Auth extends Controller {
             'faturamento'=> 'faturamento-dashboard',
             'pedidos'    => 'pedidos-transferencia',
             'processo'   => 'processo-troca-almox',
+            'processo-rotinas'    => 'processo-troca-almox',
+            'processo-relatorios' => 'processo-relatorio-mov-estoque',
             'carga'      => 'carga-projecao',
             'permissao'  => 'permissao',
             'pcp'        => 'pcp-relatorio-producao',

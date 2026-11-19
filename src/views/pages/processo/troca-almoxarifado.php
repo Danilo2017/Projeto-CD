@@ -6,7 +6,7 @@
  * @var callable $render
  * @var array    $empresas
  */
-$acesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('processo-rotinas', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acesso) {
     header('Location: ' . $base . 'sem-acesso');
     exit;

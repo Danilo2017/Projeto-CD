@@ -1,6 +1,6 @@
 <?php
 /** @var array  $almoxs */
-$acessoProcesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoProcesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('processo-rotinas', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoProcesso) { header('Location: ' . $base . 'sem-acesso'); exit; }
 ?>
 <?= $render('header', [

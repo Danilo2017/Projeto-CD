@@ -3,7 +3,7 @@
 /** @var array    $rotas_permitidas */
 /** @var string   $base */
 /** @var callable $render */
-$acessoProcesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('*', $rotas_permitidas);
+$acessoProcesso = $is_admin || in_array('processo', $rotas_permitidas) || in_array('processo-relatorios', $rotas_permitidas) || in_array('*', $rotas_permitidas);
 if (!$acessoProcesso) {
     header('Location: ' . $base . 'sem-acesso');
     exit;
