@@ -146,7 +146,7 @@ class PontuacaoProduto
      */
     private static function proximoIdPontuacao()
     {
-        $result = Database::switchParams('focco', [], 'comissao.pontuacao.proximo_id', true);
+        $result = Database::switchParams('focco', [], 'comissao.pontuacao.proximoIdSeq', true);
         if (!empty($result['error'])) throw new \Exception($result['error']);
         return (int)($result['retorno'][0]['ID'] ?? 1);
     }

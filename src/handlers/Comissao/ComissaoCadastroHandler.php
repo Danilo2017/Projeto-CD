@@ -103,6 +103,17 @@ class ComissaoCadastroHandler
         PontuacaoProduto::excluir($id, $usuarioId);
     }
 
+    /** Avança a SEQ_GAZIN_PONTUACAO_PROD até passar do maior ID_PONTUACAO já gravado (só consome números da sequence). */
+    private static function alinharSequencePontuacao(\PDO $pdo): void
+    {
+        $max = (int) ($pdo->query(GetSqlFocco::getSql('comissao.pontuacao.maxId'))->fetch(\PDO::FETCH_ASSOC)['ID'] ?? 0);
+        $stmt = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.proximoIdSeq'));
+        for ($i = 0; $i < 200000; $i++) {
+            $stmt->execute();
+            if ((int) $stmt->fetch(\PDO::FETCH_ASSOC)['ID'] > $max) return;
+        }
+    }
+
     /**
      * Importar pontuações em lote (OTIMIZADO)
      * Usa uma única conexão PDO, prepared statements reutilizáveis,
@@ -239,6 +250,9 @@ class ComissaoCadastroHandler
         // ===== FASE 3: Executar INSERTs e UPDATEs em transação única =====
         $stmtInsert = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.importarInserir'));
         $stmtUpdate = $pdo->prepare(GetSqlFocco::getSql('comissao.pontuacao.importarAtualizar'));
+
+        // Alinha a sequence ao maior ID gravado: o cadastro manual antigo usava MAX+1 e deixava a sequence para trás (ORA-00001 ao importar)
+        self::alinharSequencePontuacao($pdo);
 
         $pdo->beginTransaction();
         try {
